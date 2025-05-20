@@ -2,3 +2,6 @@
 	path = utilities/norlab-shell-script-tools
 	url = https://github.com/norlab-ulaval/norlab-shell-script-tools.git
 	branch = main
+[submodule "utilities/norlab-build-system"]
+	path = utilities/norlab-build-system
+	url = https://github.com/norlab-ulaval/norlab-build-system.git
