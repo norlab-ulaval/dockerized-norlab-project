@@ -1,0 +1,65 @@
+#
+# GitHub action for executing "semantic-release" with configuration in ".releaserc.json"
+#
+# Note about pushing to protected branches:
+#
+#   The GITHUB_TOKEN credential does not have the required permission
+#   to operate on protected branches.
+#   Solution:
+#    1. generate a GitHub Personal Access Token
+#    2. and register it as a Repository Secrets and name it `SEMANTIC_RELEASE_GH_TOKEN`
+#    3. Important: set "actions/checkout" to "persist-credentials: false" otherwise it will be overwriten
+#
+# Reference
+#   - https://conventionalcommits.org
+#   - https://semantic-release.gitbook.io
+#   - https://semantic-release.gitbook.io/semantic-release/recipes/ci-configurations/github-actions
+#   - https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
+#
+
+name: Semantic-release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read # for checkout
+
+jobs:
+  release:
+    name: Semantic-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+      id-token: write # to enable use of OIDC for npm provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
+      - name: Install semantic-release
+        run: npm install --save-dev semantic-release
+      - name: Install semantic-release additional plugins (git)
+        run: npm install @semantic-release/git
+      - name: Install semantic-release additional plugins (changelog)
+        run: npm install @semantic-release/changelog -D
+      - name: Install semantic-release additional plugins (semantic-release-replace-plugin)
+        run: npm install semantic-release-replace-plugin -D
+      - name: Install semantic-release additional plugins (conventional-changelog-conventionalcommits for commit-analyzer preset)
+        run: npm install conventional-changelog-conventionalcommits -D
+      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+        run: npm audit signatures
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_GH_TOKEN }}
+        run: npx semantic-release
+

@@ -1,0 +1,4 @@
+[submodule "utilities/norlab-shell-script-tools"]
+	path = utilities/norlab-shell-script-tools
+	url = https://github.com/norlab-ulaval/norlab-shell-script-tools.git
+	branch = main
