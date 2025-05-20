@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Execute 'template-norlab-project.template' repo shell script tests via 'norlab-shell-script-tools' library
+# Execute 'dockerized-norlab-project' repo shell script tests via 'norlab-shell-script-tools' library
 #
 # Usage:
 #   $ bash run_bats_core_test_in_n2st.bash ['<test-directory>[/<this-bats-test-file.bats>]' ['<image-distro>']]
@@ -25,12 +25,12 @@ function n2st::run_n2st_testsing_tools(){
   TMP_CWD=$(pwd)
 
   # ....Project root logic.........................................................................
-  TNP_ROOT=$(git rev-parse --show-toplevel)
+  DNP_ROOT=$(git rev-parse --show-toplevel)
 
   # ....Load environment variables from file.......................................................
-  cd "${TNP_ROOT}" || exit 1
+  cd "${DNP_ROOT}" || exit 1
   set -o allexport
-  source .env.template-norlab-project.template
+  source .env.dockerized-norlab-project
   set +o allexport
 
   # ....Execute N2ST run_bats_tests_in_docker.bash.................................................

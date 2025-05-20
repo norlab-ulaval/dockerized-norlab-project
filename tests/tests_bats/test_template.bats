@@ -77,51 +77,51 @@ teardown() {
   fail 'this test always fails'
 }
 
-@test "n2st::this_is_not_cool (explicitly source $TESTED_FILE) › expect fail" {
-  run bash -c "source ./$TESTED_FILE && n2st::this_is_not_cool"
+@test "dnp::this_is_not_cool (explicitly source $TESTED_FILE) › expect fail" {
+  run bash -c "source ./$TESTED_FILE && dnp::this_is_not_cool"
   assert_failure 1
   assert_output --partial 'Noooooooooooooo!'
 }
 
-@test "n2st::this_is_not_cool (source at setup step) › expect fail" {
-  run n2st::this_is_not_cool
+@test "dnp::this_is_not_cool (source at setup step) › expect fail" {
+  run dnp::this_is_not_cool
   assert_failure 1
   assert_output --partial 'Noooooooooooooo!'
 }
 
-@test "n2st::good_morning_norlab (environment variable not set) › expect fail" {
-  run "n2st::good_morning_norlab"
+@test "dnp::good_morning_norlab (environment variable not set) › expect fail" {
+  run "dnp::good_morning_norlab"
   assert_failure 1
   assert_output --partial 'Error: Environment variable not set'
   unset GREETING
 }
 
-@test "n2st::good_morning_norlab (environment variable set) › expect pass" {
+@test "dnp::good_morning_norlab (environment variable set) › expect pass" {
   assert_empty $GREETING
   export GREETING='Goooooooood morning NorLab'
   assert_not_empty $GREETING
 
-  run "n2st::good_morning_norlab"
+  run "dnp::good_morning_norlab"
   assert_success
   assert_output --partial " ... there's nothing like the smell of a snow storm in the morning!"
   unset GREETING
 }
 
-@test "n2st::good_morning_norlab (command executed in a subshell) › expect pass" {
+@test "dnp::good_morning_norlab (command executed in a subshell) › expect pass" {
   assert_empty $GREETING
-  run bash -c "source ./$TESTED_FILE && GREETING='Goooooooood morning NorLab' && n2st::good_morning_norlab"
+  run bash -c "source ./$TESTED_FILE && GREETING='Goooooooood morning NorLab' && dnp::good_morning_norlab"
   assert_empty $GREETING
   assert_success
   assert_output --partial "Goooooooood morning NorLab ... there's nothing like the smell of a snow storm in the morning!"
 }
 
-@test "n2st::talk_to_me_or_not › expect fail" {
+@test "dnp::talk_to_me_or_not › expect fail" {
   # Note:
   #  - "echo 'Y'" is for sending an keyboard input to the 'read' command which expect a single character
   #    run bash -c "echo 'Y' | source ./function_library/$TESTED_FILE"
   #  - Alt: Use the 'yes [n]' command which optionaly send n time
-#  run bash -c "yes 1 | n2st::talk_to_me_or_not"
-  run bash -c "source ./$TESTED_FILE && yes 1 | n2st::talk_to_me_or_not"
+#  run bash -c "yes 1 | dnp::talk_to_me_or_not"
+  run bash -c "source ./$TESTED_FILE && yes 1 | dnp::talk_to_me_or_not"
   assert_failure 1
   assert_output --partial '(press any key to exit)'
 }

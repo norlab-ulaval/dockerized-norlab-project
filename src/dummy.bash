@@ -7,14 +7,14 @@
 #
 # =================================================================================================
 
-function n2st::talk_to_me_or_not() {
+function dnp::talk_to_me_or_not() {
   echo -e "Hey $(whoami), hit me when you are ready"
   echo '(press any key to exit)'
   read -r -n 1
   exit 1
 }
 
-function n2st::good_morning_norlab() {
+function dnp::good_morning_norlab() {
   # Global
   #   - Read GREETING global environment variable
   #
@@ -22,7 +22,7 @@ function n2st::good_morning_norlab() {
   return 0
 }
 
-function n2st::this_is_not_cool() {
+function dnp::this_is_not_cool() {
     echo -e "\n[\033[1;31mERROR\033[0m] Noooooooooooooo!" 1>&2
     return 1
 }
