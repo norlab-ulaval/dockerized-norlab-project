@@ -12,7 +12,7 @@
 
 # ....Repository wide code owner...................................................................
 # These owners will be the default owners for everything in the repo.
-#*       @RedLeader962
+*       @RedLeader962
 
 # ....Core directories and files...................................................................
 #/src/ @RedLeader962
