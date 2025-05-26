@@ -1,0 +1,91 @@
+# @formatter:off
+
+services:
+
+  project-core:
+    extends:
+      service: project-core
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+
+  project-develop:
+    extends:
+      service: project-develop
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    depends_on:
+      - project-core
+
+  project-deploy:
+    extends:
+      service: project-deploy
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    depends_on:
+      - project-core
+
+#  project-release:
+#    extends:
+#      service: project-deploy
+#      file: docker-compose.project.build.native.yaml
+#    build:
+#      platforms:
+#        - "linux/arm64"
+#        - "linux/amd64"
+#    depends_on:
+#      - project-core
+
+  project-ci-tests:
+    extends:
+      service: project-ci-tests
+      file: docker-compose.project.build.native.yaml
+    build:
+      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.multiarch"
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    depends_on:
+      - project-core
+
+  project-ci-tests-no-gpu:
+    extends:
+      service: project-ci-tests
+      file: docker-compose.project.build.native.yaml
+    build:
+      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.multiarch"
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    depends_on:
+      - project-ci-tests
+
+  project-slurm:
+    extends:
+      service: project-slurm
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    depends_on:
+      - project-core
+
+  project-slurm-no-gpu:
+    extends:
+      service: project-slurm
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    depends_on:
+      - project-slurm

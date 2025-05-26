@@ -1,0 +1,49 @@
+
+ARG BASE_IMAGE
+ARG BASE_IMAGE_TAG
+FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS norlab-slurm-setup
+
+ARG IS_TEAMCITY_RUN
+ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
+
+SHELL ["/bin/bash", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN echo "Pre-condition checks" && { \
+        test $(whoami) == "root" &&  \
+        test -n ${DN_PROJECT_USER:?'Env variable need to be set and non-empty.'} && \
+        test -d /home/${DN_PROJECT_USER} && \
+        test -n ${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'} && \
+        test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ; \
+    } || exit 1
+
+WORKDIR /tmp/numba_cache
+ENV NUMBA_CACHE_DIR=/tmp/numba_cache
+
+WORKDIR /
+COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/dn_entrypoint.python.bash .
+
+RUN <<EOF
+  chmod 777 /tmp/numba_cache
+
+  echo "Configure Matplotlib to use a non-interactive backends for headless run"
+  echo "backend : Agg" >> /etc/matplotlibrc
+
+  chmod +x /dn_entrypoint.python.bash
+  chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) /dn_entrypoint.python.bash
+EOF
+
+
+# ====Execute slurm run============================================================================
+FROM norlab-slurm-setup AS execute-slurm-run
+USER ${DN_PROJECT_USER:?err}
+SHELL ["/bin/bash", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+
+WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
+
+RUN test -x /dn_entrypoint.python.bash || exit 1
+
+ENTRYPOINT [ "/dn_entrypoint.python.bash" ]
+CMD [ "-c","print('>>>Hello-slurm')" ]
+

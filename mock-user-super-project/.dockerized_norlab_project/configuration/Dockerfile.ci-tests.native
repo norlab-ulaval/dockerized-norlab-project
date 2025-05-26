@@ -1,0 +1,65 @@
+# ====Dockerfile.ci-tests.native===================================================================
+#
+# Test container for executing Dockerized-NorLab-project user tests on host architecture.
+#
+# Usage:
+#   1. Execute `build.ci_tests.bash` to build test image with required dependent image(s);
+#   2. Execute `run.ci_tests.bash` to run tests.
+#
+# Notes:
+#   - Tests are executed at run time on host architecture.
+#   - At runtime, the entrypoint execute one by one all `run_ci_tests.*.bash` files, located in
+#      `.dockerized_norlab_project/configuration/project_cicd/` directory.
+#
+# =================================================================================================
+ARG BASE_IMAGE
+ARG BASE_IMAGE_TAG
+FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS norlab-teamcity-cicd-setup
+
+ARG IS_TEAMCITY_RUN
+ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
+
+SHELL ["/bin/bash", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN echo "Pre-condition checks" && { \
+        test $(whoami) == "root" &&  \
+        test -n ${DN_PROJECT_USER:?'Env variable need to be set and non-empty.'} && \
+        test -d /home/${DN_PROJECT_USER} && \
+        test -n ${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'} && \
+        test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ; \
+    } || exit 1
+
+# ===install teamcity & CI/CD utilities============================================================
+
+RUN pip3 install --no-cache-dir  --upgrade pip
+RUN pip3 install --no-cache-dir teamcity-messages
+
+RUN ( \
+  echo "Configure Matplotlib to use a non-interactive backends for TeamCity run"; \
+  echo "backend : Agg" >> /etc/matplotlibrc; \
+)
+
+WORKDIR /project_cicd
+COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_cicd .
+RUN chmod +x ./dn_entrypoint.ci_test.bash
+
+# ====Execute tests================================================================================
+# (CRITICAL) ToDo: validate single platform setup
+FROM norlab-teamcity-cicd-setup AS setup-ci-tests-stage
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG BUILDPLATFORM
+
+USER ${DN_PROJECT_USER:?err}
+SHELL ["/bin/bash", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DNP_PYTEST_CI_RUN=true
+
+WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/
+
+# Note: Run tests in docker run native to assess deployment related potential problem.
+WORKDIR /project_cicd
+
+ENTRYPOINT [ "./dn_entrypoint.ci_test.bash" ]

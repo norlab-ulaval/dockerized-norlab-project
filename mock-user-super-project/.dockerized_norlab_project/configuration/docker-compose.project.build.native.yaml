@@ -1,0 +1,163 @@
+# @formatter:off
+
+# =================================================================================================
+# Notes:
+#   - The `build` attribute `pull: false` tells the image builder to use the local image store
+#     to execute the FROM directive instead of pulling the image from the registry.
+#     Ref https://docs.docker.com/compose/compose-file/build/#pull
+#   - The attibute `pull_policy: build` tells the builder to build the image even if the `image`
+#     attribute is set. So it set precedense on building over pulling.
+#     Ref:
+#       - https://docs.docker.com/compose/compose-file/build/#using-build-and-image
+#       - https://docs.docker.com/compose/compose-file/05-services/#image
+#   - Build `context` and `additional_contexts` formating options:
+#       - /abs/path/to/resources
+#       - ../rel/path/to/resources
+#       - https://<my-repo>.git#<my-branch-or-repo-tag>:<my-folder>
+#       - docker-image://<my-app>:<image-tag>
+#
+# =================================================================================================
+services:
+
+  project-core:
+    build:
+      context: "../../"
+      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile"
+      additional_contexts:
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+      args:
+        BASE_IMAGE: ${DN_HUB:?err}/${DN_PROJECT_BASE_IMG:?err}
+        BASE_IMAGE_TAG: ${DN_IMAGE_TAG:?err}
+        DN_PROJECT_GIT_DOMAIN: ${DN_PROJECT_GIT_DOMAIN:?err}
+        DN_PROJECT_GIT_NAME: ${DN_PROJECT_GIT_NAME:?err}
+        DN_PROJECT_ALIAS_PREFIX: ${DN_PROJECT_ALIAS_PREFIX:?err}
+        DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
+        DN_PROJECT_UID: ${DN_PROJECT_UID:?err}
+        DN_PROJECT_GID: ${DN_PROJECT_GID:?err}
+        IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+      labels:
+        org.opencontainers.image.authors: "luc.coupal.1@ulaval.ca"
+        norlab.buildsystem.project: "${DN_PROJECT_GIT_NAME:?err}"
+        norlab.dockerized-norlab.project: "${DN_PROJECT_GIT_NAME:?err}"
+        norlab.tools.norlab-shell-script-tools: "${N2ST_VERSION:?err}"
+        norlab.tools.norlab-build-system: "${NBS_VERSION:?err}"
+    pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}
+    pid: host
+    ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
+    init: true  # Propagate exit code (See remark in task NMO-266)
+
+
+  project-develop:
+    build:
+      context: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/core-images/dn-project/project-develop
+      additional_contexts:
+        context-dn-root: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}
+        context-dn-submodules: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:utilities/
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+      pull: false # Use the local image store to execute the FROM directive
+      args:
+        BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
+        BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
+        IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+    pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
+    depends_on:
+      - project-core
+
+  project-deploy:
+    build:
+      context: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/core-images/dn-project/project-deploy
+      additional_contexts:
+        context-dn-project-local-src-path: ${DN_PROJECT_DEPLOY_SRC_PATH:?err}
+        context-dn-root: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}
+        context-dn-submodules: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:utilities/
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+      pull: false # Use the local image store to execute the FROM directive
+      args:
+        BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
+        BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
+        DN_PROJECT_DEPLOY_REPO_BRANCH: ${DN_PROJECT_DEPLOY_REPO_BRANCH:?err}
+        BUILDKIT_CONTEXT_KEEP_GIT_DIR: 1
+        IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+    pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
+    depends_on:
+      - project-core
+
+  # ToDo: rethink ci-test run logic to use "up and ataach" but with ci-test entrypoint and env var
+  project-ci-tests:
+    build:
+      context: "../../"
+      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.native"
+      pull: false # Use the local image store to execute the FROM directive
+      args:
+        BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
+        BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
+        IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+        DNP_PYTEST_CI_RUN: true
+    # (Priority) ToDo: validate >> pull_policy: never
+    pull_policy: never
+    environment:
+      PYTHONUNBUFFERED: 0 # Slightly faster
+      DN_ENTRYPOINT_TRACE_EXECUTION: false
+      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
+      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
+      DN_ACTIVATE_POWERLINE_PROMT: false
+      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+      ROS_DOMAIN_ID: 1
+      NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
+      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
+      NVIDIA_DRIVER_CAPABILITIES: all
+    #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
+      # DISPLAY: ${DISPLAY}
+      DISPLAY: "" # Keep unset
+      QT_X11_NO_MITSHM: 1
+      XAUTHORITY: /tmp/.docker.xauth
+      # (CRITICAL) ToDo: validate >> jetson-container set env var to rmw_cyclonedds_cpp
+      #      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      # Fix for warning "ros2: using network interface eth0 (udp/169.254.205.89) selected arbitrarily from: eth0, wlan0, docker0"
+      # Solution ref: https://answers.ros.org/question/375360/multiple-network-interfaces-with-rmw_cyclonedds_cpp/
+      CYCLONEDDS_URI: "<CycloneDDS><Domain><General><NetworkInterface>${DN_DDS_NETWORK_INTERFACE:-eth0}</></></></>"
+      #   ToDo: assessment >> check if it would be a plus to refactor out RMW_IMPLEMENTATION DN wide
+      #       Ref rosbag2 PR #656: QoS profiles recorded from Fast-DDS are unplayable in Cyclone (and vice-versa)
+      #       https://github.com/ros2/rosbag2/issues/656
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    cap_add:
+      - SYS_PTRACE
+      - SYS_NICE
+    ulimits:  # Real-Time related: See https://github.com/2b-t/docker-realtime?tab=readme-ov-file
+      rtprio: 99
+      rttime: -1 # corresponds to 'unlimited'
+      memlock: 8428281856
+    runtime: nvidia
+    privileged: true
+    depends_on:
+      - project-core
+
+  project-ci-tests-no-gpu:
+    extends:
+      service: project-ci-tests
+    runtime: !reset []
+
+  project-slurm:
+    build:
+      context: "../../"
+      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.run-slurm"
+      pull: false # Use the local image store to execute the FROM directive
+      args:
+        BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
+        BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
+        IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+    pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-slurm:${PROJECT_TAG:?err}
+    depends_on:
+      - project-core
+
+  project-slurm-no-gpu:
+    extends:
+      service: project-slurm
+    runtime: !reset []

@@ -1,0 +1,93 @@
+
+
+services:
+
+  #
+  # Docker compose project run version for running on Jetson devices
+  #
+  project-develop:
+    entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
+    container_name: ${DN_CONTAINER_NAME:?err}
+    environment:
+      DN_HOST: 'l4t/arm64'
+      DN_ENTRYPOINT_TRACE_EXECUTION: false
+      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
+      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
+      DN_ACTIVATE_POWERLINE_PROMT: true
+      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+      ROS_DOMAIN_ID: 1
+      NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
+      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
+      NVIDIA_DRIVER_CAPABILITIES: all
+      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
+      DISPLAY: ${DISPLAY}
+      QT_X11_NO_MITSHM: 1
+      XAUTHORITY: /tmp/.docker.xauth
+      # (CRITICAL) ToDo: validate >> jetson-container set env var to rmw_cyclonedds_cpp
+#      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      # Fix for warning "ros2: using network interface eth0 (udp/169.254.205.89) selected arbitrarily from: eth0, wlan0, docker0"
+      # Solution ref: https://answers.ros.org/question/375360/multiple-network-interfaces-with-rmw_cyclonedds_cpp/
+      CYCLONEDDS_URI: "<CycloneDDS><Domain><General><NetworkInterface>${DN_DDS_NETWORK_INTERFACE:-eth0}</></></></>"
+      #   ToDo: assessment >> check if it would be a plus to refactor out RMW_IMPLEMENTATION DN wide
+      #       Ref rosbag2 PR #656: QoS profiles recorded from Fast-DDS are unplayable in Cyclone (and vice-versa)
+      #       https://github.com/ros2/rosbag2/issues/656
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
+      # ....Dockerized-NorLab-project internal. ...................................................
+      - ../../.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ../../.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
+#      # ....Add host volume you want to mount into the container...................................
+      - ../../:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
+      - ../../artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+#      - ../../external_data:/home/${DN_PROJECT_USER}/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
+      # ....legacy user............................................................................
+#      - ../../:/home/${DN_SSH_SERVER_USER:-pycharm-debugger}/tmp/${DN_PROJECT_GIT_NAME:?err}/:rw
+      # ....From jetson-container run.sh....
+      - /tmp/argus_socket:/tmp/argus_socket
+      - /etc/enctune.conf:/etc/enctune.conf
+      - /etc/nv_tegra_release:/etc/nv_tegra_release
+      - /tmp/nv_jetson_model:/tmp/nv_jetson_model
+    tty: true
+    stdin_open: true
+    devices:
+      - /dev/input/js0
+      # ....From jetson-container run.sh....
+      - /dev/snd
+      - /dev/bus/usb
+    privileged: true
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    cap_add:
+      - SYS_PTRACE
+      - SYS_NICE
+    ulimits:  # Real-Time related: See https://github.com/2b-t/docker-realtime?tab=readme-ov-file
+      rtprio: 99
+      rttime: -1 # corresponds to 'unlimited'
+      memlock: 8428281856
+    network_mode: host    # allow the container to have full access to the host’s networking system
+    pid: host
+    ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
+    init: true  # Propagate exit code (See remark in task NMO-266)
+    runtime: nvidia
+
+
+  project-deploy:
+    extends:
+      service: project-develop
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
+      # ....Add host volume you want to mount into the container...................................
+      - ../../.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      # ....From jetson-container run.sh....
+      - /tmp/argus_socket:/tmp/argus_socket
+      - /etc/enctune.conf:/etc/enctune.conf
+      - /etc/nv_tegra_release:/etc/nv_tegra_release
+      - /tmp/nv_jetson_model:/tmp/nv_jetson_model
