@@ -1,5 +1,4 @@
 #!/usr/bin/env bats
-# =================================================================================================
 #
 # Usage in docker container
 #   $ REPO_ROOT=$(pwd) && RUN_TESTS_IN_DIR='tests'
@@ -13,18 +12,12 @@
 #   - https://opensource.com/article/19/2/testing-bash-bats
 #       ↳ https://github.com/dmlond/how_to_bats/blob/master/test/build.bats
 #
-# Helper library:
+# Helper library: 
 #   - https://github.com/bats-core/bats-assert
 #   - https://github.com/bats-core/bats-support
 #   - https://github.com/bats-core/bats-file
 #
-# =================================================================================================
 
-#TODO: setup the following variable
-TESTED_FILE="dummy.bash"
-TESTED_FILE_PATH="tests/tests_dockerized-norlab-project"
-
-# ====Load ressources==============================================================================
 BATS_HELPER_PATH=/usr/lib/bats
 if [[ -d ${BATS_HELPER_PATH} ]]; then
   load "${BATS_HELPER_PATH}/bats-support/load"
@@ -39,7 +32,10 @@ else
   read -r -n 1
   exit 1
 fi
+
 # ====Setup========================================================================================
+TESTED_FILE="validate_DN_project_setup.bash"
+TESTED_FILE_PATH=".dockerized_norlab_project/utilities"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
@@ -53,7 +49,6 @@ setup_file() {
 # executed before each test
 setup() {
   cd "$TESTED_FILE_PATH" || exit 1
-  source ./$TESTED_FILE
 }
 
 # ====Teardown=====================================================================================
@@ -70,25 +65,28 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-#TODO: implement tests cases
+# (!) Notes: the following tests assume `setup_dockerized_norlab_for_this_repo.bash` was already
+#  executed via `test_setup_dockerized_norlab_for_this_repo.bats`.
 
-@test "dnp::good_morning_norlab (environment variable set) › expect pass" {
-  assert_empty $GREETING
-  export GREETING='Goooooooood morning NorLab'
-  assert_not_empty $GREETING
+@test "dnp::validate_DN_project_setup (explicitly source $TESTED_FILE) › expect pass" {
+  assert_not_exist "${PROJECT_ENV_N2ST_FILE}"
+  assert_not_exist "${SUPER_PROJECT_ROOT}"
 
-  run "dnp::good_morning_norlab"
+  run bash -c "source ./$TESTED_FILE"
   assert_success
-  assert_output --partial " ... there's nothing like the smell of a snow storm in the morning!"
-  unset GREETING
+  assert_output --partial '[DN-project done] Installation › OK'
+  assert_not_exist "${PROJECT_ENV_N2ST_FILE}"
+  assert_not_exist "${SUPER_PROJECT_ROOT}"
 }
 
-@test "dnp::good_morning_norlab (command executed in a subshell) › expect pass" {
-  assert_empty $GREETING
-  run bash -c "source ./$TESTED_FILE && GREETING='Goooooooood morning NorLab' && dnp::good_morning_norlab"
-  assert_empty $GREETING
+@test "dnp::validate_DN_project_setup (source at setup step) › expect pass" {
+  assert_not_exist "${PROJECT_ENV_N2ST_FILE}"
+  assert_not_exist "${SUPER_PROJECT_ROOT}"
+  source ./$TESTED_FILE
+  run dnp::validate_DN_project_setup
   assert_success
-  assert_output --partial "Goooooooood morning NorLab ... there's nothing like the smell of a snow storm in the morning!"
+  assert_output --partial '[DN-project done] Installation › OK'
+  assert_not_empty "${PROJECT_ENV_N2ST_FILE}"
+  assert_not_empty "${SUPER_PROJECT_ROOT}"
 }
-
 

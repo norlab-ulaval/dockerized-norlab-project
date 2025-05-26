@@ -21,8 +21,8 @@
 # =================================================================================================
 
 #TODO: setup the following variable
-TESTED_FILE="dummy.bash"
-TESTED_FILE_PATH="tests/tests_dockerized-norlab-project"
+TESTED_FILE="load_dependencies.bash"
+TESTED_FILE_PATH=".dockerized_norlab_project/utilities"
 
 # ====Load ressources==============================================================================
 BATS_HELPER_PATH=/usr/lib/bats
@@ -53,7 +53,6 @@ setup_file() {
 # executed before each test
 setup() {
   cd "$TESTED_FILE_PATH" || exit 1
-  source ./$TESTED_FILE
 }
 
 # ====Teardown=====================================================================================
@@ -70,25 +69,35 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-#TODO: implement tests cases
+@test "dnp::source_project_shellscript_dependencies (explicitly source $TESTED_FILE) › expect pass" {
+  assert_not_exist "${SUPER_PROJECT_ROOT}"
+  assert_not_exist "${N2ST_PATH}"
+  assert_not_exist "${NBS_PATH}"
+  assert_not_exist "${DN_PROJECT_HUB}"
 
-@test "dnp::good_morning_norlab (environment variable set) › expect pass" {
-  assert_empty $GREETING
-  export GREETING='Goooooooood morning NorLab'
-  assert_not_empty $GREETING
+  assert_equal "$(pwd)" "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}"
 
-  run "dnp::good_morning_norlab"
+  source ./$TESTED_FILE
+
+  assert_equal "$(pwd)" "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}" # Validate that it returned to the original
+
+  assert_not_empty "${SUPER_PROJECT_ROOT}"
+  assert_not_empty "${N2ST_PATH}"
+  assert_not_empty "${NBS_PATH}"
+  assert_not_empty "${DN_PROJECT_HUB}"
+
+  run n2st::norlab_splash
   assert_success
-  assert_output --partial " ... there's nothing like the smell of a snow storm in the morning!"
-  unset GREETING
+
 }
 
-@test "dnp::good_morning_norlab (command executed in a subshell) › expect pass" {
-  assert_empty $GREETING
-  run bash -c "source ./$TESTED_FILE && GREETING='Goooooooood morning NorLab' && dnp::good_morning_norlab"
-  assert_empty $GREETING
-  assert_success
-  assert_output --partial "Goooooooood morning NorLab ... there's nothing like the smell of a snow storm in the morning!"
+@test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
+  # ....Import N2ST library........................................................................
+  run bash "$TESTED_FILE"
+
+  # ....Tests......................................................................................
+  assert_failure
+  assert_output --regexp "[ERROR]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 

@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="runBatsTestsAll" type="ShConfigurationType" folderName="[DNP] A | bats tests" focusToolWindowBeforeRun="true">
+  <configuration default="false" name="run bats tests  › tests/ (all) " type="ShConfigurationType" folderName="[DNP] A | bats tests" focusToolWindowBeforeRun="true">
     <option name="SCRIPT_TEXT" value="" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tests/run_bats_core_test_in_n2st.bash" />
+    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/../dockerized-norlab-project/tests/run_bats_core_test_in_n2st.bash" />
     <option name="SCRIPT_OPTIONS" value="tests/tests_bats" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
-    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/../dockerized-norlab-project" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
     <option name="INTERPRETER_PATH" value="/bin/zsh" />
     <option name="INTERPRETER_OPTIONS" value="" />

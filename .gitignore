@@ -11,8 +11,8 @@
 devel/
 logs/
 build/
-bin/
-lib/
+#bin/
+#lib/
 msg_gen/
 srv_gen/
 #msg/*Action.msg
@@ -79,7 +79,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+#lib/
 lib64/
 parts/
 sdist/
