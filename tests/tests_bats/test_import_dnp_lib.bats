@@ -20,9 +20,8 @@
 #
 # =================================================================================================
 
-#TODO: setup the following variable
-TESTED_FILE="load_dependencies.bash"
-TESTED_FILE_PATH=".dockerized_norlab_project/utilities"
+TESTED_FILE="import_dnp_lib.bash"
+TESTED_FILE_PATH="src/lib/core/utils"
 
 # ====Load ressources==============================================================================
 BATS_HELPER_PATH=/usr/lib/bats
@@ -45,14 +44,26 @@ fi
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  ## Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
-#  pwd >&3 && tree -L 1 -a -hug >&3
-#  printenv >&3
+  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/mock-user-super-project"
+
+#  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
+#  echo -e "\033[1;2m
+#  \n...N2ST bats tests environment.................................................................
+#  \n$( pwd && tree -L 1 -a -hug && printenv )
+#  \n...............................................................................................
+#  \033[0m"  >&3
+#
+#  echo -e "
+#  \n...DNP related environment varaibles...........................................................
+#  \n$(printenv | grep -e DNP_)
+#  \n...............................................................................................
+#  \n" >&3
+
 }
 
 # executed before each test
 setup() {
-  cd "$TESTED_FILE_PATH" || exit 1
+  cd "${DNP_MOCK_PROJECT_PATH}" || exit 1
 }
 
 # ====Teardown=====================================================================================
@@ -69,35 +80,40 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-@test "dnp::source_project_shellscript_dependencies (explicitly source $TESTED_FILE) › expect pass" {
-  assert_not_exist "${SUPER_PROJECT_ROOT}"
+@test "dnp::import_lib_and_dependencies (explicitly source $TESTED_FILE) › expect pass" {
+  assert_not_exist "${DNP_REPO_ROOT_PATH}"
   assert_not_exist "${N2ST_PATH}"
   assert_not_exist "${NBS_PATH}"
-  assert_not_exist "${DN_PROJECT_HUB}"
 
-  assert_equal "$(pwd)" "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}"
+  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}"
 
-  source ./$TESTED_FILE
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
-  assert_equal "$(pwd)" "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}" # Validate that it returned to the original
+  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original
 
-  assert_not_empty "${SUPER_PROJECT_ROOT}"
+  assert_not_empty "${DNP_REPO_ROOT_PATH}"
   assert_not_empty "${N2ST_PATH}"
   assert_not_empty "${NBS_PATH}"
-  assert_not_empty "${DN_PROJECT_HUB}"
 
   run n2st::norlab_splash
   assert_success
 
 }
 
+@test "assess execute with \"source $TESTED_FILE\"  › expect pass" {
+  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  assert_success
+  assert_output --regexp "[DNP done]".*"librairies loaded"
+}
+
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
   # ....Import N2ST library........................................................................
-  run bash "$TESTED_FILE"
+  run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # ....Tests......................................................................................
   assert_failure
-  assert_output --regexp "[ERROR]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 

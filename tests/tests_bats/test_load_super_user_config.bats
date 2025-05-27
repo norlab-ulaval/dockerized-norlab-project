@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# =================================================================================================
 #
 # Usage in docker container
 #   $ REPO_ROOT=$(pwd) && RUN_TESTS_IN_DIR='tests'
@@ -12,12 +13,17 @@
 #   - https://opensource.com/article/19/2/testing-bash-bats
 #       ↳ https://github.com/dmlond/how_to_bats/blob/master/test/build.bats
 #
-# Helper library: 
+# Helper library:
 #   - https://github.com/bats-core/bats-assert
 #   - https://github.com/bats-core/bats-support
 #   - https://github.com/bats-core/bats-file
 #
+# =================================================================================================
 
+TESTED_FILE="load_super_project_config.bash"
+TESTED_FILE_PATH="src/lib/core/utils"
+
+# ====Load ressources==============================================================================
 BATS_HELPER_PATH=/usr/lib/bats
 if [[ -d ${BATS_HELPER_PATH} ]]; then
   load "${BATS_HELPER_PATH}/bats-support/load"
@@ -32,10 +38,7 @@ else
   read -r -n 1
   exit 1
 fi
-
 # ====Setup========================================================================================
-TESTED_FILE="validate_super_project_dnp_setup.bash"
-TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
@@ -77,25 +80,35 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-# (!) Notes: the following tests assume `setup_host_for_this_dnp_user_project.bash` was already
-#  executed via `test_setup_host_for_this_dnp_user_project.bats`.
-
 @test "explicitly source $TESTED_FILE › expect pass" {
-  assert_dir_exist "${DNP_MOCK_PROJECT_PATH}/.dockerized_norlab_project"
-  assert_file_exist "${DNP_MOCK_PROJECT_PATH}/.dockerignore"
+  assert_not_exist "${SUPER_PROJECT_ROOT}"
+  assert_not_exist "${SUPER_PROJECT_REPO_NAME}"
+  assert_not_exist "${DN_PROJECT_HUB}"
 
-  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  assert_success
-  assert_output --regexp "[DNP done].*Super project mock-user-super-project setup is OK"
-}
-
-@test "dnp::validate_super_project_dnp_setup (source at setup step) › expect pass" {
-  assert_dir_exist "${DNP_MOCK_PROJECT_PATH}/.dockerized_norlab_project"
-  assert_file_exist "${DNP_MOCK_PROJECT_PATH}/.dockerignore"
+  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::validate_super_project_dnp_setup
-  assert_success
-  assert_output --regexp "[DNP done].*Super project mock-user-super-project setup is OK"
+
+  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original
+
+  assert_not_empty "${SUPER_PROJECT_ROOT}"
+  assert_not_empty "${SUPER_PROJECT_REPO_NAME}"
+  assert_not_empty "${DN_PROJECT_HUB}"
+
 }
+
+@test "assess execute with \"source $TESTED_FILE\"  › expect pass" {
+  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  assert_success
+  assert_output --regexp "[DNP done]".*"mock-user-super-project project configurations loaded"
+}
+
+@test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
+  run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  assert_failure
+  assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+}
+
 

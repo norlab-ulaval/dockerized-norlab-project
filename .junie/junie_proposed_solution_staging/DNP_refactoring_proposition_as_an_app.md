@@ -26,9 +26,9 @@ The current Dockerized-NorLab-Project is organized as follows:
 │   └── ... (other execution scripts)
 ├── python_dev_tools/
 ├── utilities/
-│   ├── load_dependencies.bash
-│   ├── setup_dockerized_norlab_for_this_repo.bash
-│   └── validate_DN_project_setup.bash
+│   ├── import_dnp_lib.bash
+│   ├── setup_host_for_this_dnp_user_project.bash
+│   └── validate_super_project_dnp_setup.bash
 └── visual/
 ```
 
@@ -275,9 +275,9 @@ dockerized-norlab-project/ # (standalone version)
 │   │   │   │   ├── run_kill.slurm.bash
 │   │   │   │   └── up_and_attach.bash
 │   │   │   ├── utils/
-│   │   │   │   ├── load_dependencies.bash
-│   │   │   │   ├── setup_dockerized_norlab_for_this_repo.bash
-│   │   │   │   ├── validate_DN_project_setup.bash
+│   │   │   │   ├── import_dnp_lib.bash
+│   │   │   │   ├── setup_host_for_this_dnp_user_project.bash
+│   │   │   │   ├── validate_super_project_dnp_setup.bash
 │   │   │   │   ├── dnp_execute_compose.bash
 │   │   │   │   └── dn_entrypoint.python.bash
 │   │   │   └── ... (other core scripts)

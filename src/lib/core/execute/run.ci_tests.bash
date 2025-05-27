@@ -14,7 +14,7 @@
 # =================================================================================================
 
 # ....Source project shell-scripts dependencies....................................................
-source ../utilities/load_dependencies.bash || exit 1
+source ../utilities/import_dnp_lib.bash || exit 1
 source dnp_execute_compose.bash || exit 1
 
 # ====Execute tests================================================================================

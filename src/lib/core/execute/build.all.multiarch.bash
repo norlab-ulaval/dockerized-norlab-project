@@ -34,7 +34,7 @@ EOF
 # (Priority) ToDo: unit-test for flag option
 
 # ....Source project shell-scripts dependencies..................................................
-source ../utilities/load_dependencies.bash || exit 1
+source ../utilities/import_dnp_lib.bash || exit 1
 
 # ....Function.....................................................................................
 function dnp::build_dn_project_multiarch_services() {

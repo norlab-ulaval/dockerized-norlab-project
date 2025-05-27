@@ -34,21 +34,33 @@ else
 fi
 
 # ====Setup========================================================================================
-TESTED_FILE="setup_dockerized_norlab_for_this_repo.bash"
-TESTED_FILE_PATH=".dockerized_norlab_project/utilities"
+TESTED_FILE="setup_host_for_this_dnp_user_project.bash"
+TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  ## Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
-#  pwd >&3 && tree -L 1 -a -hug >&3
-#  printenv >&3
+  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/mock-user-super-project"
+
+#  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
+#  echo -e "\033[1;2m
+#  \n...N2ST bats tests environment.................................................................
+#  \n$( pwd && tree -L 1 -a -hug && printenv )
+#  \n...............................................................................................
+#  \033[0m"  >&3
+#
+#  echo -e "
+#  \n...DNP related environment varaibles...........................................................
+#  \n$(printenv | grep -e DNP_)
+#  \n...............................................................................................
+#  \n" >&3
+
 }
 
 # executed before each test
 setup() {
-  cd "$TESTED_FILE_PATH" || exit 1
+  cd "${DNP_MOCK_PROJECT_PATH}" || exit 1
 }
 
 # ====Teardown=====================================================================================
@@ -65,31 +77,32 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-@test "dnp::setup_dockerized_norlab_for_this_repo (test .bashrc expected append › expect pass" {
-  source ./load_dependencies.bash || exit 1
-  T_DN_PROJECT_ALIAS_PREFIX="dn${DN_PROJECT_ALIAS_PREFIX:?err}"
+@test "dnp::setup_host_for_this_dnp_user_project (test .bashrc expected append › expect pass" {
+  T_DN_PROJECT_ALIAS_PREFIX="dnpumock"
   cat ${HOME}/.bashrc
-  assert_file_not_contains "${HOME}/.bashrc" ".*aliases and env variable"
-  assert_file_not_contains "${HOME}/.bashrc" ".*${T_DN_PROJECT_ALIAS_PREFIX}_DIR_PATH"
-  assert_file_not_contains "${HOME}/.bashrc" ".*${T_DN_PROJECT_ALIAS_PREFIX}_cd"
-  assert_file_not_contains "${HOME}/.bashrc" ".*${T_DN_PROJECT_ALIAS_PREFIX}_cdd"
 
-  run bash -c "source ./$TESTED_FILE"
-  cat ${HOME}/.bashrc
+  assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNP mock-user-super-project aliases and env variable"
+  assert_file_not_contains "${HOME}/.bashrc" "#<<<<DNP mock-user-super-project aliases and env variable end"
+
+  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  cat "${HOME}/.bashrc"
   assert_success
-  assert_file_contains "${HOME}/.bashrc" ".*aliases and env variable"
-  assert_file_contains "${HOME}/.bashrc" ".*${T_DN_PROJECT_ALIAS_PREFIX}_DIR_PATH"
-  assert_file_contains "${HOME}/.bashrc" ".*${T_DN_PROJECT_ALIAS_PREFIX}_cd"
-  assert_file_contains "${HOME}/.bashrc" ".*${T_DN_PROJECT_ALIAS_PREFIX}_cdd"
-#
+
+  assert_file_contains "${HOME}/.bashrc" "#>>>>DNP mock-user-super-project aliases and env variable
+export ${T_DN_PROJECT_ALIAS_PREFIX}_DIR_PATH=${DNP_MOCK_PROJECT_PATH}
+alias ${T_DN_PROJECT_ALIAS_PREFIX}_cd='cd ${DNP_MOCK_PROJECT_PATH}'
+alias ${T_DN_PROJECT_ALIAS_PREFIX}_cdd='cd ${DNP_MOCK_PROJECT_PATH}/.dockerized_norlab_project'
+alias ${T_DN_PROJECT_ALIAS_PREFIX}_cddd='cd ${DNP_MOCK_PROJECT_PATH}/src'
+#<<<<DNP mock-user-super-project aliases and env variable end"
+
   assert_output --partial 'dir is reachable. Ready to install alias'
   assert_output --partial 'Setup completed!'
 }
 
-@test "dnp::setup_dockerized_norlab_for_this_repo (source at setup step) › expect pass" {
+@test "dnp::setup_host_for_this_dnp_user_project (source at setup step) › expect pass" {
   assert_not_exist "${DN_PROJECT_ALIAS_PREFIX}"
-  source ./$TESTED_FILE
-  run dnp::setup_dockerized_norlab_for_this_repo
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::setup_host_for_this_dnp_user_project
   assert_success
   assert_output --partial 'dir is reachable. Ready to install alias'
   assert_output --partial 'Setup completed!'

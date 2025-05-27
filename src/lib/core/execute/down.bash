@@ -10,7 +10,7 @@ clear
 pushd "$(pwd)" >/dev/null || exit 1
 
 # ....Source project shell-scripts dependencies...................................................
-source ../utilities/load_dependencies.bash || exit 1
+source ../utilities/import_dnp_lib.bash || exit 1
 cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====Begin========================================================================================

@@ -35,7 +35,7 @@ EOF
 # (CRITICAL) ToDo: unit-test
 
 # ....Source project shell-scripts dependencies..................................................
-source ../utilities/load_dependencies.bash || exit 1
+source ../utilities/import_dnp_lib.bash || exit 1
 
 # ....Functions....................................................................................
 function dnp::excute_compose_on_dn_project_image() {

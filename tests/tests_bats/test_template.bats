@@ -22,7 +22,7 @@
 
 #TODO: setup the following variable
 TESTED_FILE="dummy.bash"
-TESTED_FILE_PATH="tests/tests_dockerized-norlab-project"
+TESTED_FILE_PATH="tests"
 
 # ====Load ressources==============================================================================
 BATS_HELPER_PATH=/usr/lib/bats

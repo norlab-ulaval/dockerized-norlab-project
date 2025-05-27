@@ -56,9 +56,9 @@ dockerized-norlab-project
 ├── python_dev_tools
 │   └── ...
 ├── user_utilities
-│   ├── load_dependencies.bash
-│   ├── setup_dockerized_norlab_for_this_repo.bash
-│   └── validate_DN_project_setup.bash
+│   ├── import_dnp_lib.bash
+│   ├── setup_host_for_this_dnp_user_project.bash
+│   └── validate_super_project_dnp_setup.bash
 ├── utilities # repository level tools
 │    ├── @norlab-build-system
 │    └── @norlab-shell-script-tools
@@ -98,7 +98,7 @@ git submodule add https://github.com/norlab-ulaval/dockerized-norlab-project.git
 
 ### 4. Update Scripts to Use the New Structure
 
-#### Updated `load_dependencies.bash` script:
+#### Updated `import_dnp_lib.bash` script:
 
 ```bash
 #!/bin/bash
@@ -106,13 +106,13 @@ git submodule add https://github.com/norlab-ulaval/dockerized-norlab-project.git
 # Load Dockerized-NorLab and Dockerized-NorLab-Project resources and dependencies
 #
 # Usage:
-#   $ source load_dependencies.bash
+#   $ source import_dnp_lib.bash
 #
 # =================================================================================================
 # Variable set for export
 declare -x SUPER_PROJECT_ROOT
 
-function dnp::source_project_shellscript_dependencies() {
+function dnp::import_lib_and_dependencies() {
   # ....N2ST lib configuration.......................................................................
   PROJECT_ENV_N2ST_FILE=".env.$( basename $(git rev-parse --show-toplevel) .git )"
   test -n ${PROJECT_ENV_N2ST_FILE:?'Env variable need to be set by Dockerized-NorLab installer.'} || exit 1
@@ -125,7 +125,7 @@ function dnp::source_project_shellscript_dependencies() {
   SUPER_PROJECT_ROOT=$(git rev-parse --show-toplevel)
   export SUPER_PROJECT_ROOT
   if [[ ! -f "${SUPER_PROJECT_ROOT}/${PROJECT_ENV_N2ST_FILE:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
     exit 1
   fi
   
@@ -177,14 +177,14 @@ MSG_ERROR_FORMAT="\033[1;31m"
 MSG_END_FORMAT="\033[0m"
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
-  dnp::source_project_shellscript_dependencies
+  dnp::import_lib_and_dependencies
 fi
 ```
 
-#### Updated `validate_DN_project_setup.bash` script:
+#### Updated `validate_super_project_dnp_setup.bash` script:
 
 ```bash
 #!/bin/bash
@@ -193,7 +193,7 @@ fi
 # location in the super-project
 #
 # Usage:
-#   $ bash validate_DN_project_setup.bash
+#   $ bash validate_super_project_dnp_setup.bash
 #
 # =================================================================================================
 #
@@ -202,54 +202,54 @@ fi
 PROJECT_ENV_N2ST_FILE=".env.$( basename $(git rev-parse --show-toplevel) .git )"
 #
 #
-function dnp::validate_DN_project_setup() {
+function dnp::validate_super_project_dnp_setup() {
   # ....Pre-condition..............................................................................
   SUPER_PROJECT_ROOT=$(git rev-parse --show-toplevel)
   cd "${SUPER_PROJECT_ROOT}" || exit 1
   if [[ ! -f "$PROJECT_ENV_N2ST_FILE" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
     exit 1
   fi
   
   # ====Begin======================================================================================
   if [[ ! -d ".dockerized_norlab_project" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} '.dockerized_norlab_project' is not installed at super-project repository root as it should!" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '.dockerized_norlab_project' is not installed at super-project repository root as it should!" 1>&2
     exit 1
   fi
   
   if [[ ! -f ".dockerignore" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} '.dockerignore' is not installed at super-project repository root as it should!" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '.dockerignore' is not installed at super-project repository root as it should!" 1>&2
     exit 1
   fi
   
   if [[ ! -f "$PROJECT_ENV_N2ST_FILE" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE'  is not installed at super-project repository root as it should!" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE'  is not installed at super-project repository root as it should!" 1>&2
     exit 1
   fi
   
   if [[ ! -d "utilities/norlab-shell-script-tools" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} 'norlab-shell-script-tools' repository is not installed as a git submodule in the 'utilities/' directory as it should!" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} 'norlab-shell-script-tools' repository is not installed as a git submodule in the 'utilities/' directory as it should!" 1>&2
     exit 1
   fi
   
   if [[ ! -d "utilities/norlab-build-system" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} 'norlab-build-system' repository is not installed as a git submodule in the 'utilities/' directory as it should!" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} 'norlab-build-system' repository is not installed as a git submodule in the 'utilities/' directory as it should!" 1>&2
     exit 1
   fi
   
   if [[ ! -d "utilities/dockerized-norlab-project" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} '@dockerized-norlab-project' repository is not installed as a git submodule in the 'utilities/' directory as it should!" 1>&2
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '@dockerized-norlab-project' repository is not installed as a git submodule in the 'utilities/' directory as it should!" 1>&2
     exit 1
   fi
   
-  echo "[DN-project done] Installation › OK"
+  echo -e "[DNP done] Installation › OK"
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 MSG_ERROR_FORMAT="\033[1;31m"
 MSG_END_FORMAT="\033[0m"
 pushd "$(pwd)" >/dev/null || exit 1
-dnp::validate_DN_project_setup
+dnp::validate_super_project_dnp_setup
 # ====Teardown=====================================================================================
 popd >/dev/null || exit 1
 ```
@@ -309,7 +309,7 @@ This directory contains the user-side configuration for Dockerized-NorLab-Projec
 function dnp::setup_dockerized_norlab_project() {
   # ....Pre-condition..............................................................................
   if [[ ! -d ".git" ]]; then
-    echo -e "\n[ERROR] This script must be run from the root of a Git repository!" 1>&2
+    echo -e "\n[DNP error] This script must be run from the root of a Git repository!" 1>&2
     exit 1
   fi
   
