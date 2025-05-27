@@ -10,16 +10,17 @@
 
 function dnp::validate_super_project_dnp_setup() {
 
+  # ....Setup......................................................................................
   # Note: can handle both sourcing cases
   #   i.e. from within a script or from an interactive terminal session
   local _PATH_TO_SCRIPT="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   local _CWD="$(dirname "${_PATH_TO_SCRIPT}")"
 
-  # ....Source project shell-scripts dependencies..................................................
   source "${_CWD}/load_super_project_config.bash" || exit 1
-  cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
   # ====Begin======================================================================================
+  cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
+
   if [[ ! -d ".dockerized_norlab_project" ]]; then
     echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '.dockerized_norlab_project' is not installed at super-project repository root as it should!" 1>&2
     exit 1

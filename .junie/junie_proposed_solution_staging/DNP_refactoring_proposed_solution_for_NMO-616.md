@@ -114,8 +114,8 @@ declare -x SUPER_PROJECT_ROOT
 
 function dnp::import_lib_and_dependencies() {
   # ....N2ST lib configuration.......................................................................
-  PROJECT_ENV_N2ST_FILE=".env.$( basename $(git rev-parse --show-toplevel) .git )"
-  test -n ${PROJECT_ENV_N2ST_FILE:?'Env variable need to be set by Dockerized-NorLab installer.'} || exit 1
+  SUPER_PROJECT_META_DNP_DOTENV=".env.$( basename $(git rev-parse --show-toplevel) .git )"
+  test -n ${SUPER_PROJECT_META_DNP_DOTENV:?'Env variable need to be set by Dockerized-NorLab installer.'} || exit 1
   
   # ....Setup......................................................................................
   local TMP_CWD
@@ -124,8 +124,8 @@ function dnp::import_lib_and_dependencies() {
   # ....Pre-condition..............................................................................
   SUPER_PROJECT_ROOT=$(git rev-parse --show-toplevel)
   export SUPER_PROJECT_ROOT
-  if [[ ! -f "${SUPER_PROJECT_ROOT}/${PROJECT_ENV_N2ST_FILE:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+  if [[ ! -f "${SUPER_PROJECT_ROOT}/${SUPER_PROJECT_META_DNP_DOTENV:?err}" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$SUPER_PROJECT_META_DNP_DOTENV' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
     exit 1
   fi
   
@@ -133,7 +133,7 @@ function dnp::import_lib_and_dependencies() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
   set -o allexport
   # shellcheck disable=SC1090
-  source "${PROJECT_ENV_N2ST_FILE}" || exit 1
+  source "${SUPER_PROJECT_META_DNP_DOTENV}" || exit 1
   set +o allexport
   
   # ....Load NBS...................................................................................
@@ -144,7 +144,7 @@ function dnp::import_lib_and_dependencies() {
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
   set -o allexport
   # shellcheck disable=SC1090
-  source "${PROJECT_ENV_N2ST_FILE}" || exit 1
+  source "${SUPER_PROJECT_META_DNP_DOTENV}" || exit 1
   set +o allexport
   
   # ....Load N2ST..................................................................................
@@ -155,7 +155,7 @@ function dnp::import_lib_and_dependencies() {
   # shellcheck disable=SC1090
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
   set -o allexport
-  source "${PROJECT_ENV_N2ST_FILE}" || exit 1
+  source "${SUPER_PROJECT_META_DNP_DOTENV}" || exit 1
   set +o allexport
   
   # ....Load Dockerized-NorLab-Project .env file...................................................
@@ -199,15 +199,15 @@ fi
 #
 # File configuration
 #
-PROJECT_ENV_N2ST_FILE=".env.$( basename $(git rev-parse --show-toplevel) .git )"
+SUPER_PROJECT_META_DNP_DOTENV=".env.$( basename $(git rev-parse --show-toplevel) .git )"
 #
 #
 function dnp::validate_super_project_dnp_setup() {
   # ....Pre-condition..............................................................................
   SUPER_PROJECT_ROOT=$(git rev-parse --show-toplevel)
   cd "${SUPER_PROJECT_ROOT}" || exit 1
-  if [[ ! -f "$PROJECT_ENV_N2ST_FILE" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+  if [[ ! -f "$SUPER_PROJECT_META_DNP_DOTENV" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$SUPER_PROJECT_META_DNP_DOTENV' root directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
     exit 1
   fi
   
@@ -222,8 +222,8 @@ function dnp::validate_super_project_dnp_setup() {
     exit 1
   fi
   
-  if [[ ! -f "$PROJECT_ENV_N2ST_FILE" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$PROJECT_ENV_N2ST_FILE'  is not installed at super-project repository root as it should!" 1>&2
+  if [[ ! -f "$SUPER_PROJECT_META_DNP_DOTENV" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '$SUPER_PROJECT_META_DNP_DOTENV'  is not installed at super-project repository root as it should!" 1>&2
     exit 1
   fi
   

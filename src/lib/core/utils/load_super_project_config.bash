@@ -42,20 +42,20 @@ function dnp::load_super_project_configurations() {
   dnp::find_dnp_super_project_dir || return 1
   export SUPER_PROJECT_ROOT
   export SUPER_PROJECT_REPO_NAME=$(basename "${SUPER_PROJECT_ROOT}")
-  local PROJECT_ENV_N2ST_FILE=".env.${SUPER_PROJECT_REPO_NAME}"
+  local SUPER_PROJECT_META_DNP_DOTENV=".env.${SUPER_PROJECT_REPO_NAME}"
 
   # ....Pre-condition..............................................................................
   # Test extracted path
 
-  if [[ ! -f "${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/${PROJECT_ENV_N2ST_FILE:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} can't find '.dockerized_norlab_project/${PROJECT_ENV_N2ST_FILE}' in ${SUPER_PROJECT_ROOT}!" 1>&2
+  if [[ ! -f "${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV:?err}" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} can't find '.dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV}' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
   fi
 
   # ....Load Dockerized-NorLab-Project .env file...................................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
-  source ".dockerized_norlab_project/${PROJECT_ENV_N2ST_FILE}" || return 1
+  source ".dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV}" || return 1
   set +o allexport
 
   # ....Load super user DNP docker config file.....................................................

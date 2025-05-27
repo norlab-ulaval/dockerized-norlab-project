@@ -89,7 +89,7 @@ teardown() {
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
-  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original
+  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
   assert_not_empty "${DNP_REPO_ROOT_PATH}"
   assert_not_empty "${N2ST_PATH}"
@@ -108,10 +108,8 @@ teardown() {
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
-  # ....Import N2ST library........................................................................
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
-  # ....Tests......................................................................................
   assert_failure
   assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }

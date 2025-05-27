@@ -83,17 +83,23 @@ teardown() {
 @test "explicitly source $TESTED_FILE › expect pass" {
   assert_not_exist "${SUPER_PROJECT_ROOT}"
   assert_not_exist "${SUPER_PROJECT_REPO_NAME}"
+  assert_not_exist "${DN_PROJECT_GIT_NAME}"
   assert_not_exist "${DN_PROJECT_HUB}"
+  assert_not_exist "${DNP_URL}"
 
   assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
-  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original
+  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
-  assert_not_empty "${SUPER_PROJECT_ROOT}"
-  assert_not_empty "${SUPER_PROJECT_REPO_NAME}"
-  assert_not_empty "${DN_PROJECT_HUB}"
+  assert_equal "${SUPER_PROJECT_ROOT}" "${DNP_MOCK_PROJECT_PATH}"
+  assert_equal "${SUPER_PROJECT_REPO_NAME}" "mock-user-super-project"
+  assert_equal "${DN_PROJECT_GIT_NAME}" "dockerized-norlab-project-mock"
+  assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
+
+  assert_equal "${DNP_CONFIG_VERSION}" 1
+
 
 }
 
