@@ -4,7 +4,7 @@
 # Dockerized-NorLab-Project super project.
 #
 # Usage:
-#   $ source setup_host_for_this_dnp_user_project.bash
+#   $ source setup_host_for_this_super_project.bash
 #
 # =================================================================================================
 pushd "$(pwd)" >/dev/null || exit 1
@@ -15,7 +15,7 @@ pushd "$(pwd)" >/dev/null || exit 1
 # - https://github.com/vaul-ulaval/f1tenth_controller/blob/272573b99855779428fccd122b5f84fc172e0767/setup_dockerized_norlab_for_this_repo.bash
 # - https://github.com/norlab-ulaval/dockerized-norlab/blob/8975e05e69ddc57cb858a3413ea7c98920f5422b/jetson_xavier_install.bash
 
-function dnp::setup_host_for_this_dnp_user_project() {
+function dnp::setup_host_for_this_super_project() {
 
   # Note: can handle both sourcing cases
   #   i.e. from within a script or from an interactive terminal session
@@ -120,7 +120,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
-  dnp::setup_host_for_this_dnp_user_project
+  dnp::setup_host_for_this_super_project
 fi
 
 # ====Teardown=====================================================================================

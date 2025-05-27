@@ -34,7 +34,7 @@ else
 fi
 
 # ====Setup========================================================================================
-TESTED_FILE="setup_host_for_this_dnp_user_project.bash"
+TESTED_FILE="setup_host_for_this_super_project.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
@@ -77,7 +77,7 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-@test "dnp::setup_host_for_this_dnp_user_project (test .bashrc expected append › expect pass" {
+@test "dnp::setup_host_for_this_super_project (test .bashrc expected append › expect pass" {
   T_DN_PROJECT_ALIAS_PREFIX="dnpumock"
   cat ${HOME}/.bashrc
 
@@ -99,10 +99,10 @@ alias ${T_DN_PROJECT_ALIAS_PREFIX}_cddd='cd ${DNP_MOCK_PROJECT_PATH}/src'
   assert_output --partial 'Setup completed!'
 }
 
-@test "dnp::setup_host_for_this_dnp_user_project (source at setup step) › expect pass" {
+@test "dnp::setup_host_for_this_super_project (source at setup step) › expect pass" {
   assert_not_exist "${DN_PROJECT_ALIAS_PREFIX}"
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::setup_host_for_this_dnp_user_project
+  run dnp::setup_host_for_this_super_project
   assert_success
   assert_output --partial 'dir is reachable. Ready to install alias'
   assert_output --partial 'Setup completed!'

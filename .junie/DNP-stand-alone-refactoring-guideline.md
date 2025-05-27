@@ -74,7 +74,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │   │   │   │   └── ... (other execute scripts)
 │   │   │   ├── utils/
 │   │   │   │   ├── import_dnp_lib.bash
-│   │   │   │   ├── setup_host_for_this_dnp_user_project.bash
+│   │   │   │   ├── setup_host_for_this_super_project.bash
 │   │   │   │   ├── validate_super_project_dnp_setup.bash
 │   │   │   │   ├── dnp_execute_compose.bash
 │   │   │   │   └── dn_entrypoint.python.bash
@@ -277,7 +277,7 @@ Create an installation script that will will steup the user host computer for us
   - Option 2: flag `--skip-system-wide-symlink-install` to skip option 1
   - Option 3: flag `--add-dnp-path-to-bashrc` to add DNP cloned repository path (`DNP_PATH`) to `~/.bashrc`
 - implement an `--help` flag with proper documentation
-- execute `setup_host_for_this_dnp_user_project.bash` to setup *dockerized-norlab-project* requirement on this host computer
+- execute `setup_host_for_this_super_project.bash` to setup *dockerized-norlab-project* requirement on this host computer
 - execute `validate_super_project_dnp_setup.bash` to validate install
 
 

@@ -77,7 +77,7 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-# (!) Notes: the following tests assume `setup_host_for_this_dnp_user_project.bash` was already
+# (!) Notes: the following tests assume `setup_host_for_this_super_project.bash` was already
 #  executed via `test_setup_host_for_this_dnp_user_project.bats`.
 
 @test "explicitly source $TESTED_FILE › expect pass" {

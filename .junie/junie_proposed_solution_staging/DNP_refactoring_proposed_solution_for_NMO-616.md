@@ -57,7 +57,7 @@ dockerized-norlab-project
 │   └── ...
 ├── user_utilities
 │   ├── import_dnp_lib.bash
-│   ├── setup_host_for_this_dnp_user_project.bash
+│   ├── setup_host_for_this_super_project.bash
 │   └── validate_super_project_dnp_setup.bash
 ├── utilities # repository level tools
 │    ├── @norlab-build-system
