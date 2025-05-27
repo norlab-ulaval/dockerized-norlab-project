@@ -10,15 +10,17 @@
 clear
 pushd "$(pwd)" >/dev/null || exit 1
 
-
-# ....Source project shell-scripts dependencies....................................................
-source ../utilities/import_dnp_lib.bash || exit 1
-source dnp_execute_compose.bash || exit 1
-source build.all.bash || exit 1
-source build.all.multiarch.bash || exit 1
+# ....Source project shell-scripts dependencies..................................................
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/build.all.multiarch.bash" || exit 1
 
 # ====Begin========================================================================================
-n2st::norlab_splash "${PROJECT_GIT_NAME} (${PROJECT_PROMPT_NAME})" "${PROJECT_GIT_REMOTE_URL}"
+n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
 n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
 declare -a CONFIG_TEST_EXIT_CODE
@@ -75,7 +77,7 @@ n2st::print_msg "Begin docker compose build --dry-run test"
 for each_compose in "${DRYRUN_COMPOSE_FILE_LIST[@]}"; do
   n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" ">"
   ADD_FCT_FLAG=()
-  ADD_FCT_FLAG+=("--service-names" "project-slurm")
+  ADD_FCT_FLAG+=("--service-names" "project-slurm,project-slurm-no-gpu")
   ADD_DOCKER_FLAG=()
   ADD_DOCKER_FLAG+=("--file" "${each_compose}")
   ADD_DOCKER_FLAG+=("--dry-run")
@@ -112,9 +114,9 @@ n2st::print_msg "Begin dry-run slurm job"
 SLURM_JOB_FLAGS=()
 SLURM_JOB_FLAGS+=("--skip-core-force-rebuild")
 SLURM_JOB_FLAGS+=("--dry-run")
+cd "${SUPER_PROJECT_ROOT:?err}"/src/launcher/slurm_jobs || exit 1
 for each_slurm_job in "${SLURM_JOB_FILE_NAME[@]}" ; do
   n2st::print_formated_script_header "$each_slurm_job" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-  cd "${SUPER_PROJECT_ROOT:?err}"/src/launcher/slurm_jobs || exit 1
   bash "${each_slurm_job}" "${SLURM_JOB_FLAGS[@]}"
   SLURM_JOB_DRYRUN_EXIT_CODE+=("$?")
   n2st::print_formated_script_footer "$each_slurm_job" "${MSG_LINE_CHAR_BUILDER_LVL2}"

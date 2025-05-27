@@ -6,12 +6,11 @@
 #   $ bash run_all_dryrun_and_tests_script.bash
 #
 # =================================================================================================
-_PATH_TO_SCRIPT="$(realpath "$0")"
-SCRIPT_DIR_PATH="$(dirname "${_PATH_TO_SCRIPT}")"
-TEST_DIR="$SCRIPT_DIR_PATH/tests_dryrun_and_tests_scripts"
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+TEST_DIR="${SCRIPT_PATH_PARENT}/tests_dryrun_and_tests_scripts"
 
-SUPER_PROJECT_ROOT=$(git rev-parse --show-toplevel)
-source "${SUPER_PROJECT_ROOT}"/src/lib/core/utils/import_dnp_lib.bash || exit 1
+source "$(git rev-parse --show-toplevel)/src/lib/core/utils/import_dnp_lib.bash" || exit 1
 
 set -e            # exit on error
 set -o nounset    # exit on unbound variable

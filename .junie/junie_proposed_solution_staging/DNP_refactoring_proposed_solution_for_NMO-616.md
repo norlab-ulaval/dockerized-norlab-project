@@ -271,7 +271,7 @@ This directory contains the user-side configuration for Dockerized-NorLab-Projec
    project-specific container runtime logic.
 4. Customize any `Dockerfile` or `docker-compose.*.yaml` to fit your need. It should work out of
    the box for most use cases.
-5. From your project `.dockerized_norlab_project/execute/` directory, execute the following
+5. From your project `src/lib/core/execute/` directory, execute the following
     ```shell
     cd utilities/dockerized-norlab-project/execute/
 

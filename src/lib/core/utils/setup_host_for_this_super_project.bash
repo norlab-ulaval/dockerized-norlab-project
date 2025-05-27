@@ -19,12 +19,12 @@ function dnp::setup_host_for_this_super_project() {
 
   # Note: can handle both sourcing cases
   #   i.e. from within a script or from an interactive terminal session
-  local _PATH_TO_SCRIPT="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  local _CWD="$(dirname "${_PATH_TO_SCRIPT}")"
+  local SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  local SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
 
   # ....Source project shell-scripts dependencies..................................................
-  source "${_CWD}/import_dnp_lib.bash" || exit 1
-  source "${_CWD}/load_super_project_config.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/import_dnp_lib.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/load_super_project_config.bash" || exit 1
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
   echo -e "${MSG_DONE} The '$(basename "${SUPER_PROJECT_ROOT}")' dir is reachable. Ready to install alias"
@@ -43,13 +43,13 @@ function dnp::setup_host_for_this_super_project() {
     echo "alias ${DN_PROJECT_ALIAS_PREFIX}_cd='cd $SUPER_PROJECT_ROOT'"
     echo "alias ${DN_PROJECT_ALIAS_PREFIX}_cdd='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project'"
     echo "alias ${DN_PROJECT_ALIAS_PREFIX}_cddd='cd ${SUPER_PROJECT_ROOT}/src'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_up_and_attach='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash up_and_attach.bash'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_down='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash down.bash'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_all='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash build.all.bash'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_ci_tests='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash build.ci_tests.bash'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_and_run_ci_tests='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash build.ci_tests.bash && bash run.ci_tests.bash'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_develop='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash build.develop.bash'"
-#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_deploy='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/execute && bash build.deploy.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_up_and_attach='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash up_and_attach.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_down='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash down.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_all='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash build.all.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_ci_tests='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash build.ci_tests.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_and_run_ci_tests='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash build.ci_tests.bash && bash run.ci_tests.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_develop='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash build.develop.bash'"
+#    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_build_deploy='cd ${SUPER_PROJECT_ROOT}/src/lib/core/execute && bash build.deploy.bash'"
 #    echo "alias ${DN_PROJECT_ALIAS_PREFIX}_attach_to_${DN_CONTAINER_NAME:?err}='clear && dn_attach ${DN_CONTAINER_NAME}'"
     echo "#<<<<DNP ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
     echo ""

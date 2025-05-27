@@ -24,11 +24,8 @@ function n2st::run_n2st_testsing_tools(){
   local TMP_CWD
   TMP_CWD=$(pwd)
 
-  # ....Project root logic.........................................................................
-  DNP_ROOT=$(git rev-parse --show-toplevel)
-
   # ....Load environment variables from file.......................................................
-  cd "${DNP_ROOT}" || exit 1
+  cd "$(git rev-parse --show-toplevel)" || exit 1
   set -o allexport
   source .env.dockerized-norlab-project
   set +o allexport

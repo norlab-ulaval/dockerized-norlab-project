@@ -4,14 +4,14 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 # =================================================================================================
 # Convenient script for executin a compose command on a single images specified in a compose file.
 #
-# Note: Prefer using $(build.all.bash) instead of using $(dnp_execute_compose.bash) directly
+# Note: Prefer using $(build.all.bash) instead of using $(execute_compose.bash) directly
 #
 # Usage as a function:
-#   $ source dnp_execute_compose.bash
+#   $ source execute_compose.bash
 #   $ dnp::excute_compose_on_dn_project_image [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Usage as a script:
-#   $ bash dnp_execute_compose.bash [<any-arguments>] [--] [<any-docker-flag>]
+#   $ bash execute_compose.bash [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Arguments:
 #   --override-build-cmd <docker_cmd>      To override the docker command
@@ -33,9 +33,6 @@ EOF
 )
 
 # (CRITICAL) ToDo: unit-test
-
-# ....Source project shell-scripts dependencies..................................................
-source ../utilities/import_dnp_lib.bash || exit 1
 
 # ....Functions....................................................................................
 function dnp::excute_compose_on_dn_project_image() {
@@ -111,7 +108,7 @@ function dnp::excute_compose_on_dn_project_image() {
   DOCKER_COMMAND_W_FLAGS=("${DOCKER_CMD}" "${REMAINING_ARGS[@]}")
 
   # ====Begin======================================================================================
-  n2st::print_formated_script_header "dnp_execute_compose.bash ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_header "execute_compose.bash ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
@@ -171,7 +168,7 @@ function dnp::excute_compose_on_dn_project_image() {
   fi
 
   # ....Teardown...................................................................................
-  n2st::print_formated_script_footer "dnp_execute_compose.bash" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_footer "execute_compose.bash" "${MSG_LINE_CHAR_BUILDER_LVL2}"
   cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && exit 1; }
   return ${DOCKER_EXIT_CODE}
 }
@@ -179,7 +176,15 @@ function dnp::excute_compose_on_dn_project_image() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  n2st::norlab_splash "${PROJECT_GIT_NAME} (${PROJECT_PROMPT_NAME})" "${PROJECT_GIT_REMOTE_URL}"
+
+  # ....Source project shell-scripts dependencies..................................................
+  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+  source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
+
+  # ....Execute....................................................................................
+  n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::excute_compose_on_dn_project_image "$@"
   FCT_EXIT_CODE=$?

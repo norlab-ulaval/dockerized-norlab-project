@@ -41,48 +41,8 @@ EOF
 FROM project-setup AS project-custom-docker-steps
 WORKDIR ${DN_PROJECT_PATH:?err}
 
-# ....Install MBRL-lib fork........................................................................
-# Doc:
-#   - mbrl ›
-#      github: https://github.com/facebookresearch/mbrl-lib
-#      colab: https://colab.research.google.com/github/natolambert/mbrl-lib-dev/blob/main/notebooks/traj_based_model.ipynb
-#   - Hydra › www: https://hydra.cc
-#
-# Note:
-#   - mujoco or pybullet-gym is required to run most mbrl-lib example
-#   - To install the dependencies for the latest gym MuJoCo environments
-#     use pip install gymnasium[mujoco].
-
-# Note: Use git clone install here to execute test on `relaxed_requirements` branch instead of
-# using `mbrl @ git+https://github.com/RedLeader962/mbrl-lib@relaxed_requirements` instruction
-# in the python.requirements.txt file.
-RUN <<EOF
-    cd /opt
-    git clone --branch migration_to_hydra_latest https://github.com/RedLeader962/mbrl-lib.git
-    cd mbrl-lib
-    pip3 install -e . --config-settings editable_mode=compat
-    python -c "import mbrl"
-    pip3 install 'pytest==8.0' \
-      gymnasium[mujoco]
-    python -m pytest tests/core
-EOF
-
 # ....Install requirement from file................................................................
 # Doc › pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
-# ToDo: implement (ref task NMO-159 ⚒︎ → `pip install` new module)
-
-# (Priority) ToDo: on task RLRP-213 end >> delete next bloc ↓↓
-#COPY .dockerized_norlab_project/configuration/project_requirements/python.requirements.txt /python.requirements.txt
-#RUN pip3 install --verbose \
-#       -r /python.requirements.txt \
-#    && rm -rf /python.requirements.txt
-##    --no-cache-dir \
-##    --upgrade \
-#
-#COPY .dockerized_norlab_project/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
-#RUN source /shell.requirements.bash \
-#    && rm -rf /shell.requirements.bash
-
 
 # (Priority) ToDo: refactor to dn_project_core_init.bash (ref task RLRP-213 and NMO-548)
 COPY .dockerized_norlab_project/configuration/project_requirements/python.requirements.txt /python.requirements.txt
@@ -92,13 +52,10 @@ RUN <<EOF
   pip3 install --verbose \
     -r /python.requirements.txt \
     && rm -f /python.requirements.txt
-#    --no-cache-dir \
-#    --upgrade \
 
   source /shell.requirements.bash \
     && rm -f /shell.requirements.bash
 EOF
-
 
 
 # ====Python required tools sanity check===========================================================
@@ -109,19 +66,6 @@ RUN <<EOF
     {
         python -c "import torch" && \
         python -c "import torchvision" && \
-        echo "..........................................." && \
-        python -c "from pytorch_mppi import MPPI" && \
-        echo "..........................................." && \
-        python -c "from stable_baselines3 import PPO" && \
-        echo "..........................................." && \
-        python -c "import mbrl" && \
-        python -c "import mbrl.algorithms.pets as pets" && \
-        echo "..........................................." && \
-        python -c "import hydra" && \
-        python -c "from omegaconf import DictConfig, OmegaConf" && \
-        echo "..........................................." && \
-        python -c "import f110_gym" && \
-        python -c "from f110_gym.envs import F110Env" ;
     } || exit 1
 EOF
 
@@ -141,18 +85,6 @@ RUN <<EOF
     echo "Cyclon DDS performance recommendations (ref https://github.com/ros2/rmw_cyclonedds?tab=readme-ov-file)"
     echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf
 EOF
-
-
-# ....ros2 gym bridge (Note: copied as an independant sub workspace)...............................
-#WORKDIR ${DN_DEV_WORKSPACE}
-#COPY ./src/simulator/r2s2r_f1tenth_gym_ros/f1tenth_gym_ros ./src/f1tenth_gym_ros
-
-# Note:
-#   - as part of the same workspace as RedLeader-research-codebase
-#   - 'r2s2r_f1tenth_gym_ros/' will be overwritten at runtime
-WORKDIR ${DN_DEV_WORKSPACE}
-#COPY ../../src/ros2_packages/r2s2r_f1tenth_gym_ros/f1tenth_gym_ros ./src/RedLeader-research-codebase/src/ros2_packages/r2s2r_f1tenth_gym_ros/f1tenth_gym_ros
-COPY "../../src/ros2_packages/r2s2r_f1tenth_gym_ros/f1tenth_gym_ros" "${DN_PROJECT_PATH}/src/ros2_packages/r2s2r_f1tenth_gym_ros/f1tenth_gym_ros"
 
 FROM --platform=${TARGETPLATFORM} simulator AS build-ros
 ARG TARGETPLATFORM
@@ -200,9 +132,6 @@ RUN <<EOF
     colcon build ${COLCON_FLAGS[@]}
 EOF
 
-#    && echo "TMP DEV:\n   TARGETPLATFORM: ${TARGETPLATFORM}\n   BUILDPLATFORM: ${BUILDPLATFORM}" \
-#    && exit 1
-
 
 
 # ====Final========================================================================================
@@ -213,21 +142,10 @@ RUN <<EOF
     (
       echo ""
       echo "# Project specific aliases (general)"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX:?err}_cd='cd ${DN_PROJECT_PATH:?err}'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX:?err}_cdd='cd ${DN_PROJECT_PATH:?err}/src'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX:?err}_cdt='cd ${DN_PROJECT_PATH:?err}/tests'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX:?err}_cde='cd ${DN_PROJECT_PATH:?err}/external_data'"
-      echo ""
-      echo "# Project specific aliases (ros releated)"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX:?err}_cddd='cd ${DN_PROJECT_PATH:?err}/src/launcher'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX:?err}_main='cd ${DN_PROJECT_PATH:?err}/src && python -m launcher.f110_s2s_main \$@'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX}_start_f1tenth_gym_ros='source $DN_PROJECT_PATH/src/ros2_packages/r2s2r_f1tenth_gym_ros/start_f110_gym_ros.bash'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX}_start_f1tenth_gym_ros_headless='source $DN_PROJECT_PATH/src/ros2_packages/r2s2r_f1tenth_gym_ros/start_f110_gym_ros.bash --headless'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX}_test_this_ros_pkg='source $DN_PROJECT_PATH/tests/ros2_colcon_tests/test_this_ros_package.bash'"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX}_build_and_launch_ros_pkg='source $DN_PROJECT_PATH/src/ros2_packages/build_and_launch_pkg.bash'"
-      echo ""
-      echo "# Project specific aliases (tensorbord)"
-      echo "alias dn${DN_PROJECT_ALIAS_PREFIX}_start_tensorboard='tensorboard --bind_all --logdir=${DN_PROJECT_PATH}/artifact/tensorboard_tmp/\$@'"
+      echo "alias dnp${DN_PROJECT_ALIAS_PREFIX:?err}_cd='cd ${DN_PROJECT_PATH:?err}'"
+      echo "alias dnp${DN_PROJECT_ALIAS_PREFIX:?err}_cdd='cd ${DN_PROJECT_PATH:?err}/src'"
+      echo "alias dnp${DN_PROJECT_ALIAS_PREFIX:?err}_cdt='cd ${DN_PROJECT_PATH:?err}/tests'"
+      echo "alias dnp${DN_PROJECT_ALIAS_PREFIX:?err}_cde='cd ${DN_PROJECT_PATH:?err}/external_data'"
       echo ""
     ) >> /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
 EOF

@@ -14,6 +14,12 @@
 #
 # =================================================================================================
 ADD_DOCKER_FLAG=()
-ADD_DOCKER_FLAG+=("--service-names" "project-core project-ci-tests")
-bash build.all.multiarch.bash "${ADD_DOCKER_FLAG[@]}" "$@"
+ADD_DOCKER_FLAG+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+
+# ....Path resolution..............................................................................
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+
+# ====Begin========================================================================================
+bash "${SCRIPT_PATH_PARENT}"/build.all.multiarch.bash "${ADD_DOCKER_FLAG[@]}" "$@"
 exit $?

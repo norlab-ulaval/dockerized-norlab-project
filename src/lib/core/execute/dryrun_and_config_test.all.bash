@@ -11,14 +11,17 @@ clear
 pushd "$(pwd)" >/dev/null || exit 1
 
 
-# ....Source project shell-scripts dependencies....................................................
-source ../utilities/import_dnp_lib.bash || exit 1
-source dnp_execute_compose.bash || exit 1
-source build.all.bash || exit 1
-source build.all.multiarch.bash || exit 1
+# ....Source project shell-scripts dependencies..................................................
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/build.all.multiarch.bash" || exit 1
 
 # ====Begin========================================================================================
-n2st::norlab_splash "${PROJECT_GIT_NAME} (${PROJECT_PROMPT_NAME})" "${PROJECT_GIT_REMOTE_URL}"
+n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
 n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
 CONFIG_TEST_EXIT_CODE=()

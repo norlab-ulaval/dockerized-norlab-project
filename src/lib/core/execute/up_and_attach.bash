@@ -28,9 +28,12 @@ pushd "$(pwd)" >/dev/null || exit 1
 # ToDo: see newly added implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash (ref task NMO-375)
 
 
-# ....Source project shell-scripts dependencies....................................................
-source ../utilities/import_dnp_lib.bash || exit 1
-cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
+# ....Source project shell-scripts dependencies..................................................
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
 
 
 # ToDo: move the help fct near the script/fct menu
@@ -90,7 +93,9 @@ done
 DOCKER_EXEC_CMD_AND_ARGS=("${REMAINING_ARGS[@]:-"bash"}")
 
 # ====Begin========================================================================================
-n2st::norlab_splash "${PROJECT_GIT_NAME} (${PROJECT_PROMPT_NAME})" "${PROJECT_GIT_REMOTE_URL}"
+cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
+
+n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
 
 n2st::set_which_architecture_and_os
 n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"

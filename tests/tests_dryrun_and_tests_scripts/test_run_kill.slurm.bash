@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# ....path resolution logic........................................................................
-SUPER_PROJECT_ROOT=$(git rev-parse --show-toplevel)
-cd "${SUPER_PROJECT_ROOT}"/.dockerized_norlab_project/execute
+# ....Setup........................................................................................
+DNP_ROOT=$(git rev-parse --show-toplevel)
+DNP_LIB_EXEC_PATH="${DNP_ROOT}/src/lib/core/execute"
+SUPER_PROJECT_ROOT="${DNP_ROOT}/mock-user-super-project"
+cd "$SUPER_PROJECT_ROOT" || exit 1
 
 # ====begin========================================================================================
-bash run_kill.slurm.bash
+bash "${DNP_LIB_EXEC_PATH}"/run_kill.slurm.bash
 exit $?

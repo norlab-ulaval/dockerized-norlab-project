@@ -11,19 +11,16 @@ PYTEST_FLAG+=(--config-file="${DN_PROJECT_PATH}/tests/pytest.no_xdist.ini")
 
 # pytest-xdist manual setting
 # ref: https://pytest-xdist.readthedocs.io
-PYTEST_FLAG+=(--dist loadgroup) # (CRITICAL) ToDo: validate changing loadscope to loadgroup on TC
+PYTEST_FLAG+=(--dist loadgroup)
 PYTEST_FLAG+=(--numprocesses auto --maxprocesses=2) # Limit CPU process to prevent GPU overload.
 
 PYTEST_FLAG+=(--reruns 5 --reruns-delay 2.5)
 #PYTEST_FLAG+=(--verbose)
-
-# (CRITICAL) ToDo: on task end >> mute this line ↓
 #PYTEST_FLAG+=(--exitfirst) # Exit instantly on first error or failed test
 
 # ....Add per project specific flag................................................................
-PYTEST_FLAG+=(--ignore="${DN_PROJECT_PATH}/src/ros2_packages")
-
-PYTEST_FLAG+=(-k "tests_launcher") # Only run test matching this expression
+#PYTEST_FLAG+=(--ignore="${DN_PROJECT_PATH}/src/ros2_packages")
+PYTEST_FLAG+=(-k "test_try_pytorch") # Only run test matching this expression
 
 # ====Execute pytest command=======================================================================
 n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}pytest ${PYTEST_FLAG[*]} ${DN_PROJECT_PATH}/tests${MSG_END_FORMAT}\n"

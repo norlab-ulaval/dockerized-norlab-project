@@ -123,9 +123,3 @@ else
   dnp::load_super_project_configurations || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} failled to load DNP user project configurations" 1>&2 && exit 1; }
 fi
 
-## For DEBUG
-#{
-#  echo -e "\n=======================================================\n" &&
-#    printenv | grep -i -e DN_ -e N2ST_ -e NBS_ -e RLRC &&
-#    echo -e "\n=======================================================\n"
-#} && echo "WE ARE HERE" #<--

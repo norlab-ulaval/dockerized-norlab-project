@@ -33,9 +33,6 @@ EOF
 
 # (Priority) ToDo: unit-test for flag option
 
-# ....Source project shell-scripts dependencies..................................................
-source ../utilities/import_dnp_lib.bash || exit 1
-
 # ....Function.....................................................................................
 function dnp::build_dn_project_multiarch_services() {
   local TMP_CWD
@@ -105,7 +102,6 @@ function dnp::build_dn_project_multiarch_services() {
   DNP_BUILD_ALL_ARGS+=("${REMAINING_ARGS[@]}")
 
   # ====Begin========================================================================================
-  source build.all.bash
   dnp::build_dn_project_services "${DNP_BUILD_ALL_ARGS[@]}"
   BUILD_EXIT_CODE=$?
 
@@ -117,8 +113,18 @@ function dnp::build_dn_project_multiarch_services() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
+
+  # ....Source project shell-scripts dependencies..................................................
+  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+  source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
+
+  # ....Execute....................................................................................
   clear
-  n2st::norlab_splash "${PROJECT_GIT_NAME} (${PROJECT_PROMPT_NAME})" "${PROJECT_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::build_dn_project_multiarch_services "$@"
   FCT_EXIT_CODE=$?

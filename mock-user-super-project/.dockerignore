@@ -55,7 +55,7 @@ visual/
 # ....Dockerized-NorLab............................................................................
 /.dockerized_norlab_project/configuration/docker-compose*
 /.dockerized_norlab_project/configuration/Dockerfile
-/.dockerized_norlab_project/execute
+/src/lib/core/execute
 
 # ....General......................................................................................
 **/.DS_Store

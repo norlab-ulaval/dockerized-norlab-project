@@ -14,7 +14,13 @@
 #
 # =================================================================================================
 BUILD_ALL_FLAG=()
-BUILD_ALL_FLAG+=("--service-names" "project-core project-ci-tests")
+BUILD_ALL_FLAG+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
 # Note: force push project core is set to false by default
-bash build.all.bash "${BUILD_ALL_FLAG[@]}" "$@" || exit 1
+
+# ....Path resolution..............................................................................
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+
+# ====Begin========================================================================================
+bash "${SCRIPT_PATH_PARENT}"/build.all.bash "${BUILD_ALL_FLAG[@]}" "$@" || exit 1
 exit $?

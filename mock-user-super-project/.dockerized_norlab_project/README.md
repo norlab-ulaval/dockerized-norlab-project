@@ -8,9 +8,9 @@
    project-specific container runtime logic.
 4. Customize any `Dockerfile` or `docker-compose.*.yaml` to fit your need. It should work out of
    the box for most use cases.
-5. From your project `.dockerized_norlab_project/execute/` directory, execute the following
+5. From your project `src/lib/core/execute/` directory, execute the following
     ```shell
-    cd .dockerized_norlab_project/execute/
+    cd src/lib/core/execute/
    
     # Build your DN-project containers 
     bash build.all.bash 
@@ -39,7 +39,7 @@
 - Set `rsync` ON and sudo OFF
 - Make sure `rsync` DO copy the `.git` directory to the remote host i.e. check if it is in the rsync excluded item list 
 - **Remote display**:
-  - Start your DN container project using script `.dockerized_norlab_project/execute/up_and_attach.bash`
+  - Start your DN container project using script `src/lib/core/execute/up_and_attach.bash`
   - In the remote docker container terminal, execute command alias `dn_expose_container_env_variables` and download `.dockerized_norlab_project/dn_container_env_variable/.env.dn_expose_<DN_CONTAINER_NAME>`  to your source machine
    and set `Paths to ".env" files` in run configuration window 
     ![set_interpreter_env.png](visual/set_run_config_env.png)

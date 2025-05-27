@@ -81,9 +81,9 @@ teardown() {
 # ====Test casses==================================================================================
 
 @test "dnp::import_lib_and_dependencies (explicitly source $TESTED_FILE) › expect pass" {
-  assert_not_exist "${DNP_REPO_ROOT_PATH}"
   assert_not_exist "${N2ST_PATH}"
   assert_not_exist "${NBS_PATH}"
+  assert_not_exist "${DNP_ROOT}"
 
   assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}"
 
@@ -91,7 +91,9 @@ teardown() {
 
   assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
-  assert_not_empty "${DNP_REPO_ROOT_PATH}"
+#  printenv | grep -e DNP_ >&3
+
+  assert_not_empty "${DNP_ROOT}"
   assert_not_empty "${N2ST_PATH}"
   assert_not_empty "${NBS_PATH}"
 

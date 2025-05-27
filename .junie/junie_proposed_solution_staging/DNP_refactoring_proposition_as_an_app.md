@@ -278,7 +278,7 @@ dockerized-norlab-project/ # (standalone version)
 │   │   │   │   ├── import_dnp_lib.bash
 │   │   │   │   ├── setup_host_for_this_super_project.bash
 │   │   │   │   ├── validate_super_project_dnp_setup.bash
-│   │   │   │   ├── dnp_execute_compose.bash
+│   │   │   │   ├── execute_compose.bash
 │   │   │   │   └── dn_entrypoint.python.bash
 │   │   │   └── ... (other core scripts)
 │   │   ├── docker/
