@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=12
-#SBATCH --time=7-00:00
+#SBATCH --gres=gpu:0
+#SBATCH --cpus-per-task=2
+#SBATCH --time=0-01:00
 #SBATCH --output=out/%x-%j.out
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=luc.coupal@norlab.ulaval.ca
@@ -12,9 +12,11 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.template.bash [<any-hydra-argument>]
+#   $ bash slurm_job.dryrun.bash [<any-hydra-argument>]
 #
 # =================================================================================================
+
+# ....Source project shell-scripts dependencies....................................................
 
 # ====Custom steps=================================================================================
 declare -a HYDRA_FLAGS
@@ -26,7 +28,7 @@ export SJOB_ID="default" # Open a YouTrack task and use the issue ID
 
 # ....Hydra app module.............................................................................
 # Note assume cwd is `src/`
-HYDRA_FLAGS+=("launcher/mock_app.py")
+HYDRA_FLAGS+=("launcher/mock_app_hparam_optim.py")
 
 # ....Optional flags...............................................................................
 # --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
@@ -38,11 +40,10 @@ HYDRA_FLAGS+=("launcher/mock_app.py")
 #HYDRA_FLAGS+=("--config-name=")
 
 # ....Debug flags..................................................................................
-FLAGS+=(--register-hydra-dryrun-flag "+new_key='fake-value'")
+FLAGS+=(--register-hydra-dry-run-flag "run_pytorch_check=true")
 
-# (CRITICAL) ToDo: on task end >> mute next bloc ↓↓
-#FLAGS+=("--skip-core-force-rebuild")
-#FLAGS+=("--dry-run")
+FLAGS+=("--skip-core-force-rebuild")
+FLAGS+=("--dry-run")
 #HYDRA_FLAGS+=("--cfg" "all")
 
 # .................................................................................................
