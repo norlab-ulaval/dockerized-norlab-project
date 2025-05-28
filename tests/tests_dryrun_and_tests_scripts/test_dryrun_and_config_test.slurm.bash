@@ -12,8 +12,7 @@ bash "${DNP_LIB_EXEC_PATH}"/dryrun_and_config_test.slurm.bash "src/slurm_jobs"
 EXIT_CODE=$?
 
 # ....Teardown.....................................................................................
-# (CRITICAL) ToDo: test rm execution
-#rm -rf "${DNP_ROOT}/mock-user-super-project/artifact/mock_experiment_tmp/"
-#rm -f "${DNP_ROOT}/mock-user-super-project/artifact/optuna_storage/mock_experiment_tmp.db"
+rm -rf "${DNP_ROOT}/mock-user-super-project/artifact/mock_experiment_tmp/"
+rm -f "${DNP_ROOT}/mock-user-super-project/artifact/optuna_storage/mock_experiment_tmp.db"
 
 exit $EXIT_CODE
