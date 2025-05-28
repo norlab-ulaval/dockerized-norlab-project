@@ -28,14 +28,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       # ....Add host volume you want to mount into the container...................................
-      - ../../.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
-      - ../../.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
-#      # ....Add host volume you want to mount into the container...................................
-      - ../../:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ../../artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-#      - ../../external_data:/home/${DN_PROJECT_USER}/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
-      # ....legacy user............................................................................
-#      - ../../:/home/${DN_SSH_SERVER_USER:-pycharm-debugger}/tmp/${DN_PROJECT_GIT_NAME:?err}/:rw
+      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
+      # ....Add host volume you want to mount into the container...................................
+      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
+      - ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
     tty: true
     stdin_open: true
     privileged: true
@@ -74,4 +72,4 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       # ....Add host volume you want to mount into the container...................................
-      - ../../.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro

@@ -34,12 +34,12 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Dockerized-NorLab-project internal. ...................................................
-      - ../../.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
-      - ../../.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
+      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
-      - ../../:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ../../artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      # - ../../external_data:/home/${DN_PROJECT_USER}/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
+      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
+      - ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
     tty: false
     stdin_open: false
     privileged: false # (Priority) ToDo: assessment (true or false)
@@ -58,13 +58,6 @@ services:
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
     runtime: nvidia
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           device_ids: [$CUDA_VISIBLE_DEVICES]
-    #           capabilities: [gpu]
 
   project-slurm-no-gpu:
     extends:

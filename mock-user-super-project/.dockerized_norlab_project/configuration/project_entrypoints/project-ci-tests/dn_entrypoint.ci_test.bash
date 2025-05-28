@@ -52,8 +52,7 @@ for each_file_path in /project-ci-tests/test_jobs/run_ci_tests.*.bash ; do
   n2st::print_formated_script_footer "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"
 done
 
-# ....Release......................................................................................
-
+# ====Teardown=====================================================================================
 for idx in "${EXIT_CODES[@]}" ; do
   if [[ ${idx} != 0 ]]; then
     # Test scripts completed with error!

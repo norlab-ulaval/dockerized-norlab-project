@@ -21,10 +21,11 @@ services:
 
   project-core:
     build:
-      context: "../../"
+      context: ${SUPER_PROJECT_ROOT:?err}
       dockerfile: ".dockerized_norlab_project/configuration/Dockerfile"
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+        context-dnp-container-tools: ${DNP_ROOT}/src/lib/core/docker/container-tools
       args:
         BASE_IMAGE: ${DN_HUB:?err}/${DN_PROJECT_BASE_IMG:?err}
         BASE_IMAGE_TAG: ${DN_IMAGE_TAG:?err}
@@ -88,7 +89,7 @@ services:
   # ToDo: rethink ci-test run logic to use "up and ataach" but with ci-test entrypoint and env var
   project-ci-tests:
     build:
-      context: "../../"
+      context: ${SUPER_PROJECT_ROOT:?err}
       dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.native"
       pull: false # Use the local image store to execute the FROM directive
       args:
@@ -145,7 +146,7 @@ services:
 
   project-slurm:
     build:
-      context: "../../"
+      context: ${SUPER_PROJECT_ROOT:?err}
       dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.run-slurm"
       pull: false # Use the local image store to execute the FROM directive
       args:
