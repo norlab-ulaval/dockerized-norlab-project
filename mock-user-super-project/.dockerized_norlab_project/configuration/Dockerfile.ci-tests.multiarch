@@ -8,7 +8,8 @@
 # Notes:
 #   - Tests are executed at build time on both architecture.
 #   - During the `execute-ci-tests` stage, all `run_ci_tests.*.bash` files, located in
-#      `.dockerized_norlab_project/configuration/project_cicd/` are execute one by one.
+#      `.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/test_jobs`
+#      are execute one by one.
 #
 # =================================================================================================
 ARG BASE_IMAGE
@@ -39,8 +40,8 @@ RUN ( \
   echo "backend : Agg" >> /etc/matplotlibrc; \
 )
 
-WORKDIR /project_cicd
-COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_cicd .
+WORKDIR /project-ci-tests
+COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests .
 RUN chmod +x ./dn_entrypoint.ci_test.bash
 
 # ====Execute tests================================================================================
@@ -59,7 +60,7 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/
 
 # Note: Run tests in docker build stage to assess multi-architecture related potential problem.
-WORKDIR /project_cicd
+WORKDIR /project-ci-tests
 RUN ./dn_entrypoint.ci_test.bash
 
 ENTRYPOINT [ ]

@@ -40,8 +40,9 @@ function dnp::load_super_project_configurations() {
   TMP_CWD=$(pwd)
 
   dnp::find_dnp_super_project_dir || return 1
+  SUPER_PROJECT_REPO_NAME=$(basename "${SUPER_PROJECT_ROOT}")
   export SUPER_PROJECT_ROOT
-  export SUPER_PROJECT_REPO_NAME=$(basename "${SUPER_PROJECT_ROOT}")
+  export SUPER_PROJECT_REPO_NAME
   local SUPER_PROJECT_META_DNP_DOTENV=".env.${SUPER_PROJECT_REPO_NAME}"
 
   # ....Pre-condition..............................................................................

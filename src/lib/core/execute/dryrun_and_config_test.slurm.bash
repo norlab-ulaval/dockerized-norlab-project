@@ -8,7 +8,7 @@
 #
 # Positional argument:
 #   <slurm/job/dir/path>              The path to the directory containing the slurm job scripts.
-#                                     Default to "src/launcher/slurm_jobs"
+#                                     Default to ".dockerized_norlab_project/slurm_jobs"
 #
 # =================================================================================================
 clear
@@ -25,7 +25,7 @@ source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/build.all.multiarch.bash" || exit 1
 
 # ....Setup user argument..........................................................................
-SLURM_SCRIPT_JOB_PATH="${*:-"src/launcher/slurm_jobs"}"
+SLURM_SCRIPT_JOB_PATH="${*:-".dockerized_norlab_project/slurm_jobs"}"
 
 if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/${SLURM_SCRIPT_JOB_PATH}" ]]; then
   echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} Slurm jobs script directory ${SUPER_PROJECT_ROOT:?err}/${SLURM_SCRIPT_JOB_PATH} is unreachable!" 1>&2

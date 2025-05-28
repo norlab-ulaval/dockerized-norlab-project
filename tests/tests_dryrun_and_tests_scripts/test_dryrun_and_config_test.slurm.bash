@@ -8,7 +8,7 @@ cd "$SUPER_PROJECT_ROOT" || exit 1
 
 # ====begin========================================================================================
 export DNP_LIB_EXEC_PATH
-bash "${DNP_LIB_EXEC_PATH}"/dryrun_and_config_test.slurm.bash "src/slurm_jobs"
+bash "${DNP_LIB_EXEC_PATH}"/dryrun_and_config_test.slurm.bash ".dockerized_norlab_project/slurm_jobs"
 EXIT_CODE=$?
 
 # ....Teardown.....................................................................................

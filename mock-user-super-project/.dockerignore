@@ -15,10 +15,10 @@
 
 /external_data/
 /artifact/
-/artifact/slurm_jobs_logs/*.log
 
-#/src/launcher/slurm_jobs/*.out
-#/src/launcher/slurm_jobs/out/*.out
+**/slurm_jobs_logs/*.log
+**/slurm_jobs/*.out
+**/slurm_jobs/out/*.out
 
 # ....Repository related...........................................................................
 !version.txt
@@ -49,13 +49,15 @@ visual/
 /.idea/
 
 # ....Dockerized-NorLab (Prevent ignore)...........................................................
-/.dockerized_norlab_project/configuration/!project_requirements
-/.dockerized_norlab_project/configuration/!project_entrypoints
+**/.dockerized_norlab_project/configuration/!project_requirements
+**/.dockerized_norlab_project/configuration/!project_entrypoints
 
 # ....Dockerized-NorLab............................................................................
-/.dockerized_norlab_project/configuration/docker-compose*
-/.dockerized_norlab_project/configuration/Dockerfile
-/src/lib/core/execute
+**/.dockerized_norlab_project/configuration/docker-compose*
+**/.dockerized_norlab_project/configuration/Dockerfile
+
+/src/lib/
+!/src/lib/core/docker/
 
 # ....General......................................................................................
 **/.DS_Store

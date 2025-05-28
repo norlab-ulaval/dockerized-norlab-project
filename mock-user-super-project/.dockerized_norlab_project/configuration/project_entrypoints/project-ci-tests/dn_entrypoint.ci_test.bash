@@ -1,8 +1,9 @@
 #!/bin/bash
 # =================================================================================================
 # Dockerfile.ci-tests.native entrypoint.
-# Will execute every tests in `.dockerized_norlab_project/configuration/project_cicd/` directory
-# that follow the patern `run_ci_tests.*.bash`.
+# Will execute every tests in
+# `.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/test_jobs`
+# directory that follow the patern `run_ci_tests.*.bash`.
 #
 # Usage:
 #   bash dn_entrypoint.ci_test.bash
@@ -33,7 +34,7 @@ echo -e "DN container ${DN_CONTAINER_NAME} test environment"
 echo -e "Pytest tests will follow"
 echo
 echo
-tree -L 1 "${DN_PROJECT_PATH}/.dockerized_norlab_project/configuration/project_cicd"
+tree -L 1 "${DN_PROJECT_PATH}/.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests"
 tree -L 3 "$DN_PROJECT_PATH"
 echo
 echo
@@ -43,7 +44,8 @@ echo -e "${MSG_END_FORMAT}"
 
 # ====Execute tests================================================================================
 declare -a EXIT_CODES
-for each_file_path in /project_cicd/run_ci_tests.*.bash ; do
+test -d "/project-ci-tests/test_jobs" || exit 1
+for each_file_path in /project-ci-tests/test_jobs/run_ci_tests.*.bash ; do
   n2st::print_formated_script_header "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"
   bash "${each_file_path}"
   EXIT_CODES+=("$?")

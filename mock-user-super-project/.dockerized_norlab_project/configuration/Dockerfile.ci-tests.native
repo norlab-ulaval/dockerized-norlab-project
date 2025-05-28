@@ -9,7 +9,8 @@
 # Notes:
 #   - Tests are executed at run time on host architecture.
 #   - At runtime, the entrypoint execute one by one all `run_ci_tests.*.bash` files, located in
-#      `.dockerized_norlab_project/configuration/project_cicd/` directory.
+#      `.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/test_jobs`
+#      directory.
 #
 # =================================================================================================
 ARG BASE_IMAGE
@@ -40,8 +41,8 @@ RUN ( \
   echo "backend : Agg" >> /etc/matplotlibrc; \
 )
 
-WORKDIR /project_cicd
-COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_cicd .
+WORKDIR /project-ci-tests
+COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests .
 RUN chmod +x ./dn_entrypoint.ci_test.bash
 
 # ====Execute tests================================================================================
@@ -60,6 +61,6 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/
 
 # Note: Run tests in docker run native to assess deployment related potential problem.
-WORKDIR /project_cicd
+WORKDIR /project-ci-tests
 
 ENTRYPOINT [ "./dn_entrypoint.ci_test.bash" ]

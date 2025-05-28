@@ -14,7 +14,7 @@ The current Dockerized-NorLab-Project is organized as follows:
 │   ├── .env
 │   ├── Dockerfile.*
 │   ├── docker-compose.*.yaml
-│   ├── project_cicd/
+│   ├── project-ci-tests/
 │   ├── project_entrypoints/
 │   └── project_requirements/
 ├── dn_container_env_variable/
@@ -217,7 +217,7 @@ user-super-project/
 │   ├── README.md
 │   ├── configuration/
 │   │   ├── .env # This is the user side customizable DNP environment var
-│   │   ├── project_cicd/
+│   │   ├── project-ci-tests/
 │   │   │   ├── dn_entrypoint.ci_test.bash
 │   │   │   ├── run_ci_tests.pytest_main.bash
 │   │   │   └── run_ci_tests.pytest_only_selected.bash
@@ -226,7 +226,7 @@ user-super-project/
 │   │   │   ├── dn_entrypoint.global.init.callback.bash
 │   │   │   ├── project-deploy/
 │   │   │   └── project-develop/
-│   │   ├── project_custom_install/
+│   │   ├── project_requirements/
 │   │   │   ├── python.requirements.txt
 │   │   │   └── shell.custom_install.bash
 │   │   ├── Dockerfile.project
@@ -295,7 +295,7 @@ dockerized-norlab-project/ # (standalone version)
 │   │   │   └── docker-compose._project.run.slurm.yaml
 │   └── configuration_template/
 │       ├── .env # This is the user customizable environment var
-│       ├── project_cicd
+│       ├── project-ci-tests
 │       │   ├── dn_entrypoint.ci_test.bash
 │       │   ├── run_ci_tests.pytest_main.bash
 │       │   └── run_ci_tests.pytest_only_selected.bash
@@ -304,7 +304,7 @@ dockerized-norlab-project/ # (standalone version)
 │       │   ├── dn_entrypoint.global.init.callback.bash
 │       │   ├── project-deploy
 │       │   └── project-develop
-│       ├── project_custom_install
+│       ├── project_requirements
 │       │   ├── python.requirements.txt
 │       │   └── shell.custom_install.bash
 │       ├── Dockerfile.project

@@ -16,11 +16,13 @@ pushd "$(pwd)" >/dev/null || exit 1
 # - https://github.com/norlab-ulaval/dockerized-norlab/blob/8975e05e69ddc57cb858a3413ea7c98920f5422b/jetson_xavier_install.bash
 
 function dnp::setup_host_for_this_super_project() {
+  local SCRIPT_PATH
+  local SCRIPT_PATH_PARENT
 
   # Note: can handle both sourcing cases
   #   i.e. from within a script or from an interactive terminal session
-  local SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  local SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
 
   # ....Source project shell-scripts dependencies..................................................
   source "${SCRIPT_PATH_PARENT}/import_dnp_lib.bash" || exit 1

@@ -35,11 +35,11 @@ dockerized-norlab-project
 ├── README.md
 ├── configuration.template
 │   ├── .env # Template for user customizable environment var
-│   ├── project_cicd
+│   ├── project-ci-tests
 │   │   └── ...
 │   ├── project_entrypoints
 │   │   └── ...
-│   ├── project_custom_install
+│   ├── project_requirements
 │   │   └── ...
 │   ├── Dockerfile.project
 │   └── docker-compose.*.yaml
@@ -76,11 +76,11 @@ dockerized-norlab-project
 ├── README.md
 ├── configuration
 │   ├── .env # User customizable environment var
-│   ├── project_cicd
+│   ├── project-ci-tests
 │   │   └── ...
 │   ├── project_entrypoints
 │   │   └── ...
-│   ├── project_custom_install
+│   ├── project_requirements
 │   │   └── ...
 │   ├── Dockerfile.project
 │   └── docker-compose.*.yaml
@@ -331,17 +331,15 @@ function dnp::setup_dockerized_norlab_project() {
   
   # ....Create user-side configuration.............................................................
   echo "Creating user-side configuration..."
-  mkdir -p .dockerized_norlab_project/configuration/project_cicd
   mkdir -p .dockerized_norlab_project/configuration/project_entrypoints
-  mkdir -p .dockerized_norlab_project/configuration/project_custom_install
+  mkdir -p .dockerized_norlab_project/configuration/project_requirements
   mkdir -p .dockerized_norlab_project/dn_container_env_variable
   
   # ....Copy template files........................................................................
   echo "Copying template files..."
   cp utilities/dockerized-norlab-project/configuration.template/.env .dockerized_norlab_project/configuration/
-  cp utilities/dockerized-norlab-project/configuration.template/project_cicd/* .dockerized_norlab_project/configuration/project_cicd/
   cp utilities/dockerized-norlab-project/configuration.template/project_entrypoints/* .dockerized_norlab_project/configuration/project_entrypoints/
-  cp utilities/dockerized-norlab-project/configuration.template/project_custom_install/* .dockerized_norlab_project/configuration/project_custom_install/
+  cp utilities/dockerized-norlab-project/configuration.template/project_requirements/* .dockerized_norlab_project/configuration/project_requirements/
   cp utilities/dockerized-norlab-project/configuration.template/Dockerfile.project .dockerized_norlab_project/configuration/
   cp utilities/dockerized-norlab-project/configuration.template/docker-compose.*.yaml .dockerized_norlab_project/configuration/
   

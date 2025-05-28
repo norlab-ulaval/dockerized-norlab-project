@@ -93,16 +93,13 @@ dockerized-norlab-project/ # (stand-alone version)
 │   │       └── docker-compose._project.run.slurm.yaml
 │   └── configuration_template/
 │       ├── .env # This is the user customizable environment var
-│       ├── project_cicd
-│       │   ├── dn_entrypoint.ci_test.bash
-│       │   ├── run_ci_tests.pytest_main.bash
-│       │   └── run_ci_tests.pytest_only_selected.bash
 │       ├── project_entrypoints
 │       │   ├── dn_entrypoint.global.attach.callback.bash
 │       │   ├── dn_entrypoint.global.init.callback.bash
+│       │   ├── project-ci-tests
 │       │   ├── project-deploy
 │       │   └── project-develop
-│       ├── project_custom_install
+│       ├── project_requirements
 │       │   ├── python.requirements.txt
 │       │   └── shell.custom_install.bash
 │       ├── Dockerfile.project
@@ -189,16 +186,13 @@ user-super-project/
 │   ├── README.md
 │   ├── configuration/
 │   │   ├── .env # This is the user-side customizable DNP environment variables
-│   │   ├── project_cicd/
-│   │   │   ├── dn_entrypoint.ci_test.bash
-│   │   │   ├── run_ci_tests.pytest_main.bash
-│   │   │   └── run_ci_tests.pytest_only_selected.bash
 │   │   ├── project_entrypoints/
 │   │   │   ├── dn_entrypoint.global.attach.callback.bash
 │   │   │   ├── dn_entrypoint.global.init.callback.bash
+│   │   │   ├── project-ci-tests/
 │   │   │   ├── project-deploy/
 │   │   │   └── project-develop/
-│   │   ├── project_custom_install/
+│   │   ├── project_requirements/
 │   │   │   ├── python.requirements.txt
 │   │   │   └── shell.custom_install.bash
 │   │   ├── Dockerfile.project
