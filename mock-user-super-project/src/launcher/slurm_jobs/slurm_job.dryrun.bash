@@ -28,7 +28,7 @@ export SJOB_ID="default" # Open a YouTrack task and use the issue ID
 
 # ....Hydra app module.............................................................................
 # Note assume cwd is `src/`
-HYDRA_FLAGS+=("launcher/math_env_main_hparam_optimization.py")
+HYDRA_FLAGS+=("launcher/mock_app_hparam_optim.py")
 
 # ....Optional flags...............................................................................
 # --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
@@ -40,7 +40,7 @@ HYDRA_FLAGS+=("launcher/math_env_main_hparam_optimization.py")
 #HYDRA_FLAGS+=("--config-name=")
 
 # ....Debug flags..................................................................................
-FLAGS+=(--register-hydra-dryrun-flag "+dev@_global_=math_env_slurm_job_dryrun")
+FLAGS+=(--register-hydra-dryrun-flag "run_pytorch_check=true")
 
 FLAGS+=("--skip-core-force-rebuild")
 FLAGS+=("--dry-run")

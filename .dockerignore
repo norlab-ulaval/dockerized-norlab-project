@@ -17,8 +17,8 @@
 /artifact/
 /artifact/slurm_jobs_logs/*.log
 
-#/src/launcher/slurm_jobs/*.out
-#/src/launcher/slurm_jobs/out/*.out
+/src/launcher/slurm_jobs/*.out
+/src/launcher/slurm_jobs/out/*.out
 
 # ....Repository related...........................................................................
 !version.txt

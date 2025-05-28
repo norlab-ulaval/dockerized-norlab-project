@@ -9,4 +9,9 @@ cd "$SUPER_PROJECT_ROOT" || exit 1
 # ====begin========================================================================================
 export DNP_LIB_EXEC_PATH
 bash "${DNP_LIB_EXEC_PATH}"/dryrun_and_config_test.slurm.bash
-exit $?
+EXIT_CODE=$?
+
+# ....Teardown.....................................................................................
+#rm -rf "${DNP_ROOT}/mock-user-super-project/artifact/tmp_dryrun_test"
+
+exit $EXIT_CODE

@@ -1,0 +1,29 @@
+
+comment: "" # Note: Leave empty. Usefull to add commentary to command line executed run
+experiment_name: "default" # Note: Overide in your <app-name>.yaml
+
+# ....DN-project directories.............
+project_root_path: ${oc.env:DN_PROJECT_PATH,../../mock-user-super-project}
+# Note: fetch environment variable via omegaconf resolver `${oc.env:<env-var>, <default-value>}`
+#  See doc https://omegaconf.readthedocs.io/en/2.3_branch/custom_resolvers.html#oc-env
+exp_root_dir: "artifact"
+project_experiment_root_path: ${project_root_path}/${exp_root_dir}
+project_src_root_path: ${project_root_path}/src
+project_config_root_path: ${project_root_path}/src/launcher/configs
+
+
+hydra:
+
+  job:
+    chdir: true # Keep pre hydra 1.2 behaviour
+
+  run:
+    dir: ${project_experiment_root_path}/${experiment_name}/${now:%Y.%m.%d}/${now:%H%M%S}
+
+  sweep:
+    # Ref https://hydra.cc/docs/1.3/configure_hydra/workdir/#configuration-for-multirun
+    dir: ${project_experiment_root_path}/${experiment_name}/${now:%H%M%S}
+    subdir: ${hydra.job.override_dirname}
+
+# ....Autofill............................
+python_version: ${python_version:micro}

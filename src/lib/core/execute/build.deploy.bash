@@ -74,7 +74,7 @@ SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
 SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
 source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
 
 # ....Execute....................................................................................
@@ -98,7 +98,7 @@ fi
 }
 
 if [[ ${PUSH_DEPLOY_IMAGE} == true ]]; then
-  source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
+  source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
   {
     PUSH_DOCKER_FLAG=("--push" "project-deploy")
     # PUSH_DOCKER_FLAG=("--override-build-cmd" "push" "project-deploy")

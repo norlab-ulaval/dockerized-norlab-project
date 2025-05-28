@@ -25,12 +25,10 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-pushd "$(pwd)" >/dev/null || exit 1
 
 # (Priority) ToDo: unit-test for flag option
 
-# ....Optional settings............................................................................
-
+pushd "$(pwd)" >/dev/null || exit 1
 
 # .................................................................................................
 function show_help() {
@@ -139,7 +137,7 @@ SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
 SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
 source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/execute_compose.bash" || exit 1
+source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
 
 
 # ====Begin========================================================================================
@@ -183,9 +181,9 @@ COMPOSE_FLAGS=("-f" "${COMPOSE_FILE_PATH}")
 DOCKER_RUN=("run" "--rm")
 DOCKER_RUN+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
 #DOCKER_RUN+=("--service-ports") # Publish compose service ports (Mute if collision with host)
-#DOCKER_RUN+=("--dry-run") # (CRITICAL) ToDo: on task end >> mute this line ←
 
 if [[ ${DRY_RUN_SLURM_JOB} == true ]]; then
+  PYTHON_ARG+=( "experiment_name=tmp_dryrun_test" )
   PYTHON_ARG+=( "${REGISTERED_HYDRA_DRYRUN_FLAG[@]}" )
   DOCKER_RUN+=("${THE_SERVICE}" "${PYTHON_ARG[@]}")
   n2st::print_msg "Dryrun execute docker compose ${COMPOSE_FLAGS[*]} ${DOCKER_RUN[*]}\n"
@@ -220,4 +218,5 @@ else
 fi
 
 # ====Teardown=====================================================================================
-# Handled by the trap function `execute_on_exit`
+# The teardown logic of this script is handled by the trap function `execute_on_exit`
+exit $EXIT_CODE

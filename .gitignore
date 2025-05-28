@@ -1,10 +1,14 @@
 
-# ....Dockerized-NorLab-Project rlated.............................................................
+# ....Dockerized-NorLab-Project related............................................................
 /.dockerized_norlab_project/dn_container_env_variable/
 
+**/external_data/
+**/artifact/
+**/artifact/slurm_jobs_logs/*.log
+!**/artifact/optuna_storage/README.md
 
-# ====template-norlab-project related==============================================================
-/tests/.env.tnp_test_values
+/src/launcher/slurm_jobs/*.out
+/src/launcher/slurm_jobs/out/*.out
 
 
 # ====Generic gitignore template===================================================================

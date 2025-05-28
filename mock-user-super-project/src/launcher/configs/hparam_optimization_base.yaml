@@ -1,0 +1,31 @@
+# @package _global_
+
+#
+# Base configuration for hyperparameter optimization
+#
+
+defaults:
+  - override hydra/sweeper: optuna # Options: basic, experiment, optuna
+  - override hydra/sweeper/sampler: tpe # Options: cmaes, grid, motpe, nsgaii, random, tpe
+  - override hydra/launcher: joblib
+  - _self_
+
+
+hparam_optimizer:
+  sjob_id: ???
+  objectives_name: ??? # Take value type str or List[str]
+  sweep_optimizer_dryrun: false
+  db_path_pre: sqlite:///
+  db_name: ${experiment_name}.db
+  db_path: ${project_experiment_root_path}/optuna_storage/${.db_name}
+  optuna_dashboard:
+    port: 8888
+    host: 192.168.1.189 # fire-jetson-orin-protable-router-lan
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    direction: ??? # str or list with value [minimize|maximize]
+    study_name: ${experiment_name}_${hparam_optimizer.sjob_id}_${now:%Y.%m.%d}_${now:%H%M%S}
+    storage: ${hparam_optimizer.db_path_pre}${hparam_optimizer.db_path}
+    n_jobs: 1 # Number of parallel workers
