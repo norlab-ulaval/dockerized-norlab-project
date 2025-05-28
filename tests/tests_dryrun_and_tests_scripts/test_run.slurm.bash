@@ -14,8 +14,8 @@ declare -a HYDRA_FLAGS
 
 SJOB_ID="default"
 # ....Debug flags..................................................................................
-#FLAGS+=("--dry-run")
-#FLAGS+=(--register-hydra-dryrun-flag "+dev@_global_=math_env_slurm_job_dryrun")
+#FLAGS+=("--hydra-dry-run")
+#FLAGS+=(--register-hydra-dry-run-flag "+dev@_global_=math_env_slurm_job_dryrun")
 FLAGS+=("--skip-core-force-rebuild")
 HYDRA_FLAGS+=("--version")
 

@@ -11,7 +11,6 @@ project_experiment_root_path: ${project_root_path}/${exp_root_dir}
 project_src_root_path: ${project_root_path}/src
 project_config_root_path: ${project_root_path}/src/launcher/configs
 
-
 hydra:
 
   job:

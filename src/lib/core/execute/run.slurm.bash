@@ -13,8 +13,8 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #   --log-path=<absolute-path-super-project-root>     The Absolute path to the slurm log directory.
 #                                                     Will be created if it does not exist.
 #   --skip-core-force-rebuild
-#   --dry-run                                         Dry-run slurm job using registered hydra flag
-#   --register-hydra-dryrun-flag                      Hydra flag used by '--dry-run'
+#   --hydra-dry-run                                         Dry-run slurm job using registered hydra flag
+#   --register-hydra-dry-run-flag                      Hydra flag used by '--hydra-dry-run'
 #                                                     e.g., "+dev@_global_=math_env_slurm_job_dryrun"
 #   -h | --help
 #
@@ -82,14 +82,14 @@ DRY_RUN_SLURM_JOB=false
 while [ $# -gt 0 ]; do
 
   case $1 in
-    --register-hydra-dryrun-flag)
+    --register-hydra-dry-run-flag)
       REGISTERED_HYDRA_DRYRUN_FLAG+=("${2}")
-      shift # Remove argument (--register-hydra-dryrun-flag)
+      shift # Remove argument (--register-hydra-dry-run-flag)
       shift # Remove argument value
       ;;
-    --dry-run)
+    --hydra-dry-run)
       DRY_RUN_SLURM_JOB=true
-      shift # Remove argument (--dry-run)
+      shift # Remove argument (--hydra-dry-run)
       ;;
     --log-name)
       LOG_NAME="${2}"
@@ -183,7 +183,6 @@ DOCKER_RUN+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
 #DOCKER_RUN+=("--service-ports") # Publish compose service ports (Mute if collision with host)
 
 if [[ ${DRY_RUN_SLURM_JOB} == true ]]; then
-  PYTHON_ARG+=( "experiment_name=tmp_dryrun_test" )
   PYTHON_ARG+=( "${REGISTERED_HYDRA_DRYRUN_FLAG[@]}" )
   DOCKER_RUN+=("${THE_SERVICE}" "${PYTHON_ARG[@]}")
   n2st::print_msg "Dryrun execute docker compose ${COMPOSE_FLAGS[*]} ${DOCKER_RUN[*]}\n"

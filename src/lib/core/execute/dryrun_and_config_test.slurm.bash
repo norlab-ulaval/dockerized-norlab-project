@@ -4,11 +4,16 @@
 # in docker-compose.project.build.native.yaml and docker-compose.project.build.multiarch.yaml
 #
 # Usage:
-#   $ bash dryrun_and_config_test.slurm.bash
+#   $ bash dryrun_and_config_test.slurm.bash ["<slurm/job/dir/path>"]
+#
+# Positional argument:
+#   <slurm/job/dir/path>              The path to the directory containing the slurm job scripts.
+#                                     Default to "src/launcher/slurm_jobs"
 #
 # =================================================================================================
 clear
 pushd "$(pwd)" >/dev/null || exit 1
+
 
 # ....Source project shell-scripts dependencies..................................................
 SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
@@ -18,6 +23,14 @@ source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/build.all.multiarch.bash" || exit 1
+
+# ....Setup user argument..........................................................................
+SLURM_SCRIPT_JOB_PATH="${*:-"src/launcher/slurm_jobs"}"
+
+if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/${SLURM_SCRIPT_JOB_PATH}" ]]; then
+  echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} Slurm jobs script directory ${SUPER_PROJECT_ROOT:?err}/${SLURM_SCRIPT_JOB_PATH} is unreachable!" 1>&2
+  return 1
+fi
 
 # ====Begin========================================================================================
 n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
@@ -97,7 +110,7 @@ n2st::print_formated_script_header "Dry-run slurm job" "${MSG_LINE_CHAR_BUILDER_
 pushd "$(pwd)" >/dev/null || exit 1
 
 SLURM_JOB_FILE_NAME=()
-for each_file_path in "${SUPER_PROJECT_ROOT:?err}"/src/launcher/slurm_jobs/slurm_job.*.bash ; do
+for each_file_path in "${SUPER_PROJECT_ROOT:?err}"/"${SLURM_SCRIPT_JOB_PATH}"/slurm_job.*.bash ; do
   each_file_name="$(basename $each_file_path)"
   SLURM_JOB_FILE_NAME+=("$each_file_name")
 #  if [[ "${each_file_name}" != "slurm_job.dryrun.bash" ]] && [[ "${each_file_name}" != "slurm_job.template.bash" ]]; then
@@ -113,8 +126,8 @@ done
 n2st::print_msg "Begin dry-run slurm job"
 SLURM_JOB_FLAGS=()
 SLURM_JOB_FLAGS+=("--skip-core-force-rebuild")
-SLURM_JOB_FLAGS+=("--dry-run")
-cd "${SUPER_PROJECT_ROOT:?err}"/src/launcher/slurm_jobs || exit 1
+SLURM_JOB_FLAGS+=("--hydra-dry-run")
+cd "${SUPER_PROJECT_ROOT:?err}/${SLURM_SCRIPT_JOB_PATH}" || exit 1
 for each_slurm_job in "${SLURM_JOB_FILE_NAME[@]}" ; do
   n2st::print_formated_script_header "$each_slurm_job" "${MSG_LINE_CHAR_BUILDER_LVL2}"
   bash "${each_slurm_job}" "${SLURM_JOB_FLAGS[@]}"

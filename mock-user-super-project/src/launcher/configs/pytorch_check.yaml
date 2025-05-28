@@ -3,7 +3,7 @@ defaults:
   - global_config
   - _self_
 
-experiment_name: "mock_experiment"
+experiment_name: "mock_experiment_tmp"
 
 ms_model:
   hid_size: 64
