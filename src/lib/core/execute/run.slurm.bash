@@ -60,7 +60,7 @@ function execute_on_exit() {
 }
 
 
-# ....Set env variables (pre cli)................................................................
+# ....Set env variables (pre cli)..................................................................
 declare -a PYTHON_ARG
 declare -a REGISTERED_HYDRA_DRYRUN_FLAG
 declare -x SJOB_ID

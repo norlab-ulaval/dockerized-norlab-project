@@ -4,14 +4,15 @@ DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
 # Build deploy images specified in docker-compose.project.build.native.yaml
 #
 # Usage:
-#   $ bash build.deploy.bash [<any-arguments>] [--] [<any-build.all-argument>]
+#   $ bash build.deploy.bash [--push-deploy-image] [<any-build.all-argument>] [--] [<any-docker-flag>]
 #
 # Arguments:
 #   --push-deploy-image
 #   -h | --help
 #
 # Positional argument:
-#   <any-docker-flag>                      Any docker flag (optional)
+#   <any-build.all-argument>               (Optional) Any build.all.bash arguments
+#   <any-docker-flag>                      (Optional) Any docker flag
 #
 # =================================================================================================
 EOF
@@ -51,11 +52,6 @@ while [ $# -gt 0 ]; do
       clear
       show_help
       exit
-      ;;
-    --) # no more option
-      shift
-      REMAINING_ARGS=( "$@" )
-      break
       ;;
     *) # Default case
       REMAINING_ARGS=("$@")

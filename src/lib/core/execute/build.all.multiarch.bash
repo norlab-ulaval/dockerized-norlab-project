@@ -22,7 +22,7 @@ DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
 #   -h | --help
 #
 # Positional argument:
-#   <any-docker-flag>                      Any docker flag (optional)
+#   <any-docker-flag>                      (Optional) Any docker flag
 #
 # Global
 #   none

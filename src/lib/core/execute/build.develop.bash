@@ -8,6 +8,9 @@
 # Usage:
 #   $ bash build.develop.bash  [<any-build.all-argument>]
 #
+# Positional argument:
+#   <any-build.all-argument>               (Optional) Any build.all.bash arguments
+#
 # =================================================================================================
 ADD_DOCKER_FLAG=("--service-names" "project-core,project-develop")
 

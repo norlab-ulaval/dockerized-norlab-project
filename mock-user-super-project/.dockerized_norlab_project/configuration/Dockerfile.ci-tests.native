@@ -23,23 +23,26 @@ ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN echo "Pre-condition checks" && { \
+RUN <<EOF
+    echo "Pre-condition checks"
+    {
         test $(whoami) == "root" &&  \
         test -n ${DN_PROJECT_USER:?'Env variable need to be set and non-empty.'} && \
         test -d /home/${DN_PROJECT_USER} && \
         test -n ${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'} && \
-        test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ; \
+        test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ;
     } || exit 1
+EOF
 
 # ===install teamcity & CI/CD utilities============================================================
 
 RUN pip3 install --no-cache-dir  --upgrade pip
 RUN pip3 install --no-cache-dir teamcity-messages
 
-RUN ( \
-  echo "Configure Matplotlib to use a non-interactive backends for TeamCity run"; \
-  echo "backend : Agg" >> /etc/matplotlibrc; \
-)
+RUN <<EOF
+    echo "Configure Matplotlib to use a non-interactive backends for TeamCity run"
+    echo "backend : Agg" >> /etc/matplotlibrc
+EOF
 
 WORKDIR /project-ci-tests
 COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests .
@@ -58,7 +61,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV DNP_PYTEST_CI_RUN=true
 
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
-COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/
+#COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/
+COPY --chown=${DN_PROJECT_USER} . ${DN_PROJECT_PATH:?err}/
 
 # Note: Run tests in docker run native to assess deployment related potential problem.
 WORKDIR /project-ci-tests

@@ -27,27 +27,27 @@ declare -x SUPER_PROJECT_REPO_NAME
 # Outputs:
 #   An error message to to stderr in case of failure
 # Globals:
-#   write SUPER_PROJECT_ROOT, SUPER_PROJECT_REPO_NAME
+#   write SUPER_PROJECT_ROOT
+#   write SUPER_PROJECT_REPO_NAME
 # Returns:
 #   1 on faillure, 0 otherwise
 # =================================================================================================
 function dnp::load_super_project_configurations() {
 
   # ....Setup......................................................................................
-  # Note: Use local var approach for dir handling in lib import script has its more robust in case
-  #       of nested error (instead of the pushd approach).
   local TMP_CWD
   TMP_CWD=$(pwd)
 
+  # ....Find super project path and name...........................................................
   dnp::find_dnp_super_project_dir || return 1
+
   SUPER_PROJECT_REPO_NAME=$(basename "${SUPER_PROJECT_ROOT}")
+
   export SUPER_PROJECT_ROOT
   export SUPER_PROJECT_REPO_NAME
+
+  # ....Test extracted path........................................................................
   local SUPER_PROJECT_META_DNP_DOTENV=".env.${SUPER_PROJECT_REPO_NAME}"
-
-  # ....Pre-condition..............................................................................
-  # Test extracted path
-
   if [[ ! -f "${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV:?err}" ]]; then
     echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} can't find '.dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV}' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
@@ -115,7 +115,6 @@ dnp::find_dnp_super_project_dir() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2

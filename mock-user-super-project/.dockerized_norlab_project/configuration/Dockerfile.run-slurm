@@ -9,13 +9,17 @@ ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN echo "Pre-condition checks" && { \
+RUN <<EOF
+    echo "Pre-condition checks"
+    {
         test $(whoami) == "root" &&  \
         test -n ${DN_PROJECT_USER:?'Env variable need to be set and non-empty.'} && \
         test -d /home/${DN_PROJECT_USER} && \
         test -n ${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'} && \
-        test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ; \
+        test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ;
     } || exit 1
+
+EOF
 
 WORKDIR /tmp/numba_cache
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
@@ -24,13 +28,13 @@ WORKDIR /
 COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/dn_entrypoint.python.bash .
 
 RUN <<EOF
-  chmod 777 /tmp/numba_cache
+    chmod 777 /tmp/numba_cache
 
-  echo "Configure Matplotlib to use a non-interactive backends for headless run"
-  echo "backend : Agg" >> /etc/matplotlibrc
+    echo "Configure Matplotlib to use a non-interactive backends for headless run"
+    echo "backend : Agg" >> /etc/matplotlibrc
 
-  chmod +x /dn_entrypoint.python.bash
-  chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) /dn_entrypoint.python.bash
+    chmod +x /dn_entrypoint.python.bash
+chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) /dn_entrypoint.python.bash
 EOF
 
 

@@ -6,6 +6,9 @@
 # Usage:
 #   $ bash build.ci_tests.multiarch.bash [<any-build.all.multiarch-argument>]
 #
+# Positional argument:
+#   <any-build.all.multiarch-argument>     (Optional)  build.all.multiarch.bash
+#
 # Notes:
 #   The differences with executing `bash build.ci_tests.bash && bash run.ci_tests.bash` is that:
 #     1. tests are executed at build time instead of at runtime;

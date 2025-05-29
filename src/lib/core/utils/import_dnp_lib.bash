@@ -12,7 +12,7 @@ MSG_END_FORMAT="\033[0m"
 # ....Variable set for export......................................................................
 
 # =================================================================================================
-# Function that load DNP lib and load all dependencies.
+# Function that load DNP lib and all dependencies.
 #
 # Usage:
 #     $ dnp::import_lib_and_dependencies
@@ -25,31 +25,33 @@ MSG_END_FORMAT="\033[0m"
 #   1 on faillure, 0 otherwise
 # =================================================================================================
 function dnp::import_lib_and_dependencies() {
-  local TMP_CWD
-  local SCRIPT_PATH
-  local SCRIPT_PATH_PARENT
-  local TMP_DNP_ROOT
 
   # ....Setup......................................................................................
-  # Note: Use local var approach for dir handling in lib import script has its more robust in case
-  #       of nested error (instead of the pushd approach).
+  local TMP_CWD
   TMP_CWD=$(pwd)
 
+  # ....Find path to script........................................................................
+  # Note: can handle both sourcing cases
+  #   i.e. from within a script or from an interactive terminal session
+  local SCRIPT_PATH
+  local TARGET_ROOT
   SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  TMP_DNP_ROOT="$(dirname "${SCRIPT_PATH}")"
-  while [[ $(basename "${TMP_DNP_ROOT}") != "dockerized-norlab-project" ]]; do
-    TMP_DNP_ROOT="$( dirname "$TMP_DNP_ROOT" )"
+  TARGET_ROOT="$(dirname "${SCRIPT_PATH}")"
+
+  # ....Find path to target parent directory.......................................................
+  while [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]]; do
+    TARGET_ROOT="$( dirname "$TARGET_ROOT" )"
   done
 
   # ....Pre-condition..............................................................................
   # Test extracted path
-  if [[ ! -d "${TMP_DNP_ROOT:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project is unreachable at '${TMP_DNP_ROOT}'!" 1>&2
+  if [[ ! -d "${TARGET_ROOT:?err}" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project is unreachable at '${TARGET_ROOT}'!" 1>&2
     return 1
   fi
 
   # ....Load DNP .env file for N2ST................................................................
-  cd "${TMP_DNP_ROOT}" || return 1
+  cd "${TARGET_ROOT}" || return 1
   set -o allexport
   # shellcheck disable=SC1090
   source ".env.dockerized-norlab-project" || return 1
@@ -60,7 +62,7 @@ function dnp::import_lib_and_dependencies() {
   source "import_norlab_build_system_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-  cd "${TMP_DNP_ROOT:?err}" || return 1
+  cd "${TARGET_ROOT:?err}" || return 1
   set -o allexport
   # shellcheck disable=SC1090
   source ".env.dockerized-norlab-project" || return 1
@@ -72,7 +74,7 @@ function dnp::import_lib_and_dependencies() {
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
   # shellcheck disable=SC1090
-  cd "${TMP_DNP_ROOT:?err}" || return 1
+  cd "${TARGET_ROOT:?err}" || return 1
   set -o allexport
   source ".env.dockerized-norlab-project" || return 1
   set +o allexport

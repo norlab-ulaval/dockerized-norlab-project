@@ -7,6 +7,10 @@
 #   $ bash build.ci_tests.bash  [<any-build.all-argument>]
 #   $ bash run.ci_tests.bash [<any-docker-argument>]
 #
+# Positional argument:
+#   <any-build.all-argument>               (Optional) Any build.all.bash arguments
+#   <any-docker-flag>                      (Optional) Any docker flag
+#
 # Notes:
 #   The difference with `build.ci_tests.multiarch.bash` is that tests are only executed for the
 #   host architecture, either x86 or arm64 and are executed at runtime (using `run.ci_tests.bash`)

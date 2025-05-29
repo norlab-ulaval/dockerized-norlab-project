@@ -22,7 +22,7 @@ pushd "$(pwd)" >/dev/null || exit 1
 
 # (CRITICAL) ToDo: unit-test
 
-function dn::setup_dockerized_norlab_project() {
+function dnp::setup_dockerized_norlab_project() {
 
   # ....Check pre-conditions.......................................................................
   # Check environment variables
@@ -43,11 +43,6 @@ function dn::setup_dockerized_norlab_project() {
     test -d "${DN_PROJECT_PATH}" ;
   } || return 1
 
-  # ....Install requirement from file................................................................
-  # Doc › pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
-  pip3 install --verbose -r /python.requirements.txt || return 1
-  source /shell.requirements.bash || return 1
-
   # ....User specific aliases......................................................................
   echo "Add project specific aliases"
     (
@@ -61,14 +56,30 @@ function dn::setup_dockerized_norlab_project() {
     ) >> /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
 
   # ....Entrypoint related setup...................................................................
-  # Note: project-develop container mounth those directories as a volume to skip rebuilding
-  #       each time they are modify (see docker-compose.project.run.*.yaml). However, project-deploy
-  #       and project release container will need them copied in the image for portability.
+  # Notes:
+  #   - All files from 'configuration/project_entrypoints/' directory that follow the pattern
+  #     'dn_entrypoint.*.callback.bash' are required by DN scripts 'dn_entrypoint.init.bash' and
+  #     'dn_entrypoint.attach.bash'.
+  #   - Be advise that 'project-develop' container mount this directory as a volume to prevent
+  #     image rebuilding each time its content is modified (See the 'services.volumes' key in
+  #     'docker-compose.project.run.*.yaml').
+  #   - However, 'project-deploy' and 'project-release' containers copy this directory and its
+  #     contents in the image at build time to ensure portability.
   #
-  # Note: Files copied from project_entrypoints/ directory are required by Dockerized-NorLab
-  #       dn_entrypoint.init.bash and dn_entrypoint.attach.bash
-
   cd /project_entrypoints || return 1
+  test -d project-ci-tests/ || exit 1
+  test -d project-ci-tests/test_jobs || exit 1
+  test -f project-ci-tests/dn_entrypoint.ci_test.bash || exit 1
+  test -d project-deploy/ || exit 1
+  test -f project-deploy/dn_entrypoint.attach.callback.bash || exit 1
+  test -f project-deploy/dn_entrypoint.init.callback.bash || exit 1
+  test -d project-develop/ || exit 1
+  test -f project-develop/dn_entrypoint.attach.callback.bash || exit 1
+  test -f project-develop/dn_entrypoint.init.callback.bash || exit 1
+  test -f dn_entrypoint.global.attach.callback.bash || exit 1
+  test -f dn_entrypoint.global.init.callback.bash || exit 1
+  test -f dn_entrypoint.python.bash || exit 1
+
   for each_file in ./dn_entrypoint.*.bash; do
     chmod +x "${each_file}"
   done
@@ -81,12 +92,20 @@ function dn::setup_dockerized_norlab_project() {
   # For Matplotlib default backend (QtAgg) when python script are launched from terminal
   mkdir -m 0700 -p "/tmp/runtime-root" && chown -R "${DN_PROJECT_USER}" "/tmp/runtime-root"
 
+  # ....Install requirement from file................................................................
+
+  # Doc › pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
+  pip3 install --verbose -r /python.requirements.txt || return 1
+
+  source /shell.requirements.bash || return 1
+
   # ....Teardown...................................................................................
   rm -f /python.requirements.txt
   rm -f /shell.requirements.bash
 
   return 0
 }
+
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
@@ -98,7 +117,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dn::setup_dockerized_norlab_project || exit 1
+  dnp::setup_dockerized_norlab_project || exit 1
 fi
 
 # ====Teardown=====================================================================================

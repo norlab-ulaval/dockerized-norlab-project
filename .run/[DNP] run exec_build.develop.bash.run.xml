@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="open a terminal in ubuntu container" type="ShConfigurationType" folderName="[DNP] D | docker utilities">
-    <option name="SCRIPT_TEXT" value="docker run --privileged --name IamUbuntu-focal -it --rm ubuntu:20.04 bash" />
+  <configuration default="false" name="[DNP] run exec_build.develop.bash" type="ShConfigurationType" folderName="[DNP] C | stability check" focusToolWindowBeforeRun="true">
+    <option name="SCRIPT_TEXT" value="cd tests/stability_check/ &amp;&amp; bash exec_build.develop.bash" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
@@ -9,9 +9,11 @@
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
     <option name="INTERPRETER_PATH" value="/bin/zsh" />
     <option name="INTERPRETER_OPTIONS" value="" />
-    <option name="EXECUTE_IN_TERMINAL" value="true" />
+    <option name="EXECUTE_IN_TERMINAL" value="false" />
     <option name="EXECUTE_SCRIPT_FILE" value="false" />
-    <envs />
+    <envs>
+      <env name="DOCKER_CONTEXT" value="desktop-linux" />
+    </envs>
     <method v="2" />
   </configuration>
 </component>

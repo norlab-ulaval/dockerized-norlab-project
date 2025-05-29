@@ -2,6 +2,8 @@
 # =================================================================================================
 # Dockerized-NorLab project-core architecture aware ros build script.
 #
+# Note: user have access to `dn_ros2_rebuild_dev_workspace.bash` at runtime
+#
 # Usage:
 #   # In a Dockerfile
 #   FROM --platform=${TARGETPLATFORM} project-setup AS project-custom-docker-steps
@@ -30,7 +32,7 @@ FROM_PATH=$3
 
 # (CRITICAL) ToDo: unit-test
 
-function dn::build_ros() {
+function dnp::build_ros() {
 
   # ....Check pre-conditions.......................................................................
   {
@@ -90,7 +92,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dn::build_ros || exit 1
+  dnp::build_ros || exit 1
 fi
 
 # ====Teardown=====================================================================================
