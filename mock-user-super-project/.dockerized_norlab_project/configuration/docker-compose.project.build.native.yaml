@@ -101,7 +101,7 @@ services:
     pull_policy: never
     environment:
       PYTHONUNBUFFERED: 0 # Slightly faster
-      DN_ENTRYPOINT_TRACE_EXECUTION: false
+      DN_ENTRYPOINT_TRACE_EXECUTION: true
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: false
