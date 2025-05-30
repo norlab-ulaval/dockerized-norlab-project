@@ -34,6 +34,15 @@ services:
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
       - ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
       - ${SUPER_PROJECT_ROOT}/external_data:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
+    env_file:
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.dnp
+        required: true
+      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
+        required: false
     tty: true
     stdin_open: true
     privileged: true

@@ -18,15 +18,17 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #                                           (defaul: 'build')
 #   -f | --file "compose.yaml"             To override the docker compose file
 #                                           (default: "docker-compose.project.build.native.yaml")
+#   --compose-path "/path/to/compose/dir"  To override the compose file directory
 #   --multiarch
-#   --buildx-builder-name "name"         Default to "local-builder-multiarch-virtual"
+#   --buildx-builder-name "name"           Default to "local-builder-multiarch-virtual"
 #   -h | --help
 #
 # Positional argument:
 #   <any-docker-flag>                      (Optional) Any docker flag
 #
 # Global
-#   none
+#   read SUPER_PROJECT_ROOT
+#   read DNP_ROOT
 #
 # =================================================================================================
 EOF
@@ -44,7 +46,8 @@ function dnp::excute_compose_on_dn_project_image() {
   # ....Set env variables (pre cli)................................................................
   local REMAINING_ARGS=()
   local DOCKER_COMMAND_W_FLAGS=()
-  local COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+#  local COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+  local COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
   local THE_COMPOSE_FILE="docker-compose.project.build.native.yaml"
   local MULTIARCH=false
   local LOCAL_BUILDX_BUILDER_NAME="local-builder-multiarch-virtual"
@@ -75,6 +78,11 @@ function dnp::excute_compose_on_dn_project_image() {
     -f | --file)
       THE_COMPOSE_FILE="${2}"
       shift # Remove argument (-f | --file)
+      shift # Remove argument value
+      ;;
+    --compose-path)
+      COMPOSE_PATH="${2}"
+      shift # Remove argument (--compose-path)
       shift # Remove argument value
       ;;
     --multiarch)

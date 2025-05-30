@@ -110,7 +110,7 @@ n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"
 # .................................................................................................
 
 # ....Device specific config.......................................................................
-COMPOSE_PATH=".dockerized_norlab_project/configuration"
+COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
 THE_COMPOSE_FILE=""
 DISPLAY_DEVICE=""
 if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then

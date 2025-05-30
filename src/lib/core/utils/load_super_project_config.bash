@@ -6,6 +6,7 @@
 #   $ source import_dnp_lib.bash
 #
 # Globals:
+#   read DNP_ROOT
 #   write SUPER_PROJECT_ROOT, SUPER_PROJECT_REPO_NAME
 #
 # =================================================================================================
@@ -59,11 +60,21 @@ function dnp::load_super_project_configurations() {
   source ".dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV}" || return 1
   set +o allexport
 
-  # ....Load super user DNP docker config file.....................................................
+  # ....Load build time DNP dotenv file for docker-compose.........................................
+  set -o allexport
+  cd "${SUPER_PROJECT_ROOT:?err}" || return 1
+  source ".dockerized_norlab_project/configuration/.env.dnp" || return 1
+  cd "${DNP_ROOT:?err}" || return 1
+  source "src/lib/core/docker/.env.dnp-internal" || return 1
+  set +o allexport
+
+  # ....Load run time DNP dotenv file for docker-compose...........................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   source ".dockerized_norlab_project/configuration/.env" || return 1
+  source ".dockerized_norlab_project/configuration/.env.local" || return 1
   set +o allexport
+
 
   #  ....Teardown...................................................................................
   echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"

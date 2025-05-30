@@ -22,11 +22,11 @@ ARG DN_PROJECT_ALIAS_PREFIX
 ENV DN_PROJECT_ALIAS_PREFIX=${DN_PROJECT_ALIAS_PREFIX:?'Build argument needs to be set and non-empty.'}
 ARG DN_PROJECT_USER
 ENV DN_PROJECT_USER=${DN_PROJECT_USER:?'Build argument needs to be set and non-empty.'}
+ENV DN_PROJECT_USER_HOME=/home/${DN_PROJECT_USER}
 ARG DN_PROJECT_UID
 ENV DN_PROJECT_UID=${DN_PROJECT_UID:?'Build argument needs to be set and non-empty.'}
 ARG DN_PROJECT_GID
 ENV DN_PROJECT_GID=${DN_PROJECT_GID:?'Build argument needs to be set and non-empty.'}
-ENV DN_PROJECT_USER_HOME=/home/${DN_PROJECT_USER}
 ARG IS_TEAMCITY_RUN
 ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 

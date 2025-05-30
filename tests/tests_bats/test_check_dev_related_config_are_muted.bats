@@ -34,7 +34,7 @@ else
 fi
 
 # ====Setup========================================================================================
-TESTED_FILE_PATH="mock-user-super-project/.dockerized_norlab_project/configuration"
+TESTED_FILE_PATH="src/lib/core/docker"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {

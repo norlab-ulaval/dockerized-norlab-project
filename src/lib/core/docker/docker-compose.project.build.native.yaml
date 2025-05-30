@@ -42,6 +42,15 @@ services:
         norlab.dockerized-norlab.project: "${DN_PROJECT_GIT_NAME:?err}"
         norlab.tools.norlab-shell-script-tools: "${N2ST_VERSION:?err}"
         norlab.tools.norlab-build-system: "${NBS_VERSION:?err}"
+    env_file:
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.dnp
+        required: true
+      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
+        required: false
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}
     pid: host
@@ -90,7 +99,7 @@ services:
   project-ci-tests:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.native"
+      dockerfile: ${DNP_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.native
       pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
@@ -100,8 +109,10 @@ services:
     # (Priority) ToDo: validate >> pull_policy: never
     pull_policy: never
     environment:
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # DN_HOST: 'linux/x86'
       PYTHONUNBUFFERED: 0 # Slightly faster
-      DN_ENTRYPOINT_TRACE_EXECUTION: true
+      DN_ENTRYPOINT_TRACE_EXECUTION: false
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: false
@@ -124,6 +135,15 @@ services:
       #   ToDo: assessment >> check if it would be a plus to refactor out RMW_IMPLEMENTATION DN wide
       #       Ref rosbag2 PR #656: QoS profiles recorded from Fast-DDS are unplayable in Cyclone (and vice-versa)
       #       https://github.com/ros2/rosbag2/issues/656
+    env_file:
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.dnp
+        required: true
+      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
+        required: false
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined
@@ -147,7 +167,7 @@ services:
   project-slurm:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.run-slurm"
+      dockerfile: ${DNP_ROOT:?err}/src/lib/core/docker/Dockerfile.run-slurm
       pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core

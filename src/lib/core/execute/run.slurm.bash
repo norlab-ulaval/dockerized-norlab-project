@@ -43,7 +43,8 @@ function show_help() {
 }
 
 function execute_on_exit() {
-  COMPOSE_PATH="${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration"
+#  COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+  COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
   THE_COMPOSE_FILE=docker-compose.project.run.slurm.yaml
   RUNNING_CONTAINER_IDS=$(docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" ps --quiet --all --orphans=false)
 
@@ -128,7 +129,7 @@ test -n "${SJOB_ID}" || { echo "$(basename $0) | Positional argument <job-name> 
 test -n "${PYTHON_ARG[0]}" || { echo "$(basename $0) | Positional argument <any-python-arg> is empty" ; exit 1 ; }
 
 # ....Set env variables (post cli).................................................................
-DN_PROJECT_CONFIG_DIR=".dockerized_norlab_project/configuration"
+DN_PROJECT_CONFIG_DIR="${DNP_ROOT:?err}/src/lib/core/docker"
 COMPOSE_FILE="docker-compose.project.run.slurm.yaml"
 COMPOSE_FILE_PATH=${DN_PROJECT_CONFIG_DIR}/${COMPOSE_FILE}
 

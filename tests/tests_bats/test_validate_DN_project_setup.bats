@@ -80,7 +80,7 @@ teardown() {
 # (!) Notes: the following tests assume `setup_host_for_this_super_project.bash` was already
 #  executed via `test_setup_host_for_this_dnp_user_project.bats`.
 
-@test "explicitly source $TESTED_FILE › expect pass" {
+@test "source $TESTED_FILE › expect pass" {
   assert_dir_exist "${DNP_MOCK_PROJECT_PATH}/.dockerized_norlab_project"
   assert_file_exist "${DNP_MOCK_PROJECT_PATH}/.dockerignore"
 

@@ -49,7 +49,7 @@ services:
       service: project-ci-tests
       file: docker-compose.project.build.native.yaml
     build:
-      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.multiarch"
+      dockerfile: "src/lib/core/docker/Dockerfile.ci-tests.multiarch"
       platforms:
         - "linux/arm64"
         - "linux/amd64"
@@ -61,7 +61,7 @@ services:
       service: project-ci-tests
       file: docker-compose.project.build.native.yaml
     build:
-      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile.ci-tests.multiarch"
+      dockerfile: "src/lib/core/docker/Dockerfile.ci-tests.multiarch"
       platforms:
         - "linux/arm64"
         - "linux/amd64"

@@ -42,7 +42,8 @@ function dnp::build_dn_project_services() {
   local BUILD_EXIT_CODE=()
   local SERVICES_NAMES=("none")
   local FORCE_PUSH_PROJECT_CORE=false
-  local COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+#  local COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+  local COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
   local THE_COMPOSE_FILE="docker-compose.project.build.native.yaml"
   local BUILD_DOCKER_FLAG=()
   local MSG_LINE_LEVEL=$MSG_LINE_CHAR_BUILDER_LVL1

@@ -46,6 +46,8 @@ setup_file() {
 
   export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/mock-user-super-project"
 
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash"
+
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
 #  \n...N2ST bats tests environment.................................................................
@@ -54,8 +56,8 @@ setup_file() {
 #  \033[0m"  >&3
 #
 #  echo -e "
-#  \n...DNP related environment varaibles...........................................................
-#  \n$(printenv | grep -e DNP_)
+#  \n...DN/DNP/SUPER related environment varaibles..................................................
+#  \n$( printenv | grep -e DN_ -e DNP_ -e SUPER_ )
 #  \n...............................................................................................
 #  \n" >&3
 
@@ -86,10 +88,19 @@ teardown() {
   assert_not_exist "${DN_PROJECT_GIT_NAME}"
   assert_not_exist "${DN_PROJECT_HUB}"
   assert_not_exist "${DNP_URL}"
+  assert_not_exist "${DN_PROJECT_USER}"
+  assert_not_exist "${HYDRA_FULL_ERROR}"
+  assert_not_exist "${MOCK_TEST_WAS_LOADED}"
 
   assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+    echo -e "
+  \n...DN/DNP/SUPER related environment varaibles..................................................
+  \n$( printenv | grep -e DN_ -e DNP_ -e SUPER_ )
+  \n...............................................................................................
+  \n"
 
   assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
@@ -98,7 +109,10 @@ teardown() {
   assert_equal "${DN_PROJECT_GIT_NAME}" "dockerized-norlab-project-mock"
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
+  assert_equal "${DN_PROJECT_USER}" 'root'
   assert_equal "${DNP_CONFIG_VERSION}" 1
+  assert_equal "${MOCK_TEST_WAS_LOADED}" 1
+  assert_equal "${HYDRA_FULL_ERROR}" 1
 
 
 }

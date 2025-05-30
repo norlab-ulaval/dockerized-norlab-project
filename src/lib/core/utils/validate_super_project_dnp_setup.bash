@@ -19,6 +19,7 @@ function dnp::validate_super_project_dnp_setup() {
   SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
 
   # ....Setup......................................................................................
+  source "${SCRIPT_PATH_PARENT}/import_dnp_lib.bash" || exit 1
   source "${SCRIPT_PATH_PARENT}/load_super_project_config.bash" || exit 1
 
   # ====Begin======================================================================================
@@ -76,7 +77,9 @@ Dockerized-NorLab-Porject require that the super project be under version contro
 
   test -d "project_requirements/" || exit 1
   test -d "project_entrypoints/" || exit 1
+  test -f ".env.dnp" || exit 1
   test -f ".env" || exit 1
+  test -f ".env.local" || exit 1
   test -f "Dockerfile" || exit 1
 
   test -d "project_entrypoints/project-ci-tests/" || exit 1
