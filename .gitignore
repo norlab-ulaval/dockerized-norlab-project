@@ -2,10 +2,10 @@
 # ....Dockerized-NorLab-Project related............................................................
 **/.dockerized_norlab_project/dn_container_env_variable/
 
-**/external_data/
-!**/external_data/README.md
-**/artifact/
-!**/artifact/optuna_storage/README.md
+#**/external_data/
+#!**/external_data/README.md
+#**/artifact/
+#!**/artifact/optuna_storage/README.md
 
 **/slurm_jobs_logs/*.log
 **/slurm_jobs/*.out
