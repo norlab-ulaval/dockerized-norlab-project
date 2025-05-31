@@ -5,6 +5,7 @@
 **/.dockerized_norlab_project/configuration/.env.local
 
 **/external_data/
+!**/external_data/README.md
 **/artifact/
 !**/artifact/optuna_storage/README.md
 
