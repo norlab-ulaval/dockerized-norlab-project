@@ -21,7 +21,7 @@ docker run \
   -e QT_X11_NO_MITSHM=1 \
   -e XAUTHORITY=/tmp/.docker.xauth \
   -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
-  -e CYCLONEDDS_URI="<CycloneDDS><Domain><General><NetworkInterface>${DN_DDS_NETWORK_INTERFACE:-eth0}</></></></>" \
+  -e CYCLONEDDS_URI="<CycloneDDS><Domain><General><NetworkInterface>${DDS_NETWORK_INTERFACE:-eth0}</></></></>" \
   -v /etc/localtime:/etc/localtime:ro \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   -v /tmp/.docker.xauth:/tmp/.docker.xauth:rw \

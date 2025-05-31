@@ -13,11 +13,6 @@
 # =================================================================================================
 set -e
 
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
-MSG_DIMMED_FORMAT="\033[1;2m"
-MSG_EMPH_FORMAT="\033[1;97m"
-
 # ====DN-project internal logic====================================================================
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
   n2st::print_msg "Execute ${BASH_SOURCE[0]}"
@@ -36,7 +31,7 @@ echo -e "Project ${DN_PROJECT_GIT_NAME:?err} specific in-container available ali
 ${MSG_END_FORMAT}"
 
 # ....Sanity check.................................................................................
-test -n "$(pgrep -x 'sshd')" || echo -e "${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} ssh daemon is not running!" 1>&2
+test -n "$(pgrep -x 'sshd')" || n2st::print_msg_warning "ssh daemon is not running!" 1>&2
 
 # ....Remove byte-compiled files that could mess with tools on context/environment change..........
 pyclean "${DN_PROJECT_PATH}"
@@ -52,4 +47,3 @@ echo -e "Project ${DN_PROJECT_GIT_NAME:?err} specific information: ${MSG_DIMMED_
   && pip --disable-pip-version-check list --exclude hydra-optuna-sweeper | grep -i -e optuna | sed "s;^optuna;${SP}optuna;"
 )
 ${MSG_END_FORMAT}"
-

@@ -19,6 +19,9 @@ FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS norlab-teamcity-cicd-setup
 ARG IS_TEAMCITY_RUN
 ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 
+ENV DN_PROJECT_SERVICE=project-ci-tests
+ENV DN_PROJECT_SERVICE_DIR=/dockerized-norlab/project/${DN_PROJECT_SERVICE}
+
 SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -43,7 +46,9 @@ RUN <<EOF
     echo "backend : Agg" >> /etc/matplotlibrc
 EOF
 
-WORKDIR /project-ci-tests
+# ....DN and DN-project entrypoints and utilities................................................
+WORKDIR ${DN_PROJECT_SERVICE_DIR}
+COPY --chown=${DN_PROJECT_USER} --from=context-dnp-lib-container-tools ${DN_PROJECT_SERVICE}/dn_entrypoint.ci_test.bash ./
 COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests .
 RUN chmod +x ./dn_entrypoint.ci_test.bash
 
@@ -64,7 +69,7 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 COPY --chown=${DN_PROJECT_USER} . ${DN_PROJECT_PATH:?err}/
 
 # Note: Run tests in docker build stage to assess multi-architecture related potential problem.
-WORKDIR /project-ci-tests
+WORKDIR ${DN_PROJECT_SERVICE_DIR}
 RUN ./dn_entrypoint.ci_test.bash
 
 ENTRYPOINT [ ]

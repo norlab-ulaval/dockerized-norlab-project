@@ -37,9 +37,9 @@ ENV PYTHONPATH="${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PAT
 
 # ====Copy init and setup files====================================================================
 COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
-COPY --from=context-dnp-container-tools ./dn_project_core_setup.bash /dn_project_core_setup.bash
-COPY --from=context-dnp-container-tools ./dn_project_wide_install_patch.bash /dn_project_wide_install_patch.bash
-COPY --from=context-dnp-container-tools ./dn_architecture_aware_build_ros.bash /dn_architecture_aware_build_ros.bash
+COPY --from=context-dnp-lib-container-tools ./dn_project_core_setup.bash /dn_project_core_setup.bash
+COPY --from=context-dnp-lib-container-tools ./dn_project_wide_install_patch.bash /dn_project_wide_install_patch.bash
+COPY --from=context-dnp-lib-container-tools ./dn_architecture_aware_build_ros.bash /dn_architecture_aware_build_ros.bash
 COPY .dockerized_norlab_project/configuration/project_requirements/python.requirements.txt /python.requirements.txt
 COPY .dockerized_norlab_project/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
 COPY .dockerized_norlab_project/configuration/project_entrypoints /project_entrypoints
@@ -59,6 +59,7 @@ ENV XDG_RUNTIME_DIR='/tmp/runtime-root'
 FROM init-and-setup AS user-project-custom-steps
 # USER NOTES: ADD YOUR CODE IN THIS STAGE
 # ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
 # Example
 RUN <<EOF
@@ -73,6 +74,7 @@ RUN <<EOF
     } || exit 1
 EOF
 
+# ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
 # ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
 # USER NOTES: ADD YOUR CODE BEFORE THIS LINE
 

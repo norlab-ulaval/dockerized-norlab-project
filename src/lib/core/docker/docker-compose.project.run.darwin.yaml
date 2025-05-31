@@ -15,15 +15,10 @@ services:
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: true
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      ROS_DOMAIN_ID: 1
       NVIDIA_VISIBLE_DEVICES: void
       NVIDIA_DRIVER_CAPABILITIES:
       DISPLAY: ${DN_DISPLAY:-${DISPLAY}}
       QT_X11_NO_MITSHM: 1
-      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      #   ToDo: assessment >> check if it would be a plus to refactor out RMW_IMPLEMENTATION DN wide
-      #       Ref rosbag2 PR #656: QoS profiles recorded from Fast-DDS are unplayable in Cyclone (and vice-versa)
-      #       https://github.com/ros2/rosbag2/issues/656
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw

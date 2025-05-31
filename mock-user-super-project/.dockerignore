@@ -13,8 +13,8 @@
 #
 # =================================================================================================
 
-/external_data/
-/artifact/
+**/external_data/
+**/artifact/
 
 **/slurm_jobs_logs/*.log
 **/slurm_jobs/*.out
@@ -55,9 +55,6 @@ visual/
 # ....Dockerized-NorLab............................................................................
 **/.dockerized_norlab_project/configuration/docker-compose*
 **/.dockerized_norlab_project/configuration/Dockerfile
-
-/src/lib/
-!/src/lib/core/docker/
 
 # ....General......................................................................................
 **/.DS_Store

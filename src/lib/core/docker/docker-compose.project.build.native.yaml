@@ -25,7 +25,7 @@ services:
       dockerfile: ".dockerized_norlab_project/configuration/Dockerfile"
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
-        context-dnp-container-tools: ${DNP_ROOT}/src/lib/core/docker/container-tools
+        context-dnp-lib-container-tools: ${DNP_ROOT}/src/lib/core/docker/container-tools
       args:
         BASE_IMAGE: ${DN_HUB:?err}/${DN_PROJECT_BASE_IMG:?err}
         BASE_IMAGE_TAG: ${DN_IMAGE_TAG:?err}
@@ -100,6 +100,9 @@ services:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
       dockerfile: ${DNP_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.native
+      additional_contexts:
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+        context-dnp-lib-container-tools: ${DNP_ROOT:?err}/src/lib/core/docker/container-tools
       pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
@@ -113,28 +116,17 @@ services:
       # DN_HOST: 'linux/x86'
       PYTHONUNBUFFERED: 0 # Slightly faster
       DN_ENTRYPOINT_TRACE_EXECUTION: false
-      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
+      # DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: false
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      ROS_DOMAIN_ID: 1
       NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
       NVIDIA_DRIVER_CAPABILITIES: all
     #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
-      # DISPLAY: ${DISPLAY}
       DISPLAY: "" # Keep unset
       QT_X11_NO_MITSHM: 1
       XAUTHORITY: /tmp/.docker.xauth
-      # (CRITICAL) ToDo: validate >> jetson-container set env var to rmw_cyclonedds_cpp
-      #      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-      # Fix for warning "ros2: using network interface eth0 (udp/169.254.205.89) selected arbitrarily from: eth0, wlan0, docker0"
-      # Solution ref: https://answers.ros.org/question/375360/multiple-network-interfaces-with-rmw_cyclonedds_cpp/
-      CYCLONEDDS_URI: "<CycloneDDS><Domain><General><NetworkInterface>${DN_DDS_NETWORK_INTERFACE:-eth0}</></></></>"
-      #   ToDo: assessment >> check if it would be a plus to refactor out RMW_IMPLEMENTATION DN wide
-      #       Ref rosbag2 PR #656: QoS profiles recorded from Fast-DDS are unplayable in Cyclone (and vice-versa)
-      #       https://github.com/ros2/rosbag2/issues/656
     env_file:
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.dnp
         required: true
@@ -168,6 +160,9 @@ services:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
       dockerfile: ${DNP_ROOT:?err}/src/lib/core/docker/Dockerfile.run-slurm
+      additional_contexts:
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+        context-dnp-lib-container-tools: ${DNP_ROOT:?err}/src/lib/core/docker/container-tools
       pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core

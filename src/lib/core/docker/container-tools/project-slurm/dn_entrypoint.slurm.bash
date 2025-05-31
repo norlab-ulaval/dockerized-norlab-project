@@ -8,12 +8,12 @@
 #   $ bash dn_entrypoint.python.bash [<any-python-arg>]
 #
 # Globals:
-#   Read 'DN_PROJECT_PATH'
+#   Read DN_PROJECT_PATH
+#   Read PYTHONPATH
 #
 # Notes:
 #   - This setup is required for Pycharm based project where the run configuration setup was set to
 #     add 'content root' and 'source root' to PYTHONPATH
-#   - entrypoint is used by Dockerfile.run-slurm
 #
 # =================================================================================================
 set -e
@@ -37,8 +37,39 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 # pycharm-debugger user path nightmare)
 pyclean "${DN_PROJECT_PATH}"
 
+# ....Load library.................................................................................
+source /import_dockerized_norlab_container_tools.bash
+n2st::set_which_python3_version && test -n "${PYTHON3_VERSION}" || exit 1
+if [[ -z "${PYTHON3_VERSION}" ]]; then
+  echo -e "[\033[1;31mERROR\033[0m] $0 | Script import_dockerized_norlab_container_tools.bash failled" 1>&2
+fi
+
+if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
+  n2st::print_msg "Execute $0"
+fi
+
+# ====DN-project user defined logic================================================================
+
+# ....Execute DN-project user callback.............................................................
+# Sanity check
+test -d "/project_entrypoints" || n2st::print_msg_error_and_exit "Dir /project_entrypoints is unreachable"
+test -d "/project_entrypoints/project-slurm" || n2st::print_msg_error_and_exit "Dir /project_entrypoints/project-slurm is unreachable"
+
+if [[ -f /project_entrypoints/dn_entrypoint.global.init.callback.bash ]]; then
+  source /project_entrypoints/dn_entrypoint.global.init.callback.bash || exit 1
+else
+  n2st::print_msg_warning "dn_entrypoint.global.init.callback.bash unavailable"
+fi
+
+if [[ -f /project_entrypoints/project-slurm/dn_entrypoint.init.callback.bash ]]; then
+  source /project_entrypoints/project-slurm/dn_entrypoint.init.callback.bash || exit 1
+else
+  n2st::print_msg_warning "project-slurm/dn_entrypoint.init.callback.bash unavailable"
+fi
+
 
 # ====Execute python command=======================================================================
+cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1
 
 # ....Release......................................................................................

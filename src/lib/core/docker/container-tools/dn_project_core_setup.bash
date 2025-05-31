@@ -19,6 +19,8 @@
 # =================================================================================================
 set -e
 pushd "$(pwd)" >/dev/null || exit 1
+MSG_ERROR_FORMAT="\033[1;31m"
+MSG_END_FORMAT="\033[0m"
 
 # (CRITICAL) ToDo: unit-test
 
@@ -67,18 +69,21 @@ function dnp::setup_dockerized_norlab_project() {
   #     contents in the image at build time to ensure portability.
   #
   cd /project_entrypoints || return 1
-  test -d project-ci-tests/ || exit 1
-  test -d project-ci-tests/test_jobs || exit 1
-  test -f project-ci-tests/dn_entrypoint.ci_test.bash || exit 1
-  test -d project-deploy/ || exit 1
-  test -f project-deploy/dn_entrypoint.attach.callback.bash || exit 1
-  test -f project-deploy/dn_entrypoint.init.callback.bash || exit 1
-  test -d project-develop/ || exit 1
-  test -f project-develop/dn_entrypoint.attach.callback.bash || exit 1
-  test -f project-develop/dn_entrypoint.init.callback.bash || exit 1
-  test -f dn_entrypoint.global.attach.callback.bash || exit 1
-  test -f dn_entrypoint.global.init.callback.bash || exit 1
-  test -f dn_entrypoint.python.bash || exit 1
+  {
+    test -d project-ci-tests/ && \
+    test -d project-ci-tests/test_jobs && \
+    test -f project-ci-tests/dn_entrypoint.init.callback.bash && \
+    test -d project-slurm/ && \
+    test -f project-slurm/dn_entrypoint.init.callback.bash && \
+    test -d project-deploy/ && \
+    test -f project-deploy/dn_entrypoint.attach.callback.bash && \
+    test -f project-deploy/dn_entrypoint.init.callback.bash && \
+    test -d project-develop/ && \
+    test -f project-develop/dn_entrypoint.attach.callback.bash && \
+    test -f project-develop/dn_entrypoint.init.callback.bash && \
+    test -f dn_entrypoint.global.attach.callback.bash && \
+    test -f dn_entrypoint.global.init.callback.bash ;
+  } || { echo -e "${MSG_ERROR_FORMAT}[DNP error] Missing super project configuration file or directory in .dockerized_norlab_project/configuration/${MSG_END_FORMAT}" && return 1 ; }
 
   for each_file in ./dn_entrypoint.*.bash; do
     chmod +x "${each_file}"
@@ -110,8 +115,6 @@ function dnp::setup_dockerized_norlab_project() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  MSG_ERROR_FORMAT="\033[1;31m"
-  MSG_END_FORMAT="\033[0m"
   echo -e "${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
