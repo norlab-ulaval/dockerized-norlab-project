@@ -36,23 +36,21 @@ ENV PATH="${DN_PROJECT_PATH}:${PATH}"
 ENV PYTHONPATH="${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data:${PYTHONPATH}"
 
 # ====Copy init and setup files====================================================================
-COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
-COPY --from=context-dnp-lib-container-tools ./dn_project_core_setup.bash /dn_project_core_setup.bash
-COPY --from=context-dnp-lib-container-tools ./dn_project_wide_install_patch.bash /dn_project_wide_install_patch.bash
-COPY --from=context-dnp-lib-container-tools ./dn_architecture_aware_build_ros.bash /dn_architecture_aware_build_ros.bash
 COPY .dockerized_norlab_project/configuration/project_requirements/python.requirements.txt /python.requirements.txt
 COPY .dockerized_norlab_project/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
 COPY .dockerized_norlab_project/configuration/project_entrypoints /project_entrypoints
+COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
+COPY --from=context-dnp-lib-container-tools . /dnp-lib-container-tools/
 
 RUN <<EOF
     source /dn_project_core_init.bash || exit 1
-    source /dn_project_core_setup.bash || exit 1
-    source /dn_project_wide_install_patch.bash || exit 1
-    rm -f /dn_project_core_setup.bash && rm -f /dn_project_core_init.bash
+    source /dnp-lib-container-tools/dn_project_core.setup.bash || exit 1
+    source /dnp-lib-container-tools/dn_project_core.build.patch.bash || exit 1
 EOF
 
+
 # ====Matplotlib related===========================================================================
-# See dn_project_core_setup.bash for details
+# See dn_project_core.setup.bash for details
 ENV XDG_RUNTIME_DIR='/tmp/runtime-root'
 
 # ====User project custom steps====================================================================
@@ -86,8 +84,11 @@ ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 
 RUN <<EOF
-    source /dn_architecture_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
-    rm -f /dn_architecture_aware_build_ros.bash
+    source /dnp-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
+    # Cleanup buidl script
+    rm -f /dn_project_core_init.bash
+    rm -f /dnp-lib-container-tools/dn_project_core.setup.bash
+    rm -f /dnp-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
 EOF
 CMD [ "bash" ]
 

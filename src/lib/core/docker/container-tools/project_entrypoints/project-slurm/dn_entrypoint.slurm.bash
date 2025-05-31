@@ -5,7 +5,7 @@
 #   - cleanup byte-compiled files to prevent execution bug
 #
 # Usage:
-#   $ bash dn_entrypoint.python.bash [<any-python-arg>]
+#   $ bash dn_entrypoint.slurm.bash [<any-python-arg>]
 #
 # Globals:
 #   Read DN_PROJECT_PATH

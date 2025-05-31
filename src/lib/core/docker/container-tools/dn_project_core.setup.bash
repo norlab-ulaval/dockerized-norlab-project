@@ -4,7 +4,7 @@
 # Is executed by '.dockerized_norlab_project/configuration/Dockerfile' in a DN project image
 #
 # Usage:
-#   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_core_setup.bash
+#   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_core.setup.bash
 #
 # Globals:
 #   Read DN_PROJECT_ALIAS_PREFIX

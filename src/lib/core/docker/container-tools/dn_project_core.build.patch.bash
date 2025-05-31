@@ -4,7 +4,7 @@
 # service variations: project-develop, project-deploy, project-ci-tests, project-slurm
 #
 # Usage:
-#   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_wide_install_patch.bash
+#   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_core.build.patch.bash
 #
 # Globals:
 #   Read ROS_DISTRO

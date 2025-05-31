@@ -10,7 +10,7 @@
 #   ARG TARGETPLATFORM
 #   ARG BUILDPLATFORM
 #   WORKDIR /dockerized-norlab/dockerized-norlab-images/container-tools/
-#   RUN source dn_architecture_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} <from-path>
+#   RUN source dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} <from-path>
 #
 # Positional argument:
 #   TARGETPLATFORM      The target platform env var generated build buildx
