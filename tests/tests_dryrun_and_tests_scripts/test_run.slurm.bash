@@ -1,10 +1,8 @@
 #!/bin/bash
 
 # ....Setup........................................................................................
-DNP_ROOT=$(git rev-parse --show-toplevel)
-DNP_LIB_EXEC_PATH="${DNP_ROOT}/src/lib/core/execute"
-SUPER_PROJECT_ROOT="${DNP_ROOT}/dockerized-norlab-project-mock"
-cd "$SUPER_PROJECT_ROOT" || exit 1
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
 
@@ -19,12 +17,12 @@ SJOB_ID="default"
 FLAGS+=("--skip-core-force-rebuild")
 HYDRA_FLAGS+=("--version")
 
-bash "${DNP_LIB_EXEC_PATH}"/run.slurm.bash "${SJOB_ID}" "${FLAGS[@]}" "${HYDRA_FLAGS[@]}"
+bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${FLAGS[@]}" "${HYDRA_FLAGS[@]}"
 EXIT_CODE=$?
 
 if [[ ${EXIT_CODE} != 0 ]]; then
   # Make sure there is no slurm container running
-  bash "${DNP_LIB_EXEC_PATH}"/run_kill.slurm.bash >/dev/null
+  bash "${DNP_LIB_EXEC_PATH:?err}"/run_kill.slurm.bash >/dev/null
   exit $EXIT_CODE
 fi
 

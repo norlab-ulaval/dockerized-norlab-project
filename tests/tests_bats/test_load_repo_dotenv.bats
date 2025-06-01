@@ -20,8 +20,7 @@
 #
 # =================================================================================================
 
-TESTED_FILE="import_dnp_lib.bash"
-TESTED_FILE_PATH="src/lib/core/utils"
+TESTED_FILE="load_repo_dotenv.bash"
 
 # ====Load ressources==============================================================================
 BATS_HELPER_PATH=/usr/lib/bats
@@ -44,8 +43,6 @@ fi
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
-
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
 #  \n...N2ST bats tests environment.................................................................
@@ -62,9 +59,9 @@ setup_file() {
 }
 
 # executed before each test
-setup() {
-  cd "${MOCK_PROJECT_PATH}" || exit 1
-}
+#setup() {
+#  cd "${MOCK_PROJECT_PATH}" || exit 1
+#}
 
 # ====Teardown=====================================================================================
 
@@ -80,37 +77,64 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-@test "dnp::import_lib_and_dependencies (explicitly source $TESTED_FILE) › expect pass" {
+@test "assess execute with \"source $TESTED_FILE\" › expect pass" {
+  assert_not_exist "${PROJECT_PROMPT_NAME}"
+  assert_not_exist "${PROJECT_PATH}"
+  assert_not_exist "${DNP_PROMPT_NAME}"
+  assert_not_exist "${DNP_GIT_REMOTE_URL}"
+  assert_not_exist "${DNP_SRC_NAME}"
   assert_not_exist "${N2ST_PATH}"
   assert_not_exist "${NBS_PATH}"
   assert_not_exist "${DNP_ROOT}"
+  assert_not_exist "${DNP_CONFIG_SCHEME_VERSION}"
+  assert_not_exist "${DNP_LIB_EXEC_PATH}"
+  assert_not_exist "${DNP_MOCK_SUPER_PROJECT_ROOT}"
 
-  assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}"
-
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-
-  assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
 
 #  printenv | grep -e DNP_ >&3
 
-  assert_not_empty "${DNP_ROOT}"
+  assert_not_empty "${PROJECT_PROMPT_NAME}"
+  assert_not_empty "${PROJECT_PATH}"
+  assert_not_empty "${DNP_PROMPT_NAME}"
+  assert_not_empty "${DNP_GIT_REMOTE_URL}"
+  assert_not_empty "${DNP_SRC_NAME}"
   assert_not_empty "${N2ST_PATH}"
   assert_not_empty "${NBS_PATH}"
+  assert_not_empty "${DNP_ROOT}"
+  assert_not_empty "${DNP_CONFIG_SCHEME_VERSION}"
+  assert_not_empty "${DNP_LIB_EXEC_PATH}"
+  assert_not_empty "${DNP_MOCK_SUPER_PROJECT_ROOT}"
 
-  run n2st::norlab_splash
-  assert_success
+  assert_equal "${PROJECT_PROMPT_NAME}" "DNP"
+  assert_equal "${DNP_PROMPT_NAME}" "DNP"
+  assert_equal "${PROJECT_PATH}" "${BATS_DOCKER_WORKDIR}"
+  assert_equal "${DNP_GIT_REMOTE_URL}" "https://github.com/norlab-ulaval/dockerized-norlab-project"
+  assert_equal "${DNP_SRC_NAME}" "dockerized-norlab-project"
+  assert_equal "${N2ST_PATH}" "${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
+  assert_equal "${NBS_PATH}" "${BATS_DOCKER_WORKDIR}/utilities/norlab-build-system"
+  assert_equal "${DNP_LIB_EXEC_PATH}" "${BATS_DOCKER_WORKDIR}/src/lib/core/execute"
+  assert_equal "${DNP_MOCK_SUPER_PROJECT_ROOT}" "${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
 
 }
 
-@test "assess execute with \"source $TESTED_FILE\"  › expect pass" {
-  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+@test "assess execute from arbitrary location with \"source $TESTED_FILE\"  › expect pass" {
+  cd  src
+  assert_equal "$(pwd)" "${BATS_DOCKER_WORKDIR}/src"
+  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
+  assert_equal "$(pwd)" "${BATS_DOCKER_WORKDIR}/src" # Validate that it returned to the original dir
+  assert_success
+}
+
+@test "assess execute feedback with \"source $TESTED_FILE\"  › expect pass" {
+  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
 
   assert_success
-  assert_output --regexp "[DNP done]".*"librairies loaded"
+  assert_output --regexp "[DNP]".*".env.dockerized-norlab-project loaded"
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
-  run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
 
   assert_failure
   assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"

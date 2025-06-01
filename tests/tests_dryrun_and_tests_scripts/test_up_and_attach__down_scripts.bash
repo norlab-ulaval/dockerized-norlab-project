@@ -1,25 +1,23 @@
 #!/bin/bash
 
 # ....Setup........................................................................................
-DNP_ROOT=$(git rev-parse --show-toplevel)
-DNP_LIB_EXEC_PATH="${DNP_ROOT}/src/lib/core/execute"
-SUPER_PROJECT_ROOT="${DNP_ROOT}/dockerized-norlab-project-mock"
-cd "$SUPER_PROJECT_ROOT" || exit 1
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-bash "${DNP_LIB_EXEC_PATH}"/build.develop.bash
+bash "${DNP_LIB_EXEC_PATH:?err}"/build.develop.bash
 EXIT_CODE=$?
 if [[ ${EXIT_CODE} != 0 ]]; then
   exit $EXIT_CODE
 fi
 
-bash "${DNP_LIB_EXEC_PATH}"/up_and_attach.bash --service project-develop -- tree -L 1
+bash "${DNP_LIB_EXEC_PATH:?err}"/up_and_attach.bash --service project-develop -- tree -L 1
 EXIT_CODE=$?
 if [[ ${EXIT_CODE} != 0 ]]; then
   exit $EXIT_CODE
 fi
 
-bash "${DNP_LIB_EXEC_PATH}"/down.bash
+bash "${DNP_LIB_EXEC_PATH:?err}"/down.bash
 EXIT_CODE=$?
 if [[ ${EXIT_CODE} != 0 ]]; then
   exit $EXIT_CODE

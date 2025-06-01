@@ -9,7 +9,7 @@ This approach maintains the current bash script structure but makes it accessibl
     - via symlink `/usr/local/bin/dnp` → `/path/to/dockerized-norlab-project/src/bin/dnp`;
     - via `~/.bashrc` ← `PATH=${PATH}:${DNP_PATH}:${NBS_PATH}:${N2ST_PATH}`.
   - Case 2 › manual load: 
-    - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project`.
+    - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
 - `python_dev_tools` package
   - rename to `dnp_dev_tools` 
   - move to `src/tools` (will go in repo `redleader962-research-codebase-tools`)
@@ -44,84 +44,117 @@ dockerized-norlab-project/ # (stand-alone version)
 ├── src/
 │   ├── bin/
 │   │   ├── dnp # symlink to /usr/local/bin/dnp
-│   │   └── dnp-completion.bash
-│   ├── lib/ 
-│   │   ├── commands/
-│   │   │   ├── version.bash
-│   │   │   ├── init.bash # project initialization
-│   │   │   ├── build.bash
-│   │   │   ├── up.bash
-│   │   │   ├── down.bash
-│   │   │   ├── run.bash
-│   │   │   ├── validate.bash
-│   │   │   └── ... (other command scripts)
-│   │   ├── core/
-│   │   │   ├── execute/
-│   │   │   │   ├── build.all.bash
-│   │   │   │   ├── build.all.multiarch.bash
-│   │   │   │   ├── build.all.multiarch.bash
-│   │   │   │   ├── build.ci_tests.bash
-│   │   │   │   ├── build.ci_tests.multiarch.bash
-│   │   │   │   ├── build.deploy.bash
-│   │   │   │   ├── build.develop.bash
-│   │   │   │   ├── down.bash
-│   │   │   │   ├── down.slurm.bash # <-- renamed from run_kill.slurm.bash
-│   │   │   │   ├── validate.all.bash # <-- renamed from dryrun_and_config_test.all.bash
-│   │   │   │   ├── validate.slurm.bash # <-- renamed from dryrun_and_config_test.slurm.bash
-│   │   │   │   ├── run.ci_tests.bash
-│   │   │   │   ├── run.slurm.bash
-│   │   │   │   ├── up_and_attach.bash
-│   │   │   │   └── ... (other execute scripts)
-│   │   │   ├── utils/
-│   │   │   │   ├── import_dnp_lib.bash
-│   │   │   │   ├── setup_host_for_this_super_project.bash
-│   │   │   │   ├── validate_super_project_dnp_setup.bash
-│   │   │   │   ├── execute_compose.bash
-│   │   │   │   └── dn_entrypoint.python.bash
-│   │   │   └── ... (other core scripts)
-│   │   └── docker/
-│   │       ├── .env # This is the docker compose environment varariable file specific to DNP
-│   │       ├── Dockerfile._project
-│   │       ├── Dockerfile._ci-tests.multiarch
-│   │       ├── Dockerfile._ci-tests.native
-│   │       ├── Dockerfile._run-slurm
-│   │       ├── docker-compose._project.build.multiarch.yaml
-│   │       ├── docker-compose._project.build.native.yaml
-│   │       ├── docker-compose._project.run.darwin.yaml
-│   │       ├── docker-compose._project.run.jetson.yaml
-│   │       ├── docker-compose._project.run.linux-x86.yaml
-│   │       └── docker-compose._project.run.slurm.yaml
-│   └── configuration_template/
-│       ├── .env # This is the user customizable environment var
-│       ├── project_entrypoints
-│       │   ├── dn_entrypoint.global.attach.callback.bash
-│       │   ├── dn_entrypoint.global.init.callback.bash
-│       │   ├── project-ci-tests
-│       │   ├── project-deploy
-│       │   └── project-develop
-│       ├── project_requirements
-│       │   ├── python.requirements.txt
-│       │   └── shell.custom_install.bash
-│       ├── Dockerfile.project
-│       ├── docker-compose.project.build.multiarch.yaml  
-│       ├── docker-compose.project.build.native.yaml  
-│       ├── docker-compose.project.run.darwin.yaml  
-│       ├── docker-compose.project.run.jetson.yaml  
-│       ├── docker-compose.project.run.linux-x86.yaml  
-│       └── docker-compose.project.run.slurm.yaml  
+│   │   └── dnp-completion.bash <- ice boxed for now 
+│   └── lib/ 
+│       ├── commands/
+│       │   ├── version.bash
+│       │   ├── init.bash # project initialization
+│       │   ├── build.bash
+│       │   ├── up.bash
+│       │   ├── down.bash
+│       │   ├── run.bash
+│       │   ├── validate.bash
+│       │   └── ... (other command scripts)
+│       ├── core
+│       │   ├── docker
+│       │   │   ├── .env.dnp-internal
+│       │   │   ├── Dockerfile.ci-tests.multiarch
+│       │   │   ├── Dockerfile.ci-tests.native
+│       │   │   ├── Dockerfile.run-slurm
+│       │   │   ├── container-tools
+│       │   │   │   ├── dn_project_core.build.aarch_aware_build_ros.bash
+│       │   │   │   ├── dn_project_core.build.patch.bash
+│       │   │   │   ├── dn_project_core.setup.bash
+│       │   │   │   └── project_entrypoints
+│       │   │   ├── docker-compose.project.build.multiarch.yaml
+│       │   │   ├── docker-compose.project.build.native.yaml
+│       │   │   ├── docker-compose.project.run.darwin.yaml
+│       │   │   ├── docker-compose.project.run.jetson.yaml
+│       │   │   ├── docker-compose.project.run.linux-x86.yaml
+│       │   │   └── docker-compose.project.run.slurm.yaml
+│       │   ├── execute
+│       │   │   ├── build.all.bash
+│       │   │   ├── build.all.multiarch.bash
+│       │   │   ├── build.ci_tests.bash
+│       │   │   ├── build.ci_tests.multiarch.bash
+│       │   │   ├── build.deploy.bash
+│       │   │   ├── build.develop.bash
+│       │   │   ├── cadence
+│       │   │   │   ├── project_run_slurm_docker_cmd.bash
+│       │   │   │   └── run_cadence.ci_test.bash
+│       │   │   ├── down.bash
+│       │   │   ├── validate.all.bash # <-- renamed from dryrun_and_config_test.all.bash
+│       │   │   ├── validate.slurm.bash # <-- renamed from dryrun_and_config_test.slurm.bash
+│       │   │   ├── run.ci_tests.bash
+│       │   │   ├── run.slurm.bash
+│       │   │   ├── down.slurm.bash # <-- renamed from run_kill.slurm.bash
+│       │   │   ├── up_and_attach.bash
+│       │   │   └── ... (other execute scripts)
+│       │   └── utils
+│       │       ├── execute_compose.bash
+│       │       ├── import_dnp_lib.bash
+│       │       ├── load_super_project_config.bash
+│       │       ├── setup_host_for_this_super_project.bash
+│       │       └── validate_super_project_dnp_setup.bash
+│       └── template/
+│           ├── .dockerized_norlab_project/
+│           │   ├── .env.dockerized-norlab-project-mock
+│           │   ├── README.md
+│           │   ├── configuration/
+│           │   │   ├── .env
+│           │   │   ├── .env.dnp
+│           │   │   ├── .env.local
+│           │   │   ├── Dockerfile
+│           │   │   ├── README.md
+│           │   │   ├── project_entrypoints/
+│           │   │   └── project_requirements/
+│           │   ├── dn_container_env_variable/
+│           │   └── slurm_jobs/
+│           ├── artifact/
+│           ├── external_data/
+│           ├── src
+│           │   ├── README.md
+│           │   ├── launcher/
+│           │   └── tools/
+│           ├── tests/ 
+│           ├── .dockerignore
+│           ├── .gitignore
+│           └── README.md  
 ├── tests/
-│   └── ... any N2ST bats tests 
-├── user_super_project_mock/
-│   └── ...
 ├── visual/
-├── utilities
-│   ├── @norlab-build-system
-│   └── @norlab-shell-script-tools
+├── utilities/
+│   ├── dockerized-norlab-project-mock/ <- git worktree https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git
+│   │   ├── .dockerized_norlab_project/
+│   │   │   ├── .env.dockerized-norlab-project-mock
+│   │   │   ├── README.md
+│   │   │   ├── configuration/
+│   │   │   │   ├── .env
+│   │   │   │   ├── .env.dnp
+│   │   │   │   ├── .env.local # Referenced by ignore files
+│   │   │   │   ├── Dockerfile
+│   │   │   │   ├── README.md
+│   │   │   │   ├── project_entrypoints/
+│   │   │   │   └── project_requirements/
+│   │   │   ├── dn_container_env_variable/
+│   │   │   └── slurm_jobs/
+│   │   ├── artifact/
+│   │   ├── external_data/
+│   │   ├── src
+│   │   │   ├── README.md
+│   │   │   ├── launcher/
+│   │   │   └── tools/
+│   │   ├── tests/
+│   │   ├── .dockerignore
+│   │   ├── .gitignore
+│   │   └── README.md
+│   ├── norlab-build-system/ <- git submodule https://github.com/norlab-ulaval/norlab-build-system.git
+│   └── norlab-shell-script-tools/ <- git submodule https://github.com/norlab-ulaval/norlab-shell-script-tools.git
 ├── install.bash
+├── load_repo_dotenv.bash
 ├── README.md
 ├── .dockerignore
 ├── .gitignore
-└── .env.dockerized-norlab-project ← declare DNP, N2ST and NBS path 
+└── .env.dockerized-norlab-project ← declare DNP_ROOT, DNP_MOCK_SUPER_PROJECT_ROOT, N2ST and NBS path 
 ```
 
 
@@ -182,34 +215,31 @@ The script will initialize the DNP user side resources.
 
 ```
 user-super-project/
-├── .dockerized_norlab_project  # DNP project user side specific configuration
+├── .dockerized_norlab_project/ # DNP project user side specific configuration
+│   ├── .env.dockerized-norlab-project-mock
 │   ├── README.md
 │   ├── configuration/
-│   │   ├── .env # This is the user-side customizable DNP environment variables
+│   │   ├── .env
+│   │   ├── .env.dnp
+│   │   ├── .env.local # Referenced by ignore files
+│   │   ├── Dockerfile
+│   │   ├── README.md
 │   │   ├── project_entrypoints/
-│   │   │   ├── dn_entrypoint.global.attach.callback.bash
-│   │   │   ├── dn_entrypoint.global.init.callback.bash
-│   │   │   ├── project-ci-tests/
-│   │   │   ├── project-deploy/
-│   │   │   └── project-develop/
-│   │   ├── project_requirements/
-│   │   │   ├── python.requirements.txt
-│   │   │   └── shell.custom_install.bash
-│   │   ├── Dockerfile.project
-│   │   ├── docker-compose.project.build.multiarch.yaml
-│   │   ├── docker-compose.project.build.native.yaml
-│   │   ├── docker-compose.project.run.darwin.yaml
-│   │   ├── docker-compose.project.run.jetson.yaml
-│   │   ├── docker-compose.project.run.linux-x86.yaml
-│   │   └── docker-compose.project.run.slurm.yaml
-│   └── dn_container_env_variable/ # Refenced by ignore files
-│       └── .env.dn_expose_user_super_project # auto generated
-├── src/
-│   └── ...
+│   │   └── project_requirements/
+│   ├── dn_container_env_variable/ # Referenced by ignore files
+│   │   └── .env.dn_expose_user_super_project # auto generated
+│   └── slurm_jobs/
+├── artifact/
+├── external_data/
+├── src
+│   ├── README.md
+│   ├── launcher/
+│   └── tools/
 ├── tests/
-│   └── ...
 ├── ...
-└── .env.user-super-project # generated by N2ST
+├── .dockerignore
+├── .gitignore
+└── README.md
 ```
 
 

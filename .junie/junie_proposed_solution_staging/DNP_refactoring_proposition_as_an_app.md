@@ -186,7 +186,7 @@ This approach maintains the current bash script structure but makes it accessibl
       - via symlink `/usr/local/bin/dnp` → `/path/to/dockerized-norlab-project/src/bin/dnp`;
       - via `~/.bashrc` ← `PATH=${PATH}:${DNP_PATH}:${NBS_PATH}:${N2ST_PATH}`.
     - Case 2 › manual load: 
-      - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project`.
+      - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
 - [ ] `python_dev_tools` package
   - [ ] rename to `dnp_dev_tools` 
   - [ ] move to `src/tools` (will go in repo `redleader962-research-codebase-tools`)

@@ -44,7 +44,7 @@ fi
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
+  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash"
 
@@ -65,7 +65,7 @@ setup_file() {
 
 # executed before each test
 setup() {
-  cd "${DNP_MOCK_PROJECT_PATH}" || exit 1
+  cd "${MOCK_PROJECT_PATH}" || exit 1
 }
 
 # ====Teardown=====================================================================================
@@ -93,7 +93,7 @@ teardown() {
   assert_not_exist "${HYDRA_FULL_ERROR}"
   assert_not_exist "${MOCK_TEST_WAS_LOADED}"
 
-  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}"
+  assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
@@ -103,9 +103,9 @@ teardown() {
   \n...............................................................................................
   \n"
 
-  assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
+  assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
-  assert_equal "${SUPER_PROJECT_ROOT}" "${DNP_MOCK_PROJECT_PATH}"
+  assert_equal "${SUPER_PROJECT_ROOT}" "${MOCK_PROJECT_PATH}"
   assert_equal "${SUPER_PROJECT_REPO_NAME}" "dockerized-norlab-project-mock"
   assert_equal "${DN_PROJECT_GIT_NAME}" "dockerized-norlab-project-mock"
   assert_equal "${DN_PROJECT_GIT_REMOTE_URL}" "https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git"

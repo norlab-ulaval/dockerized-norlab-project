@@ -25,10 +25,7 @@ function n2st::run_n2st_testsing_tools(){
   TMP_CWD=$(pwd)
 
   # ....Load environment variables from file.......................................................
-  cd "$(git rev-parse --show-toplevel)" || exit 1
-  set -o allexport
-  source .env.dockerized-norlab-project
-  set +o allexport
+  source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
 
   # ....Execute N2ST run_bats_tests_in_docker.bash.................................................
   # shellcheck disable=SC2086

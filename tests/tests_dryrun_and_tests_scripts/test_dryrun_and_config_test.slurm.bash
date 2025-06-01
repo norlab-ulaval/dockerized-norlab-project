@@ -1,18 +1,15 @@
 #!/bin/bash
 
 # ....Setup........................................................................................
-DNP_ROOT=$(git rev-parse --show-toplevel)
-DNP_LIB_EXEC_PATH="${DNP_ROOT}/src/lib/core/execute"
-SUPER_PROJECT_ROOT="${DNP_ROOT}/dockerized-norlab-project-mock"
-cd "$SUPER_PROJECT_ROOT" || exit 1
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-export DNP_LIB_EXEC_PATH
-bash "${DNP_LIB_EXEC_PATH}"/dryrun_and_config_test.slurm.bash ".dockerized_norlab_project/slurm_jobs"
+bash "${DNP_LIB_EXEC_PATH:?err}"/dryrun_and_config_test.slurm.bash ".dockerized_norlab_project/slurm_jobs"
 EXIT_CODE=$?
 
 # ....Teardown.....................................................................................
-rm -rf "${DNP_ROOT}/dockerized-norlab-project-mock/artifact/mock_experiment_tmp/"
+rm -rf "${DNP_ROOT:?err}/dockerized-norlab-project-mock/artifact/mock_experiment_tmp/"
 rm -f "${DNP_ROOT}/dockerized-norlab-project-mock/artifact/optuna_storage/mock_experiment_tmp.db"
 
 exit $EXIT_CODE

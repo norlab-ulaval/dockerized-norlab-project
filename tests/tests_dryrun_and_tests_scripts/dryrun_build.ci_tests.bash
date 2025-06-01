@@ -1,11 +1,9 @@
 #!/bin/bash
 
 # ....Setup........................................................................................
-DNP_ROOT=$(git rev-parse --show-toplevel)
-DNP_LIB_EXEC_PATH="${DNP_ROOT}/src/lib/core/execute"
-SUPER_PROJECT_ROOT="${DNP_ROOT}/dockerized-norlab-project-mock"
-cd "$SUPER_PROJECT_ROOT" || exit 1
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-bash "${DNP_LIB_EXEC_PATH}"/build.ci_tests.bash -- --dry-run
+bash "${DNP_LIB_EXEC_PATH:?err}"/build.ci_tests.bash -- --dry-run
 exit $?

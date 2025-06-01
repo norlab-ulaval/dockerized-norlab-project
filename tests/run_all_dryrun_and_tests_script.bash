@@ -6,11 +6,8 @@
 #   $ bash run_all_dryrun_and_tests_script.bash
 #
 # =================================================================================================
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
-TEST_DIR="${SCRIPT_PATH_PARENT}/tests_dryrun_and_tests_scripts"
-
-source "$(git rev-parse --show-toplevel)/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+TEST_DIR="${DNP_ROOT}/tests/tests_dryrun_and_tests_scripts"
 
 set -e            # exit on error
 set -o nounset    # exit on unbound variable

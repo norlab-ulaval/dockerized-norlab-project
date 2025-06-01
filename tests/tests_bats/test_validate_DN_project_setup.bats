@@ -41,10 +41,10 @@ TESTED_FILE_PATH="src/lib/core/utils"
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
+  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
 
-#  tree -L 3 -a "${DNP_MOCK_PROJECT_PATH}" >&3
-#  cat "${DNP_MOCK_PROJECT_PATH}/.git" >&3
+#  tree -L 3 -a "${MOCK_PROJECT_PATH}" >&3
+#  cat "${MOCK_PROJECT_PATH}/.git" >&3
 
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
@@ -63,7 +63,7 @@ setup_file() {
 
 # executed before each test
 setup() {
-  cd "${DNP_MOCK_PROJECT_PATH}" || exit 1
+  cd "${MOCK_PROJECT_PATH}" || exit 1
 }
 
 # ====Teardown=====================================================================================
@@ -84,8 +84,8 @@ teardown() {
 #  executed via `test_setup_host_for_this_dnp_user_project.bats`.
 
 @test "source $TESTED_FILE › expect pass" {
-  assert_dir_exist "${DNP_MOCK_PROJECT_PATH}/.dockerized_norlab_project"
-  assert_file_exist "${DNP_MOCK_PROJECT_PATH}/.dockerignore"
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab_project"
+  assert_file_exist "${MOCK_PROJECT_PATH}/.dockerignore"
 
   run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   assert_success
@@ -93,8 +93,8 @@ teardown() {
 }
 
 @test "dnp::validate_super_project_dnp_setup (source at setup step) › expect pass" {
-  assert_dir_exist "${DNP_MOCK_PROJECT_PATH}/.dockerized_norlab_project"
-  assert_file_exist "${DNP_MOCK_PROJECT_PATH}/.dockerignore"
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab_project"
+  assert_file_exist "${MOCK_PROJECT_PATH}/.dockerignore"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run dnp::validate_super_project_dnp_setup
