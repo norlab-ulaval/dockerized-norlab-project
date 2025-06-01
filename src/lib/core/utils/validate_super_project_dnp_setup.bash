@@ -43,7 +43,7 @@ function dnp::validate_super_project_dnp_setup() {
 
   if [[ ! -d ".git" ]]; then
     echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The '.git' directory does not exist at super-project repository root as it should!
-Dockerized-NorLab-Porject require that the super project be under version controlle using git." 1>&2
+Dockerized-NorLab-Porject require that the super project be under version control using git." 1>&2
     exit 1
   fi
 

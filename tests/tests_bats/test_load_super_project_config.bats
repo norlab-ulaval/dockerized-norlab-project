@@ -44,7 +44,7 @@ fi
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/mock-user-super-project"
+  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash"
 
@@ -105,7 +105,7 @@ teardown() {
   assert_equal "$(pwd)" "${DNP_MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
   assert_equal "${SUPER_PROJECT_ROOT}" "${DNP_MOCK_PROJECT_PATH}"
-  assert_equal "${SUPER_PROJECT_REPO_NAME}" "mock-user-super-project"
+  assert_equal "${SUPER_PROJECT_REPO_NAME}" "dockerized-norlab-project-mock"
   assert_equal "${DN_PROJECT_GIT_NAME}" "dockerized-norlab-project-mock"
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
@@ -121,7 +121,7 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_success
-  assert_output --regexp "[DNP done]".*"mock-user-super-project project configurations loaded"
+  assert_output --regexp "[DNP done]".*"dockerized-norlab-project-mock project configurations loaded"
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {

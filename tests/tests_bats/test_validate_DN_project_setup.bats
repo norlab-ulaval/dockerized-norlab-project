@@ -41,7 +41,7 @@ TESTED_FILE_PATH="src/lib/core/utils"
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/mock-user-super-project"
+  export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
 
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
@@ -86,7 +86,7 @@ teardown() {
 
   run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   assert_success
-  assert_output --regexp "[DNP done].*Super project mock-user-super-project setup is OK"
+  assert_output --regexp "[DNP done].*Super project dockerized-norlab-project-mock setup is OK"
 }
 
 @test "dnp::validate_super_project_dnp_setup (source at setup step) › expect pass" {
@@ -96,6 +96,6 @@ teardown() {
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run dnp::validate_super_project_dnp_setup
   assert_success
-  assert_output --regexp "[DNP done].*Super project mock-user-super-project setup is OK"
+  assert_output --regexp "[DNP done].*Super project dockerized-norlab-project-mock setup is OK"
 }
 
