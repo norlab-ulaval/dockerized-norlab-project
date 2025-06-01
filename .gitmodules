@@ -5,6 +5,3 @@
 [submodule "utilities/norlab-build-system"]
 	path = utilities/norlab-build-system
 	url = https://github.com/norlab-ulaval/norlab-build-system.git
-[submodule "dockerized-norlab-project-mock"]
-	path = dockerized-norlab-project-mock
-	url = https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git
