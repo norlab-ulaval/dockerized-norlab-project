@@ -90,6 +90,7 @@ services:
         DN_PROJECT_DEPLOY_REPO_BRANCH: ${DN_PROJECT_DEPLOY_REPO_BRANCH:?err}
         BUILDKIT_CONTEXT_KEEP_GIT_DIR: 1
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+        DN_DEV_TESTS: false
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
     depends_on:

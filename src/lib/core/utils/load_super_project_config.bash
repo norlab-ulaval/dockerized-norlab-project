@@ -64,8 +64,7 @@ function dnp::load_super_project_configurations() {
   set -o allexport
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   source ".dockerized_norlab_project/configuration/.env.dnp" || return 1
-  cd "${DNP_ROOT:?err}" || return 1
-  source "src/lib/core/docker/.env.dnp-internal" || return 1
+  source "${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal" || return 1
   set +o allexport
 
   # ....Load run time DNP dotenv file for docker-compose...........................................

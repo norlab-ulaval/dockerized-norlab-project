@@ -84,21 +84,20 @@ if [[ ${PUSH_DEPLOY_IMAGE} == true ]]; then
   echo "Won't push the deploy image, use falg ${MSG_DIMMED_FORMAT}--push-deploy-image${MSG_END_FORMAT} to push it."
 fi
 
+# ....Build stage..................................................................................
 {
   BUILD_DOCKER_FLAG=("--service-names" "project-core,project-deploy")
   BUILD_DOCKER_FLAG+=("--force-push-project-core")
-  # BUILD_DOCKER_FLAG+=("--dry-run")
   dnp::build_dn_project_services "${BUILD_DOCKER_FLAG[@]}" "${REMAINING_ARGS[@]}"
   BUILD_EXIT_CODE=$?
-
 }
 
+# ....Push deploy stage............................................................................
 if [[ ${PUSH_DEPLOY_IMAGE} == true ]]; then
   source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
   {
     PUSH_DOCKER_FLAG=("--push" "project-deploy")
     # PUSH_DOCKER_FLAG=("--override-build-cmd" "push" "project-deploy")
-    # PUSH_DOCKER_FLAG+=("--dry-run")
     dnp::excute_compose_on_dn_project_image "${PUSH_DOCKER_FLAG[@]}"
     PUSH_EXIT_CODE=$?
   }

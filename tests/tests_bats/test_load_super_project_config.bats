@@ -86,6 +86,7 @@ teardown() {
   assert_not_exist "${SUPER_PROJECT_ROOT}"
   assert_not_exist "${SUPER_PROJECT_REPO_NAME}"
   assert_not_exist "${DN_PROJECT_GIT_NAME}"
+  assert_not_exist "${DN_PROJECT_GIT_REMOTE_URL}"
   assert_not_exist "${DN_PROJECT_HUB}"
   assert_not_exist "${DNP_URL}"
   assert_not_exist "${DN_PROJECT_USER}"
@@ -107,6 +108,7 @@ teardown() {
   assert_equal "${SUPER_PROJECT_ROOT}" "${DNP_MOCK_PROJECT_PATH}"
   assert_equal "${SUPER_PROJECT_REPO_NAME}" "dockerized-norlab-project-mock"
   assert_equal "${DN_PROJECT_GIT_NAME}" "dockerized-norlab-project-mock"
+  assert_equal "${DN_PROJECT_GIT_REMOTE_URL}" "https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git"
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
   assert_equal "${DN_PROJECT_USER}" 'root'
