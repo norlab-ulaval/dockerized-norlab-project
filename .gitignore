@@ -12,6 +12,8 @@
 **/slurm_jobs/*.out
 **/slurm_jobs/out/*.out
 
+/utilities/tmp/dockerized-norlab-project-mock
+
 
 # ====Generic gitignore template===================================================================
 

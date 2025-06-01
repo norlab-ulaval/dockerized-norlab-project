@@ -49,6 +49,7 @@ visual/
 /.idea/
 
 # ....Dockerized-NorLab (Prevent ignore)...........................................................
+!/utilities/tmp/dockerized-norlab-project-mock/
 !**/.dockerized_norlab_project/configuration/project_requirements
 !**/.dockerized_norlab_project/configuration/project_entrypoints
 

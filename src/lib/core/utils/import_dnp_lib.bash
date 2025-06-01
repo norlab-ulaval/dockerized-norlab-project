@@ -51,33 +51,36 @@ function dnp::import_lib_and_dependencies() {
   fi
 
   # ....Load DNP .env file for N2ST................................................................
-  cd "${TARGET_ROOT}" || return 1
-  set -o allexport
-  # shellcheck disable=SC1090
-  source ".env.dockerized-norlab-project" || return 1
-  set +o allexport
+#  cd "${TARGET_ROOT}" || return 1
+#  set -o allexport
+#  # shellcheck disable=SC1090
+#  source ".env.dockerized-norlab-project" || return 1
+#  set +o allexport
+  source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   # ....Load NBS...................................................................................
   cd "${NBS_PATH:?'Variable not set'}" || return 1
   source "import_norlab_build_system_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-  cd "${TARGET_ROOT:?err}" || return 1
-  set -o allexport
-  # shellcheck disable=SC1090
-  source ".env.dockerized-norlab-project" || return 1
-  set +o allexport
+#  cd "${TARGET_ROOT:?err}" || return 1
+#  set -o allexport
+#  # shellcheck disable=SC1090
+#  source ".env.dockerized-norlab-project" || return 1
+#  set +o allexport
+  source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   # ....Load N2ST..................................................................................
   cd "${N2ST_PATH:?'Variable not set'}" || return 1
   source "import_norlab_shell_script_tools_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-  # shellcheck disable=SC1090
-  cd "${TARGET_ROOT:?err}" || return 1
-  set -o allexport
-  source ".env.dockerized-norlab-project" || return 1
-  set +o allexport
+#  # shellcheck disable=SC1090
+#  cd "${TARGET_ROOT:?err}" || return 1
+#  set -o allexport
+#  source ".env.dockerized-norlab-project" || return 1
+#  set +o allexport
+  source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   #  ....Teardown...................................................................................
   echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} librairies loaded"

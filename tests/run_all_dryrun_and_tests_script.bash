@@ -7,7 +7,7 @@
 #
 # =================================================================================================
 source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
-TEST_DIR="${DNP_ROOT}/tests/tests_dryrun_and_tests_scripts"
+TEST_DIR="${DNP_ROOT:?err}/tests/tests_dryrun_and_tests_scripts"
 
 set -e            # exit on error
 set -o nounset    # exit on unbound variable

@@ -35,7 +35,7 @@ fi
 
 # ====Setup========================================================================================
 TESTED_FILE_PATH="src/lib/core/docker"
-TESTED_FILE_PATH2="dockerized-norlab-project-mock/.dockerized_norlab_project/configuration/"
+TESTED_FILE_PATH2="${DNP_MOCK_SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
