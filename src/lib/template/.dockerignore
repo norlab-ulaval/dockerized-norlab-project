@@ -1,0 +1,60 @@
+# =================================================================================================
+#
+#   Specify files/directories to be ignored by the Dockerfile COPY/ADD clause
+#   Note: content from "volumes" will still be accessible inside the container
+#
+#   Syntax:
+#       "*"     match any number of characters
+#       "?"     match one character
+#       "!"     prevent ignore
+#       "**"    match any number of directories
+#
+#   References: https://docs.docker.com/build/building/context/#dockerignore-files
+#
+# =================================================================================================
+
+**/external_data/
+**/artifact/
+
+**/slurm_jobs_logs/*.log
+**/slurm_jobs/*.out
+**/slurm_jobs/out/*.out
+
+# ....Repository related...........................................................................
+!version.txt
+.github
+.releaserc.json
+CHANGELOG.md
+commit_msg_reference.md
+visual/
+
+# ....Graphic/image related........................................................................
+**/*.svg
+**/*.svgz
+**/*.drawio
+**/drawio/
+
+# ....Text related.................................................................................
+**/!version.txt
+**/*.pdf
+
+# ....Python related...............................................................................
+**/.pytest_cache
+**/.benchmarks
+**/__pycache__
+**/*.pyc
+
+# ....Jetbrains....................................................................................
+/.run/
+/.idea/
+
+# ....Dockerized-NorLab (Prevent ignore)...........................................................
+!**/.dockerized_norlab_project/configuration/project_requirements
+!**/.dockerized_norlab_project/configuration/project_entrypoints
+
+# ....Dockerized-NorLab............................................................................
+**/.dockerized_norlab_project/configuration/docker-compose*
+**/.dockerized_norlab_project/configuration/Dockerfile
+
+# ....General......................................................................................
+**/.DS_Store

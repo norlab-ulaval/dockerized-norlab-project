@@ -1,0 +1,15 @@
+
+defaults:
+  - global_config
+  - _self_
+
+experiment_name: "mock_experiment_tmp"
+
+ms_model:
+  hid_size: 64
+  num_layers: 2
+
+run_pytorch_check: true
+
+simulation_mode:
+  rendering: "headless_fast"

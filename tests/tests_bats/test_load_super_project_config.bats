@@ -112,7 +112,7 @@ teardown() {
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
   assert_equal "${DN_PROJECT_USER}" 'root'
-  assert_equal "${DNP_CONFIG_VERSION}" 1
+  assert_equal "${DNP_CONFIG_SCHEME_VERSION}" 1
   assert_equal "${MOCK_TEST_WAS_LOADED}" 1
   assert_equal "${HYDRA_FULL_ERROR}" 1
 
