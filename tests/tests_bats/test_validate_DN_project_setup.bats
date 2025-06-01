@@ -43,6 +43,9 @@ setup_file() {
 
   export DNP_MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
 
+  tree -L 3 -a "${DNP_MOCK_PROJECT_PATH}" >&3
+  cat "${DNP_MOCK_PROJECT_PATH}/.git" >&3
+
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
 #  \n...N2ST bats tests environment.................................................................

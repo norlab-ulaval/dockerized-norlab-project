@@ -41,11 +41,17 @@ function dnp::validate_super_project_dnp_setup() {
     exit 1
   fi
 
-  if [[ ! -d ".git" ]]; then
+  if [[ $( git -C "${SUPER_PROJECT_ROOT}" rev-parse --is-inside-work-tree ) != true ]]; then
     echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The '.git' directory does not exist at super-project repository root as it should!
 Dockerized-NorLab-Porject require that the super project be under version control using git." 1>&2
     exit 1
+  else
+    git status
   fi
+
+#  echo "$( git rev-parse --show-toplevel )"
+#  echo "$( git remote get-url origin )"
+#  echo -e "\n${0}: breakpoint\n" && exit 1 # (CRITICAL) ToDo: on task end >> delete this line <--
 
   if [[ ! -d "tests/" ]]; then
     echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The 'tests' directory is not installed at super-project repository root as it should!" 1>&2
