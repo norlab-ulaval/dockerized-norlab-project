@@ -15,38 +15,31 @@
 # =================================================================================================
 PARAMS="$@"
 
+set -e            # exit on error
+set -o nounset    # exit on unbound variable
+set -o pipefail   # exit if errors within pipes
+
 if [[ -z $PARAMS ]]; then
   # Set to default bats tests directory if none specified
   PARAMS="tests/tests_bats/"
 fi
 
-function n2st::run_n2st_testsing_tools(){
-  local TMP_CWD
-  TMP_CWD=$(pwd)
+# ....Setup........................................................................................
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
 
-  # ....Load environment variables from file.......................................................
-  source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+function dnp::execute_on_exit() {
+  cd "${DNP_ROOT:?err}"
+  bash tests/teardown_mock.bash
+  exit ${EXIT_CODE:1}
+}
+trap dnp::execute_on_exit EXIT
 
-  # ....Load N2ST..................................................................................
-  cd "${N2ST_PATH:?'Variable not set'}" || return 1
-  source "import_norlab_shell_script_tools_lib.bash" || return 1
+# ....Execute N2ST run_bats_tests_in_docker.bash.................................................
+cd "${DNP_ROOT:?err}" || return 1
 
-  # ....Setup dockerized-norlab-project-mock.......................................................
-  bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
+bash "${N2ST_PATH:?err}/tests/bats_testing_tools/run_bats_tests_in_docker.bash" $PARAMS
+EXIT_CODE=$?
 
-  # ....Execute N2ST run_bats_tests_in_docker.bash.................................................
-  cd "${DNP_ROOT:?err}" || return 1
-
-  # shellcheck disable=SC2086
-  bash "${N2ST_PATH:?err}/tests/bats_testing_tools/run_bats_tests_in_docker.bash" $PARAMS
-
-  # ....Teardown dockerized-norlab-project-mock....................................................
-  bash "${DNP_ROOT:?err}/tests/teardown_mock.bash"
-
-  # ....Teardown...................................................................................
-  cd "$TMP_CWD" || return 1
-  return 0
-  }
-
-n2st::run_n2st_testsing_tools || exit 1
-
+# ....Teardown.....................................................................................
+# Handle by the trap command

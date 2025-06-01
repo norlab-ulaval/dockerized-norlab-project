@@ -44,7 +44,7 @@ fi
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
-  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
+  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash"
 

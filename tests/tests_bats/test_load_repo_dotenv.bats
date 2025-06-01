@@ -114,7 +114,7 @@ teardown() {
   assert_equal "${N2ST_PATH}" "${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
   assert_equal "${NBS_PATH}" "${BATS_DOCKER_WORKDIR}/utilities/norlab-build-system"
   assert_equal "${DNP_LIB_EXEC_PATH}" "${BATS_DOCKER_WORKDIR}/src/lib/core/execute"
-  assert_equal "${DNP_MOCK_SUPER_PROJECT_ROOT}" "${BATS_DOCKER_WORKDIR}/dockerized-norlab-project-mock"
+  assert_equal "${DNP_MOCK_SUPER_PROJECT_ROOT}" "${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
 }
 

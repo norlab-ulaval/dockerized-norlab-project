@@ -6,6 +6,10 @@
 #   $ source load_repo_dotenv.bash
 #
 # =================================================================================================
+MSG_ERROR_FORMAT="\033[1;31m"
+MSG_END_FORMAT="\033[0m"
+MSG_DONE_FORMAT="\033[1;32m"
+
 function dnp::load_repository_environment_variables() {
   # ....Setup......................................................................................
   local TMP_CWD
@@ -26,7 +30,7 @@ function dnp::load_repository_environment_variables() {
   source ".env.dockerized-norlab-project" || return 1
   set +o allexport
 
-  #  ....Teardown...................................................................................
+  # ....Teardown...................................................................................
   echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} .env.dockerized-norlab-project loaded"
 
   cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
@@ -36,8 +40,6 @@ function dnp::load_repository_environment_variables() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  MSG_ERROR_FORMAT="\033[1;31m"
-  MSG_END_FORMAT="\033[0m"
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else

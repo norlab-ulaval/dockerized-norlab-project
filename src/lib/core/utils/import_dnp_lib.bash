@@ -51,11 +51,6 @@ function dnp::import_lib_and_dependencies() {
   fi
 
   # ....Load DNP .env file for N2ST................................................................
-#  cd "${TARGET_ROOT}" || return 1
-#  set -o allexport
-#  # shellcheck disable=SC1090
-#  source ".env.dockerized-norlab-project" || return 1
-#  set +o allexport
   source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   # ....Load NBS...................................................................................
@@ -63,11 +58,6 @@ function dnp::import_lib_and_dependencies() {
   source "import_norlab_build_system_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-#  cd "${TARGET_ROOT:?err}" || return 1
-#  set -o allexport
-#  # shellcheck disable=SC1090
-#  source ".env.dockerized-norlab-project" || return 1
-#  set +o allexport
   source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   # ....Load N2ST..................................................................................
@@ -75,14 +65,9 @@ function dnp::import_lib_and_dependencies() {
   source "import_norlab_shell_script_tools_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-#  # shellcheck disable=SC1090
-#  cd "${TARGET_ROOT:?err}" || return 1
-#  set -o allexport
-#  source ".env.dockerized-norlab-project" || return 1
-#  set +o allexport
   source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
-  #  ....Teardown...................................................................................
+  # ....Teardown...................................................................................
   echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} librairies loaded"
   cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0

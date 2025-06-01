@@ -35,11 +35,12 @@ fi
 
 # ====Setup========================================================================================
 TESTED_FILE_PATH="src/lib/core/docker"
-TESTED_FILE_PATH2="${DNP_MOCK_SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/"
+TESTED_FILE_PATH2=".dockerized_norlab_project/configuration/"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
+  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
@@ -92,11 +93,11 @@ function helper::setup_dotenv_related_tests() {
   TESTED_FILE=$1
   TESTED_ENV_VAR=$2
   EXPECTED_VALUE=$3
-  cd "${TESTED_FILE_PATH2}" || exit 1
+  cd "${MOCK_PROJECT_PATH}/${TESTED_FILE_PATH2}" || exit 1
   echo -e "\n\n
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 [DN ERROR] -> dotenv file ${TESTED_FILE} misconfiguration error.
-Path: ${TESTED_FILE_PATH2}${TESTED_FILE}
+Path: ${MOCK_PROJECT_PATH}/${TESTED_FILE_PATH2}${TESTED_FILE}
 
 Actual:
   $( cat "${TESTED_FILE}" | grep -e "^${TESTED_ENV_VAR}" )
