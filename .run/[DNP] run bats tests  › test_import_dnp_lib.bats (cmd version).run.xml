@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="[DNP] run bats tests  › test_import_dnp_lib.bats (cmd version)" type="ShConfigurationType" folderName="[DNP] A | bats tests" focusToolWindowBeforeRun="true">
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; bash tests/run_bats_core_test_in_n2st.bash tests/tests_bats/test_import_dnp_lib.bats" />
+    <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tests/run_bats_core_test_in_n2st.bash" />
+    <option name="SCRIPT_OPTIONS" value="tests/tests_bats" />
+    <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+    <option name="INTERPRETER_PATH" value="/bin/zsh" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="EXECUTE_IN_TERMINAL" value="false" />
+    <option name="EXECUTE_SCRIPT_FILE" value="false" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

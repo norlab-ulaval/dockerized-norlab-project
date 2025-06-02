@@ -11,7 +11,10 @@
 #                            Default to ".dockerized_norlab_project/slurm_jobs"
 #
 # =================================================================================================
-clear
+if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  clear
+fi
+
 pushd "$(pwd)" >/dev/null || exit 1
 
 # ....Set env variables via positional argument....................................................

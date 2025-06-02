@@ -29,6 +29,20 @@ function dnp::import_lib_and_dependencies() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$(pwd)
+  local DEBUG
+
+  # ....cli..........................................................................................
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --debug)
+        DEBUG="true"
+        shift # Remove argument (--debug)
+        ;;
+      *) # Default case
+        break
+        ;;
+    esac
+  done
 
   # ....Find path to script........................................................................
   # Note: can handle both sourcing cases
@@ -68,7 +82,10 @@ function dnp::import_lib_and_dependencies() {
   source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   # ....Teardown...................................................................................
-  echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} librairies loaded"
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${DEBUG}" == "true" ]]; then
+    export DNP_DEBUG=true
+    echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} librairies loaded"
+  fi
   cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
@@ -80,5 +97,5 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
-  dnp::import_lib_and_dependencies || exit 1
+  dnp::import_lib_and_dependencies "$@" || exit 1
 fi

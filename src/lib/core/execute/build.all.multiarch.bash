@@ -94,7 +94,7 @@ function dnp::build_dn_project_multiarch_services() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  DNP_BUILD_ALL_ARGS+=("--file" "${THE_COMPOSE_FILE[@]}")
+  DNP_BUILD_ALL_ARGS+=("--file" "${THE_COMPOSE_FILE}")
   if [[ ${FORCE_PUSH_PROJECT_CORE} == true ]]; then
     DNP_BUILD_ALL_ARGS+=("--force-push-project-core")
   fi
@@ -123,7 +123,9 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
 
   # ....Execute....................................................................................
-  clear
+  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+    clear
+  fi
   n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::build_dn_project_multiarch_services "$@"

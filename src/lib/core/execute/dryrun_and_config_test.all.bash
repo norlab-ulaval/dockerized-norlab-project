@@ -7,7 +7,9 @@
 #   $ bash dryrun_and_config_test.all.bash
 #
 # =================================================================================================
-clear
+if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  clear
+fi
 pushd "$(pwd)" >/dev/null || exit 1
 
 

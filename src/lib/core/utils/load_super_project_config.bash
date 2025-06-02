@@ -38,6 +38,21 @@ function dnp::load_super_project_configurations() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$(pwd)
+  local DEBUG
+
+  # ....cli..........................................................................................
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --debug)
+        DEBUG="true"
+        shift # Remove argument (--debug)
+        ;;
+      *) # Default case
+        break
+        ;;
+    esac
+  done
+
 
   # ....Find super project path and name...........................................................
   dnp::find_dnp_super_project_dir || return 1
@@ -76,7 +91,10 @@ function dnp::load_super_project_configurations() {
 
 
   #  ....Teardown...................................................................................
-  echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${DEBUG}" == "true" ]]; then
+    export DNP_DEBUG=true
+    echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"
+  fi
 
   cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
@@ -130,6 +148,6 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
-  dnp::load_super_project_configurations || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} failled to load DNP user project configurations" 1>&2 && exit 1; }
+  dnp::load_super_project_configurations "$@" || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} failled to load DNP user project configurations" 1>&2 && exit 1; }
 fi
 

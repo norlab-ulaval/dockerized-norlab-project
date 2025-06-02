@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ....Setup........................................................................................
-source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash"
+source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash" || exit 1
 
 # ====begin========================================================================================
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1

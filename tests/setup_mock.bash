@@ -10,9 +10,6 @@
 #
 # =================================================================================================
 
-# ....Load environment variables from file.......................................................
-source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash" >/dev/null
-
 # ....Load N2ST..................................................................................
 cd "${N2ST_PATH:?'Variable not set'}" || exit 1
 source "import_norlab_shell_script_tools_lib.bash" || exit 1

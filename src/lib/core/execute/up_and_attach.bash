@@ -19,7 +19,9 @@ DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 EOF
 )
 
-clear
+if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  clear
+fi
 pushd "$(pwd)" >/dev/null || exit 1
 
 # (Priority) ToDo: unit-test for flag option

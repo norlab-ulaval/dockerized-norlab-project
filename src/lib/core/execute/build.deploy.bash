@@ -20,7 +20,9 @@ EOF
 
 # (Priority) ToDo: unit-test for flag option
 
-clear
+if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  clear
+fi
 pushd "$(pwd)" >/dev/null || exit 1
 
 # ToDo: move the help fct near the script/fct menu
@@ -74,7 +76,9 @@ source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
 source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
 
 # ....Execute....................................................................................
-clear
+if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  clear
+fi
 
 # ====Begin========================================================================================
 n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"

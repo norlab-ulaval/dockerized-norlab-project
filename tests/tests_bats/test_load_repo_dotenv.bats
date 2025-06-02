@@ -127,7 +127,7 @@ teardown() {
 }
 
 @test "assess execute feedback with \"source $TESTED_FILE\"  › expect pass" {
-  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
+  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}" --debug
 
   assert_success
   assert_output --regexp "[DNP]".*".env.dockerized-norlab-project loaded"

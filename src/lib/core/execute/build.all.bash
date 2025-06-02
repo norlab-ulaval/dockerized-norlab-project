@@ -147,9 +147,9 @@ function dnp::build_dn_project_services() {
       n2st::print_msg "Build faillure test summary"
       for idx in "${!BUILD_EXIT_CODE[@]}"; do
         if [[ ${BUILD_EXIT_CODE[idx]} != 0 ]]; then
-          echo -e "    ${MSG_ERROR_FORMAT}Service ${SERVICES_NAMES[idx]} completed build with error${MSG_END_FORMAT}"
+          echo -e "    ${MSG_ERROR_FORMAT}Service [$idx] ${SERVICES_NAMES[idx]} completed build with error${MSG_END_FORMAT}"
         else
-          echo -e "    ${MSG_DONE_FORMAT}Service ${SERVICES_NAMES[idx]} completed build${MSG_END_FORMAT}"
+          echo -e "    ${MSG_DONE_FORMAT}Service [$idx] ${SERVICES_NAMES[idx]} completed build${MSG_END_FORMAT}"
         fi
       done
     else
@@ -161,8 +161,9 @@ function dnp::build_dn_project_services() {
   else
 
     # Rebuild and push the core image prior to building any other images
-    for each in "${SERVICES_NAMES[@]}"; do
-      if [[ "${each}" == "project-core" ]]; then
+    for idx in "${!SERVICES_NAMES[@]}"; do
+      if [[ "${SERVICES_NAMES[idx]}" == "project-core" ]]; then
+        PROJECT_CORE_BUILD_IDX=$idx
         # Note:
         #   - THIS WORK ON MacOs with buildx builder "docker-container:local-builder-multiarch-virtual"
         #   - THIS WORK on TC server as its the same setup use in DN
@@ -171,15 +172,19 @@ function dnp::build_dn_project_services() {
         #       2. if not, consider building and pushing manualy each arm64 and amd64 images and
         #          then merge as in DN l4t base images
         dnp::excute_compose_on_dn_project_image --file "${THE_COMPOSE_FILE}" "${BUILD_DOCKER_FLAG[@]}" --push project-core
-        BUILD_EXIT_CODE=("$?")
+        PROJECT_CORE_BUILD_EXIT_CODE=$?
       fi
     done
 
+    # Reset exit code buffer
+    BUILD_EXIT_CODE=()
     # Execute docker cmd on all remaining service
     for each in "${SERVICES_NAMES[@]}"; do
       if [[ "${each}" != "project-core" ]]; then
         dnp::excute_compose_on_dn_project_image --file "${THE_COMPOSE_FILE}" "${BUILD_DOCKER_FLAG[@]}" "${each}"
         BUILD_EXIT_CODE+=("$?")
+      else
+        BUILD_EXIT_CODE+=("$PROJECT_CORE_BUILD_EXIT_CODE")
       fi
     done
 
@@ -188,9 +193,9 @@ function dnp::build_dn_project_services() {
     n2st::print_msg "Build summary"
     for idx in "${!BUILD_EXIT_CODE[@]}"; do
       if [[ ${BUILD_EXIT_CODE[idx]} != 0 ]]; then
-        echo -e "    ${MSG_ERROR_FORMAT}Service ${SERVICES_NAMES[idx]} completed build with error${MSG_END_FORMAT}"
+        echo -e "    ${MSG_ERROR_FORMAT}Service [$idx] ${SERVICES_NAMES[idx]} completed build with error${MSG_END_FORMAT}"
       else
-        echo -e "    ${MSG_DONE_FORMAT}Service ${SERVICES_NAMES[idx]} completed build${MSG_END_FORMAT}"
+        echo -e "    ${MSG_DONE_FORMAT}Service [$idx] ${SERVICES_NAMES[idx]} completed build${MSG_END_FORMAT}"
       fi
     done
 
@@ -224,7 +229,9 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
 
   # ....Execute....................................................................................
-  clear
+  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+    clear
+  fi
   n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::build_dn_project_services "$@"

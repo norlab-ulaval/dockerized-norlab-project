@@ -6,7 +6,9 @@
 #   $ bash run_kill.slurm.bash
 #
 # =================================================================================================
-clear
+if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  clear
+fi
 pushd "$(pwd)" >/dev/null || exit 1
 
 # ....Source project shell-scripts dependencies..................................................
@@ -27,7 +29,7 @@ n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"
 n2st::set_is_teamcity_run_environment_variable
 
 # ....Device specific config.......................................................................
-COMPOSE_PATH="${DNP_ROOT}/src/lib/core/docker"
+COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
 THE_COMPOSE_FILE=docker-compose.project.run.slurm.yaml
 
 CONTAINER_ID=$(docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" ps --quiet --all --orphans=false)
