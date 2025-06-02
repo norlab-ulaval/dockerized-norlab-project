@@ -55,8 +55,8 @@ dockerized-norlab-project/ # (stand-alone version)
 │       │   ├── run.bash
 │       │   ├── validate.bash
 │       │   └── ... (other command scripts)
-│       ├── core
-│       │   ├── docker
+│       ├── core/
+│       │   ├── docker/
 │       │   │   ├── .env.dnp-internal
 │       │   │   ├── Dockerfile.ci-tests.multiarch
 │       │   │   ├── Dockerfile.ci-tests.native
@@ -72,14 +72,14 @@ dockerized-norlab-project/ # (stand-alone version)
 │       │   │   ├── docker-compose.project.run.jetson.yaml
 │       │   │   ├── docker-compose.project.run.linux-x86.yaml
 │       │   │   └── docker-compose.project.run.slurm.yaml
-│       │   ├── execute
+│       │   ├── execute/
 │       │   │   ├── build.all.bash
 │       │   │   ├── build.all.multiarch.bash
 │       │   │   ├── build.ci_tests.bash
 │       │   │   ├── build.ci_tests.multiarch.bash
 │       │   │   ├── build.deploy.bash
 │       │   │   ├── build.develop.bash
-│       │   │   ├── cadence
+│       │   │   ├── cadence/
 │       │   │   │   ├── project_run_slurm_docker_cmd.bash
 │       │   │   │   └── run_cadence.ci_test.bash
 │       │   │   ├── down.bash
@@ -90,7 +90,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │       │   │   ├── down.slurm.bash # <-- renamed from run_kill.slurm.bash
 │       │   │   ├── up_and_attach.bash
 │       │   │   └── ... (other execute scripts)
-│       │   └── utils
+│       │   └── utils/
 │       │       ├── execute_compose.bash
 │       │       ├── import_dnp_lib.bash
 │       │       ├── load_super_project_config.bash
@@ -112,7 +112,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │           │   └── slurm_jobs/
 │           ├── artifact/
 │           ├── external_data/
-│           ├── src
+│           ├── src/
 │           │   ├── README.md
 │           │   ├── launcher/
 │           │   └── tools/
@@ -139,7 +139,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │   │   │   └── slurm_jobs/
 │   │   ├── artifact/
 │   │   ├── external_data/
-│   │   ├── src
+│   │   ├── src/
 │   │   │   ├── README.md
 │   │   │   ├── launcher/
 │   │   │   └── tools/
@@ -216,8 +216,6 @@ The script will initialize the DNP user side resources.
 ```
 user-super-project/
 ├── .dockerized_norlab_project/ # DNP project user side specific configuration
-│   ├── .env.dockerized-norlab-project-mock
-│   ├── README.md
 │   ├── configuration/
 │   │   ├── .env
 │   │   ├── .env.dnp
@@ -228,7 +226,10 @@ user-super-project/
 │   │   └── project_requirements/
 │   ├── dn_container_env_variable/ # Referenced by ignore files
 │   │   └── .env.dn_expose_user_super_project # auto generated
-│   └── slurm_jobs/
+│   ├── slurm_jobs/
+│   ├── visual/
+│   ├── README.md
+│   └── .env.dockerized-norlab-project-mock
 ├── artifact/
 ├── external_data/
 ├── src
@@ -236,7 +237,7 @@ user-super-project/
 │   ├── launcher/
 │   └── tools/
 ├── tests/
-├── ...
+...
 ├── .dockerignore
 ├── .gitignore
 └── README.md
