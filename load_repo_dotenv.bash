@@ -14,7 +14,7 @@ function dnp::load_repository_environment_variables() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$( pwd )
-  local DEBUG
+  local DEBUG="false"
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
