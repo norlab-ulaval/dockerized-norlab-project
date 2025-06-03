@@ -56,11 +56,14 @@ function dnp::import_lib_and_dependencies() {
   local max_iterations=10  # Safety limit to prevent infinite loops
   local iterations_count=0
 
-  while [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]] || [[ ! -f "${TARGET_ROOT}/.env.dockerized-norlab-project" ]]; do
+  while [[ ! -f "${TARGET_ROOT}/.env.dockerized-norlab-project" ]] || [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]]; do
     # Note: the .env.dockerized-norlab-project check is for case where the repo root was clone with a different name, e.g., in teamcity
     TARGET_ROOT="$( dirname "$TARGET_ROOT" )"
     if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
-      echo "TARGET_ROOT=$TARGET_ROOT"
+      echo "Level ${iterations_count} › TARGET_ROOT=$TARGET_ROOT"
+      echo
+      tree -L 1 -a "${TARGET_ROOT}"
+      echo
     fi
     ((iterations_count++))
     if [[ $iterations_count -ge $max_iterations ]]; then
