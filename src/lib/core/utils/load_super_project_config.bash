@@ -28,7 +28,7 @@ declare -x SUPER_PROJECT_REPO_NAME
 # Outputs:
 #   An error message to to stderr in case of failure
 # Globals:
-#   write SUPER_PROJECT_ROOT
+#   read/write SUPER_PROJECT_ROOT
 #   write SUPER_PROJECT_REPO_NAME
 # Returns:
 #   1 on faillure, 0 otherwise
@@ -103,7 +103,7 @@ function dnp::load_super_project_configurations() {
 
 # =================================================================================================
 # Function to find the DNP user side project path. It seek for the .dockerized_norlab_project
-# directory which sould be at the project root by moving up the directory tree from cwd.
+# directory which should be at the project root by moving up the directory tree from cwd.
 #
 # Usage:
 #     $ dnp::find_dnp_super_project_dir
