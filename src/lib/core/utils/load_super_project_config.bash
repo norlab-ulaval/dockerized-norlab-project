@@ -28,7 +28,7 @@ declare -x SUPER_PROJECT_REPO_NAME
 # Outputs:
 #   An error message to to stderr in case of failure
 # Globals:
-#   write SUPER_PROJECT_ROOT
+#   read/write SUPER_PROJECT_ROOT
 #   write SUPER_PROJECT_REPO_NAME
 # Returns:
 #   1 on faillure, 0 otherwise
@@ -38,13 +38,13 @@ function dnp::load_super_project_configurations() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$(pwd)
-  local DEBUG
+  local _debug
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
     case $1 in
       --debug)
-        DEBUG="true"
+        _debug="true"
         shift # Remove argument (--debug)
         ;;
       *) # Default case
@@ -91,7 +91,7 @@ function dnp::load_super_project_configurations() {
 
 
   #  ....Teardown...................................................................................
-  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${DEBUG}" == "true" ]]; then
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
     export DNP_DEBUG=true
     echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"
   fi
@@ -103,7 +103,7 @@ function dnp::load_super_project_configurations() {
 
 # =================================================================================================
 # Function to find the DNP user side project path. It seek for the .dockerized_norlab_project
-# directory which sould be at the project root by moving up the directory tree from cwd.
+# directory which should be at the project root by moving up the directory tree from cwd.
 #
 # Usage:
 #     $ dnp::find_dnp_super_project_dir

@@ -14,13 +14,13 @@ function dnp::load_repository_environment_variables() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$( pwd )
-  local DEBUG="false"
+  local _debug="false"
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
     case $1 in
       --debug)
-        DEBUG="true"
+        _debug="true"
         shift # Remove argument (--debug)
         ;;
       *) # Default case
@@ -44,12 +44,12 @@ function dnp::load_repository_environment_variables() {
   set +o allexport
 
   # ....Teardown...................................................................................
-  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${DEBUG}" == "true" ]]; then
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
     export DNP_DEBUG=true
     echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} .env.dockerized-norlab-project loaded"
     # Debug flags
     set -v # echo lines as they are read
-    set -x # show execution of [file]
+    export BUILDKIT_PROGRESS=plain
   fi
 
   cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
