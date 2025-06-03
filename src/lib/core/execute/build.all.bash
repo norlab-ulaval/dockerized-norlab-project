@@ -190,7 +190,7 @@ function dnp::build_dn_project_services() {
 
     # ....Show build summary.......................................................................
     n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_LEVEL}"
-    n2st::print_msg "Build summary"
+    n2st::print_msg "Build summary\n"
     for idx in "${!BUILD_EXIT_CODE[@]}"; do
       if [[ ${BUILD_EXIT_CODE[idx]} != 0 ]]; then
         echo -e "    ${MSG_ERROR_FORMAT}Service [$idx] ${SERVICES_NAMES[idx]} completed build with error${MSG_END_FORMAT}"

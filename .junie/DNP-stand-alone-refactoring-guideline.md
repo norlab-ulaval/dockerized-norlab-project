@@ -3,32 +3,20 @@
 Stand-alone version with a PATH-accessible bash script approach
 This approach maintains the current bash script structure but makes it accessible from anywhere via the system `PATH`.
 
-### Requirements:
+### General Requirements:
 - path management
   - Case 1 › system wide:
     - via symlink `/usr/local/bin/dnp` → `/path/to/dockerized-norlab-project/src/bin/dnp`;
     - via `~/.bashrc` ← `PATH=${PATH}:${DNP_PATH}:${NBS_PATH}:${N2ST_PATH}`.
   - Case 2 › manual load: 
     - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
-- `python_dev_tools` package
-  - rename to `dnp_dev_tools` 
-  - move to `src/tools` (will go in repo `redleader962-research-codebase-tools`)
-- a main entrypoint: `dnp` with command (`build`, `up`, `down`, `init`, `validate`, `version`, `run`) linked to corresponding bash script
-  - `dnp` need to executable 
-  - `dnp` need to be in `PATH`
-  - `dnp init` command to initialize a project, i.e., create the super project config files, (optional) register existing project
-  - `dnp update` command to check DNP version, update cloned repo and execute a per version update script to modify project DNP config
-  - a project dnp config discovery mechanism so that we can do `cd path/to/repo/ && dnp build` instead of `cd path/to/repo/ && dnp build path/to/repo/path/to/config`
-  - `dnp config` command to check DNP project config
-  - a DNP `installer.bash` with:
-    - path install option step: system wide, add to `~/.bashrc` or skip
-    - install *dockerized-norlab* requirement
-    - a `--yes` flag
-- `.env.super-project-name`
-  - `DNP_VERSION` env variable set in each dnp project to validate compatibility
-  - `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` as a fallback for handling local install case
-- a vagrant workflow for UX development
-- N2ST bats testing tools 
+- unit-tests and integration tests
+  - repository need to use N2ST bats tests tools for unit-test. See `run_bats_core_test_in_n2st.bash` and `tests/tests_bats` directory
+  - repository need to use NBS tests tools for integration-test. See `run_all_dryrun_and_tests_script.bash`
+  - all new script or functionality need to have (either or both):
+    - a corresponding bats unit-test `.bats` file in the `tests/tests_bats` directory 
+    - and/or a corresponding test/dryrun script in the `tests/tests_dryrun_and_tests_scripts` directory 
+- implement a vagrant workflow for UX development
 
 ### Implementation Plan
 
@@ -38,6 +26,9 @@ Implement the following repository directory structure:
 - create the required new directory
 - move the existing directory or file to their new proposed location
 - rename files if necesseray 
+- DNP main dotenv file `.env.dockerized-norlab-project`
+  - `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` as a fallback for handling local install case
+  - `DNP_CONFIG_SCHEME_VERSION` env variable set in each dnp project to validate compatibility
 
 ```
 dockerized-norlab-project/ # (stand-alone version)
@@ -160,6 +151,12 @@ dockerized-norlab-project/ # (stand-alone version)
 
 #### Step 2: Create a Main Entry Point Script
 
+##### Requirements:
+- a main entrypoint: `dnp` with command (`build`, `up`, `down`, `run`, `init`, `validate`, `config`, `version`, `super`, `update`) linked to corresponding bash script
+- `dnp` need to executable 
+- `dnp` need to be in `PATH`
+- a project dnp config discovery mechanism so that we can do `cd path/to/repo/ && dnp build` instead of `cd path/to/repo/ && dnp build path/to/repo/path/to/config`
+
 ```bash
 #!/bin/bash
 # bin/dnp
@@ -213,6 +210,14 @@ The script will initialize the DNP user side resources.
   4. create the `.env.user-super-project` file using N2ST script
   5. initialize any placeholder environment variable if needed
 
+##### Requirements:
+- Command `dnp init` to initialize a project:
+  - create `.env.<super-project-name>` dotenv file with environment variable `DNP_CONFIG_SCHEME_VERSION` env variable set in each dnp project to validate compatibility
+  - create the super project config directory and files:
+    - `.dockerized_norlab_project` and all subdirectory
+    - all super project repository required directory as tested by `validate_super_project_dnp_setup.bash`
+  - need to pass `validate_super_project_dnp_setup.bash` tests
+
 ```
 user-super-project/
 ├── .dockerized_norlab_project/ # DNP project user side specific configuration
@@ -246,12 +251,19 @@ user-super-project/
 
 #### Step 4: Implement `build`, `up`, `down`, `run` and `validate` Command Scripts
 
-Command script requirements: 
+##### Requirements:
 - Each command script would implement highlevel user logic
 - Should be intuitive to use
-- Act as an abstraction layer that hide the complexity of the `core/execute/` scripts by selecting the proper specialize script among that directory base on user input, e.g., 
-  - command `dnp build` would execute the `core/execute/build.all.bash` script;
-  - command `dnp build --multiach` would execute the `core/execute/build.all.multiarch.bash` script.
+- Commands:
+  - - Command `dnp [build|up|down|run]` act as an abstraction layer that hide the complexity of the `core/execute/` scripts by selecting the proper specialize script among that directory base on user input, e.g., 
+    - command `dnp build` would execute the `core/execute/build.all.bash` script;
+    - command `dnp build --multiach` would execute the `core/execute/build.all.multiarch.bash` script.
+  - Command `dnp config <argument>` to tests compose config with interpolated value and to show it in console
+    - one of those argument `[dev [darwin|linux|jetson]|deploy|ci-tests|slurm|release]` to select which compose file and service to to test and show
+    - under the hood `dnp config` would execute `execute import_dnp_lib.bash` and `load_super_project_config.bash` and then `docker-compose --file docker-compose.project.*.*.yaml config` command
+  - Command `dnp super validate` to test super project directory setup by executing `validate_super_project_dnp_setup.bash`
+  - Command `dnp super show` to print consolidated and interpolated dotenv config files to console
+
 
 ```bash
 #!/bin/bash
@@ -294,16 +306,23 @@ This script would simply read and print to console the current local repository 
 
 #### Step 6:  DNP installation Script
 
-Create an installation script that will will steup the user host computer for using `dockerized-norlab-project` as a stand-alone application: 
+Create an installation script that will will steup the user host computer for using `dockerized-norlab-project` as a stand-alone application.
+
+##### Requirements:
 - implement DNP path resolution install options:
-  - Option 1 (default):  
+  - Option 1: system wide (default):  
     - add a symlink from the `/path/to/cloned/dockerized-norlab-project/src/bin/dnp` to `/user/local/bin/dnp`
     - make `dockerized-norlab-project/src/bin/dnp` excutable
   - Option 2: flag `--skip-system-wide-symlink-install` to skip option 1
   - Option 3: flag `--add-dnp-path-to-bashrc` to add DNP cloned repository path (`DNP_PATH`) to `~/.bashrc`
 - implement an `--help` flag with proper documentation
+- a `--yes` flag to bypass user interactive installation
 - execute `setup_host_for_this_super_project.bash` to setup *dockerized-norlab-project* requirement on this host computer
-- execute `validate_super_project_dnp_setup.bash` to validate install
+- execute `validate_super_project_dnp_setup.bash` to validate install at the end
+
+
+#### (iceboxed for now) Step 7: Command `dnp update` 
+To check DNP version, update cloned repo and execute a per-version update script to modify project DNP config
 
 
 ### Usage Example
