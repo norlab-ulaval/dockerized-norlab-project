@@ -29,13 +29,13 @@ function dnp::import_lib_and_dependencies() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$(pwd)
-  local DEBUG
+  local _debug
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
     case $1 in
       --debug)
-        DEBUG="true"
+        _debug="true"
         shift # Remove argument (--debug)
         ;;
       *) # Default case
@@ -53,8 +53,20 @@ function dnp::import_lib_and_dependencies() {
   TARGET_ROOT="$(dirname "${SCRIPT_PATH}")"
 
   # ....Find path to target parent directory.......................................................
-  while [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]]; do
+  local max_iterations=10  # Safety limit to prevent infinite loops
+  local iterations_count=0
+
+  while [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]] || [[ ! -f "${TARGET_ROOT}/.env.dockerized-norlab-project" ]]; do
+    # Note: the .env.dockerized-norlab-project check is for case where the repo root was clone with a different name, e.g., in teamcity
     TARGET_ROOT="$( dirname "$TARGET_ROOT" )"
+    if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
+      echo "TARGET_ROOT=$TARGET_ROOT"
+    fi
+    ((iterations_count++))
+    if [[ $iterations_count -ge $max_iterations ]]; then
+      echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project is unreachable at '${TARGET_ROOT}'!" 1>&2
+      return 1
+    fi
   done
 
   # ....Pre-condition..............................................................................
@@ -82,7 +94,7 @@ function dnp::import_lib_and_dependencies() {
   source "${TARGET_ROOT}/load_repo_dotenv.bash"
 
   # ....Teardown...................................................................................
-  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${DEBUG}" == "true" ]]; then
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
     export DNP_DEBUG=true
     echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} librairies loaded"
   fi

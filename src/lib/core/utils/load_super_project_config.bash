@@ -38,13 +38,13 @@ function dnp::load_super_project_configurations() {
   # ....Setup......................................................................................
   local TMP_CWD
   TMP_CWD=$(pwd)
-  local DEBUG
+  local _debug
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
     case $1 in
       --debug)
-        DEBUG="true"
+        _debug="true"
         shift # Remove argument (--debug)
         ;;
       *) # Default case
@@ -91,7 +91,7 @@ function dnp::load_super_project_configurations() {
 
 
   #  ....Teardown...................................................................................
-  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${DEBUG}" == "true" ]]; then
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
     export DNP_DEBUG=true
     echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"
   fi
