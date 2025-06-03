@@ -46,8 +46,6 @@ setup_file() {
 
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash"
-
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
 #  \n...N2ST bats tests environment.................................................................
@@ -83,6 +81,10 @@ teardown() {
 # ====Test casses==================================================================================
 
 @test "explicitly source $TESTED_FILE › expect pass" {
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  assert_exist "${DNP_ROOT}"
+  assert_not_empty "${DNP_ROOT}"
+
   assert_not_exist "${SUPER_PROJECT_ROOT}"
   assert_not_exist "${SUPER_PROJECT_REPO_NAME}"
   assert_not_exist "${DN_PROJECT_GIT_NAME}"
@@ -97,7 +99,7 @@ teardown() {
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
-    echo -e "
+  echo -e "
   \n...DN/DNP/SUPER related environment varaibles..................................................
   \n$( printenv | grep -e DN_ -e DNP_ -e SUPER_ )
   \n...............................................................................................
@@ -120,6 +122,7 @@ teardown() {
 }
 
 @test "assess execute with \"source $TESTED_FILE\"  › expect pass" {
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success

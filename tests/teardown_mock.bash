@@ -8,11 +8,12 @@
 # Notes:
 #   See utilities/tmp/README.md for details on role of `dockerized-norlab-project-mock`
 #
+# Global:
+#   read DNP_ROOT
+#   read N2ST_PATH
+#
 # =================================================================================================
-
-# ....Load N2ST..................................................................................
-cd "${N2ST_PATH:?'Variable not set'}" || exit 1
-source "import_norlab_shell_script_tools_lib.bash" || exit 1
+pushd "$(pwd)" >/dev/null || exit 1
 
 function dnp::teardown_mock() {
   n2st::print_formated_script_header "teardown_mock.bash" "${MSG_LINE_CHAR_UTIL}"
@@ -41,7 +42,12 @@ function dnp::teardown_mock() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
+
+  cd "${N2ST_PATH:?'Variable not set'}" || exit 1
+  source "import_norlab_shell_script_tools_lib.bash" || exit 1
+
   dnp::teardown_mock
+
 else
   # This script is being sourced, ie: __name__="__source__"
   MSG_ERROR_FORMAT="\033[1;31m"
@@ -49,5 +55,8 @@ else
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must executed with bash! i.e.: $ bash $( basename "$0" )" 1>&2
   exit 1
 fi
+
+# ====Teardown=====================================================================================
+popd >/dev/null || exit 1
 
 

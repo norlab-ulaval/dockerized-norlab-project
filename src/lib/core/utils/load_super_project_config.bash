@@ -36,15 +36,15 @@ declare -x SUPER_PROJECT_REPO_NAME
 function dnp::load_super_project_configurations() {
 
   # ....Setup......................................................................................
-  local TMP_CWD
-  TMP_CWD=$(pwd)
-  local _debug
+  local tmp_cwd
+  tmp_cwd=$(pwd)
+  local debug_flag
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
     case $1 in
       --debug)
-        _debug="true"
+        debug_flag="true"
         shift # Remove argument (--debug)
         ;;
       *) # Default case
@@ -55,25 +55,39 @@ function dnp::load_super_project_configurations() {
 
 
   # ....Find super project path and name...........................................................
-  dnp::find_dnp_super_project_dir || return 1
+  dnp::cd_to_dnp_super_project_root || return 1
 
-  SUPER_PROJECT_REPO_NAME=$(basename "${SUPER_PROJECT_ROOT}")
-
-  export SUPER_PROJECT_ROOT
+  local super_project_git_remote_url
+  super_project_git_remote_url=$( cd "${SUPER_PROJECT_ROOT:?err}" && git remote get-url origin )
+  SUPER_PROJECT_REPO_NAME="$( basename "${super_project_git_remote_url}" .git )"
   export SUPER_PROJECT_REPO_NAME
 
+  local super_project_meta_dnp_dotenv=".env.${SUPER_PROJECT_REPO_NAME}"
+
   # ....Test extracted path........................................................................
-  local SUPER_PROJECT_META_DNP_DOTENV=".env.${SUPER_PROJECT_REPO_NAME}"
-  if [[ ! -f "${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} can't find '.dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV}' in ${SUPER_PROJECT_ROOT}!" 1>&2
+  # Note: We validate the repository expected root by matching DNP config and .git config.
+  #       Its a more robust alternative to checking the root dir name because the repository
+  #       root might be arbitrary different from the repository name for various reason,
+  #       e.g., teamcity CI src code pull, user cloned in a different dir, project renamed.
+
+  if [[ ! -f "${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/${super_project_meta_dnp_dotenv:?err}" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} can't find '.dockerized_norlab_project/${super_project_meta_dnp_dotenv}' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
   fi
 
-  # ....Load Dockerized-NorLab-Project .env file...................................................
+  local git_project_path
+  git_project_path="$( cd "${SUPER_PROJECT_ROOT}" && git rev-parse --show-toplevel )"
+  if [[ "${SUPER_PROJECT_ROOT:?err}" != "${git_project_path}" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} found project root '${SUPER_PROJECT_ROOT}' does not match the repository .git config '${git_project_path}'!" 1>&2
+    return 1
+  fi
+
+  # ....Load super project DNP meta config dotenv file.............................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
-  source ".dockerized_norlab_project/${SUPER_PROJECT_META_DNP_DOTENV}" || return 1
+  source ".dockerized_norlab_project/${super_project_meta_dnp_dotenv}" || return 1
   set +o allexport
+
 
   # ....Load build time DNP dotenv file for docker-compose.........................................
   set -o allexport
@@ -81,6 +95,12 @@ function dnp::load_super_project_configurations() {
   source ".dockerized_norlab_project/configuration/.env.dnp" || return 1
   source "${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal" || return 1
   set +o allexport
+
+  if [[ "${super_project_git_remote_url}" != "${DN_PROJECT_GIT_REMOTE_URL:?err}" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} super project ${SUPER_PROJECT_REPO_NAME} DNP configuration in .dockerized_norlab_project/configuration.env.dnp DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
+    return 1
+  fi
+
 
   # ....Load run time DNP dotenv file for docker-compose...........................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
@@ -91,12 +111,12 @@ function dnp::load_super_project_configurations() {
 
 
   #  ....Teardown...................................................................................
-  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
+  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
     export DNP_DEBUG=true
     echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"
   fi
 
-  cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
 
@@ -106,7 +126,7 @@ function dnp::load_super_project_configurations() {
 # directory which should be at the project root by moving up the directory tree from cwd.
 #
 # Usage:
-#     $ dnp::find_dnp_super_project_dir
+#     $ dnp::cd_to_dnp_super_project_root
 #
 # Arguments:
 #   none
@@ -114,12 +134,15 @@ function dnp::load_super_project_configurations() {
 #   An error message to to stderr in case of failure
 # Globals:
 #   write SUPER_PROJECT_ROOT
+#   read DNP_DEBUG (optional)
 # Returns:
 #   1 on faillure, 0 otherwise
 # =================================================================================================
-dnp::find_dnp_super_project_dir() {
+function dnp::cd_to_dnp_super_project_root() {
 
-    local current_dir=$(pwd)
+    local current_dir
+    current_dir=$(pwd)
+
     local max_iterations=10  # Safety limit to prevent infinite loops
     local iterations_count=0
 
@@ -127,8 +150,10 @@ dnp::find_dnp_super_project_dir() {
         # Check if .dockerized_norlab_project exists in the current directory
         if [[ -d "$current_dir/.dockerized_norlab_project" ]]; then
             echo "Found .dockerized_norlab_project in: $current_dir"
-            export SUPER_PROJECT_ROOT="$( pwd )"
+            export SUPER_PROJECT_ROOT="${current_dir}"
             return 0
+        elif [[ "${DNP_DEBUG}" == "true" ]]; then
+          echo "Level ${iterations_count} › current_dir=$current_dir"
         fi
 
         # Move up to parent directory

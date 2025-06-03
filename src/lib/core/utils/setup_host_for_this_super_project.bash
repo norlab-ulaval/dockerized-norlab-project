@@ -6,8 +6,14 @@
 # Usage:
 #   $ source setup_host_for_this_super_project.bash
 #
+# Global:
+#  read SUPER_PROJECT_ROOT
+#  read SUPER_PROJECT_REPO_NAME
+#  read DN_PROJECT_ALIAS_PREFIX
+#  read PATH
+#  read LD_LIBRARY_PATH
+#
 # =================================================================================================
-pushd "$(pwd)" >/dev/null || exit 1
 
 # (Priority) ToDo: Make the script multi-arch and multi-os by calling specialize version
 # see:
@@ -16,18 +22,21 @@ pushd "$(pwd)" >/dev/null || exit 1
 # - https://github.com/norlab-ulaval/dockerized-norlab/blob/8975e05e69ddc57cb858a3413ea7c98920f5422b/jetson_xavier_install.bash
 
 function dnp::setup_host_for_this_super_project() {
+  # ....Setup......................................................................................
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
   # ....Find path to script........................................................................
   # Note: can handle both sourcing cases
   #   i.e. from within a script or from an interactive terminal session
-  local SCRIPT_PATH
-  local SCRIPT_PATH_PARENT
-  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+  local script_path
+  local script_path_parent
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
 
   # ....Source project shell-scripts dependencies..................................................
-  source "${SCRIPT_PATH_PARENT}/import_dnp_lib.bash" || exit 1
-  source "${SCRIPT_PATH_PARENT}/load_super_project_config.bash" || exit 1
+  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
   echo -e "${MSG_DONE} The '$(basename "${SUPER_PROJECT_ROOT}")' dir is reachable. Ready to install alias"
@@ -112,6 +121,10 @@ function dnp::setup_host_for_this_super_project() {
     New env variable
       - ${DN_PROJECT_ALIAS_PREFIX}_DIR_PATH
   "
+
+  #  ....Teardown...................................................................................
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
+  return 0
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -123,8 +136,5 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
-  dnp::setup_host_for_this_super_project
+  dnp::setup_host_for_this_super_project || exit 1
 fi
-
-# ====Teardown=====================================================================================
-popd >/dev/null || exit 1

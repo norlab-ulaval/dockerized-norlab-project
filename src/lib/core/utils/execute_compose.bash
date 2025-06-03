@@ -38,22 +38,22 @@ EOF
 
 # ....Functions....................................................................................
 function dnp::excute_compose_on_dn_project_image() {
-  local TMP_CWD
-  TMP_CWD=$(pwd)
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
   # ....Set env variables (pre cli)................................................................
-  local REMAINING_ARGS=()
-  local DOCKER_COMMAND_W_FLAGS=()
-#  local COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
-  local COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
-  local THE_COMPOSE_FILE="docker-compose.project.build.native.yaml"
-  local MULTIARCH=false
-  local LOCAL_BUILDX_BUILDER_NAME="local-builder-multiarch-virtual"
+  local remaining_args=()
+  local docker_command_w_flags=()
+#  local compose_path="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+  local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  local the_compose_file="docker-compose.project.build.native.yaml"
+  local multiarch=false
+  local local_buildx_builder_name="local-builder-multiarch-virtual"
 
-  # Note: The env var DOCKER_CMD is required for using the script with 'push' or 'config' docker cmd
-  local DOCKER_CMD=build
+  # Note: The env var docker_cmd is required for using the script with 'push' or 'config' docker cmd
+  local docker_cmd=build
 
   # ....cli........................................................................................
   function show_help() {
@@ -71,26 +71,26 @@ function dnp::excute_compose_on_dn_project_image() {
 
     case $1 in
     --override-build-cmd)
-      DOCKER_CMD="${2}"
+      docker_cmd="${2}"
       shift # Remove argument (--override-build-cmd)
       shift # Remove argument value
       ;;
     -f | --file)
-      THE_COMPOSE_FILE="${2}"
+      the_compose_file="${2}"
       shift # Remove argument (-f | --file)
       shift # Remove argument value
       ;;
     --compose-path)
-      COMPOSE_PATH="${2}"
+      compose_path="${2}"
       shift # Remove argument (--compose-path)
       shift # Remove argument value
       ;;
     --multiarch)
-      MULTIARCH=true
+      multiarch=true
       shift # Remove argument (--multiarch)
       ;;
     --buildx-builder-name)
-      LOCAL_BUILDX_BUILDER_NAME="${2}"
+      local_buildx_builder_name="${2}"
       shift # Remove argument (--buildx-builder-name)
       shift # Remove argument value
       ;;
@@ -101,11 +101,11 @@ function dnp::excute_compose_on_dn_project_image() {
       ;;
     --) # no more option
       shift
-      REMAINING_ARGS=("$@")
+      remaining_args=("$@")
       break
       ;;
     *) # Default case
-      REMAINING_ARGS=("$@")
+      remaining_args=("$@")
       break
       ;;
     esac
@@ -113,7 +113,7 @@ function dnp::excute_compose_on_dn_project_image() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  DOCKER_COMMAND_W_FLAGS=("${DOCKER_CMD}" "${REMAINING_ARGS[@]}")
+  docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
 
   # ====Begin======================================================================================
   n2st::print_formated_script_header "execute_compose.bash ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
@@ -122,10 +122,10 @@ function dnp::excute_compose_on_dn_project_image() {
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
   n2st::set_which_architecture_and_os
   n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"
-  n2st::print_msg "MULTIARCH: ${MULTIARCH}"
+  n2st::print_msg "multiarch: ${multiarch}"
 
   if [[ -z ${BUILDX_BUILDER} ]]; then
-    if [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${MULTIARCH} == false ]]; then
+    if [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == false ]]; then
       # Note: Default to default buildx builder (ie native host architecture) so that the build img
       # be available in the local image store and that run executed via `up_and_attach.bash` doesn't
       # require pulling built img from dockerhub.
@@ -134,20 +134,20 @@ function dnp::excute_compose_on_dn_project_image() {
       elif [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
         export BUILDX_BUILDER=default
       fi
-    elif [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${MULTIARCH} == true ]]; then
+    elif [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == true ]]; then
       CURRENT_BUILDX_BUILDER=$(docker buildx inspect | grep -i -m 1 -e Name: | sed "s/^Name:[[:space:]]*//")
       n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
       BUILDER_PLATFORM=$(docker buildx inspect --builder "${CURRENT_BUILDX_BUILDER}" | grep -i -e Platforms)
       if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64*".* ]] && [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64*".* ]]; then
-        n2st::print_msg_warning "Exporting ${MSG_DIMMED_FORMAT}BUILDX_BUILDER=${LOCAL_BUILDX_BUILDER_NAME:?err}${MSG_END_FORMAT} for $(basename $0) execution."
+        n2st::print_msg_warning "Exporting ${MSG_DIMMED_FORMAT}BUILDX_BUILDER=${local_buildx_builder_name:?err}${MSG_END_FORMAT} for $(basename $0) execution."
         # Set builder for local execution
-        export BUILDX_BUILDER="${LOCAL_BUILDX_BUILDER_NAME}"
+        export BUILDX_BUILDER="${local_buildx_builder_name}"
         # ToDo: logic to warn and provide instructions to user if the builder does not exist and need to be setup.
       fi
-    elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${MULTIARCH} == false ]]; then
+    elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == false ]]; then
       # Case TC native-architecture: Run build on native single arch builder. Required for build.all.bash
       export BUILDX_BUILDER=default
-    elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${MULTIARCH} == true ]]; then
+    elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == true ]]; then
       # Case TC multi-architecture: Run build on muti-arch builder. Required for build.all.multiarch.bash
       # Pass as TC is responsible for setting the buildx builder
       :
@@ -158,27 +158,27 @@ function dnp::excute_compose_on_dn_project_image() {
   n2st::print_msg "BUILDX_BUILDER=${BUILDX_BUILDER}"
 
   # ....Execute....................................................................................
-  n2st::teamcity_service_msg_blockOpened "Execute docker compose with argument ${DOCKER_COMMAND_W_FLAGS[*]}"
-  DOCKER_CMD_STR="${MSG_DIMMED_FORMAT}docker compose --file ${COMPOSE_PATH}/${THE_COMPOSE_FILE} ${DOCKER_COMMAND_W_FLAGS[*]}${MSG_END_FORMAT}"
-  n2st::print_msg "Execute ${DOCKER_CMD_STR}\n"
+  n2st::teamcity_service_msg_blockOpened "Execute docker compose with argument ${docker_command_w_flags[*]}"
+  docker_cmd_str="${MSG_DIMMED_FORMAT}docker compose --file ${compose_path}/${the_compose_file} ${docker_command_w_flags[*]}${MSG_END_FORMAT}"
+  n2st::print_msg "Execute ${docker_cmd_str}\n"
 
   # Refactor using "n2st::show_and_execute_docker" (See ref NMO-575)
-  docker compose --file "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" "${DOCKER_COMMAND_W_FLAGS[@]}"
-  local DOCKER_EXIT_CODE=$?
+  docker compose --file "${compose_path}/${the_compose_file}" "${docker_command_w_flags[@]}"
+  local docker_exit_code=$?
   # Ref on docker exit codes: https://komodor.com/learn/exit-codes-in-containers-and-kubernetes-the-complete-guide/
 
   n2st::teamcity_service_msg_blockClosed
 
-  if [[ ${DOCKER_EXIT_CODE} == 0 ]]; then
-    n2st::print_msg_done "Completed ${DOCKER_CMD_STR} succesfuly 👍"
+  if [[ ${docker_exit_code} == 0 ]]; then
+    n2st::print_msg_done "Completed ${docker_cmd_str} succesfuly 👍"
   else
-    n2st::print_msg_error "Completed ${DOCKER_CMD_STR} with error ⚠️ "
+    n2st::print_msg_error "Completed ${docker_cmd_str} with error ⚠️ "
   fi
 
   # ....Teardown...................................................................................
   n2st::print_formated_script_footer "execute_compose.bash" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-  cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && exit 1; }
-  return ${DOCKER_EXIT_CODE}
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
+  return ${docker_exit_code}
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -186,13 +186,13 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
-  source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
-  source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${PROJECT_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::excute_compose_on_dn_project_image "$@"
   FCT_EXIT_CODE=$?
