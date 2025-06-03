@@ -56,9 +56,16 @@ function dnp::import_lib_and_dependencies() {
   local max_iterations=10  # Safety limit to prevent infinite loops
   local iterations_count=0
 
-  while [[ ! -f "${TARGET_ROOT}/.env.dockerized-norlab-project" ]] || [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]]; do
+#  while [[ ! -f "${TARGET_ROOT}/.env.dockerized-norlab-project" ]] || [[ $(basename "${TARGET_ROOT}") != "dockerized-norlab-project" ]]; do
+  while [[ "$current_dir" != "/" && $iterations_count -lt $max_iterations ]]; do
     # Note: the .env.dockerized-norlab-project check is for case where the repo root was clone with a different name, e.g., in teamcity
     TARGET_ROOT="$( dirname "$TARGET_ROOT" )"
+
+    if [[ -f "${TARGET_ROOT}/.env.dockerized-norlab-project" ]]; then
+      echo "Found .env.dockerized-norlab-project in: $TARGET_ROOT"
+      break
+    fi
+
     if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${_debug}" == "true" ]]; then
       echo "Level ${iterations_count} › TARGET_ROOT=$TARGET_ROOT"
       echo
@@ -66,11 +73,11 @@ function dnp::import_lib_and_dependencies() {
       echo
     fi
     ((iterations_count++))
-    if [[ $iterations_count -ge $max_iterations ]]; then
-      echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project is unreachable at '${TARGET_ROOT}'!" 1>&2
-      return 1
-    fi
   done
+  if [[ $iterations_count -ge $max_iterations ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project is unreachable at '${TARGET_ROOT}'!" 1>&2
+    return 1
+  fi
 
   # ....Pre-condition..............................................................................
   # Test extracted path
