@@ -6,24 +6,27 @@ cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
 
+# Script locals env var
+declare -a flags
+declare -a hydra_flags
+
+# Exported env var
 declare -x SJOB_ID
-declare -a FLAGS
-declare -a HYDRA_FLAGS
 
 SJOB_ID="default"
 # ....Debug flags..................................................................................
-#FLAGS+=("--hydra-dry-run")
-#FLAGS+=(--register-hydra-dry-run-flag "+dev@_global_=math_env_slurm_job_dryrun")
-FLAGS+=("--skip-core-force-rebuild")
-HYDRA_FLAGS+=("--version")
+#flags+=("--hydra-dry-run")
+#flags+=(--register-hydra-dry-run-flag "+dev@_global_=math_env_slurm_job_dryrun")
+flags+=("--skip-core-force-rebuild")
+hydra_flags+=("--version")
 
-bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${FLAGS[@]}" "${HYDRA_FLAGS[@]}"
-EXIT_CODE=$?
+bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${flags[@]}" "${hydra_flags[@]}"
+exit_code=$?
 
-if [[ ${EXIT_CODE} != 0 ]]; then
+if [[ ${exit_code} != 0 ]]; then
   # Make sure there is no slurm container running
-  bash "${DNP_LIB_EXEC_PATH:?err}"/run_kill.slurm.bash >/dev/null
-  exit $EXIT_CODE
+  bash "${DNP_LIB_EXEC_PATH:?err}"/down.slurm.bash >/dev/null
+  exit $exit_code
 fi
 
 echo "test_run.slurm.bash DONE"

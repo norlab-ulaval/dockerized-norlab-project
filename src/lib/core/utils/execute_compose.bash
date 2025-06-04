@@ -60,7 +60,7 @@ function dnp::excute_compose_on_dn_project_image() {
     # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
     echo -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "$0 --help\n"
+    echo -e "$0 --help"
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_DNP_EXECUTE_COMPOSE}" | sed 's/\# ====.*//' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="
@@ -121,7 +121,7 @@ function dnp::excute_compose_on_dn_project_image() {
   n2st::set_is_teamcity_run_environment_variable
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
   n2st::set_which_architecture_and_os
-  n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"
+  n2st::print_msg "Current image architecture and os: ${IMAGE_ARCH_AND_OS:?err}"
   n2st::print_msg "multiarch: ${multiarch}"
 
   if [[ -z ${BUILDX_BUILDER} ]]; then
@@ -188,8 +188,8 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
   n2st::norlab_splash "${PROJECT_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"

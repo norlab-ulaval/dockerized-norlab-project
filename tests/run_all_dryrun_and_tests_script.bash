@@ -12,10 +12,10 @@ source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash" || exit 1
 bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
 
 function dnp::teardown() {
-  EXIT_CODE=$?
+  exit_code=$?
   cd "${DNP_ROOT:?err}"
   bash tests/teardown_mock.bash
-  exit ${EXIT_CODE:1}
+  exit ${exit_code:1}
 }
 trap dnp::teardown EXIT
 
@@ -25,8 +25,8 @@ trap dnp::teardown EXIT
   set -o nounset    # exit on unbound variable
   set -o pipefail   # exit if errors within pipes
 
-  TEST_DIR="${DNP_ROOT:?err}/tests/tests_dryrun_and_tests_scripts"
-  source "${NBS_PATH:?err}/src/utility_scripts/nbs_run_all_test_and_dryrun_in_directory.bash" "${TEST_DIR}"
+  test_dir="${DNP_ROOT:?err}/tests/tests_dryrun_and_tests_scripts"
+  source "${NBS_PATH:?err}/src/utility_scripts/nbs_run_all_test_and_dryrun_in_directory.bash" "${test_dir}"
 )
 
 

@@ -16,13 +16,13 @@
 #     3. tests are executed on both x86 and arm64 architecture.
 #
 # =================================================================================================
-ADD_DOCKER_FLAG=()
-ADD_DOCKER_FLAG+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+add_docker_flag=()
+add_docker_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
 
 # ....Path resolution..............................................................................
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path_parent="$(dirname "${script_path}")"
 
 # ====Begin========================================================================================
-bash "${SCRIPT_PATH_PARENT}"/build.all.multiarch.bash "${ADD_DOCKER_FLAG[@]}" "$@"
+bash "${script_path_parent}"/build.all.multiarch.bash "${add_docker_flag[@]}" "$@"
 exit $?

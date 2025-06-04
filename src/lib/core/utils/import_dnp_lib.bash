@@ -134,7 +134,9 @@ function dnp::find_dnp_root_path() {
     while [[ "$dnp_root" != "/" && $iterations_count -lt $max_iterations ]]; do
       # Check if DNP main dotenv exists in the current directory
       if [[ -f "${dnp_root}/.env.dockerized-norlab-project" ]]; then
-        echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} Found .env.dockerized-norlab-project in: $dnp_root"
+        if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
+          echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} Found .env.dockerized-norlab-project in: $dnp_root"
+        fi
         export DNP_ROOT="${dnp_root}"
         return 0
       elif [[ "${DNP_DEBUG}" == "true" ]]; then

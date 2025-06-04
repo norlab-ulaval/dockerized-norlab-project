@@ -5,5 +5,5 @@ source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash" || exit 1
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-bash "${DNP_LIB_EXEC_PATH:?err}"/run_kill.slurm.bash
+bash "${DNP_LIB_EXEC_PATH:?err}"/project_validate.all.bash
 exit $?

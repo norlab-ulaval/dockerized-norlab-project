@@ -35,21 +35,21 @@ EOF
 
 # ....Function.....................................................................................
 function dnp::build_dn_project_multiarch_services() {
-  local TMP_CWD
-  TMP_CWD=$(pwd)
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a DNP_BUILD_ALL_ARGS
-  declare -a REMAINING_ARGS
-  local FORCE_PUSH_PROJECT_CORE=true
-  local THE_COMPOSE_FILE="docker-compose.project.build.multiarch.yaml"
+  declare -a dnp_build_all_args
+  declare -a remaining_args
+  local force_push_project_core=true
+  local the_compose_file="docker-compose.project.build.multiarch.yaml"
 
   # ....cli........................................................................................
   function show_help() {
     # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
     echo -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "$0 --help\n"
+    echo -e "$0 --help"
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_BUILD_ALL_MULTIARCH}" | sed 's/\# ====.*//' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="
@@ -60,18 +60,18 @@ function dnp::build_dn_project_multiarch_services() {
 
     case $1 in
     --no-force-push-project-core)
-      FORCE_PUSH_PROJECT_CORE=false
+      force_push_project_core=false
       shift # Remove argument (--my-new-flag-name)
       ;;
     --service-names)
       # ToDo: refactor (ref task NMO-574)
       # shellcheck disable=SC2207
-      DNP_BUILD_ALL_ARGS+=("--service-names" "${2}")
+      dnp_build_all_args+=("--service-names" "${2}")
       shift # Remove argument (--service-names)
       shift # Remove argument value
       ;;
     -f | --file)
-      THE_COMPOSE_FILE="${2}"
+      the_compose_file="${2}"
       shift # Remove argument (-f | --file)
       shift # Remove argument value
       ;;
@@ -82,11 +82,11 @@ function dnp::build_dn_project_multiarch_services() {
       ;;
     --) # no more option
       shift
-      REMAINING_ARGS=("$@")
+      remaining_args=("$@")
       break
       ;;
     *) # Default case
-      REMAINING_ARGS=("$@")
+      remaining_args=("$@")
       break
       ;;
     esac
@@ -94,20 +94,20 @@ function dnp::build_dn_project_multiarch_services() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  DNP_BUILD_ALL_ARGS+=("--file" "${THE_COMPOSE_FILE}")
-  if [[ ${FORCE_PUSH_PROJECT_CORE} == true ]]; then
-    DNP_BUILD_ALL_ARGS+=("--force-push-project-core")
+  dnp_build_all_args+=("--file" "${the_compose_file}")
+  if [[ ${force_push_project_core} == true ]]; then
+    dnp_build_all_args+=("--force-push-project-core")
   fi
-  DNP_BUILD_ALL_ARGS+=("--multiarch")
-  DNP_BUILD_ALL_ARGS+=("${REMAINING_ARGS[@]}")
+  dnp_build_all_args+=("--multiarch")
+  dnp_build_all_args+=("${remaining_args[@]}")
 
   # ====Begin========================================================================================
-  dnp::build_dn_project_services "${DNP_BUILD_ALL_ARGS[@]}"
-  BUILD_EXIT_CODE=$?
+  dnp::build_dn_project_services "${dnp_build_all_args[@]}"
+  build_exit_code=$?
 
   # ....Teardown...................................................................................
-  cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && exit 1; }
-  return $BUILD_EXIT_CODE
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
+  return $build_exit_code
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -115,12 +115,12 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
-  source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
-  source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
-  source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
-  source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+  source "${script_path_parent}/build.all.bash" || exit 1
 
   # ....Execute....................................................................................
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
@@ -129,9 +129,9 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::build_dn_project_multiarch_services "$@"
-  FCT_EXIT_CODE=$?
+  fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  exit "${FCT_EXIT_CODE}"
+  exit "${fct_exit_code}"
 else
   # This script is being sourced, ie: __name__="__source__"
   :

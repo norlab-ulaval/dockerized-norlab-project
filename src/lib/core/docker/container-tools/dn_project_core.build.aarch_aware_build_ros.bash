@@ -62,22 +62,23 @@ function dnp::build_ros() {
          || return 1
 
   colcon version-check
-  COLCON_FLAGS=()
+
+  local colcon_flags=()
   if [[ ${TARGETPLATFORM:?err} != ${BUILDPLATFORM:?err} ]]; then
       echo -e "Builder is running in architecture virtualisation"
-      COLCON_FLAGS+=("--executor" "sequential")
+      colcon_flags+=("--executor" "sequential")
   else
       echo -e "Builder is running on native architecture"
-      COLCON_FLAGS+=("--symlink-install")
+      colcon_flags+=("--symlink-install")
   fi
 
-  COLCON_FLAGS+=(
+  colcon_flags+=(
         "--cmake-clean-cache"
         "--cmake-args" "-DCMAKE_BUILD_TYPE=Release"
         "--event-handlers" "console_direct+"
      )
-  echo -e "COLCON_FLAGS=(${COLCON_FLAGS[*]})"
-  colcon build "${COLCON_FLAGS[@]}" || return 1
+  echo -e "colcon_flags=(${colcon_flags[*]})"
+  colcon build "${colcon_flags[@]}" || return 1
 
   return 0
 }

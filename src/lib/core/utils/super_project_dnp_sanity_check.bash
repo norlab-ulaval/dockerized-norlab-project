@@ -4,7 +4,7 @@
 # location in the super-project
 #
 # Usage:
-#   $ bash validate_super_project_dnp_setup.bash
+#   $ [bash|source] super_project_dnp_sanity_check.bash
 #
 # Global:
 #  read SUPER_PROJECT_ROOT
@@ -12,22 +12,21 @@
 #
 # =================================================================================================
 
-function dnp::validate_super_project_dnp_setup() {
+function dnp::super_project_dnp_sanity_check() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  # ....Find path to script........................................................................
-  # Note: can handle both sourcing cases
-  #   i.e. from within a script or from an interactive terminal session
-  local script_path
-  local script_path_parent
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  script_path_parent="$(dirname "${script_path}")"
+  # ....Source project shell-scripts dependencies..................................................
+  if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
+    local script_path
+    local script_path_parent
+    script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+    script_path_parent="$(dirname "${script_path}")"
+    source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+    source "${script_path_parent}/load_super_project_config.bash" || exit 1
+  fi
 
-  # ....Setup......................................................................................
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ====Begin======================================================================================
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -104,4 +103,4 @@ Dockerized-NorLab-Porject require that the super project be under version contro
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dnp::validate_super_project_dnp_setup || exit 1
+dnp::super_project_dnp_sanity_check || exit 1

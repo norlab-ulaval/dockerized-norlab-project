@@ -12,12 +12,12 @@
 #   <any-build.all-argument>               (Optional) Any build.all.bash arguments
 #
 # =================================================================================================
-ADD_DOCKER_FLAG=("--service-names" "project-core,project-develop")
+add_docker_flag=("--service-names" "project-core,project-develop")
 
 # ....Path resolution..............................................................................
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path_parent="$(dirname "${script_path}")"
 
 # ====Begin========================================================================================
-bash "${SCRIPT_PATH_PARENT}"/build.all.bash "${ADD_DOCKER_FLAG[@]}" "$@"
+bash "${script_path_parent}"/build.all.bash "${add_docker_flag[@]}" "$@"
 exit $?

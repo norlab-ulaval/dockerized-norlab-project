@@ -193,7 +193,7 @@ fi
 # location in the super-project
 #
 # Usage:
-#   $ bash validate_super_project_dnp_setup.bash
+#   $ bash super_project_dnp_sanity_check.bash
 #
 # =================================================================================================
 #

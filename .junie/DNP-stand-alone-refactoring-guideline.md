@@ -4,19 +4,45 @@ Stand-alone version with a PATH-accessible bash script approach
 This approach maintains the current bash script structure but makes it accessible from anywhere via the system `PATH`.
 
 ### General Requirements:
-- path management
+- Path management:
   - Case 1 › system wide:
     - via symlink `/usr/local/bin/dnp` → `/path/to/dockerized-norlab-project/src/bin/dnp`;
     - via `~/.bashrc` ← `PATH=${PATH}:${DNP_PATH}:${NBS_PATH}:${N2ST_PATH}`.
   - Case 2 › manual load: 
     - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
-- unit-tests and integration tests
-  - repository need to use N2ST bats tests tools for unit-test. See `run_bats_core_test_in_n2st.bash` and `tests/tests_bats` directory
-  - repository need to use NBS tests tools for integration-test. See `run_all_dryrun_and_tests_script.bash`
-  - all new script or functionality need to have (either or both):
-    - a corresponding bats unit-test `.bats` file in the `tests/tests_bats` directory 
-    - and/or a corresponding test/dryrun script in the `tests/tests_dryrun_and_tests_scripts` directory 
-- implement a vagrant workflow for UX development
+- Dont repeat yourself. Use already implemented code such as:
+  - `load_repo_dotenv.bash`
+  - `import_dnp_lib.bash`
+  - `load_super_project_config.bash`
+  - N2ST library
+  - NBS library
+  
+### Tests Requirements:
+- All tests in the `tests` directory must pass
+- Unit-tests and Integration tests:
+  - All new script or functionality need to have (either or both):
+    - Unit-tests: 
+      - use N2ST bats tests tools for unit-test. See `run_bats_core_test_in_n2st.bash` and `tests/tests_bats` directory;
+      - a corresponding bats unit-test `.bats` file in the `tests/tests_bats` directory; 
+      - dont run `.bats` file directly, use `tests/run_bats_core_test_in_n2st.bash tests/tests_bats/<bats-file-name>.bats` instead.
+    - Integration tests: 
+      - those are test case where there is multiple script interacting whith each other or we want to assess execution from begining to end;
+      - those tests are devided in two categories: 
+        - dryrun: either make use of a `--dry-run` flag implemented in the script or make use of the docker `--dry-run` flag  
+        - test: all other integration test case that are not dryrun
+      - use NBS tests tools for integration-test. See `run_all_dryrun_and_tests_script.bash`;
+      - a corresponding `test_*` or `dryrun_*` script in the `tests/tests_dryrun_and_tests_scripts` directory. 
+- You can mock shell core command an docker command but dont mock the function that is actualy tested.
+- One test file (`.bats` or `.bash`) per coresponding source code script.
+- Identify relevant test cases e.g., behavior validation, error handling, desired user feedback, ...   
+- Divide test file by test case: one test function per test case.
+- Provide a summary explanation of the test case: 
+  - what does it test for; 
+  - what's the test expected outcome (i.e, should it pass or fail); 
+  - if you do mock something, justify why.
+- Use bats framework `bats-file` helper library provide tools for temporary directory management, such as the `temp_make` and `temp_del` functions.
+  Refenrece https://github.com/bats-core/bats-file?tab=readme-ov-file#working-with-temporary-directories
+
 
 ### Implementation Plan
 
@@ -157,50 +183,6 @@ dockerized-norlab-project/ # (stand-alone version)
 - `dnp` need to be in `PATH`
 - a project dnp config discovery mechanism so that we can do `cd path/to/repo/ && dnp build` instead of `cd path/to/repo/ && dnp build path/to/repo/path/to/config`
 
-```bash
-#!/bin/bash
-# bin/dnp
-
-# Determine the installation directory
-DNP_INSTALL_DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
-DNP_LIB_DIR="${DNP_INSTALL_DIR}/lib"
-
-# Source common utilities
-source "${DNP_LIB_DIR}/core/common.bash"
-
-# Parse command
-COMMAND="$1"
-shift
-
-case "${COMMAND}" in
-    init)
-        source "${DNP_LIB_DIR}/commands/init.bash"
-        dnp::init "$@"
-        ;;
-    build)
-        source "${DNP_LIB_DIR}/commands/build.bash"
-        dnp::build "$@"
-        ;;
-    up)
-        source "${DNP_LIB_DIR}/commands/up.bash"
-        dnp::up "$@"
-        ;;
-    down)
-        source "${DNP_LIB_DIR}/commands/down.bash"
-        dnp::down "$@"
-        ;;
-    # ... other commands
-    help)
-        dnp::show_help
-        ;;
-    *)
-        echo "Unknown command: ${COMMAND}"
-        dnp::show_help
-        exit 1
-        ;;
-esac
-```
-
 #### Step 3: Create a init command Script
 
 The script will initialize the DNP user side resources.
@@ -261,44 +243,10 @@ user-super-project/
   - Command `dnp config <argument>` to tests compose config with interpolated value and to show it in console
     - one of those argument `[dev [darwin|linux|jetson]|deploy|ci-tests|slurm|release]` to select which compose file and service to to test and show
     - under the hood `dnp config` would execute `execute import_dnp_lib.bash` and `load_super_project_config.bash` and then `docker-compose --file docker-compose.project.*.*.yaml config` command
+  - Command `dnp validate` to execute dryrun and config tests
   - Command `dnp super validate` to test super project directory setup by executing `validate_super_project_dnp_setup.bash`
   - Command `dnp super show` to print consolidated and interpolated dotenv config files to console
-
-
-```bash
-#!/bin/bash
-# lib/commands/build.bash
-
-function dnp::build() {
-    # Parse options
-    local MULTIARCH=false
-    local REMAINING_ARGS=()
-    
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --multiarch)
-                MULTIARCH=true
-                shift
-                ;;
-            *) # Default case
-              REMAINING_ARGS=("$@")
-              break
-              ;;
-            esac
-    done
-    
-    # Execute build logic
-    if [[ "${MULTIARCH}" == true ]]; then
-        # Build for multiple architectures
-        source "${DNP_LIB_DIR}/core/execute/build.all.multiarch.bash"
-        dnp::docker_build_multiarch "${REMAINING_ARGS[@]}"
-    else
-        # Build for native architecture
-        source "${DNP_LIB_DIR}/core/execute/build.all.bash "
-        dnp::build_dn_project_services "${REMAINING_ARGS[@]}"
-    fi
-}
-```
+  - Command `dnp config` to tests compose config with interpolated value and to show it in console
 
 #### Step 5: Implement `version` Command Scripts
 This script would simply read and print to console the current local repository version from the `version.txt` file created and updated by semantic-release github action.
@@ -322,7 +270,7 @@ Create an installation script that will will steup the user host computer for us
 
 
 #### (iceboxed for now) Step 7: Command `dnp update` 
-To check DNP version, update cloned repo and execute a per-version update script to modify project DNP config
+To check DNP config scheme version, update DNP cloned repo on host and if required execute a per-version update script to modify project DNP config 
 
 
 ### Usage Example
@@ -331,7 +279,7 @@ After installation, users would interact with the system like this:
 
 ```bash
 # Initialize a new project
-cd ~/pat/to/my/project
+cd ~/pat/to/my/super-project
 dnp init my-project
 
 # Build Docker images

@@ -13,15 +13,15 @@
 # Globals: none
 #
 # =================================================================================================
-PARAMS="$@"
+params=( "$@" )
 
 set -e            # exit on error
 set -o nounset    # exit on unbound variable
 set -o pipefail   # exit if errors within pipes
 
-if [[ -z $PARAMS ]]; then
+if [[ -z $params ]]; then
   # Set to default bats tests directory if none specified
-  PARAMS="tests/tests_bats/"
+  params="tests/tests_bats/"
 fi
 
 # ....Setup........................................................................................
@@ -29,17 +29,18 @@ source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash" || exit 1
 bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
 
 function dnp::teardown() {
-  EXIT_CODE=$?
+  exit_code=$?
   cd "${DNP_ROOT:?err}"
   bash tests/teardown_mock.bash
-  exit ${EXIT_CODE:1}
+  exit ${exit_code:1}
 }
 trap dnp::teardown EXIT
 
 # ....Execute N2ST run_bats_tests_in_docker.bash.................................................
 cd "${DNP_ROOT:?err}" || return 1
 
-bash "${N2ST_PATH:?err}/tests/bats_testing_tools/run_bats_tests_in_docker.bash" $PARAMS
+bash "${N2ST_PATH:?err}/tests/bats_testing_tools/run_bats_tests_in_docker.bash" "${params[@]}"
 
 # ....Teardown.....................................................................................
 # Handle by the trap command
+

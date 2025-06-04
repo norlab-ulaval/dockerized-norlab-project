@@ -26,17 +26,15 @@ function dnp::setup_host_for_this_super_project() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  # ....Find path to script........................................................................
-  # Note: can handle both sourcing cases
-  #   i.e. from within a script or from an interactive terminal session
-  local script_path
-  local script_path_parent
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  script_path_parent="$(dirname "${script_path}")"
-
   # ....Source project shell-scripts dependencies..................................................
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/load_super_project_config.bash" || exit 1
+  if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
+    local script_path
+    local script_path_parent
+    script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+    script_path_parent="$(dirname "${script_path}")"
+    source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+    source "${script_path_parent}/load_super_project_config.bash" || exit 1
+  fi
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
   echo -e "${MSG_DONE} The '$(basename "${SUPER_PROJECT_ROOT}")' dir is reachable. Ready to install alias"

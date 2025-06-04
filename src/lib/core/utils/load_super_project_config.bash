@@ -7,7 +7,8 @@
 #
 # Globals:
 #   read DNP_ROOT
-#   write SUPER_PROJECT_ROOT, SUPER_PROJECT_REPO_NAME
+#   write SUPER_PROJECT_ROOT
+#   write SUPER_PROJECT_REPO_NAME
 #
 # =================================================================================================
 MSG_ERROR_FORMAT="\033[1;31m"

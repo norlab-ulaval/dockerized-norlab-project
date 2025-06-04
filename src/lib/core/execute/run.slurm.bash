@@ -1,8 +1,8 @@
 #!/bin/bash
 DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # =================================================================================================
-# Convenient script for running container specified in docker-compose.project.run.slurm.yaml and
-#  docker-compose.project.build.native.yaml.
+# Convenient script for building and running container specified in
+# docker-compose.project.run.slurm.yaml and docker-compose.project.build.native.yaml.
 # Handle stoping the container in case the slurm command `scancel` is issued.
 #
 # Usage:
@@ -22,6 +22,10 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #   <sjob-id>              (required) Used to ID the docker container, slurm job, optuna study ...
 #   <any-docker-flag>       Any docker flag (optional)
 #
+# Globals:
+#   write SJOB_ID
+#   write IS_SLURM_RUN
+#
 # =================================================================================================
 EOF
 )
@@ -35,7 +39,7 @@ function show_help() {
   # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
   echo -e "${MSG_DIMMED_FORMAT}"
   n2st::draw_horizontal_line_across_the_terminal_window "="
-  echo -e "$0 --help\n"
+  echo -e "$0 --help"
   # Strip shell comment char `#` and both lines
   echo -e "${DOCUMENTATION_RUN_SLURM}" | sed 's/\# ====.*//' | sed 's/^\#//'
   n2st::draw_horizontal_line_across_the_terminal_window "="
@@ -43,40 +47,45 @@ function show_help() {
 }
 
 function execute_on_exit() {
-#  COMPOSE_PATH="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
-  COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
-  THE_COMPOSE_FILE=docker-compose.project.run.slurm.yaml
-  RUNNING_CONTAINER_IDS=$(docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" ps --quiet --all --orphans=false)
+#  compose_path="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
+  compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  the_compose_file=docker-compose.project.run.slurm.yaml
+  running_container_ids=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
 
-  for each_id in "${RUNNING_CONTAINER_IDS[@]}"; do
-    if [[ "${CONTAINER_ID}" == "${each_id}" ]]; then
-      n2st::print_msg "Stoping container ${CONTAINER_ID}"
-      docker stop "${CONTAINER_ID}" 2>/dev/null
+  for each_id in "${running_container_ids[@]}"; do
+    if [[ "${container_id}" == "${each_id}" ]]; then
+      n2st::print_msg "Stoping container ${container_id}"
+      docker stop "${container_id}" 2>/dev/null
     fi
   done
 
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   popd >/dev/null || exit 1
-  exit ${EXIT_CODE:1}
+  exit ${exit_code:1}
 }
 
 
 # ....Set env variables (pre cli)..................................................................
-declare -a PYTHON_ARG
-declare -a REGISTERED_HYDRA_DRYRUN_FLAG
+# Script locals env var
+declare -a python_arg
+declare -a registered_hydra_dryrun_flag
+declare log_name
+declare log_path
+declare dry_run_slurm_job
+
+# Exported env var
 declare -x SJOB_ID
 declare -x IS_SLURM_RUN
-declare LOG_NAME
-declare LOG_PATH
-declare DRY_RUN_SLURM_JOB
 
+# Positional argument
 SJOB_ID="$1"
 shift # Remove SJOB_ID argument value
 
-LOG_NAME="slurm_job"
-FORCE_REBUILD_PROJECT_CORE=true
-FORCE_REBUILD_SLURM_IMG=true
-DRY_RUN_SLURM_JOB=false
+# Default values
+log_name="slurm_job"
+force_rebuild_project_core=true
+force_rebuild_slurm_img=true
+dry_run_slurm_job=false
 
 
 # ....cli..........................................................................................
@@ -84,26 +93,26 @@ while [ $# -gt 0 ]; do
 
   case $1 in
     --register-hydra-dry-run-flag)
-      REGISTERED_HYDRA_DRYRUN_FLAG+=("${2}")
+      registered_hydra_dryrun_flag+=("${2}")
       shift # Remove argument (--register-hydra-dry-run-flag)
       shift # Remove argument value
       ;;
     --hydra-dry-run)
-      DRY_RUN_SLURM_JOB=true
+      dry_run_slurm_job=true
       shift # Remove argument (--hydra-dry-run)
       ;;
     --log-name)
-      LOG_NAME="${2}"
+      log_name="${2}"
       shift # Remove argument (--log-name)
       shift # Remove argument value
       ;;
     --log-path)
-      LOG_PATH="${2}"
+      log_path="${2}"
       shift # Remove argument (--log-path)
       shift # Remove argument value
       ;;
     --skip-core-force-rebuild)
-      FORCE_REBUILD_PROJECT_CORE=false
+      force_rebuild_project_core=false
       shift # Remove argument (--skip-force-rebuild)
       ;;
     -h | --help)
@@ -113,11 +122,11 @@ while [ $# -gt 0 ]; do
       ;;
     --) # no more option
       shift
-      PYTHON_ARG=( "$@" )
+      python_arg=( "$@" )
       break
       ;;
     *) # Default case
-      PYTHON_ARG=("$@")
+      python_arg=("$@")
       break
       ;;
   esac
@@ -126,19 +135,21 @@ done
 
 # ....Sanity check.................................................................................
 test -n "${SJOB_ID}" || { echo "$(basename $0) | Positional argument <job-name> is empty" ; exit 1 ; }
-test -n "${PYTHON_ARG[0]}" || { echo "$(basename $0) | Positional argument <any-python-arg> is empty" ; exit 1 ; }
+test -n "${python_arg[0]}" || { echo "$(basename $0) | Positional argument <any-python-arg> is empty" ; exit 1 ; }
 
 # ....Set env variables (post cli).................................................................
-DN_PROJECT_CONFIG_DIR="${DNP_ROOT:?err}/src/lib/core/docker"
-COMPOSE_FILE="docker-compose.project.run.slurm.yaml"
-COMPOSE_FILE_PATH=${DN_PROJECT_CONFIG_DIR}/${COMPOSE_FILE}
+dn_project_config_dir="${DNP_ROOT:?err}/src/lib/core/docker"
+compose_file="docker-compose.project.run.slurm.yaml"
+compose_file_path=${dn_project_config_dir}/${compose_file}
 
 # ....Source project shell-scripts dependencies..................................................
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
-source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
+if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+fi
 
 
 # ====Begin========================================================================================
@@ -147,27 +158,27 @@ n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL
 
 if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
   n2st::print_msg_warning "Host computer does not support nvidia gpu, changing container runtime to docker default."
-  THE_SERVICE="project-slurm-no-gpu"
+  the_service="project-slurm-no-gpu"
 else
-  THE_SERVICE="project-slurm"
+  the_service="project-slurm"
 fi
 
-n2st::print_msg "FORCE_REBUILD_PROJECT_CORE: ${FORCE_REBUILD_PROJECT_CORE}, FORCE_REBUILD_SLURM_IMG: ${FORCE_REBUILD_SLURM_IMG}"
+n2st::print_msg "force_rebuild_project_core: ${force_rebuild_project_core}, force_rebuild_slurm_img: ${force_rebuild_slurm_img}"
 
 # ....Build image in the local store...............................................................
-if [[ ${FORCE_REBUILD_PROJECT_CORE} == true ]]; then
+if [[ ${force_rebuild_project_core} == true ]]; then
   # shellcheck disable=SC2034
-  ADD_DOCKER_FLAG=("--no-cache" "project-core")
-  ADD_DOCKER_FLAG=("--quiet")
-  dnp::excute_compose_on_dn_project_image "${ADD_DOCKER_FLAG[@]}"
+  add_docker_flag=("--no-cache" "project-core")
+  add_docker_flag=("--quiet")
+  dnp::excute_compose_on_dn_project_image "${add_docker_flag[@]}"
 fi
 
-if [[ ${FORCE_REBUILD_SLURM_IMG} == true ]]; then
-  DOCKER_BUILD=()
-  DOCKER_BUILD+=("--no-cache")
-  DOCKER_BUILD+=("--quiet")
-  ADD_DOCKER_FLAG=("${DOCKER_BUILD[@]}" "${THE_SERVICE}")
-  dnp::excute_compose_on_dn_project_image "${ADD_DOCKER_FLAG[@]}"
+if [[ ${force_rebuild_slurm_img} == true ]]; then
+  docker_build=()
+  docker_build+=("--no-cache")
+  docker_build+=("--quiet")
+  add_docker_flag=("${docker_build[@]}" "${the_service}")
+  dnp::excute_compose_on_dn_project_image "${add_docker_flag[@]}"
 fi
 
 cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -177,46 +188,46 @@ export SJOB_ID
 export IS_SLURM_RUN=true
 
 # ....Run container on MAMBA/SLURM.................................................................
-COMPOSE_FLAGS=("-f" "${COMPOSE_FILE_PATH}")
+compose_flags=("-f" "${compose_file_path}")
 
-DOCKER_RUN=("run" "--rm")
-DOCKER_RUN+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
-#DOCKER_RUN+=("--service-ports") # Publish compose service ports (Mute if collision with host)
+docker_run=("run" "--rm")
+docker_run+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
+#docker_run+=("--service-ports") # Publish compose service ports (Mute if collision with host)
 
-if [[ ${DRY_RUN_SLURM_JOB} == true ]]; then
-  PYTHON_ARG+=( "${REGISTERED_HYDRA_DRYRUN_FLAG[@]}" )
-  DOCKER_RUN+=("${THE_SERVICE}" "${PYTHON_ARG[@]}")
-  n2st::print_msg "Dryrun execute docker compose ${COMPOSE_FLAGS[*]} ${DOCKER_RUN[*]}\n"
-  docker compose "${COMPOSE_FLAGS[@]}" "${DOCKER_RUN[@]}"
-  EXIT_CODE=$?
+if [[ ${dry_run_slurm_job} == true ]]; then
+  python_arg+=( "${registered_hydra_dryrun_flag[@]}" )
+  docker_run+=("${the_service}" "${python_arg[@]}")
+  n2st::print_msg "Dryrun execute docker compose ${compose_flags[*]} ${docker_run[*]}\n"
+  docker compose "${compose_flags[@]}" "${docker_run[@]}"
+  exit_code=$?
 else
 
-  DOCKER_RUN+=("--detach") # Return the container ID
-  DOCKER_RUN+=("${THE_SERVICE}" "${PYTHON_ARG[@]}")
-  n2st::print_msg "Execute docker compose ${COMPOSE_FLAGS[*]} ${DOCKER_RUN[*]}\n"
+  docker_run+=("--detach") # Return the container ID
+  docker_run+=("${the_service}" "${python_arg[@]}")
+  n2st::print_msg "Execute docker compose ${compose_flags[*]} ${docker_run[*]}\n"
 
-  CONTAINER_ID=$(
-    docker compose "${COMPOSE_FLAGS[@]}" "${DOCKER_RUN[@]}"
+  container_id=$(
+    docker compose "${compose_flags[@]}" "${docker_run[@]}"
   )
   trap execute_on_exit EXIT
-  n2st::print_msg "CONTAINER_ID=${CONTAINER_ID}\n" # Require `--detach` flag
+  n2st::print_msg "container_id=${container_id}\n" # Require `--detach` flag
 
-  if [[ -n "${LOG_PATH}" ]]; then
-    mkdir -p "${SUPER_PROJECT_ROOT:?err}/${LOG_PATH}"
-    touch "${SUPER_PROJECT_ROOT:?err}/${LOG_PATH}/${LOG_NAME}.log"
-    DOCKER_LOG=()
-    DOCKER_LOG+=("logs" "--follow")
-    DOCKER_LOG+=("--details")
-    n2st::print_msg "Execute docker ${DOCKER_LOG[*]}"
+  if [[ -n "${log_path}" ]]; then
+    mkdir -p "${SUPER_PROJECT_ROOT:?err}/${log_path}"
+    touch "${SUPER_PROJECT_ROOT:?err}/${log_path}/${log_name}.log"
+    docker_log=()
+    docker_log+=("logs" "--follow")
+    docker_log+=("--details")
+    n2st::print_msg "Execute docker ${docker_log[*]}"
     # Note: Operator "2>&1 |" redirect both stdin and stderr (portable version of "|&")
-    docker "${DOCKER_LOG[@]}" "${CONTAINER_ID}" 2>&1 | tee "${SUPER_PROJECT_ROOT:?err}/${LOG_PATH}/${LOG_NAME}.log"
+    docker "${docker_log[@]}" "${container_id}" 2>&1 | tee "${SUPER_PROJECT_ROOT:?err}/${log_path}/${log_name}.log"
   fi
 
   echo && n2st::print_msg "Execute docker wait"
-  docker wait "${CONTAINER_ID}" # Required if docker logs is skipped
-  EXIT_CODE=$?
+  docker wait "${container_id}" # Required if docker logs is skipped
+  exit_code=$?
 fi
 
 # ====Teardown=====================================================================================
 # The teardown logic of this script is handled by the trap function `execute_on_exit`
-exit $EXIT_CODE
+exit $exit_code

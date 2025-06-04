@@ -30,7 +30,7 @@ function show_help() {
   # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
   echo -e "${MSG_DIMMED_FORMAT}"
   n2st::draw_horizontal_line_across_the_terminal_window "="
-  echo -e "$0 --help\n"
+  echo -e "$0 --help"
   # Strip shell comment char `#` and both lines
   echo -e "${DOCUMENTATION_BUILD_DEPLOY}" | sed 's/\# ====.*//' | sed 's/^\#//'
   n2st::draw_horizontal_line_across_the_terminal_window "="
@@ -39,15 +39,15 @@ function show_help() {
 
 
 # ....Set env variables (pre cli)................................................................
-declare -a REMAINING_ARGS
-PUSH_DEPLOY_IMAGE=false
+declare -a remaining_args
+push_deploy_image=false
 
 # ....cli..........................................................................................
 while [ $# -gt 0 ]; do
 
   case $1 in
     --push-deploy-image)
-      PUSH_DEPLOY_IMAGE=true
+      push_deploy_image=true
       shift # Remove argument (--push-deploy-image)
       ;;
     -h | --help)
@@ -56,7 +56,7 @@ while [ $# -gt 0 ]; do
       exit
       ;;
     *) # Default case
-      REMAINING_ARGS=("$@")
+      remaining_args=("$@")
       break
       ;;
   esac
@@ -68,12 +68,15 @@ done
 
 
 # ....Source project shell-scripts dependencies..................................................
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
-source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/build.all.bash" || exit 1
+if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+fi
+
+source "${script_path_parent}/build.all.bash" || exit 1
 
 # ....Execute....................................................................................
 if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
@@ -84,33 +87,33 @@ fi
 n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
 n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
-if [[ ${PUSH_DEPLOY_IMAGE} == true ]]; then
+if [[ ${push_deploy_image} == true ]]; then
   echo "Won't push the deploy image, use falg ${MSG_DIMMED_FORMAT}--push-deploy-image${MSG_END_FORMAT} to push it."
 fi
 
 # ....Build stage..................................................................................
 {
-  BUILD_DOCKER_FLAG=("--service-names" "project-core,project-deploy")
-  BUILD_DOCKER_FLAG+=("--force-push-project-core")
-  dnp::build_dn_project_services "${BUILD_DOCKER_FLAG[@]}" "${REMAINING_ARGS[@]}"
-  BUILD_EXIT_CODE=$?
+  build_docker_flag=("--service-names" "project-core,project-deploy")
+  build_docker_flag+=("--force-push-project-core")
+  dnp::build_dn_project_services "${build_docker_flag[@]}" "${remaining_args[@]}"
+  build_exit_code=$?
 }
 
 # ....Push deploy stage............................................................................
-if [[ ${PUSH_DEPLOY_IMAGE} == true ]]; then
-  source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
+if [[ ${push_deploy_image} == true ]]; then
+  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   {
-    PUSH_DOCKER_FLAG=("--push" "project-deploy")
-    # PUSH_DOCKER_FLAG=("--override-build-cmd" "push" "project-deploy")
-    dnp::excute_compose_on_dn_project_image "${PUSH_DOCKER_FLAG[@]}"
-    PUSH_EXIT_CODE=$?
+    push_docker_flag=("--push" "project-deploy")
+    # push_docker_flag=("--override-build-cmd" "push" "project-deploy")
+    dnp::excute_compose_on_dn_project_image "${push_docker_flag[@]}"
+    push_exit_code=$?
   }
 else
-  PUSH_EXIT_CODE=0
+  push_exit_code=0
 fi
 
 # ====Teardown=====================================================================================
 n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 popd >/dev/null || exit 1
 
-exit $((BUILD_EXIT_CODE + PUSH_EXIT_CODE))
+exit $((build_exit_code + push_exit_code))

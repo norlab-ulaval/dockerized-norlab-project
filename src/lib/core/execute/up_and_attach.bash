@@ -30,12 +30,15 @@ pushd "$(pwd)" >/dev/null || exit 1
 # ToDo: see newly added implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash (ref task NMO-375)
 
 
-# ....Source project shell-scripts dependencies..................................................
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
-source "${SCRIPT_PATH_PARENT}/../utils/import_dnp_lib.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/../utils/load_super_project_config.bash" || exit 1
-source "${SCRIPT_PATH_PARENT}/../utils/execute_compose.bash" || exit 1
+# ....Source project shell-scripts dependencies....................................................
+if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+fi
+
 
 
 # ToDo: move the help fct near the script/fct menu
@@ -43,30 +46,30 @@ function show_help() {
   # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
   echo -e "${MSG_DIMMED_FORMAT}"
   n2st::draw_horizontal_line_across_the_terminal_window "="
-  echo -e "$0 --help\n"
+  echo -e "$0 --help"
   # Strip shell comment char `#` and both lines
   echo -e "${DOCUMENTATION_UP_AND_ATTACH}" | sed 's/\# ====.*//' | sed 's/^\#//'
   n2st::draw_horizontal_line_across_the_terminal_window "="
   echo -e "${MSG_END_FORMAT}"
 }
 
-# ....Set env variables (pre cli)................................................................
-declare -a REMAINING_ARGS
-declare -a INTERACTIVE_LOGIN
-declare -a DOCKER_EXEC_CMD_AND_ARGS
+# ....Set env variables (pre cli)..................................................................
+declare -a remaining_args
+declare -a interactive_login
+declare -a docker_exec_cmd_and_args
 
-THE_SERVICE=project-develop
+the_service=project-develop
 
 # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
 # ToDo: assess if moving to DN `dn_entrypoint.attach.bash` and `dn_entrypoint.init.bash` for all services woud be better.
-INTERACTIVE_LOGIN=("-e" "BASH_ENV")
+interactive_login=("-e" "BASH_ENV")
 
 # ....cli..........................................................................................
 while [ $# -gt 0 ]; do
 
   case $1 in
     --service)
-      THE_SERVICE="${2}"
+      the_service="${2}"
       shift # Remove argument (--service)
       shift # Remove argument value
       ;;
@@ -77,13 +80,13 @@ while [ $# -gt 0 ]; do
       ;;
     --) # no more option
       shift
-      REMAINING_ARGS=( "$@" )
-      unset INTERACTIVE_LOGIN
+      remaining_args=( "$@" )
+      unset interactive_login
       break
       ;;
     *) # Default case
-      REMAINING_ARGS=("$@")
-      unset INTERACTIVE_LOGIN
+      remaining_args=("$@")
+      unset interactive_login
       break
       ;;
   esac
@@ -92,7 +95,7 @@ done
 
 # ....Set env variables (post cli)...............................................................
 # Add env var
-DOCKER_EXEC_CMD_AND_ARGS=("${REMAINING_ARGS[@]:-"bash"}")
+docker_exec_cmd_and_args=("${remaining_args[@]:-"bash"}")
 
 # ====Begin========================================================================================
 cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -100,7 +103,7 @@ cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
 
 n2st::set_which_architecture_and_os
-n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"
+n2st::print_msg "Current image architecture and os: ${IMAGE_ARCH_AND_OS:?err}"
 
 # ....Display and xhost............................................................................
 # ToDo: assessment >> display forwarding between remote device and local [Ubuntu+MacOs]
@@ -112,13 +115,13 @@ n2st::print_msg "Current image architecture and os: $IMAGE_ARCH_AND_OS"
 # .................................................................................................
 
 # ....Device specific config.......................................................................
-COMPOSE_PATH="${DNP_ROOT:?err}/src/lib/core/docker"
-THE_COMPOSE_FILE=""
-DISPLAY_DEVICE=""
+compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+the_compose_file=""
+display_device=""
 if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
 
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then
-    THE_COMPOSE_FILE=docker-compose.project.run.jetson.yaml
+    the_compose_file=docker-compose.project.run.jetson.yaml
 
     # copy file showing which Jetson board is running for mountinf as a volume in docker-compose
     # Source https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
@@ -127,7 +130,7 @@ if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'l
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
     # (Priority) inprogress: implement case >> NorLab-CI-server
     # (Priority) ToDo: implement case >> User workstation
-    THE_COMPOSE_FILE=docker-compose.project.run.linux-x86.yaml
+    the_compose_file=docker-compose.project.run.linux-x86.yaml
   fi
 
   if [ -n "$DISPLAY" ]; then
@@ -150,7 +153,7 @@ if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'l
     sudo chmod 777 $XAUTH
 
     # Note: can't pass those argument to "docker compose up" only to "docker compose run"
-    # DISPLAY_DEVICE="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH"
+    # display_device="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH"
   else
     # Quick ref notes:
     #   - To open the display: $ xset -display :0 dpms force on
@@ -171,7 +174,7 @@ if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'l
   fi
 
 elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-  THE_COMPOSE_FILE=docker-compose.project.run.darwin.yaml
+  the_compose_file=docker-compose.project.run.darwin.yaml
 
   # Enable IGLX for X11 forwarding with OpenGL support
   # To test X11 forwarding with OpenGL, run in the container
@@ -187,41 +190,41 @@ else
   n2st::print_msg_error_and_exit "Support for current host not implemented yet!"
 fi
 
-n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${THE_COMPOSE_FILE}${MSG_END_FORMAT}"
+n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
 
 # ....Start docker container.......................................................................
 n2st::set_is_teamcity_run_environment_variable
-print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
+print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
 
 n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
 # (CRITICAL) ToDo: see newly added container name related implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash
-if [[ $(docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" ps --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME} ${THE_SERVICE} running" ]]; then
+if [[ $(docker compose -f "${compose_path}/${the_compose_file}" ps --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME} ${the_service} running" ]]; then
 
-  n2st::print_msg "Service ${MSG_DIMMED_FORMAT}${THE_SERVICE}${MSG_END_FORMAT} is already running"
+  n2st::print_msg "Service ${MSG_DIMMED_FORMAT}${the_service}${MSG_END_FORMAT} is already running"
 
   if [[ ${IS_TEAMCITY_RUN} == true ]]; then
     # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
     n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
   else
     # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-    DOCKER_EXEC=("exec")
-    DOCKER_EXEC+=("${INTERACTIVE_LOGIN[@]}")
-    DOCKER_EXEC+=("${THE_SERVICE}")
-    DOCKER_EXEC+=("/dockerized-norlab/project/${THE_SERVICE}/dn_entrypoint.attach.bash")
-    DOCKER_EXEC+=("${DOCKER_EXEC_CMD_AND_ARGS[@]}")
-    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${COMPOSE_PATH}/${THE_COMPOSE_FILE} ${DOCKER_EXEC[*]}${MSG_END_FORMAT}"
-    docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" "${DOCKER_EXEC[@]}"
+    docker_exec=("exec")
+    docker_exec+=("${interactive_login[@]}")
+    docker_exec+=("${the_service}")
+    docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.attach.bash")
+    docker_exec+=("${docker_exec_cmd_and_args[@]}")
+    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} ${docker_exec[*]}${MSG_END_FORMAT}"
+    docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
   fi
 
 else
 
   # . . Launch service as a daemon. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-  DOCKER_UP=("up" "--detach" "--wait")
-  #  DOCKER_UP+=("--build")
-  DOCKER_UP+=("${THE_SERVICE}")
-  n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose ${DOCKER_UP[*]}${MSG_END_FORMAT}"
-  docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" "${DOCKER_UP[@]}"
+  docker_up=("up" "--detach" "--wait")
+  #  docker_up+=("--build")
+  docker_up+=("${the_service}")
+  n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose ${docker_up[*]}${MSG_END_FORMAT}"
+  docker compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
 
   if [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]]; then
     # (NICE TO HAVE) ToDo: implement case fetch docker context IP address
@@ -236,14 +239,14 @@ else
     n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
   else
     # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-    DOCKER_EXEC=("exec")
-    DOCKER_EXEC+=("${INTERACTIVE_LOGIN[@]}")
-    DOCKER_EXEC+=("${THE_SERVICE}")
+    docker_exec=("exec")
+    docker_exec+=("${interactive_login[@]}")
+    docker_exec+=("${the_service}")
     # Note: The init entrypoint is executed here on purpose, not at docker compose up.
-    DOCKER_EXEC+=("/dockerized-norlab/project/${THE_SERVICE}/dn_entrypoint.init.bash")
-    DOCKER_EXEC+=("${DOCKER_EXEC_CMD_AND_ARGS[@]}")
-    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${COMPOSE_PATH}/${THE_COMPOSE_FILE} ${DOCKER_EXEC[*]}${MSG_END_FORMAT}"
-    docker compose -f "${COMPOSE_PATH}/${THE_COMPOSE_FILE}" "${DOCKER_EXEC[@]}"
+    docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
+    docker_exec+=("${docker_exec_cmd_and_args[@]}")
+    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} ${docker_exec[*]}${MSG_END_FORMAT}"
+    docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
   fi
 fi
 

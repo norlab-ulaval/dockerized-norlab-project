@@ -34,7 +34,7 @@ else
 fi
 
 # ====Setup========================================================================================
-TESTED_FILE="validate_super_project_dnp_setup.bash"
+TESTED_FILE="super_project_dnp_sanity_check.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
@@ -92,12 +92,12 @@ teardown() {
   assert_output --regexp "[DNP done].*Super project dockerized-norlab-project-mock setup is OK"
 }
 
-@test "dnp::validate_super_project_dnp_setup (source at setup step) › expect pass" {
+@test "dnp::super_project_dnp_sanity_check (source at setup step) › expect pass" {
   assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab_project"
   assert_file_exist "${MOCK_PROJECT_PATH}/.dockerignore"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::validate_super_project_dnp_setup
+  run dnp::super_project_dnp_sanity_check
   assert_success
   assert_output --regexp "[DNP done].*Super project dockerized-norlab-project-mock setup is OK"
 }

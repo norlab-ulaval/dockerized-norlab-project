@@ -17,14 +17,14 @@
 #   instead of at build time.
 #
 # =================================================================================================
-BUILD_ALL_FLAG=()
-BUILD_ALL_FLAG+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+build_all_flag=()
+build_all_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
 # Note: force push project core is set to false by default
 
 # ....Path resolution..............................................................................
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-SCRIPT_PATH_PARENT="$(dirname "${SCRIPT_PATH}")"
+script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path_parent="$(dirname "${script_path}")"
 
 # ====Begin========================================================================================
-bash "${SCRIPT_PATH_PARENT}"/build.all.bash "${BUILD_ALL_FLAG[@]}" "$@" || exit 1
+bash "${script_path_parent}"/build.all.bash "${build_all_flag[@]}" "$@" || exit 1
 exit $?
