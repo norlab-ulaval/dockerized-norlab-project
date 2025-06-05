@@ -13,6 +13,7 @@
 #
 # =================================================================================================
 
+# ....Dockerized-NorLab ...........................................................................
 **/external_data/
 **/artifact/
 
@@ -20,8 +21,12 @@
 **/slurm_jobs/*.out
 **/slurm_jobs/out/*.out
 
+# ....Dockerized-NorLab (Prevent ignore)...........................................................
+!**/.dockerized_norlab_project/
+
 # ....Repository related...........................................................................
-!version.txt
+!**/version.txt
+!**/.git
 .github
 .releaserc.json
 CHANGELOG.md
@@ -35,7 +40,6 @@ visual/
 **/drawio/
 
 # ....Text related.................................................................................
-**/!version.txt
 **/*.pdf
 
 # ....Python related...............................................................................
@@ -48,13 +52,6 @@ visual/
 /.run/
 /.idea/
 
-# ....Dockerized-NorLab (Prevent ignore)...........................................................
-!**/.dockerized_norlab_project/configuration/project_requirements
-!**/.dockerized_norlab_project/configuration/project_entrypoints
-
-# ....Dockerized-NorLab............................................................................
-**/.dockerized_norlab_project/configuration/docker-compose*
-**/.dockerized_norlab_project/configuration/Dockerfile
 
 # ....General......................................................................................
 **/.DS_Store
