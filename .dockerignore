@@ -14,15 +14,17 @@
 # =================================================================================================
 
 # ....Dockerized-NorLab ...........................................................................
-**/external_data/
-**/artifact/
-
 **/slurm_jobs_logs/*.log
 **/slurm_jobs/*.out
 **/slurm_jobs/out/*.out
 
 # ....Dockerized-NorLab (Prevent ignore)...........................................................
+# Functional requirement
 !**/.dockerized_norlab_project/
+
+# N2ST bats tests requirement
+!**/external_data/
+!**/artifact/
 !/utilities/tmp/dockerized-norlab-project-mock/
 
 # ....Repository related...........................................................................
