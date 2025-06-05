@@ -61,7 +61,7 @@ function dnp::down() {
 function dnp::down_help() {
     echo -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "$0 down --help"
+    echo -e "dnp down --help"
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_BUFFER_DOWN}" | sed 's/\# ====.*//' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="

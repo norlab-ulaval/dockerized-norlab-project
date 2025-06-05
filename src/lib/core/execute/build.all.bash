@@ -226,7 +226,6 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   script_path_parent="$(dirname "${script_path}")"
   source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
   source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
-  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
 
   # ....Execute....................................................................................
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then

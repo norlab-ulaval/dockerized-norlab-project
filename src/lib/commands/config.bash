@@ -107,7 +107,7 @@ function dnp::config() {
 function dnp::config_help() {
     echo -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "$0 config --help"
+    echo -e "dnp config --help"
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_BUFFER_CONFIG}" | sed 's/\# ====.*//' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="

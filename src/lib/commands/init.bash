@@ -117,7 +117,7 @@ function dnp::init() {
 function dnp::init_help() {
     echo -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "$0 init --help"
+    echo -e "dnp init --help"
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_BUFFER_INIT}" | sed 's/\# ====.*//' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="

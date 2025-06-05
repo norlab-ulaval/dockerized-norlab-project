@@ -27,7 +27,7 @@ The current Dockerized-NorLab-Project is organized as follows:
 ├── python_dev_tools/
 ├── utilities/
 │   ├── import_dnp_lib.bash
-│   ├── setup_host_for_this_super_project.bash
+│   ├── setup_host_for_running_this_super_project.bash
 │   └── validate_super_project_dnp_setup.bash
 └── visual/
 ```
@@ -276,7 +276,7 @@ dockerized-norlab-project/ # (standalone version)
 │   │   │   │   └── up_and_attach.bash
 │   │   │   ├── utils/
 │   │   │   │   ├── import_dnp_lib.bash
-│   │   │   │   ├── setup_host_for_this_super_project.bash
+│   │   │   │   ├── setup_host_for_running_this_super_project.bash
 │   │   │   │   ├── validate_super_project_dnp_setup.bash
 │   │   │   │   ├── execute_compose.bash
 │   │   │   │   └── dn_entrypoint.python.bash

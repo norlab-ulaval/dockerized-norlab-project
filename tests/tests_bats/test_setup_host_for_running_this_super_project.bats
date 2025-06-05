@@ -40,7 +40,7 @@ fi
 
 # ====Tests file configuration=====================================================================
 
-TESTED_FILE="setup_host_for_this_super_project.bash"
+TESTED_FILE="setup_host_for_running_this_super_project.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
@@ -85,13 +85,14 @@ teardown() {
 
 @test "dnp::setup_host_for_this_super_project (test .bashrc expected append › expect pass" {
   T_DN_PROJECT_ALIAS_PREFIX="dnpumock"
-  cat ${HOME}/.bashrc
+#  cat ${HOME}/.bashrc
 
   assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNP dockerized-norlab-project-mock aliases and env variable"
   assert_file_not_contains "${HOME}/.bashrc" "#<<<<DNP dockerized-norlab-project-mock aliases and env variable end"
 
-  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  cat "${HOME}/.bashrc"
+#  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+#  cat "${HOME}/.bashrc"
   assert_success
 
   assert_file_contains "${HOME}/.bashrc" "#>>>>DNP dockerized-norlab-project-mock aliases and env variable
@@ -105,8 +106,9 @@ alias ${T_DN_PROJECT_ALIAS_PREFIX}_cddd='cd ${MOCK_PROJECT_PATH}/src'
   assert_output --partial 'Setup completed!'
 }
 
-@test "dnp::setup_host_for_this_super_project (source at setup step) › expect pass" {
-  assert_not_exist "${DN_PROJECT_ALIAS_PREFIX}"
+@test "dnp::setup_host_for_this_super_project › expect pass" {
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/load_super_project_config.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run dnp::setup_host_for_this_super_project
   assert_success
@@ -114,3 +116,20 @@ alias ${T_DN_PROJECT_ALIAS_PREFIX}_cddd='cd ${MOCK_PROJECT_PATH}/src'
   assert_output --partial 'Setup completed!'
   assert_not_empty "${DN_PROJECT_ALIAS_PREFIX}"
 }
+
+@test "dnp::setup_host_for_this_super_project | DNP lib not loaded › expect fail" {
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::setup_host_for_this_super_project
+  assert_failure
+  assert_output --partial 'DNP libs are not loaded, run import_dnp_lib.bash first'
+}
+
+@test "dnp::setup_host_for_this_super_project | super project not loaded › expect fail" {
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::setup_host_for_this_super_project
+  assert_failure
+  assert_output --partial 'Super project config are not loaded, run load_super_project_config.bash first'
+}
+
+

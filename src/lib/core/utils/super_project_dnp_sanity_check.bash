@@ -7,6 +7,7 @@
 #   $ [bash|source] super_project_dnp_sanity_check.bash
 #
 # Global:
+#  read DNP_ROOT
 #  read SUPER_PROJECT_ROOT
 #  read SUPER_PROJECT_REPO_NAME
 #
@@ -17,16 +18,13 @@ function dnp::super_project_dnp_sanity_check() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  # ....Source project shell-scripts dependencies..................................................
-  if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
-    local script_path
-    local script_path_parent
-    script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-    script_path_parent="$(dirname "${script_path}")"
-    source "${script_path_parent}/import_dnp_lib.bash" || exit 1
-    source "${script_path_parent}/load_super_project_config.bash" || exit 1
+  if [[ -z "${DNP_ROOT}" ]]; then
+    echo -e "\033[1;31m[DNP error]\033[0m DNP libs are not loaded, run import_dnp_lib.bash first!" 1>&2
+    exit 1
   fi
-
+  if [[ -z "${SUPER_PROJECT_ROOT}" ]] || [[ -z "${SUPER_PROJECT_REPO_NAME}" ]]; then
+    n2st::print_msg_error_and_exit "Super project config are not loaded, run load_super_project_config.bash first!"
+  fi
 
   # ====Begin======================================================================================
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -105,12 +103,26 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   test -d "project_entrypoints/project-deploy/" || exit 1
   test -d "project_entrypoints/project-develop/" || exit 1
 
-  echo -e "${MSG_DONE_FORMAT}[DNP done]${MSG_END_FORMAT} Super project ${SUPER_PROJECT_REPO_NAME:?err} setup is OK"
-
   #  ....Teardown...................................................................................
+  echo -e "${MSG_DONE_FORMAT}[DNP done]${MSG_END_FORMAT} Super project ${SUPER_PROJECT_REPO_NAME:?err} setup is OK"
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dnp::super_project_dnp_sanity_check || exit 1
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  # This script is being run, ie: __name__="__main__"
+   ....Source project shell-scripts dependencies..................................................
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  if [[ -z ${DNP_ROOT}  ]]; then
+    source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  fi
+  if [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
+    source "${script_path_parent}/load_super_project_config.bash" || exit 1
+  fi
+  dnp::super_project_dnp_sanity_check || exit 1
+else
+  # This script is being sourced, ie: __name__="__source__"
+  :
+fi

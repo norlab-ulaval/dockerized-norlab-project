@@ -74,7 +74,7 @@ function dnp::run() {
 function dnp::run_help() {
     echo -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "$0 run --help"
+    echo -e "dnp run --help"
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_BUFFER_RUN}" | sed 's/\# ====.*//' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="

@@ -144,7 +144,7 @@ fi
 
 # Setup host for this super project
 echo "Setting up host for Dockerized-NorLab-Project..."
-source "${DNP_INSTALL_DIR}/src/lib/core/utils/setup_host_for_this_super_project.bash"
+source "${DNP_INSTALL_DIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash"
 
 # Validate the installation
 echo "Validating installation..."

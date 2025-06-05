@@ -89,6 +89,10 @@ function dnp::import_lib_and_dependencies() {
   # ....(Quickhack) Reload project .env file for N2ST..............................................
   source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
+  # ....Load DNP utils.............................................................................
+  cd "${N2ST_PATH:?'Variable not set'}" || return 1
+  source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || exit 1
+
   # ....Teardown...................................................................................
   if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
     export DNP_DEBUG=true
