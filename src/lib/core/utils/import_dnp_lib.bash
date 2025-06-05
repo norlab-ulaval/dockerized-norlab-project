@@ -73,21 +73,21 @@ function dnp::import_lib_and_dependencies() {
   fi
 
   # ....Load DNP .env file for N2ST................................................................
-  source "${DNP_ROOT}/load_repo_dotenv.bash"
+  source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
   # ....Load NBS...................................................................................
   cd "${NBS_PATH:?'Variable not set'}" || return 1
   source "import_norlab_build_system_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-  source "${DNP_ROOT}/load_repo_dotenv.bash"
+  source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
   # ....Load N2ST..................................................................................
   cd "${N2ST_PATH:?'Variable not set'}" || return 1
   source "import_norlab_shell_script_tools_lib.bash" || return 1
 
   # ....(Quickhack) Reload project .env file for N2ST..............................................
-  source "${DNP_ROOT}/load_repo_dotenv.bash"
+  source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
   # ....Teardown...................................................................................
   if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then

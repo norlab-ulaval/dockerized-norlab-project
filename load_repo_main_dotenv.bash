@@ -3,7 +3,7 @@
 # Load all environment variable define in .env.dockerized-norlab-project
 #
 # Usage:
-#   $ source load_repo_dotenv.bash
+#   $ source load_repo_main_dotenv.bash
 #
 # =================================================================================================
 MSG_ERROR_FORMAT="\033[1;31m"

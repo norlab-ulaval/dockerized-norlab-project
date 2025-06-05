@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ....Setup........................................................................................
-source "$(git rev-parse --show-toplevel)/load_repo_dotenv.bash" || exit 1
+source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
 bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
 
 function dnp::teardown() {

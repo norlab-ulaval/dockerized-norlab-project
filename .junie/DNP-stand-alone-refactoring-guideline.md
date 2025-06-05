@@ -11,7 +11,7 @@ This approach maintains the current bash script structure but makes it accessibl
   - Case 2 › manual load: 
     - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
 - Dont repeat yourself. Use already implemented code such as:
-  - `load_repo_dotenv.bash`
+  - `load_repo_main_dotenv.bash`
   - `import_dnp_lib.bash`
   - `load_super_project_config.bash`
   - N2ST library
@@ -167,7 +167,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │   ├── norlab-build-system/ <- git submodule https://github.com/norlab-ulaval/norlab-build-system.git
 │   └── norlab-shell-script-tools/ <- git submodule https://github.com/norlab-ulaval/norlab-shell-script-tools.git
 ├── install.bash
-├── load_repo_dotenv.bash
+├── load_repo_main_dotenv.bash
 ├── README.md
 ├── .dockerignore
 ├── .gitignore

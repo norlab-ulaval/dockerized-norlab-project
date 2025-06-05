@@ -41,7 +41,7 @@ fi
 
 # ====Tests file configuration=====================================================================
 
-TESTED_FILE="load_repo_dotenv.bash"
+TESTED_FILE="load_repo_main_dotenv.bash"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
