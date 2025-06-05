@@ -3,10 +3,11 @@
 
 DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 # =================================================================================================
-# Dockerized-NorLab-Project (DNP) - A tool for managing Docker-based NorLab projects
+#                                  Dockerized-NorLab-Project (DNP)
+#                         A tool for managing Docker-based robotic projects
 #
 # Usage:
-#   $ [bash] dnp COMMAND [OPTIONS]
+#   $ dnp COMMAND [OPTIONS]
 #
 # Commands:
 #   init        Initialize a new DNP project
@@ -25,97 +26,111 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 EOF
 )
 
-# ....Set env variables (pre cli)..................................................................
-# Parse command
-the_command="$1"
-shift || true
 
 # ....Source project shell-scripts dependencies..................................................
 script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
 dnp_core="$(dirname "$(dirname "${script_path}")")/lib/core"
 source "${dnp_core}/utils/import_dnp_lib.bash"
-source "${dnp_core}/utils/execute_compose.bash" || exit 1
 
-test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
-test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
+# (CRITICAL) ToDo: validate deleting this line ↓
+#source "${dnp_core}/utils/execute_compose.bash" || exit 1
 
-# ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Show help message
+
+function dnp::entrypoint() {
+  # ....Pre-condition..............................................................................
+  test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
+  test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
+
+  # ....Set env variables (pre cli)................................................................
+  # Parse command
+  local the_command="$1"
+  shift || true
+
+  # ....cli........................................................................................
+  if [[ -z ${the_command}  ]]; then
+    dnp::show_entrypoint_help
+    exit 1
+  fi
+
+  case "${the_command}" in
+      init)
+          source "${DNP_LIB_PATH}/commands/init.bash" || exit 1
+          dnp::init "$@"
+          ;;
+      build)
+          source "${DNP_LIB_PATH}/commands/build.bash" || exit 1
+          dnp::build "$@"
+          ;;
+      up)
+          source "${DNP_LIB_PATH}/commands/up.bash" || exit 1
+          dnp::up "$@"
+          ;;
+      down)
+          source "${DNP_LIB_PATH}/commands/down.bash" || exit 1
+          dnp::down "$@"
+          ;;
+      run)
+          source "${DNP_LIB_PATH}/commands/run.bash" || exit 1
+          dnp::run "$@"
+          ;;
+      config)
+          source "${DNP_LIB_PATH}/commands/config.bash" || exit 1
+          dnp::config "$@"
+          ;;
+      version)
+          source "${DNP_LIB_PATH}/commands/version.bash" || exit 1
+          dnp::version "$@"
+          ;;
+      project)
+          sub_the_command="$1"
+          shift || true
+
+          source "${DNP_LIB_PATH}/commands/project.bash" || exit 1
+          case "${sub_the_command}" in
+              validate)
+                  dnp::project_validate "$@"
+                  ;;
+              sanity)
+                  dnp::project_sanity "$@"
+                  ;;
+              dotenv)
+                  dnp::project_dotenv "$@"
+                  ;;
+              help|--help|-h)
+                  dnp::project_help
+                  exit 1
+                  ;;
+              *)
+                  echo "Unknown super subcommand: ${sub_the_command}"
+                  dnp::project_help
+                  exit 1
+                  ;;
+          esac
+          ;;
+      help|--help|-h)
+          dnp::show_entrypoint_help
+          exit 0
+          ;;
+      *)
+          echo "‼️Unknown command: ${the_command}"
+          echo "Here is the help menu ⬇︎. Hope it provide assistance."
+          dnp::show_entrypoint_help
+          exit 1
+          ;;
+  esac
+}
+
 function dnp::show_entrypoint_help() {
-    # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
     echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp help"
+
+    # Splash type: small, negative or big
+    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'big'
+    n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
+
     # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
+    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed 's/\# ====.*//' | sed 's/^\#//' | sed 's/Dockerized-NorLab-Project (DNP)//' | sed 's/A tool for managing Docker-based robotic projects//'
     echo -e "${MSG_END_FORMAT}"
 }
 
-# ....cli..........................................................................................
-case "${the_command}" in
-    init)
-        source "${DNP_LIB_PATH}/commands/init.bash" || exit 1
-        dnp::init "$@"
-        ;;
-    build)
-        source "${DNP_LIB_PATH}/commands/build.bash" || exit 1
-        dnp::build "$@"
-        ;;
-    up)
-        source "${DNP_LIB_PATH}/commands/up.bash" || exit 1
-        dnp::up "$@"
-        ;;
-    down)
-        source "${DNP_LIB_PATH}/commands/down.bash" || exit 1
-        dnp::down "$@"
-        ;;
-    run)
-        source "${DNP_LIB_PATH}/commands/run.bash" || exit 1
-        dnp::run "$@"
-        ;;
-    config)
-        source "${DNP_LIB_PATH}/commands/config.bash" || exit 1
-        dnp::config "$@"
-        ;;
-    version)
-        source "${DNP_LIB_PATH}/commands/version.bash" || exit 1
-        dnp::version "$@"
-        ;;
-    project)
-        sub_the_command="$1"
-        shift || true
-
-        source "${DNP_LIB_PATH}/commands/project.bash" || exit 1
-        case "${sub_the_command}" in
-            validate)
-                dnp::project_validate "$@"
-                ;;
-            sanity)
-                dnp::project_sanity "$@"
-                ;;
-            dotenv)
-                dnp::project_dotenv "$@"
-                ;;
-            help|--help|-h)
-                dnp::project_help
-                exit 1
-                ;;
-            *)
-                echo "Unknown super subcommand: ${sub_the_command}"
-                dnp::project_help
-                exit 1
-                ;;
-        esac
-        ;;
-    help|--help|-h)
-        dnp::show_entrypoint_help
-        exit 0
-        ;;
-    *)
-        echo "‼️Unknown command: ${the_command}"
-        echo "Here is the help menu⬇︎. Hope it provide assistance."
-        dnp::show_entrypoint_help
-        exit 1
-        ;;
-esac
+# ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dnp::entrypoint "$@" || exit 1
