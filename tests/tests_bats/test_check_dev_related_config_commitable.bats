@@ -46,7 +46,7 @@ setup_file() {
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
 #  \n...N2ST bats tests environment.................................................................
-#  \n$( pwd && tree -L 1 -a -hug && printenv )
+#  \n$( tree -L 1 -a -hug $PWD && printenv )
 #  \n...............................................................................................
 #  \033[0m"  >&3
 #

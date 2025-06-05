@@ -20,25 +20,29 @@
 #
 # =================================================================================================
 
-TESTED_FILE="load_super_project_config.bash"
-TESTED_FILE_PATH="src/lib/core/utils"
-
-# ====Load ressources==============================================================================
-BATS_HELPER_PATH=/usr/lib/bats
-if [[ -d ${BATS_HELPER_PATH} ]]; then
-  load "${BATS_HELPER_PATH}/bats-support/load"
-  load "${BATS_HELPER_PATH}/bats-assert/load"
-  load "${BATS_HELPER_PATH}/bats-file/load"
-  load "${SRC_CODE_PATH}/${N2ST_BATS_TESTING_TOOLS_RELATIVE_PATH}/bats_helper_functions"
+bats_path=/usr/lib/bats
+error_prefix="[\033[1;31mN2ST ERROR\033[0m]"
+if [[ -d ${bats_path} ]]; then
+  # ....Bats-core recommended helper functions.....................................................
+  load "${bats_path}/bats-support/load"
+  load "${bats_path}/bats-assert/load"
+  load "${bats_path}/bats-file/load"
+  # ....Optional...................................................................................
+  #load "${bats_path}/bats-detik/load" # <- Kubernetes support
+  # ....N2ST library helper function...............................................................
+  load "${SRC_CODE_PATH:?err}/${N2ST_BATS_TESTING_TOOLS_RELATIVE_PATH:?err}/bats_helper_functions"
   load "${SRC_CODE_PATH}/tests/tests_bats/bats_testing_tools/bats_helper_functions_local"
-  #load "${BATS_HELPER_PATH}/bats-detik/load" # << Kubernetes support
 else
-  echo -e "\n[\033[1;31mERROR\033[0m] $0 path to bats-core helper library unreachable at \"${BATS_HELPER_PATH}\"!" 1>&2
+  echo -e "\n{error_prefix} $0 path to bats-core helper library unreachable at \"${bats_path}\"!"
   echo '(press any key to exit)'
   read -r -n 1
   exit 1
 fi
-# ====Setup========================================================================================
+
+# ====Tests file configuration=====================================================================
+
+TESTED_FILE="load_super_project_config.bash"
+TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
@@ -49,7 +53,7 @@ setup_file() {
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
 #  echo -e "\033[1;2m
 #  \n...N2ST bats tests environment.................................................................
-#  \n$( pwd && tree -L 1 -a -hug && printenv )
+#  \n$( tree -L 1 -a -hug $PWD && printenv )
 #  \n...............................................................................................
 #  \033[0m"  >&3
 #

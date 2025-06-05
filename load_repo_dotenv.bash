@@ -12,8 +12,8 @@ MSG_DONE_FORMAT="\033[1;32m"
 
 function dnp::load_repository_environment_variables() {
   # ....Setup......................................................................................
-  local TMP_CWD
-  TMP_CWD=$( pwd )
+  local tmp_cwd
+  tmp_cwd=$( pwd )
   local debug_flag="false"
 
   # ....cli..........................................................................................
@@ -32,11 +32,11 @@ function dnp::load_repository_environment_variables() {
   # ....Find path to script........................................................................
   # Note: can handle both sourcing cases
   #   i.e. from within a script or from an interactive terminal session
-  local SCRIPT_PATH
-  local TARGET_PATH
-  SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  TARGET_PATH="$(dirname "${SCRIPT_PATH}")"
-  cd "${TARGET_PATH:?err}" || return 1
+  local script_path
+  local target_path
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  target_path="$(dirname "${script_path}")"
+  cd "${target_path:?err}" || return 1
 
   # ....load environment variables in current shell................................................
   set -o allexport
@@ -52,7 +52,7 @@ function dnp::load_repository_environment_variables() {
     export BUILDKIT_PROGRESS=plain
   fi
 
-  cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && return 1; }
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
 

@@ -42,6 +42,16 @@ function dnp::super_project_dnp_sanity_check() {
     exit 1
   fi
 
+  if [[ ! -f ".dockerignore" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '.dockerignore' is not installed at super-project repository root as it should!" 1>&2
+    exit 1
+  fi
+  if ! grep -E "^\!\*\*\/\.dockerized_norlab_project\/$" ".dockerignore"; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The line '!**/.dockerized_norlab_project/' is not present in .dockerignore as it should be!" 1>&2
+    exit 1
+  fi
+
+
   if [[ ! -d "src/" ]]; then
     echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The 'src' directory is not installed at super-project repository root as it should!" 1>&2
     exit 1

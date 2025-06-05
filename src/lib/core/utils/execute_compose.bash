@@ -139,7 +139,7 @@ function dnp::excute_compose_on_dn_project_image() {
       n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
       BUILDER_PLATFORM=$(docker buildx inspect --builder "${CURRENT_BUILDX_BUILDER}" | grep -i -e Platforms)
       if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64*".* ]] && [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64*".* ]]; then
-        n2st::print_msg_warning "Exporting ${MSG_DIMMED_FORMAT}BUILDX_BUILDER=${local_buildx_builder_name:?err}${MSG_END_FORMAT} for $(basename $0) execution."
+        n2st::print_msg_warning "Setting env var ${MSG_DIMMED_FORMAT}BUILDX_BUILDER=${local_buildx_builder_name:?err}${MSG_END_FORMAT} for $(basename $0) execution."
         # Set builder for local execution
         export BUILDX_BUILDER="${local_buildx_builder_name}"
         # ToDo: logic to warn and provide instructions to user if the builder does not exist and need to be setup.
