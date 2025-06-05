@@ -114,7 +114,7 @@ function dnp::entrypoint() {
       *)
           echo "‼️Unknown command: ${the_command}"
           echo "Here is the help menu ⬇︎. Hope it provide assistance."
-          dnp::show_entrypoint_help
+          dnp::show_entrypoint_help_no_splash
           exit 1
           ;;
   esac
@@ -129,6 +129,18 @@ function dnp::show_entrypoint_help() {
 
     # Strip shell comment char `#` and both lines
     echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed 's/\# ====.*//' | sed 's/^\#//' | sed 's/Dockerized-NorLab-Project (DNP)//' | sed 's/A tool for managing Docker-based robotic projects//'
+    echo -e "${MSG_END_FORMAT}"
+}
+
+function dnp::show_entrypoint_help_no_splash() {
+    echo -e "${MSG_DIMMED_FORMAT}"
+    n2st::draw_horizontal_line_across_the_terminal_window "="
+    echo -e "dnp help"
+    n2st::echo_centering_str "Dockerized-NorLab-Project (DNP)" "${MSG_DIMMED_FORMAT}" " "
+    n2st::echo_centering_str "A tool for managing Docker-based robotic projects" "${MSG_DIMMED_FORMAT}" " "
+    # Strip shell comment char `#` and both lines
+    echo -e "${MSG_DIMMED_FORMAT}${DOCUMENTATION_BUFFER_DNP}" | sed 's/\# ====.*//' | sed 's/^\#//' | sed 's/Dockerized-NorLab-Project (DNP)//' | sed 's/A tool for managing Docker-based robotic projects//'
+    n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "${MSG_END_FORMAT}"
 }
 
