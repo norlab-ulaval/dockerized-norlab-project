@@ -33,8 +33,7 @@ function dnp::down() {
                 shift
                 ;;
             --help|-h)
-                dnp::down_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_DOWN}"
                 ;;
             *)
                 remaining_args+=("$@")
@@ -56,14 +55,4 @@ function dnp::down() {
     fi
 
     return 0
-}
-
-function dnp::down_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp down --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_DOWN}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
 }

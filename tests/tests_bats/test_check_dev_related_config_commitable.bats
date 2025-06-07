@@ -166,9 +166,9 @@ Its OK for developement but MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO 
   assert_file_contains ".env.dockerized-norlab-project" "^DNP_DEBUG=false"
 }
 
-@test "check dev configs in .env.dockerized-norlab-project | DNP_CLEAR_CONSOLE_ACTIVATED=true › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNP_CLEAR_CONSOLE_ACTIVATED' 'true' "${TESTED_FILE_PATH3}"
+@test "check dev configs in .env.dockerized-norlab-project | DNP_CLEAR_CONSOLE_ACTIVATED=false › expect pass" {
+  helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNP_CLEAR_CONSOLE_ACTIVATED' 'false' "${TESTED_FILE_PATH3}"
   assert_file_exist ".env.dockerized-norlab-project"
-  assert_file_contains ".env.dockerized-norlab-project" "^DNP_CLEAR_CONSOLE_ACTIVATED=true"
+  assert_file_contains ".env.dockerized-norlab-project" "^DNP_CLEAR_CONSOLE_ACTIVATED=false"
 }
 

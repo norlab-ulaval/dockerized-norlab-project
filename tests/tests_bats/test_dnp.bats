@@ -106,7 +106,17 @@ function dnp::version() {
 }
 EOF
 
+
   cat > "${MOCK_DNP_DIR}/src/lib/commands/project.bash" << 'EOF'
+DOCUMENTATION_BUFFER_PROJECT="
+# =================================================================================================
+# Super project DNP configuration related command
+#
+# Usage:
+# Commands:
+# =================================================================================================
+"
+
 function dnp::project_validate() {
   echo "Mock dnp::project_validate called with args: $*"
   return 0
@@ -119,11 +129,6 @@ function dnp::project_sanity() {
 
 function dnp::project_dotenv() {
   echo "Mock dnp::project_dotenv called with args: $*"
-  return 0
-}
-
-function dnp::project_help() {
-  echo "Mock dnp::project_help called"
   return 0
 }
 EOF
@@ -143,6 +148,11 @@ function n2st::norlab_splash() {
   return 0
 }
 
+function n2st::print_msg() {
+  echo "Mock n2st::print_msg called with args: $*"
+  return 0
+}
+
 function n2st::echo_centering_str() {
   echo "Mock n2st::echo_centering_str called with args: $*"
   return 0
@@ -152,6 +162,8 @@ function n2st::draw_horizontal_line_across_the_terminal_window() {
   echo "Mock n2st::draw_horizontal_line_across_the_terminal_window called with args: $*"
   return 0
 }
+
+source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || exit 1
 
 # Set message formatting variables
 export MSG_DIMMED_FORMAT=""
@@ -166,9 +178,11 @@ setup() {
 
   # Create the src/bin directory in the mock project
   mkdir -p "${MOCK_DNP_DIR}/src/bin"
+  mkdir -p "${MOCK_DNP_DIR}/lib/core/utils/"
 
   # Copy the dnp script to the src/bin directory in the mock project
   cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/bin/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/ui.bash" "${MOCK_DNP_DIR}/src/lib/core/utils/"
 
   # Make the dnp script executable
   chmod +x "${MOCK_DNP_DIR}/src/bin/dnp"
@@ -189,12 +203,13 @@ teardown_file() {
 
 # ====Test cases==================================================================================
 
-@test "dnp with no arguments › expect help message and failure" {
-  # Test case: When dnp is called without arguments, it should show help and exit with error
+@test "dnp with no arguments › expect help message and no failure" {
+
+  # Test case: When dnp is called without arguments, it should show help and exit
   run bash "${MOCK_DNP_DIR}"/src/bin/dnp
 
-  # Should fail with exit code 1
-  assert_failure 1
+  # Should succeed
+  assert_success
 
   # Should output help message
   assert_output --partial "Usage:"
@@ -298,7 +313,7 @@ teardown_file() {
   assert_failure 1
 
   # Should output error message
-  assert_output --partial "Unknown command: unknown_command"
+  assert_output --partial "Unknown command dnp unknown_command"
 }
 
 @test "dnp project validate command › expect project_validate function to be called" {
@@ -334,15 +349,16 @@ teardown_file() {
   assert_output --partial "Mock dnp::project_dotenv called with args:"
 }
 
-@test "dnp project help command › expect help message and failure" {
+@test "dnp project help command › expect help message and no failllure" {
   # Test case: When dnp is called with 'project help' command, it should show help and exit with error
   run bash "${MOCK_DNP_DIR}"/src/bin/dnp project help
 
-  # Should fail with exit code 1
-  assert_failure 1
+  # Should succeed
+  assert_success
 
   # Should output help message for project command
-  assert_output --partial "Mock dnp::project_help called"
+  assert_output --partial "Usage:"
+  assert_output --partial "Commands:"
 }
 
 @test "dnp project with unknown subcommand › expect error message and failure" {
@@ -353,5 +369,5 @@ teardown_file() {
   assert_failure 1
 
   # Should output error message
-  assert_output --partial "Unknown super subcommand: unknown_subcommand"
+  assert_output --partial "Unknown command dnp project unknown_subcommand"
 }

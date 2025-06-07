@@ -23,6 +23,9 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #   <any-docker-flag>       Any docker flag (optional)
 #
 # Globals:
+#   read DNP_ROOT
+#   read SUPER_PROJECT_ROOT
+#   read DNP_LIB_LOADED
 #   write SJOB_ID
 #   write IS_SLURM_RUN
 #
@@ -34,19 +37,35 @@ EOF
 
 pushd "$(pwd)" >/dev/null || exit 1
 
+# ....Source project shell-scripts dependencies..................................................
+script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path_parent="$(dirname "${script_path}")"
+if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
+  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+fi
+if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+fi
+
+MSG_ERROR_FORMAT="\033[1;31m"
+MSG_END_FORMAT="\033[0m"
+dnp:help_header 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The DNP ui lib is not loaded!" ; exit 1 ; }
+n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
+
 # .................................................................................................
-function show_help() {
+function dnp::show_help() {
   # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
   echo -e "${MSG_DIMMED_FORMAT}"
   n2st::draw_horizontal_line_across_the_terminal_window "="
   echo -e "$0 --help"
   # Strip shell comment char `#` and both lines
-  echo -e "${DOCUMENTATION_RUN_SLURM}" | sed 's/\# ====.*//' | sed 's/^\#//'
+  echo -e "${DOCUMENTATION_RUN_SLURM}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
   n2st::draw_horizontal_line_across_the_terminal_window "="
   echo -e "${MSG_END_FORMAT}"
 }
 
-function execute_on_exit() {
+function dnp::execute_on_exit() {
 #  compose_path="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
   compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   the_compose_file=docker-compose.project.run.slurm.yaml
@@ -117,7 +136,7 @@ while [ $# -gt 0 ]; do
       ;;
     -h | --help)
       clear
-      show_help
+      dnp::show_help
       exit
       ;;
     --) # no more option
@@ -141,15 +160,6 @@ test -n "${python_arg[0]}" || { echo "$(basename $0) | Positional argument <any-
 dn_project_config_dir="${DNP_ROOT:?err}/src/lib/core/docker"
 compose_file="docker-compose.project.run.slurm.yaml"
 compose_file_path=${dn_project_config_dir}/${compose_file}
-
-# ....Source project shell-scripts dependencies..................................................
-if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
-  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
-fi
 
 
 # ====Begin========================================================================================
@@ -209,7 +219,7 @@ else
   container_id=$(
     docker compose "${compose_flags[@]}" "${docker_run[@]}"
   )
-  trap execute_on_exit EXIT
+  trap dnp::execute_on_exit EXIT
   n2st::print_msg "container_id=${container_id}\n" # Require `--detach` flag
 
   if [[ -n "${log_path}" ]]; then
@@ -229,5 +239,5 @@ else
 fi
 
 # ====Teardown=====================================================================================
-# The teardown logic of this script is handled by the trap function `execute_on_exit`
+# The teardown logic of this script is handled by the trap function `dnp::execute_on_exit`
 exit $exit_code

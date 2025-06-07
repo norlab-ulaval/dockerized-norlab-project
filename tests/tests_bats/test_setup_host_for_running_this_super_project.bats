@@ -47,6 +47,7 @@ TESTED_FILE_PATH="src/lib/core/utils"
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
+  # This is the path to the mock super project (the user side)
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
@@ -66,6 +67,7 @@ setup_file() {
 
 # executed before each test
 setup() {
+  # Change cwd to the mock super project directory
   cd "${MOCK_PROJECT_PATH}" || exit 1
 }
 
@@ -84,7 +86,8 @@ teardown() {
 # ====Test casses==================================================================================
 
 @test "dnp::setup_host_for_this_super_project (test .bashrc expected append › expect pass" {
-  T_DN_PROJECT_ALIAS_PREFIX="dnpumock"
+  T_DN_PROJECT_ALIAS_PREFIX="umock"
+  T_DN_PROJECT_ALIAS_PREFIX_CAP="UMOCK"
 #  cat ${HOME}/.bashrc
 
   assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNP dockerized-norlab-project-mock aliases and env variable"
@@ -95,15 +98,31 @@ teardown() {
 #  cat "${HOME}/.bashrc"
   assert_success
 
-  assert_file_contains "${HOME}/.bashrc" "#>>>>DNP dockerized-norlab-project-mock aliases and env variable
-export ${T_DN_PROJECT_ALIAS_PREFIX}_DIR_PATH=${MOCK_PROJECT_PATH}
-alias ${T_DN_PROJECT_ALIAS_PREFIX}_cd='cd ${MOCK_PROJECT_PATH}'
-alias ${T_DN_PROJECT_ALIAS_PREFIX}_cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab_project'
-alias ${T_DN_PROJECT_ALIAS_PREFIX}_cddd='cd ${MOCK_PROJECT_PATH}/src'
-#<<<<DNP dockerized-norlab-project-mock aliases and env variable end"
+  assert_file_contains "${HOME}/.bashrc" "^#>>>>DNP dockerized-norlab-project-mock aliases and env variable$"
+  assert_file_contains "${HOME}/.bashrc" "^export _DNP_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab_project$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cd='cd ${MOCK_PROJECT_PATH}'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab_project'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cds='cd ${MOCK_PROJECT_PATH}/src'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${MOCK_PROJECT_PATH}/tests'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cda='cd ${MOCK_PROJECT_PATH}/artifact'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cde='cd ${MOCK_PROJECT_PATH}/external_data'$"
+  assert_file_contains "${HOME}/.bashrc" "^#<<<<DNP dockerized-norlab-project-mock aliases and env variable end$"
 
-  assert_output --partial 'dir is reachable. Ready to install alias'
-  assert_output --partial 'Setup completed!'
+  assert_output --partial "dir is reachable. Ready to install alias"
+
+  assert_output --partial "Setup completed!
+
+    New available alias added to ~/.bashrc:
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cd -> cd to dockerized-norlab-project-mock root
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab_project dir
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cds -> cd to dockerized-norlab-project-mock src dir
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to dockerized-norlab-project-mock tests dir
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cda -> cd to dockerized-norlab-project-mock artifact dir
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cde -> cd to dockerized-norlab-project-mock external data dir
+
+    New available environment variable added to ~/.bashrc for convenience:
+      - _DNP_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}
+"
 }
 
 @test "dnp::setup_host_for_this_super_project › expect pass" {

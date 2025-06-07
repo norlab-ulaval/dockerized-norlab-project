@@ -57,8 +57,7 @@ function dnp::build() {
                 shift
                 ;;
             --help|-h)
-                dnp::build_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_BUILD}"
                 ;;
             --) # no more option
                 shift
@@ -66,59 +65,61 @@ function dnp::build() {
                 break
                 ;;
             *)
-                remaining_args+=("$@")
+                remaining_args=("$@")
                 break
                 ;;
         esac
     done
 
     # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
-
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || exit 1
 
     # Determine which build script to execute
     if [[ "${ci_tests}" == true ]]; then
         if [[ "${multiarch}" == true ]]; then
             echo "Building CI tests images (multiarch)..."
-            source "${DNP_LIB_PATH}/core/execute/build.ci_tests.multiarch.bash" "${remaining_args[@]}"
+            source "${DNP_LIB_EXEC_PATH}/build.ci_tests.multiarch.bash" "${remaining_args[@]}"
         else
             echo "Building CI tests images..."
-            source "${DNP_LIB_PATH}/core/execute/build.ci_tests.bash" "${remaining_args[@]}"
+            source "${DNP_LIB_EXEC_PATH}/build.ci_tests.bash" "${remaining_args[@]}"
         fi
     elif [[ "${slurm}" == true ]]; then
-        build_all_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
+        build_slurm_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
         if [[ "${multiarch}" == true ]]; then
             echo "Building slurm images (multiarch)..."
-            source "${DNP_LIB_PATH}/core/execute/build.all.multiarch.bash" "${build_all_flag[@]}" -- "${remaining_args[@]}"
+            source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash"
+            dnp::build_dn_project_multiarch_services "${build_slurm_flag[@]}" -- "${remaining_args[@]}"
+            fct_exit_code=$?
         else
             echo "Building slurm images..."
-            source "${DNP_LIB_PATH}/core/execute/build.all.bash" "${build_all_flag[@]}" -- "${remaining_args[@]}"
+            source "${DNP_LIB_EXEC_PATH}/build.all.bash"
+            dnp::build_dn_project_services  "${build_slurm_flag[@]}" -- "${remaining_args[@]}"
+            fct_exit_code=$?
         fi
     elif [[ "${deploy}" == true ]]; then
         echo "Building deploy images..."
-        source "${DNP_LIB_PATH}/core/execute/build.deploy.bash" "${remaining_args[@]}"
+        source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" "${remaining_args[@]}"
     elif [[ "${develop}" == true ]]; then
         echo "Building develop images..."
-        source "${DNP_LIB_PATH}/core/execute/build.develop.bash" "${remaining_args[@]}"
+#        source "${DNP_LIB_EXEC_PATH}/build.develop.bash" "${remaining_args[@]}"
+        add_docker_flag=("--service-names" "project-core,project-develop")
+        source "${DNP_LIB_EXEC_PATH}/build.all.bash"
+        dnp::build_dn_project_services "${add_docker_flag[@]}" "${remaining_args[@]}"
+        fct_exit_code=$?
     else
         if [[ "${multiarch}" == true ]]; then
             echo "Building all images (multiarch)..."
-            source "${DNP_LIB_PATH}/core/execute/build.all.multiarch.bash" "${remaining_args[@]}"
+            source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash"
+            dnp::build_dn_project_multiarch_services "${remaining_args[@]}"
+            fct_exit_code=$?
         else
             echo "Building all images..."
-            source "${DNP_LIB_PATH}/core/execute/build.all.bash" "${remaining_args[@]}"
+            source "${DNP_LIB_EXEC_PATH}/build.all.bash"
+            dnp::build_dn_project_services "${remaining_args[@]}"
+            fct_exit_code=$?
         fi
     fi
 
     return 0
 }
 
-function dnp::build_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp build --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_BUILD}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
-}

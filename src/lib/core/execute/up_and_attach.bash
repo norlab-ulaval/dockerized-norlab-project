@@ -31,14 +31,15 @@ pushd "$(pwd)" >/dev/null || exit 1
 
 
 # ....Source project shell-scripts dependencies....................................................
-if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  script_path_parent="$(dirname "${script_path}")"
+script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path_parent="$(dirname "${script_path}")"
+if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
   source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
 fi
-
+if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+fi
 
 
 # ToDo: move the help fct near the script/fct menu
@@ -48,7 +49,7 @@ function show_help() {
   n2st::draw_horizontal_line_across_the_terminal_window "="
   echo -e "$0 --help"
   # Strip shell comment char `#` and both lines
-  echo -e "${DOCUMENTATION_UP_AND_ATTACH}" | sed 's/\# ====.*//' | sed 's/^\#//'
+  echo -e "${DOCUMENTATION_UP_AND_ATTACH}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
   n2st::draw_horizontal_line_across_the_terminal_window "="
   echo -e "${MSG_END_FORMAT}"
 }

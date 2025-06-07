@@ -74,12 +74,13 @@ EOF
 test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
-# Load super project configuration
-source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
 
 function dnp::project_validate() {
     local slurm=false
     local remaining_args=()
+
+    # Load super project configuration
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
 
     # Parse options
     while [[ $# -gt 0 ]]; do
@@ -89,8 +90,7 @@ function dnp::project_validate() {
                 shift
                 ;;
             --help|-h)
-                dnp::project_validate_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_VALIDATE:?err}"
                 ;;
             *)
                 remaining_args+=("$@")
@@ -115,12 +115,14 @@ function dnp::project_validate() {
 function dnp::project_sanity() {
     local remaining_args=()
 
+    # Load super project configuration
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+
     # Parse options
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::project_sanity_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_SANITY:?err}"
                 ;;
             *)
                 remaining_args+=("$@")
@@ -140,12 +142,14 @@ function dnp::project_sanity() {
 function dnp::project_dotenv() {
     local remaining_args=()
 
+    # Load super project configuration
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+
     # Parse options
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::project_dotenv_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_DOTENV:?err}"
                 ;;
             *)
                 remaining_args+=("$@")
@@ -179,48 +183,4 @@ function dnp::project_dotenv() {
     env | grep "^N2ST_" | sort
 
     return 0
-}
-
-
-# ....Help commands................................................................................
-
-function dnp::project_validate_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp validate --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_PROJECT_VALIDATE}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
-}
-
-function dnp::project_sanity_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp super validate --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_PROJECT_SANITY}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
-}
-
-function dnp::project_dotenv_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp super show --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_PROJECT_DOTENV}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
-}
-
-# Main help use in dnp::show_entrypoint_help()
-function dnp::project_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp super --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_PROJECT}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
 }

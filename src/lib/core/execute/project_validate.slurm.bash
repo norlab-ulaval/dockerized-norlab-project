@@ -10,6 +10,9 @@
 #   <slurm/job/dir/path>     (Optional) The path to the directory containing the slurm job scripts.
 #                            Default to ".dockerized_norlab_project/slurm_jobs"
 #
+# Globals:
+#   read SUPER_PROJECT_ROOT
+#
 # =================================================================================================
 if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
   clear
@@ -21,12 +24,14 @@ pushd "$(pwd)" >/dev/null || exit 1
 slurm_script_job_path="${*:-".dockerized_norlab_project/slurm_jobs"}"
 
 # ....Source project shell-scripts dependencies....................................................
-if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  script_path_parent="$(dirname "${script_path}")"
+script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path_parent="$(dirname "${script_path}")"
+if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
   source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+fi
+if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
+  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
 fi
 source "${script_path_parent}/build.all.bash" || exit 1
 source "${script_path_parent}/build.all.multiarch.bash" || exit 1

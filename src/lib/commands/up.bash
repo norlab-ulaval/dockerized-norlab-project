@@ -33,8 +33,7 @@ function dnp::up() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::up_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_UP}"
                 ;;
             *)
                 remaining_args+=("$@")
@@ -52,12 +51,3 @@ function dnp::up() {
     return 0
 }
 
-function dnp::up_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp up --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_UP}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
-}

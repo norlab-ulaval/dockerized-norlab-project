@@ -25,8 +25,7 @@ function dnp::version() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::version_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_VERSION}"
                 ;;
             *)
                 remaining_args+=("$@")
@@ -51,12 +50,3 @@ function dnp::version() {
     return 0
 }
 
-function dnp::version_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp version --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_VERSION}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
-}

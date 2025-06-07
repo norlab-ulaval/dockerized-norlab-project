@@ -48,6 +48,7 @@ TESTED_FILE_PATH="src/lib/core/utils"
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
+  # This is the path to the mock super project (the user side)
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
 #  # Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
@@ -67,6 +68,7 @@ setup_file() {
 
 # executed before each test
 setup() {
+  # Change cwd to the mock super project directory
   cd "${MOCK_PROJECT_PATH}" || exit 1
 }
 
@@ -125,13 +127,23 @@ teardown() {
 
 }
 
-@test "assess execute with \"source $TESTED_FILE\"  › expect pass" {
+@test "assess execute with \"source $TESTED_FILE\" › expect pass" {
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success
   assert_output --regexp "[DNP done]".*"dockerized-norlab-project-mock project configurations loaded"
 }
+
+
+@test "assess execute with \"source $TESTED_FILE\" but miss requirement › expect fail" {
+#  export N2ST_PATH="$BATS_DOCKER_WORKDIR/utilities/norlab-shell-script-tools"
+  run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
+
+  assert_failure
+  assert_output --regexp "[DNP error]".*"The N2ST lib is not loaded!"
+}
+
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"

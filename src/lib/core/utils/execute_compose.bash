@@ -62,7 +62,7 @@ function dnp::excute_compose_on_dn_project_image() {
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "$0 --help"
     # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_DNP_EXECUTE_COMPOSE}" | sed 's/\# ====.*//' | sed 's/^\#//'
+    echo -e "${DOCUMENTATION_DNP_EXECUTE_COMPOSE}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "${MSG_END_FORMAT}"
   }

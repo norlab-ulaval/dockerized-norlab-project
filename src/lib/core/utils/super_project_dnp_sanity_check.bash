@@ -112,7 +112,7 @@ Dockerized-NorLab-Porject require that the super project be under version contro
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-   ....Source project shell-scripts dependencies..................................................
+  # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
   if [[ -z ${DNP_ROOT}  ]]; then

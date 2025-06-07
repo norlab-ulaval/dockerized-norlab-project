@@ -42,7 +42,7 @@ function dnp::entrypoint_helper_global_init() {
   \n$(
     SP="    " &&
       cd "/dockerized-norlab/dockerized-norlab-images/container-tools" &&
-      sed "s;alias dnp${DN_PROJECT_ALIAS_PREFIX:?err}_;${SP}$ dnp${DN_PROJECT_ALIAS_PREFIX}_;" ./dn_bash_alias.bash | sed "s;='.*;;" | grep -e "dnp${DN_PROJECT_ALIAS_PREFIX}"_
+      sed "s;alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-;${SP}$ dnp-${DN_PROJECT_ALIAS_PREFIX}-;" ./dn_bash_alias.bash | sed "s;='.*;;" | grep -e "dnp-${DN_PROJECT_ALIAS_PREFIX}-"
   )
   ${MSG_END_FORMAT}"
 

@@ -47,6 +47,7 @@ TESTED_FILE_PATH="src/lib/core/utils"
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
+  # This is the path to the mock super project (the user side)
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
 #  tree -L 3 -a "${MOCK_PROJECT_PATH}" >&3
@@ -71,6 +72,7 @@ setup_file() {
 
 # executed before each test
 setup() {
+  # Change cwd to the mock super project directory
   cd "${MOCK_PROJECT_PATH}" || exit 1
 }
 

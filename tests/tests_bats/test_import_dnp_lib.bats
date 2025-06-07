@@ -47,6 +47,8 @@ TESTED_FILE_PATH="src/lib/core/utils"
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
+
+  # This is the path to the mock super project (the user side)
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   ## Uncomment the following for debug, the ">&3" is for printing bats msg to stdin
@@ -71,6 +73,7 @@ setup_file() {
 
 # executed before each test
 setup() {
+  # Change cwd to the mock super project directory
   cd "${MOCK_PROJECT_PATH}" || exit 1
 }
 

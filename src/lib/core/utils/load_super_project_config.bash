@@ -56,7 +56,8 @@ function dnp::load_super_project_configurations() {
 
 
   # ....Find super project path and name...........................................................
-  dnp::cd_to_dnp_super_project_root || return 1
+  dnp::cd_to_dnp_super_project_root || exit 1
+  # Note: fail fast on super project not found
 
   local super_project_git_remote_url
   super_project_git_remote_url=$( cd "${SUPER_PROJECT_ROOT:?err}" && git remote get-url origin )
@@ -72,14 +73,14 @@ function dnp::load_super_project_configurations() {
   #       e.g., teamcity CI src code pull, user cloned in a different dir, project renamed.
 
   if [[ ! -f "${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/${super_project_meta_dnp_dotenv:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} can't find '.dockerized_norlab_project/${super_project_meta_dnp_dotenv}' in ${SUPER_PROJECT_ROOT}!" 1>&2
+    n2st::print_msg_error "can't find '.dockerized_norlab_project/${super_project_meta_dnp_dotenv}' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
   fi
 
   local git_project_path
   git_project_path="$( cd "${SUPER_PROJECT_ROOT}" && git rev-parse --show-toplevel )"
   if [[ "${SUPER_PROJECT_ROOT:?err}" != "${git_project_path}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} found project root '${SUPER_PROJECT_ROOT}' does not match the repository .git config '${git_project_path}'!" 1>&2
+    n2st::print_msg_error "found project root '${SUPER_PROJECT_ROOT}' does not match the repository .git config '${git_project_path}'!" 1>&2
     return 1
   fi
 
@@ -98,7 +99,7 @@ function dnp::load_super_project_configurations() {
   set +o allexport
 
   if [[ "${super_project_git_remote_url}" != "${DN_PROJECT_GIT_REMOTE_URL:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} super project ${SUPER_PROJECT_REPO_NAME} DNP configuration in .dockerized_norlab_project/configuration.env.dnp DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
+    n2st::print_msg_error "super project ${SUPER_PROJECT_REPO_NAME} DNP configuration in .dockerized_norlab_project/configuration.env.dnp DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
     return 1
   fi
 
@@ -114,7 +115,7 @@ function dnp::load_super_project_configurations() {
   #  ....Teardown...................................................................................
   if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
     export DNP_DEBUG=true
-    echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} ${SUPER_PROJECT_REPO_NAME} project configurations loaded"
+    n2st::print_msg_done "${SUPER_PROJECT_REPO_NAME} project configurations loaded"
   fi
 
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
@@ -141,30 +142,43 @@ function dnp::load_super_project_configurations() {
 # =================================================================================================
 function dnp::cd_to_dnp_super_project_root() {
 
-    local current_dir
-    current_dir=$(pwd)
+    local current_working_dir
+    local initial_working_dir
+    declare -a current_working_dir_trace
+    initial_working_dir=$(pwd)
+    current_working_dir="$initial_working_dir"
+
 
     local max_iterations=10  # Safety limit to prevent infinite loops
     local iterations_count=0
 
-    while [[ "$current_dir" != "/" && $iterations_count -lt $max_iterations ]]; do
+    while [[ "$current_working_dir" != "/" && $iterations_count -lt $max_iterations ]]; do
         # Check if .dockerized_norlab_project exists in the current directory
-        if [[ -d "$current_dir/.dockerized_norlab_project" ]]; then
-            echo "Found .dockerized_norlab_project in: $current_dir"
-            export SUPER_PROJECT_ROOT="${current_dir}"
+        if [[ -d "$current_working_dir/.dockerized_norlab_project" ]]; then
+            n2st::print_msg "Found .dockerized_norlab_project in: $current_working_dir"
+            export SUPER_PROJECT_ROOT="${current_working_dir}"
             return 0
         elif [[ "${DNP_DEBUG}" == "true" ]]; then
-          echo "Level ${iterations_count} › current_dir=$current_dir"
+          n2st::print_msg "Level ${iterations_count} › current_working_dir=$current_working_dir"
         fi
 
         # Move up to parent directory
         cd ..
-        current_dir=$(pwd)
+        current_working_dir=$(pwd)
+        current_working_dir_trace+=("$current_working_dir")
         ((iterations_count++))
     done
 
     # If we get here, the directory was not found
-    echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} .dockerized_norlab_project directory not found in any parent directory" >&2
+    n2st::print_msg_error "${MSG_ERROR_FORMAT}${MSG_DIMMED_FORMAT}.dockerized_norlab_project${MSG_END_FORMAT}${MSG_ERROR_FORMAT} directory not found in any parent directory.\n\n$(
+echo -e "        cwd -> $initial_working_dir"
+for each in "${current_working_dir_trace[@]}" ; do
+  echo -e "               $each"
+done
+    )\n
+Check if the project in which your curently executing a DNP command as been initialize with ${MSG_DIMMED_FORMAT}dnp init${MSG_END_FORMAT}${MSG_ERROR_FORMAT}.
+Execute ${MSG_DIMMED_FORMAT}dnp project sanity${MSG_END_FORMAT}${MSG_ERROR_FORMAT} if your unsure.
+${MSG_END_FORMAT}" >&2
     return 1
 }
 
@@ -174,6 +188,9 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
-  dnp::load_super_project_configurations "$@" || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} failled to load DNP user project configurations" 1>&2 && exit 1; }
+  # Check if N2ST is loaded
+  n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
+
+  dnp::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNP user project configurations" 1>&2 && exit 1; }
 fi
 

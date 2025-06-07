@@ -6,7 +6,7 @@ DOCUMENTATION_BUFFER_INSTALL=$( cat <<'EOF'
 # Install Dockerized-NorLab-Project
 #
 # Usage:
-#   $ ./install.bash [OPTIONS]
+#   $ bash ./install.bash [OPTIONS]
 #
 # Options:
 #   --skip-system-wide-symlink-install  Skip creating a symlink in /usr/local/bin
@@ -27,20 +27,9 @@ DNP_BIN_DIR="${DNP_INSTALL_DIR}/src/bin"
 DNP_SCRIPT="${DNP_BIN_DIR}/dnp"
 
 
-# Source the N2ST library to get access to n2st::seek_and_modify_string_in_file
+# Source minimum required library for install purposes
 source "${DNP_INSTALL_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
-
-# Show help message
-function show_help() {
-  # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
-  echo -e "${MSG_DIMMED_FORMAT}"
-  n2st::draw_horizontal_line_across_the_terminal_window "="
-  echo -e "$0 --help"
-  # Strip shell comment char `#` and both lines
-  echo -e "${DOCUMENTATION_BUFFER_INSTALL}" | sed 's/\# ====.*//' | sed 's/^\#//'
-  n2st::draw_horizontal_line_across_the_terminal_window "="
-  echo -e "${MSG_END_FORMAT}"
-}
+source "${DNP_INSTALL_DIR}/lib/core/utils/ui.bash"
 
 # Default options
 SYSTEM_WIDE_SYMLINK=true
@@ -63,13 +52,10 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            show_help
-            exit 0
+            dnp::command_help_menu "${DOCUMENTATION_BUFFER_INSTALL}"
             ;;
         *)
-            echo "Error: Unknown option: $1" >&2
-            echo "Run './install.bash --help' for usage information." >&2
-            exit 1
+            dnp::unknown_option_msg "./install.bash" "$1"
             ;;
     esac
 done

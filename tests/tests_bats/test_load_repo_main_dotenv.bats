@@ -64,7 +64,8 @@ setup_file() {
 
 # executed before each test
 #setup() {
-#  cd "${MOCK_PROJECT_PATH}" || exit 1
+#  # Change cwd to the mock super project directory
+  cd "${MOCK_PROJECT_PATH}" || exit 1
 #}
 
 # ====Teardown=====================================================================================

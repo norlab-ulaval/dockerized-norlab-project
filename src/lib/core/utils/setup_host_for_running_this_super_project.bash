@@ -46,21 +46,20 @@ function dnp::setup_host_for_this_super_project() {
   # - https://www.baeldung.com/linux/bash-alias-with-parameters
   # - https://unix.stackexchange.com/questions/3773/how-to-pass-parameters-to-an-alias
 
-  DN_PROJECT_ALIAS_PREFIX="dnp${DN_PROJECT_ALIAS_PREFIX:?err}"
-  local dn_project_alias_prefix_caps=$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')
+  local dn_project_alias_prefix_caps="$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')"
   (
     echo ""
     echo "#>>>>DNP ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable"
-    echo "export ${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT:?err}"
-    echo "alias ${DN_PROJECT_ALIAS_PREFIX}-cd='cd $SUPER_PROJECT_ROOT'"
-    echo "alias ${DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${SUPER_PROJECT_ROOT}/src'"
-    echo "alias ${DN_PROJECT_ALIAS_PREFIX}-cda='cd ${SUPER_PROJECT_ROOT}/artifact'"
-    echo "alias ${DN_PROJECT_ALIAS_PREFIX}-cdp='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project'"
+    echo "export _DNP_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project"
+    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cd='cd $SUPER_PROJECT_ROOT'"
+    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project'"
+    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cds='cd ${SUPER_PROJECT_ROOT}/src'"
+    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${SUPER_PROJECT_ROOT}/tests'"
+    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cda='cd ${SUPER_PROJECT_ROOT}/artifact'"
+    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
     echo "#<<<<DNP ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
     echo ""
   ) >>~/.bashrc
-
-  # --env=\"DISPLAY=:0\"
 
   # ...CUDA toolkit path...........................................................................
   # ref dusty_nv comment at https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068
@@ -113,13 +112,15 @@ function dnp::setup_host_for_this_super_project() {
   n2st::print_msg_done "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - ${DN_PROJECT_ALIAS_PREFIX}-cd -> cd to super project root
-      - ${DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to super project src/ dir
-      - ${DN_PROJECT_ALIAS_PREFIX}-cda -> cd to super project artifact/ dir
-      - ${DN_PROJECT_ALIAS_PREFIX}-cdp -> cd to super project dockerized_norlab_project/ dir
+      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cd -> cd to ${SUPER_PROJECT_REPO_NAME} root
+      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to ${SUPER_PROJECT_REPO_NAME} .dockerized_norlab_project dir
+      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cds -> cd to ${SUPER_PROJECT_REPO_NAME} src dir
+      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to ${SUPER_PROJECT_REPO_NAME} tests dir
+      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cda -> cd to ${SUPER_PROJECT_REPO_NAME} artifact dir
+      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cde -> cd to ${SUPER_PROJECT_REPO_NAME} external data dir
 
-    New available environment variable added to ~/.bashrc:
-      - ${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}
+    New available environment variable added to ~/.bashrc for convenience:
+      - _DNP_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}
 
   "
 
@@ -132,11 +133,13 @@ function dnp::setup_host_for_this_super_project() {
 
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  if [[ -z ${DNP_ROOT}  ]] || [[ -z ${SUPER_PROJECT_ROOT}  ]]; then
-    script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-    script_path_parent="$(dirname "${script_path}")"
-    source "${script_path_parent}/import_dnp_lib.bash" || exit 1
-    source "${script_path_parent}/load_super_project_config.bash" || exit 1
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
+    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  fi
+  if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
+    source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   fi
   dnp::setup_host_for_this_super_project || exit 1
 else

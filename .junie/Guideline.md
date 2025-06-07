@@ -17,6 +17,16 @@ Stand-alone version with a PATH-accessible bash script approach
   - N2ST library
   - NBS library
   
+### Repository development organization
+- `src/bin/dnp` is the DNP application entrypoint
+- `src/lib/` contain lybrary files
+- `tests/` contain tests files
+- `tests/tests_bats/` contain N2ST bats framework files that are mainly used for unit-testing
+- `tests/tests_dryrun_and_tests_scripts/` contain integration test (see details bellow)
+- `utilities` contain external libraries such as N2ST and NBS
+- `utilities/tmp/dockerized-norlab-project-mock` is use for cloning a fresh copy of a mock "super project" from https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git on test execution.
+  `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNP. We refer to this as a "super project" or the "user side".
+
 ### Tests Requirements:
 - All tests in the `tests` directory must pass
 - Unit-tests and Integration tests:

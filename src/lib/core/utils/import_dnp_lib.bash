@@ -7,6 +7,7 @@
 #
 # Global
 #   read/write DNP_ROOT
+#   write DNP_LIB_LOADED
 #
 # =================================================================================================
 MSG_ERROR_FORMAT="\033[1;31m"
@@ -15,6 +16,7 @@ MSG_DONE_FORMAT="\033[1;32m"
 
 # ....Variable set for export......................................................................
 declare -x DNP_ROOT
+declare -x DNP_LIB_LOADED
 
 # =================================================================================================
 # Function that load DNP lib and all dependencies.
@@ -79,19 +81,31 @@ function dnp::import_lib_and_dependencies() {
   cd "${NBS_PATH:?'Variable not set'}" || return 1
   source "import_norlab_build_system_lib.bash" || return 1
 
-  # ....(Quickhack) Reload project .env file for N2ST..............................................
+  for func in $(compgen -A function | grep nbs::); do
+    export -f "$func"
+  done
+
+  # (Quickhack) Reload project .env file for N2ST
   source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
   # ....Load N2ST..................................................................................
   cd "${N2ST_PATH:?'Variable not set'}" || return 1
   source "import_norlab_shell_script_tools_lib.bash" || return 1
 
-  # ....(Quickhack) Reload project .env file for N2ST..............................................
-  source "${DNP_ROOT}/load_repo_main_dotenv.bash"
+  for func in $(compgen -A function | grep n2st::); do
+    export -f "$func"
+  done
+
+  # (Quickhack) Reload project .env file for N2ST
+  source "${DNP_ROOT}/load_repo_main_dotenv.bash" || return 1
 
   # ....Load DNP utils.............................................................................
-  cd "${N2ST_PATH:?'Variable not set'}" || return 1
-  source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || exit 1
+  source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || return 1
+  source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || return 1
+
+  for func in $(compgen -A function | grep dnp::); do
+    export -f "$func"
+  done
 
   # ....Teardown...................................................................................
   if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
@@ -155,6 +169,23 @@ function dnp::find_dnp_root_path() {
     # If we get here, the repository root was not found
     echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project root directory not found in any parent directory" >&2
     return 1
+}
+
+# =================================================================================================
+# Simple utility to check if the lib function are loaded
+# Usage in script:
+#     if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
+#       source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+#     fi
+#
+# Arguments:
+#   none
+# Returns:
+#   0
+# =================================================================================================
+function dnp::is_lib_loaded() {
+    echo "DNP is loaded"
+    return 0
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -51,7 +51,7 @@ function dnp::build_dn_project_multiarch_services() {
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "$0 --help"
     # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUILD_ALL_MULTIARCH}" | sed 's/\# ====.*//' | sed 's/^\#//'
+    echo -e "${DOCUMENTATION_BUILD_ALL_MULTIARCH}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "${MSG_END_FORMAT}"
   }

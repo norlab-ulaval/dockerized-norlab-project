@@ -28,13 +28,10 @@ function dnp::init() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::init_help
-                exit 0
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_INIT}"
                 ;;
             *)
-                echo "Error: Too many arguments." >&2
-                dnp::init_help
-                exit 1
+                dnp::unknown_subcommand_msg "init" "${sub_the_command}"
                 ;;
         esac
     done
@@ -112,14 +109,4 @@ function dnp::init() {
     echo "DNP project initialized successfully."
     echo "You can now use 'dnp build', 'dnp up', etc. to manage your project."
     return 0
-}
-
-function dnp::init_help() {
-    echo -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "dnp init --help"
-    # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_BUFFER_INIT}" | sed 's/\# ====.*//' | sed 's/^\#//'
-    n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_END_FORMAT}"
 }
