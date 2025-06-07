@@ -46,7 +46,6 @@ function dnp::excute_compose_on_dn_project_image() {
   # ....Set env variables (pre cli)................................................................
   local remaining_args=()
   local docker_command_w_flags=()
-#  local compose_path="${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration"
   local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
   local multiarch=false
@@ -192,7 +191,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${PROJECT_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
+  n2st::norlab_splash "${DNP_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::excute_compose_on_dn_project_image "$@"
   FCT_EXIT_CODE=$?

@@ -17,13 +17,7 @@ DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-
 # (Priority) ToDo: unit-test for flag option
-
-if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
-  clear
-fi
-pushd "$(pwd)" >/dev/null || exit 1
 
 # ToDo: move the help fct near the script/fct menu
 function show_help() {
@@ -38,84 +32,95 @@ function show_help() {
 }
 
 
-# ....Set env variables (pre cli)................................................................
-declare -a remaining_args
-push_deploy_image=false
+function dnp::build_project_deploy_service() {
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
-# ....cli..........................................................................................
-while [ $# -gt 0 ]; do
+  # ....Set env variables (pre cli)................................................................
+  declare -a remaining_args
+  local push_deploy_image=false
 
-  case $1 in
-    --push-deploy-image)
-      push_deploy_image=true
-      shift # Remove argument (--push-deploy-image)
-      ;;
-    -h | --help)
-      clear
-      show_help
-      exit
-      ;;
-    *) # Default case
-      remaining_args=("$@")
-      break
-      ;;
-  esac
+  # ....cli........................................................................................
+  while [ $# -gt 0 ]; do
 
-done
+    case $1 in
+      --push-deploy-image)
+        push_deploy_image=true
+        shift # Remove argument (--push-deploy-image)
+        ;;
+      -h | --help)
+        clear
+        show_help
+        exit
+        ;;
+      *) # Default case
+        remaining_args=("$@")
+        break
+        ;;
+    esac
 
-# ....Set env variables (post cli)...............................................................
-# Add env var
+  done
 
+  # ....Set env variables (post cli)...............................................................
+  if [[ ${push_deploy_image} == true ]]; then
+    n2st::print_msg "Won't push the deploy image, use flag ${MSG_DIMMED_FORMAT}--push-deploy-image${MSG_END_FORMAT} to push it."
+  fi
 
-# ....Source project shell-scripts dependencies..................................................
-script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-script_path_parent="$(dirname "${script_path}")"
-if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
-  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
-fi
-if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
-  source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
-fi
+  # ....Build stage..................................................................................
+  {
+    build_docker_flag=("--service-names" "project-core,project-deploy")
+    build_docker_flag+=("--force-push-project-core")
+    dnp::build_dn_project_services "${build_docker_flag[@]}" "${remaining_args[@]}"
+    build_exit_code=$?
+  }
 
-source "${script_path_parent}/build.all.bash" || exit 1
+  # ....Push deploy stage............................................................................
+  if [[ ${push_deploy_image} == true ]]; then
+    source "${script_path_parent}/../utils/execute_compose.bash" || return 1
+    {
+      push_docker_flag=("--push" "project-deploy")
+      # push_docker_flag=("--override-build-cmd" "push" "project-deploy")
+      dnp::excute_compose_on_dn_project_image "${push_docker_flag[@]}"
+      push_exit_code=$?
+    }
+  else
+    push_exit_code=0
+  fi
 
-# ....Execute....................................................................................
-if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
-  clear
-fi
-
-# ====Begin========================================================================================
-n2st::norlab_splash "${PROJECT_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
-n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-
-if [[ ${push_deploy_image} == true ]]; then
-  echo "Won't push the deploy image, use falg ${MSG_DIMMED_FORMAT}--push-deploy-image${MSG_END_FORMAT} to push it."
-fi
-
-# ....Build stage..................................................................................
-{
-  build_docker_flag=("--service-names" "project-core,project-deploy")
-  build_docker_flag+=("--force-push-project-core")
-  dnp::build_dn_project_services "${build_docker_flag[@]}" "${remaining_args[@]}"
-  build_exit_code=$?
+  # ....Teardown...................................................................................
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
+  return $((build_exit_code + push_exit_code))
 }
 
-# ....Push deploy stage............................................................................
-if [[ ${push_deploy_image} == true ]]; then
-  source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
-  {
-    push_docker_flag=("--push" "project-deploy")
-    # push_docker_flag=("--override-build-cmd" "push" "project-deploy")
-    dnp::excute_compose_on_dn_project_image "${push_docker_flag[@]}"
-    push_exit_code=$?
-  }
+
+
+# ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  # This script is being run, ie: __name__="__main__"
+
+  # ....Source project shell-scripts dependencies..................................................
+  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path_parent="$(dirname "${script_path}")"
+  if [[ -z $( declare -F dnp::import_lib_and_dependencies ) ]]; then
+    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+    source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
+  fi
+  if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
+    source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+  fi
+  source "${script_path_parent}/build.all.bash" || exit 1
+
+  # ....Execute....................................................................................
+  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+    clear
+  fi
+  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  dnp::build_project_deploy_service "$@"
+  fct_exit_code=$?
+  n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  exit "${fct_exit_code}"
 else
-  push_exit_code=0
+  # This script is being sourced, ie: __name__="__source__"
+  :
 fi
-
-# ====Teardown=====================================================================================
-n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-popd >/dev/null || exit 1
-
-exit $((build_exit_code + push_exit_code))

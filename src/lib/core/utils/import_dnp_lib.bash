@@ -89,6 +89,8 @@ function dnp::import_lib_and_dependencies() {
   source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
   # ....Load N2ST..................................................................................
+  # Note: load n2st after nbs to make sure that the n2st functions version are not those of
+  # the nbs n2st submodule.
   cd "${N2ST_PATH:?'Variable not set'}" || return 1
   source "import_norlab_shell_script_tools_lib.bash" || return 1
 
@@ -169,23 +171,6 @@ function dnp::find_dnp_root_path() {
     # If we get here, the repository root was not found
     echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project root directory not found in any parent directory" >&2
     return 1
-}
-
-# =================================================================================================
-# Simple utility to check if the lib function are loaded
-# Usage in script:
-#     if [[ ! $( dnp::is_lib_loaded 2>/dev/null >/dev/null )  ]]; then
-#       source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-#     fi
-#
-# Arguments:
-#   none
-# Returns:
-#   0
-# =================================================================================================
-function dnp::is_lib_loaded() {
-    echo "DNP is loaded"
-    return 0
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
