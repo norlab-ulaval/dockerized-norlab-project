@@ -43,12 +43,12 @@ function dnp::project_validate_all() {
     config_flag+=("--file" "${each_compose}")
     config_flag+=("--" "--dry-run")
     if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
-      dnp::excute_compose_on_dn_project_image "${config_flag[@]}"
+      dnp::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
-      dnp::excute_compose_on_dn_project_image "${config_flag[@]}"
+      dnp::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.".*".yaml" ]]; then
-      dnp::excute_compose_on_dn_project_image "${config_flag[@]}" "project-develop"
-      dnp::excute_compose_on_dn_project_image "${config_flag[@]}" "project-deploy"
+      dnp::excute_compose "${config_flag[@]}" "project-develop"
+      dnp::excute_compose "${config_flag[@]}" "project-deploy"
     fi
     config_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "<"
@@ -76,9 +76,9 @@ function dnp::project_validate_all() {
     build_flag+=("--file" "${each_compose}")
     build_flag+=("--" "--dry-run")
     if [[ "${each_compose}" =~ .*".multiarch.yaml" ]]; then
-      dnp::build_dn_project_multiarch_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dnp::build_services_multiarch --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     else
-      dnp::build_dn_project_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dnp::build_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     fi
     build_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "<"
@@ -160,7 +160,7 @@ else
   test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
   test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
-  test -n "$( declare -F dnp::build_dn_project_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -F dnp::build_dn_project_multiarch_services )" || { echo -e "${dnp_error_prefix} The DNP build multiarch lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -F dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -F dnp::build_services_multiarch )" || { echo -e "${dnp_error_prefix} The DNP build multiarch lib is not loaded!" ; exit 1 ; }
 
 fi

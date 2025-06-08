@@ -21,7 +21,7 @@ EOF
 test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
-function dnp::init() {
+function dnp::init_command() {
     local project_name=""
 
     # Parse options

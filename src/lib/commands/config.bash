@@ -30,7 +30,7 @@ EOF
 test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
-function dnp::config() {
+function dnp::config_command() {
     local mode=""
     local platform=""
     local help=false

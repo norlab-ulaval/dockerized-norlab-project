@@ -7,15 +7,17 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 # Notes: build all services for host native architecture by default
 #
 # Usage:
-#   $ dnp build [OPTIONS] [--] [--help|[<specialized-option>] [--] [<any-docker-argument>]]
+#   $ dnp build [OPTIONS] [-- <any-docker-argument>]
 #
 # Options:
-#   --multiarch            Build all service for multiple architectures
-#                           (require a configured docker buildx multiarch builder)
-#   --ci-tests             Build CI tests images only
-#   --deploy               Build deploy images only
-#   --develop              Build develop images only
-#   --help, -h             Show this help message
+#   --multiarch                           Build all service for multiple architectures
+#                                          (require a configured docker buildx multiarch builder)
+#   --force-push-project-core             Build images from the local image store
+#   --develop                             Build develop images only
+#   --ci-tests                            Build CI tests images only
+#   --slurm                               Build slurm images only
+#   --deploy [--push-deploy-image]        Build deploy images only
+#   --help, -h                            Show this help message
 #
 # =================================================================================================
 EOF
@@ -24,20 +26,28 @@ EOF
 test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
-function dnp::build() {
+function dnp::build_command() {
+
+    # ....Set env variables (pre cli)).............................................................
     local multiarch=false
+    local force_push_project_core=false
     local ci_tests=false
     local deploy=false
     local develop=false
     local slurm=false
-    local help=false
+    local push_deploy=false
     local remaining_args=()
+    local original_command="$*"
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --multiarch)
                 multiarch=true
+                shift
+                ;;
+            --force-push-project-core)
+                force_push_project_core=true
                 shift
                 ;;
             --ci-tests)
@@ -46,6 +56,13 @@ function dnp::build() {
                 ;;
             --deploy)
                 deploy=true
+                shift
+                ;;
+            --push-deploy-image)
+                if [[ "${deploy}" == false ]]; then
+                  dnp::illegal_command_msg "build" "${original_command}" "The --push-deploy-image flag can only be used in combination with --deploy.\n"
+                fi
+                push_deploy=true
                 shift
                 ;;
             --develop)
@@ -61,65 +78,80 @@ function dnp::build() {
                 ;;
             --) # no more option
                 shift
-                remaining_args=("$@")
+                remaining_args+=("$@")
                 break
                 ;;
             *)
-                remaining_args=("$@")
-                break
+                dnp::unknown_subcommand_msg "build" "$*"
                 ;;
         esac
     done
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || exit 1
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNP_LIB_EXEC_PATH}/build.all.bash" return 1
+    source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" return 1
+    source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" return 1
 
-    # Determine which build script to execute
-    if [[ "${ci_tests}" == true ]]; then
-        if [[ "${multiarch}" == true ]]; then
-            echo "Building CI tests images (multiarch)..."
-            source "${DNP_LIB_EXEC_PATH}/build.ci_tests.multiarch.bash" "${remaining_args[@]}"
-        else
-            echo "Building CI tests images..."
-            source "${DNP_LIB_EXEC_PATH}/build.ci_tests.bash" "${remaining_args[@]}"
-        fi
-    elif [[ "${slurm}" == true ]]; then
-        build_slurm_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
-        if [[ "${multiarch}" == true ]]; then
-            echo "Building slurm images (multiarch)..."
-            source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash"
-            dnp::build_dn_project_multiarch_services "${build_slurm_flag[@]}" -- "${remaining_args[@]}"
-            fct_exit_code=$?
-        else
-            echo "Building slurm images..."
-            source "${DNP_LIB_EXEC_PATH}/build.all.bash"
-            dnp::build_dn_project_services  "${build_slurm_flag[@]}" -- "${remaining_args[@]}"
-            fct_exit_code=$?
-        fi
-    elif [[ "${deploy}" == true ]]; then
-        echo "Building deploy images..."
-        source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" "${remaining_args[@]}"
-    elif [[ "${develop}" == true ]]; then
-        echo "Building develop images..."
-#        source "${DNP_LIB_EXEC_PATH}/build.develop.bash" "${remaining_args[@]}"
-        add_docker_flag=("--service-names" "project-core,project-develop")
-        source "${DNP_LIB_EXEC_PATH}/build.all.bash"
-        dnp::build_dn_project_services "${add_docker_flag[@]}" "${remaining_args[@]}"
-        fct_exit_code=$?
+    # ....Set env variables (post cli).............................................................
+    declare -a build_flag
+    declare -a deploy_flag
+    # build_flag+=("--msg-line-level" " ")
+
+    local architecture="native"
+    if [[ "${multiarch}" == true ]]; then
+      architecture="multiarch"
+      if [[ "${force_push_project_core}" == false ]]; then
+        build_flag+=("--no-force-push-project-core")
+      fi
     else
-        if [[ "${multiarch}" == true ]]; then
-            echo "Building all images (multiarch)..."
-            source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash"
-            dnp::build_dn_project_multiarch_services "${remaining_args[@]}"
-            fct_exit_code=$?
-        else
-            echo "Building all images..."
-            source "${DNP_LIB_EXEC_PATH}/build.all.bash"
-            dnp::build_dn_project_services "${remaining_args[@]}"
-            fct_exit_code=$?
-        fi
+      if [[ "${force_push_project_core}" == true ]]; then
+        build_flag+=("--force-push-project-core")
+      fi
     fi
 
-    return 0
+    if [[ "${deploy}" == true ]]; then
+        # ....Deploy special case..................................................................
+        echo "Building deploy images (${architecture})..."
+        if [[ "${push_deploy}" == true ]]; then
+          deploy_flag+=("--push-deploy-image")
+        fi
+        if [[ "${multiarch}" == true ]]; then
+          dnp::illegal_command_msg "build" "${original_command}" "The build multiarch deploy image feature is not released yet!\nUse ${MSG_DIMMED_FORMAT}dnp build --multiarch${MSG_END_FORMAT} in the mean time to build multiarch project-deploy images.\nIssue NMO-680 feat: improve project-deploy logic\n"
+          # (Priority) ToDo: NMO-680 feat: improve project-deploy logic
+        fi
+        n2st::print_formated_script_header "dnp::build_project_deploy_service" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+        dnp::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
+        fct_exit_code=$?
+        n2st::print_formated_script_footer "dnp::build_project_deploy_service" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+    else
+      # ....General case...........................................................................
+      if [[ "${ci_tests}" == true ]]; then
+          echo "Building CI tests images (${architecture})..."
+          build_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+      elif [[ "${slurm}" == true ]]; then
+          echo "Building slurm images (${architecture})..."
+          build_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
+      elif [[ "${develop}" == true ]]; then
+          echo "Building develop images (${architecture})..."
+          build_flag+=("--service-names" "project-core,project-develop")
+      else
+          echo "Building all images (${architecture})..."
+      fi
+
+      if [[ "${multiarch}" == true ]]; then
+          n2st::print_formated_script_header "dnp::build_services_multiarch" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+          dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+          fct_exit_code=$?
+          n2st::print_formated_script_footer "dnp::build_services_multiarch" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+      else
+          n2st::print_formated_script_header "dnp::build_services" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+          dnp::build_services  "${build_flag[@]}" "${remaining_args[@]}"
+          fct_exit_code=$?
+          n2st::print_formated_script_footer "dnp::build_services" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+      fi
+    fi
+
+    return $fct_exit_code
 }
 

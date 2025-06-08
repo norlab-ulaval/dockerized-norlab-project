@@ -69,18 +69,19 @@ function dnp::build_project_deploy_service() {
   # ....Build stage..................................................................................
   {
     build_docker_flag=("--service-names" "project-core,project-deploy")
-    build_docker_flag+=("--force-push-project-core")
-    dnp::build_dn_project_services "${build_docker_flag[@]}" "${remaining_args[@]}"
+    if [[ ${push_deploy_image} == true ]]; then
+      build_docker_flag+=("--force-push-project-core")
+    fi
+    dnp::build_services "${build_docker_flag[@]}" "${remaining_args[@]}"
     build_exit_code=$?
   }
 
   # ....Push deploy stage............................................................................
   if [[ ${push_deploy_image} == true ]]; then
-    source "${script_path_parent}/../utils/execute_compose.bash" || return 1
     {
       push_docker_flag=("--push" "project-deploy")
       # push_docker_flag=("--override-build-cmd" "push" "project-deploy")
-      dnp::excute_compose_on_dn_project_image "${push_docker_flag[@]}"
+      dnp::excute_compose "${push_docker_flag[@]}"
       push_exit_code=$?
     }
   else
@@ -122,5 +123,10 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   exit "${fct_exit_code}"
 else
   # This script is being sourced, ie: __name__="__source__"
-  :
+
+  # ....Pre-condition..............................................................................
+  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+  test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
 fi

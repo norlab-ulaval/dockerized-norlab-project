@@ -349,15 +349,15 @@ shift
 case "${COMMAND}" in
     build)
         source "${DNP_LIB_DIR}/commands/build.bash"
-        dnp::build "$@"
+        dnp::build_command "$@"
         ;;
     up)
         source "${DNP_LIB_DIR}/commands/up.bash"
-        dnp::up "$@"
+        dnp::up_command "$@"
         ;;
     down)
         source "${DNP_LIB_DIR}/commands/down.bash"
-        dnp::down "$@"
+        dnp::down_command "$@"
         ;;
     # ... other commands
     help)
@@ -379,7 +379,7 @@ Each command script would implement the functionality of the corresponding curre
 #!/bin/bash
 # lib/commands/build.bash
 
-function dnp::build() {
+function dnp::build_command() {
     # Parse options
     local MULTIARCH=false
     local SERVICE=""

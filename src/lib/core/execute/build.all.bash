@@ -6,16 +6,16 @@ DOCUMENTATION_BUILD_ALL=$(
 #
 # Usage as a function:
 #   $ source build.all.bash
-#   $ dnp::build_dn_project_services [<any-arguments>] [--] [<any-docker-flag>]
+#   $ dnp::build_services [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Usage as a script:
 #   $ bash build.all.bash [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Arguments:
-#   --force-push-project-core             To build pull/push from/to dockerhub sequentialy.
-#   --service-names "<name1>,<name2>"     To override the list of build services.
+#   --force-push-project-core             Build images from the local image store.
+#   --service-names "<name1>,<name2>"     Override the list of build services.
 #                                         Must be a comma separated string of service name.
-#   -f | --file "compose.yaml"            To override the docker compose file
+#   -f | --file "compose.yaml"            Override the docker compose file
 #                                         (default: "docker-compose.project.build.native.yaml")
 #   --multiarch                           Build in multi-architecture mode
 #   --msg-line-level                      Set consol horizontal line character when used as a fct
@@ -34,7 +34,7 @@ EOF
 # (Priority) ToDo: unit-test for flag option
 
 # ....Function.....................................................................................
-function dnp::build_dn_project_services() {
+function dnp::build_services() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
@@ -120,42 +120,48 @@ function dnp::build_dn_project_services() {
 
   n2st::print_msg "Building the following services"
   for idx in "${!services_names[@]}"; do
-    echo "              [$idx] ${services_names[idx]}"
+    echo -e "$(dnp::show_indexed_prefix "$idx") ${services_names[idx]}"
   done
 
   # ....Execute build..............................................................................
   n2st::print_msg "force_push_project_core: ${force_push_project_core}"
   if [[ ${force_push_project_core} == false ]]; then
-    n2st::print_msg "Building from the local image store. ${MSG_DIMMED_FORMAT}To pull/push from/to Dockerhub sequentialy, execute script with flag '--force-push-project-core'.${MSG_END_FORMAT}"
+    n2st::print_msg "Building from the local image store. ${MSG_DIMMED_FORMAT}To pull/push from/to Dockerhub sequentialy, use the '--force-push-project-core' flag.${MSG_END_FORMAT}"
 
-    dnp::excute_compose_on_dn_project_image --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies "${services_names[@]}"
+    dnp::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies "${services_names[@]}"
     build_exit_code=("$?")
 
     # ....On faillure, re-run build.all one service at the time....................................
     if [[ ${build_exit_code[0]} != 0 ]]; then
-      n2st::print_msg_error "Build error, re-running build.all one service at the time"
+      n2st::print_msg_error "Build error, re-running ${MSG_DIMMED_FORMAT}dnp::build_services${MSG_END_FORMAT} one service at the time"
       # Reset exit code buffer
       build_exit_code=()
       # Execute on all remaining service
       for each in "${services_names[@]}"; do
-        dnp::excute_compose_on_dn_project_image --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+        dnp::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
         build_exit_code+=("$?")
       done
 
       # Show build faillure summary
       n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}"
-      n2st::print_msg "Build faillure test summary"
+      echo
+      n2st::print_msg "Build faillure summary\n"
       for idx in "${!build_exit_code[@]}"; do
         if [[ ${build_exit_code[idx]} != 0 ]]; then
-          echo -e "    ${MSG_ERROR_FORMAT}Service [$idx] ${services_names[idx]} completed build with error${MSG_END_FORMAT}"
+          echo -e "$(dnp::show_indexed_prefix "$idx") ${MSG_ERROR_FORMAT}${services_names[idx]} completed build with error${MSG_END_FORMAT}"
         else
-          echo -e "    ${MSG_DONE_FORMAT}Service [$idx] ${services_names[idx]} completed build${MSG_END_FORMAT}"
+          echo -e "$(dnp::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${services_names[idx]} completed build succesfully${MSG_END_FORMAT}"
         fi
       done
     else
       # Show build succes
       n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}"
-      n2st::print_msg_done "Building services ${MSG_DIMMED_FORMAT}${services_names[*]}${MSG_END_FORMAT} completed succesfully"
+      echo
+      # n2st::print_msg_done "Building services ${MSG_DIMMED_FORMAT}${services_names[*]}${MSG_END_FORMAT} completed succesfully"
+      n2st::print_msg "Build summary\n"
+      for idx in "${!services_names[@]}"; do
+        echo -e "$(dnp::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${services_names[idx]} completed build succesfully${MSG_END_FORMAT}"
+      done
     fi
 
   else
@@ -171,7 +177,7 @@ function dnp::build_dn_project_services() {
         #       1. check that project-core image on Dockerhub has been pushed for both arm64 and amd64
         #       2. if not, consider building and pushing manualy each arm64 and amd64 images and
         #          then merge as in DN l4t base images
-        dnp::excute_compose_on_dn_project_image --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core
+        dnp::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core
         project_core_build_exit_code=$?
       fi
     done
@@ -181,7 +187,7 @@ function dnp::build_dn_project_services() {
     # Execute docker cmd on all remaining service
     for each in "${services_names[@]}"; do
       if [[ "${each}" != "project-core" ]]; then
-        dnp::excute_compose_on_dn_project_image --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+        dnp::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
         build_exit_code+=("$?")
       else
         build_exit_code+=("$project_core_build_exit_code")
@@ -190,12 +196,19 @@ function dnp::build_dn_project_services() {
 
     # ....Show build summary.......................................................................
     n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}"
+    echo
     n2st::print_msg "Build summary\n"
+    local action="build"
     for idx in "${!build_exit_code[@]}"; do
-      if [[ ${build_exit_code[idx]} != 0 ]]; then
-        echo -e "    ${MSG_ERROR_FORMAT}Service [$idx] ${services_names[idx]} completed build with error${MSG_END_FORMAT}"
+      if [[ "${services_names[idx]}" == "project-core" ]]; then
+        action="build+push"
       else
-        echo -e "    ${MSG_DONE_FORMAT}Service [$idx] ${services_names[idx]} completed build${MSG_END_FORMAT}"
+        action="build"
+      fi
+      if [[ ${build_exit_code[idx]} != 0 ]]; then
+        echo -e "$(dnp::show_indexed_prefix "$idx") ${MSG_ERROR_FORMAT}${services_names[idx]} completed ${action} with error${MSG_END_FORMAT}"
+      else
+        echo -e "$(dnp::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${services_names[idx]} completed ${action} succesfully${MSG_END_FORMAT}"
       fi
     done
 
@@ -217,6 +230,10 @@ function dnp::build_dn_project_services() {
   fi
 }
 
+function dnp::show_indexed_prefix() {
+  echo -e "      ${MSG_DIMMED_FORMAT}$1)${MSG_END_FORMAT}"
+  return 0
+}
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
@@ -234,7 +251,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   fi
   n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::build_dn_project_services "$@"
+  dnp::build_services "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -246,4 +263,5 @@ else
   test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
   test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
+  test -n "$( declare -F dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
 fi

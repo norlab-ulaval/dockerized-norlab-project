@@ -18,7 +18,7 @@ EOF
 test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
-function dnp::version() {
+function dnp::version_command() {
     local remaining_args=()
 
     # Parse options

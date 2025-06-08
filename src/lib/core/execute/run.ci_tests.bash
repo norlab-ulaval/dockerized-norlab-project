@@ -33,7 +33,7 @@ function dnp::run_ci_tests() {
   docker_run_flag=("--rm")
   docker_run_flag+=("${the_service}")
   docker_run_flag+=("${any_docker_arg[@]}")
-  dnp::excute_compose_on_dn_project_image "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"
+  dnp::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"
   exit_code=$?
 
   if [[ ${exit_code} != 0 ]]; then

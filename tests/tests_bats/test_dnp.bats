@@ -58,50 +58,50 @@ setup_file() {
 
   # Create mock functions for each command
   cat > "${MOCK_DNP_DIR}/src/lib/commands/init.bash" << 'EOF'
-function dnp::init() {
-  echo "Mock dnp::init called with args: $*"
+function dnp::init_command() {
+  echo "Mock dnp::init_command called with args: $*"
   return 0
 }
 EOF
 
   cat > "${MOCK_DNP_DIR}/src/lib/commands/build.bash" << 'EOF'
-function dnp::build() {
-  echo "Mock dnp::build called with args: $*"
+function dnp::build_command() {
+  echo "Mock dnp::build_command called with args: $*"
   return 0
 }
 EOF
 
   cat > "${MOCK_DNP_DIR}/src/lib/commands/up.bash" << 'EOF'
-function dnp::up() {
-  echo "Mock dnp::up called with args: $*"
+function dnp::up_command() {
+  echo "Mock dnp::up_command called with args: $*"
   return 0
 }
 EOF
 
   cat > "${MOCK_DNP_DIR}/src/lib/commands/down.bash" << 'EOF'
-function dnp::down() {
-  echo "Mock dnp::down called with args: $*"
+function dnp::down_command() {
+  echo "Mock dnp::down_command called with args: $*"
   return 0
 }
 EOF
 
   cat > "${MOCK_DNP_DIR}/src/lib/commands/run.bash" << 'EOF'
-function dnp::run() {
-  echo "Mock dnp::run called with args: $*"
+function dnp::run_command() {
+  echo "Mock dnp::run_command called with args: $*"
   return 0
 }
 EOF
 
   cat > "${MOCK_DNP_DIR}/src/lib/commands/config.bash" << 'EOF'
-function dnp::config() {
-  echo "Mock dnp::config called with args: $*"
+function dnp::config_command() {
+  echo "Mock dnp::config_command called with args: $*"
   return 0
 }
 EOF
 
   cat > "${MOCK_DNP_DIR}/src/lib/commands/version.bash" << 'EOF'
-function dnp::version() {
-  echo "Mock dnp::version called with args: $*"
+function dnp::version_command() {
+  echo "Mock dnp::version_command called with args: $*"
   return 0
 }
 EOF
@@ -117,18 +117,18 @@ DOCUMENTATION_BUFFER_PROJECT="
 # =================================================================================================
 "
 
-function dnp::project_validate() {
-  echo "Mock dnp::project_validate called with args: $*"
+function dnp::project_validate_command() {
+  echo "Mock dnp::project_validate_command called with args: $*"
   return 0
 }
 
-function dnp::project_sanity() {
-  echo "Mock dnp::project_sanity called with args: $*"
+function dnp::project_sanity_command() {
+  echo "Mock dnp::project_sanity_command called with args: $*"
   return 0
 }
 
-function dnp::project_dotenv() {
-  echo "Mock dnp::project_dotenv called with args: $*"
+function dnp::project_dotenv_command() {
+  echo "Mock dnp::project_dotenv_command called with args: $*"
   return 0
 }
 EOF
@@ -224,7 +224,7 @@ teardown_file() {
   assert_success
 
   # Should call the init function
-  assert_output --partial "Mock dnp::init called with args:"
+  assert_output --partial "Mock dnp::init_command called with args:"
 }
 
 @test "dnp build command › expect build function to be called" {
@@ -235,7 +235,7 @@ teardown_file() {
   assert_success
 
   # Should call the build function
-  assert_output --partial "Mock dnp::build called with args:"
+  assert_output --partial "Mock dnp::build_command called with args:"
 }
 
 @test "dnp up command › expect up function to be called" {
@@ -246,7 +246,7 @@ teardown_file() {
   assert_success
 
   # Should call the up function
-  assert_output --partial "Mock dnp::up called with args:"
+  assert_output --partial "Mock dnp::up_command called with args:"
 }
 
 @test "dnp down command › expect down function to be called" {
@@ -257,7 +257,7 @@ teardown_file() {
   assert_success
 
   # Should call the down function
-  assert_output --partial "Mock dnp::down called with args:"
+  assert_output --partial "Mock dnp::down_command called with args:"
 }
 
 @test "dnp run command › expect run function to be called" {
@@ -268,7 +268,7 @@ teardown_file() {
   assert_success
 
   # Should call the run function
-  assert_output --partial "Mock dnp::run called with args:"
+  assert_output --partial "Mock dnp::run_command called with args:"
 }
 
 @test "dnp config command › expect config function to be called" {
@@ -279,7 +279,7 @@ teardown_file() {
   assert_success
 
   # Should call the config function
-  assert_output --partial "Mock dnp::config called with args:"
+  assert_output --partial "Mock dnp::config_command called with args:"
 }
 
 @test "dnp version command › expect version function to be called" {
@@ -290,7 +290,7 @@ teardown_file() {
   assert_success
 
   # Should call the version function
-  assert_output --partial "Mock dnp::version called with args:"
+  assert_output --partial "Mock dnp::version_command called with args:"
 }
 
 @test "dnp help command › expect help message and success" {
@@ -324,7 +324,7 @@ teardown_file() {
   assert_success
 
   # Should call the project_validate function
-  assert_output --partial "Mock dnp::project_validate called with args:"
+  assert_output --partial "Mock dnp::project_validate_command called with args:"
 }
 
 @test "dnp project sanity command › expect project_sanity function to be called" {
@@ -335,7 +335,7 @@ teardown_file() {
   assert_success
 
   # Should call the project_sanity function
-  assert_output --partial "Mock dnp::project_sanity called with args:"
+  assert_output --partial "Mock dnp::project_sanity_command called with args:"
 }
 
 @test "dnp project dotenv command › expect project_dotenv function to be called" {
@@ -346,7 +346,7 @@ teardown_file() {
   assert_success
 
   # Should call the project_dotenv function
-  assert_output --partial "Mock dnp::project_dotenv called with args:"
+  assert_output --partial "Mock dnp::project_dotenv_command called with args:"
 }
 
 @test "dnp project help command › expect help message and no failllure" {

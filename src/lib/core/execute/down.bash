@@ -7,7 +7,7 @@
 #
 # =================================================================================================
 
-function dnp::down() {
+function dnp::down_command() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -67,7 +67,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   fi
   n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::down "$@"
+  dnp::down_command "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"

@@ -75,7 +75,7 @@ test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
 
-function dnp::project_validate() {
+function dnp::project_validate_command() {
     local slurm=false
     local remaining_args=()
 
@@ -112,7 +112,7 @@ function dnp::project_validate() {
 }
 
 
-function dnp::project_sanity() {
+function dnp::project_sanity_command() {
     local remaining_args=()
 
     # Load super project configuration
@@ -139,7 +139,7 @@ function dnp::project_sanity() {
     return 0
 }
 
-function dnp::project_dotenv() {
+function dnp::project_dotenv_command() {
     local remaining_args=()
 
     # Load super project configuration

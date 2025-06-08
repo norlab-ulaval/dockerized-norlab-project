@@ -5,3 +5,4 @@
 [submodule "utilities/norlab-build-system"]
 	path = utilities/norlab-build-system
 	url = https://github.com/norlab-ulaval/norlab-build-system.git
+	branch = main

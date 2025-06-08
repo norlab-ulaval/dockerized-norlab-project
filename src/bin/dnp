@@ -61,31 +61,31 @@ function dnp::entrypoint() {
   case "${the_command}" in
       init)
           source "${DNP_LIB_PATH}/commands/init.bash" || exit 1
-          dnp::init "$@"
+          dnp::init_command "$@"
           ;;
       build)
           source "${DNP_LIB_PATH}/commands/build.bash" || exit 1
-          dnp::build "$@"
+          dnp::build_command "$@"
           ;;
       up)
           source "${DNP_LIB_PATH}/commands/up.bash" || exit 1
-          dnp::up "$@"
+          dnp::up_command "$@"
           ;;
       down)
           source "${DNP_LIB_PATH}/commands/down.bash" || exit 1
-          dnp::down "$@"
+          dnp::down_command "$@"
           ;;
       run)
           source "${DNP_LIB_PATH}/commands/run.bash" || exit 1
-          dnp::run "$@"
+          dnp::run_command "$@"
           ;;
       config)
           source "${DNP_LIB_PATH}/commands/config.bash" || exit 1
-          dnp::config "$@"
+          dnp::config_command "$@"
           ;;
       version)
           source "${DNP_LIB_PATH}/commands/version.bash" || exit 1
-          dnp::version "$@"
+          dnp::version_command "$@"
           ;;
       project)
           sub_the_command="$1"
@@ -98,13 +98,13 @@ function dnp::entrypoint() {
 
           case "${sub_the_command}" in
               validate)
-                  dnp::project_validate "$@"
+                  dnp::project_validate_command "$@"
                   ;;
               sanity)
-                  dnp::project_sanity "$@"
+                  dnp::project_sanity_command "$@"
                   ;;
               dotenv)
-                  dnp::project_dotenv "$@"
+                  dnp::project_dotenv_command "$@"
                   ;;
               help|--help|-h)
                   dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT:?err}"

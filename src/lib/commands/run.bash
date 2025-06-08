@@ -25,7 +25,7 @@ EOF
 test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 
-function dnp::run() {
+function dnp::run_command() {
     local ci_tests=false
     local slurm=false
     local remaining_args=()

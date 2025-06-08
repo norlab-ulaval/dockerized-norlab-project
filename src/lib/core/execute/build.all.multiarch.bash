@@ -34,7 +34,7 @@ EOF
 # (Priority) ToDo: unit-test for flag option
 
 # ....Function.....................................................................................
-function dnp::build_dn_project_multiarch_services() {
+function dnp::build_services_multiarch() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
@@ -102,7 +102,7 @@ function dnp::build_dn_project_multiarch_services() {
   dnp_build_all_args+=("${remaining_args[@]}")
 
   # ====Begin========================================================================================
-  dnp::build_dn_project_services "${dnp_build_all_args[@]}"
+  dnp::build_services "${dnp_build_all_args[@]}"
   build_exit_code=$?
 
   # ....Teardown...................................................................................
@@ -127,7 +127,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   fi
   n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::build_dn_project_multiarch_services "$@"
+  dnp::build_services_multiarch "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -139,5 +139,5 @@ else
   test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
   test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
-  test -n "$( declare -F dnp::build_dn_project_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -F dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
 fi

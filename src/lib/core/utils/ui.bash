@@ -45,9 +45,9 @@ function dnp::command_help_menu() {
 }
 
 function dnp::unknown_option_msg() {
-    local the_script_name=$1
+    local the_name=$1
     local the_option=$2
-    n2st::print_msg "Unknown command ${MSG_DIMMED_FORMAT}${the_option}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}\$ ${the_script_name} --help${MSG_END_FORMAT} for usage information"
+    n2st::print_msg "Unknown option ${MSG_DIMMED_FORMAT}${the_option}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}\$ ${the_name} --help${MSG_END_FORMAT} for usage information"
     exit 1
 }
 
@@ -61,6 +61,17 @@ function dnp::unknown_subcommand_msg() {
     local the_command=$1
     local sub_the_command=${2:-""}
     n2st::print_msg "Unknown command ${MSG_DIMMED_FORMAT}dnp ${the_command} ${sub_the_command}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}dnp ${the_command} --help${MSG_END_FORMAT} for usage information"
+    exit 1
+}
+
+function dnp::illegal_command_msg() {
+    # Usage:
+    #   local original_command="$*"
+    #   dnp::illegal_command_msg "build" "${original_command}" "Blabla blabla bla.\n"
+    local the_command=$1
+    local the_original_command=${2:-""}
+    local message=${3:-""}
+    n2st::print_msg "Illegal command ${MSG_DIMMED_FORMAT}${the_command} ${the_original_command}${MSG_END_FORMAT} ‼️\n${message}\nRun ${MSG_DIMMED_FORMAT}dnp ${the_command} --help${MSG_END_FORMAT} for usage information"
     exit 1
 }
 

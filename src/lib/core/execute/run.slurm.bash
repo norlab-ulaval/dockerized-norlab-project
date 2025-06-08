@@ -168,7 +168,7 @@ function dnp::run_slurm() {
     # shellcheck disable=SC2034
     add_docker_flag=("--no-cache" "project-core")
     add_docker_flag=("--quiet")
-    dnp::excute_compose_on_dn_project_image "${add_docker_flag[@]}"
+    dnp::excute_compose "${add_docker_flag[@]}"
   fi
 
   if [[ ${force_rebuild_slurm_img} == true ]]; then
@@ -176,7 +176,7 @@ function dnp::run_slurm() {
     docker_build+=("--no-cache")
     docker_build+=("--quiet")
     add_docker_flag=("${docker_build[@]}" "${the_service}")
-    dnp::excute_compose_on_dn_project_image "${add_docker_flag[@]}"
+    dnp::excute_compose "${add_docker_flag[@]}"
   fi
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1

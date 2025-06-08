@@ -28,7 +28,7 @@ Stand-alone version with a PATH-accessible bash script approach
   `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNP. We refer to this as a "super project" or the "user side".
 
 ### Tests Requirements:
-- All tests in the `tests` directory must pass
+- Write tests who chalenge the intended functionality or behavior
 - Unit-tests and Integration tests:
   - All new script or functionality need to have (either or both):
     - Unit-tests: 
@@ -51,6 +51,7 @@ Stand-alone version with a PATH-accessible bash script approach
   - if you do mock something, justify why.
 - Use bats framework `bats-file` helper library provide tools for temporary directory management, such as the `temp_make` and `temp_del` functions.
   Refenrece https://github.com/bats-core/bats-file?tab=readme-ov-file#working-with-temporary-directories
+- All tests in the `tests` directory must pass
 
 ### Tests execution
 - Don't directly execute `.bats` files, instead execute from the repository root `bash ./tests/run_bats_core_test_in_n2st.bash tests/tests_bats/<bats-file-name>.bats`.

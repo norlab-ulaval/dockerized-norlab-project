@@ -8,7 +8,7 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #
 # Usage as a function:
 #   $ source execute_compose.bash
-#   $ dnp::excute_compose_on_dn_project_image [<any-arguments>] [--] [<any-docker-flag>]
+#   $ dnp::excute_compose [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Usage as a script:
 #   $ bash execute_compose.bash [<any-arguments>] [--] [<any-docker-flag>]
@@ -37,7 +37,7 @@ EOF
 # (CRITICAL) ToDo: unit-test
 
 # ....Functions....................................................................................
-function dnp::excute_compose_on_dn_project_image() {
+function dnp::excute_compose() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
@@ -115,7 +115,7 @@ function dnp::excute_compose_on_dn_project_image() {
   docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
 
   # ====Begin======================================================================================
-  n2st::print_formated_script_header "execute_compose.bash ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_header "dnp::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
@@ -167,7 +167,7 @@ function dnp::excute_compose_on_dn_project_image() {
   # Ref on docker exit codes: https://komodor.com/learn/exit-codes-in-containers-and-kubernetes-the-complete-guide/
 
   n2st::teamcity_service_msg_blockClosed
-
+  echo
   if [[ ${docker_exit_code} == 0 ]]; then
     n2st::print_msg_done "Completed ${docker_cmd_str} succesfuly 👍"
   else
@@ -175,7 +175,7 @@ function dnp::excute_compose_on_dn_project_image() {
   fi
 
   # ....Teardown...................................................................................
-  n2st::print_formated_script_footer "execute_compose.bash" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_footer "dnp::excute_compose" "${MSG_LINE_CHAR_BUILDER_LVL2}"
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
   return ${docker_exit_code}
 }
@@ -193,7 +193,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # ....Execute....................................................................................
   n2st::norlab_splash "${DNP_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::excute_compose_on_dn_project_image "$@"
+  dnp::excute_compose "$@"
   FCT_EXIT_CODE=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${FCT_EXIT_CODE}"
