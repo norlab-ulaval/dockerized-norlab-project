@@ -31,21 +31,22 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 EOF
 )
 
-
-# ....Source project shell-scripts dependencies..................................................
+# ::::Load dependencies::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
 dnp_core="$(dirname "$(dirname "${script_path}")")/lib/core"
 source "${dnp_core}/utils/import_dnp_lib.bash"
 
+# ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
+test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
+test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+
+# ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::entrypoint() {
-  # ....Pre-condition..............................................................................
-  local dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-#  n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
 
   # ....Set env variables (pre cli)................................................................
-  # Parse command
   local the_command="$1"
   shift || true
 
@@ -135,26 +136,5 @@ function dnp::entrypoint() {
   esac
 }
 
-function dnp::show_entrypoint_help() {
-    # Splash type: small, negative or big
-    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'negative'
-    n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
-
-    # Note:
-    #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
-    #   - Delete both horizontal lines
-    #   - Delet both header ligne
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
-    echo -e "Run ${MSG_DIMMED_FORMAT}dnp COMMAND --help${MSG_END_FORMAT} for more information on a command."
-}
-
-function dnp::show_entrypoint_help_no_splash() {
-    # Note:
-    #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
-    #   - Delete both horizontal lines
-    #   - Reformat the header left align
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
-}
-
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dnp::entrypoint "$@" || exit 1
+dnp::entrypoint "$@"

@@ -22,9 +22,14 @@ DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 EOF
 )
 
-test -d "${DNP_ROOT:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
-test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
+# ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
+test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
+test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
 
+# ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::run_command() {
     local ci_tests=false
     local slurm=false

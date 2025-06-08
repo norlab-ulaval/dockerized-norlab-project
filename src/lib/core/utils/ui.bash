@@ -14,7 +14,7 @@ MSG_END_FORMAT="\033[0m"
 # Check if N2ST is loaded
 n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
 
-# ====UI utilities=================================================================================
+# ====Help/doc=====================================================================================
 function dnp:help_header() {
     echo -n -e "${MSG_DIMMED_FORMAT}"
     n2st::draw_horizontal_line_across_the_terminal_window "." #| sed 's/.../\/../'
@@ -44,6 +44,7 @@ function dnp::command_help_menu() {
     return 0
 }
 
+# ====Warning/error msg============================================================================
 function dnp::unknown_option_msg() {
     local the_name=$1
     local the_option=$2
@@ -79,4 +80,26 @@ function n2st::print_msg_error() {
   # This is an override version of the original one but with no newline before and after
   local error_msg=$1
   echo -e "${MSG_ERROR}: ${error_msg}" 1>&2
+}
+
+# ====Entrypoint splash============================================================================
+function dnp::show_entrypoint_help() {
+    # Splash type: small, negative or big
+    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'negative'
+    n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
+
+    # Note:
+    #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
+    #   - Delete both horizontal lines
+    #   - Delet both header ligne
+    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
+    echo -e "Run ${MSG_DIMMED_FORMAT}dnp COMMAND --help${MSG_END_FORMAT} for more information on a command."
+}
+
+function dnp::show_entrypoint_help_no_splash() {
+    # Note:
+    #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
+    #   - Delete both horizontal lines
+    #   - Reformat the header left align
+    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
 }

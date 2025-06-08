@@ -148,6 +148,10 @@ export MSG_END_FORMAT=""
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${DNP_ROOT}/src/lib"
 
+# ....Mock dependencies loading test functions.....................................................
+function dnp::import_lib_and_dependencies() {
+  return 0
+}
 
 # ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {

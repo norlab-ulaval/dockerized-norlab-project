@@ -69,6 +69,15 @@ export MSG_END_FORMAT=""
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 
+# ....Mock dependencies loading test functions.....................................................
+function dnp::import_lib_and_dependencies() {
+  return 0
+}
+
+function n2st::print_msg() {
+  return 0
+}
+
 # ....Mock ui.bash functions.......................................................................
 function dnp::command_help_menu() {
   echo "Mock dnp::command_help_menu called with args: $*"
