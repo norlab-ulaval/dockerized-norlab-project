@@ -3,7 +3,8 @@
 
 DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 # =================================================================================================
-# Build Docker images for the project
+# Build project Docker images
+#
 # Notes: build all services for host native architecture by default
 #
 # Usage:

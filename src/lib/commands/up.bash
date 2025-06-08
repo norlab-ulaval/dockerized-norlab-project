@@ -3,7 +3,7 @@
 
 DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 # =================================================================================================
-# Start and attach to a DNP project containers
+# Start and attach to a DNP containers
 #
 # Notes:
 #   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'

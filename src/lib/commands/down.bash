@@ -3,7 +3,7 @@
 
 DOCUMENTATION_BUFFER_DOWN=$( cat <<'EOF'
 # =================================================================================================
-# Stop containers for the project
+# Stop DNP containers
 #
 # Usage:
 #   $ dnp down [OPTIONS] [<any-docker-compose-down-flags>]
@@ -54,11 +54,11 @@ function dnp::down_command() {
     # Determine which down script to execute
     if [[ "${slurm}" == true ]]; then
         source "${DNP_LIB_PATH}/core/execute/down.slurm.bash"
-        dnp::down_slurm "${remaining_args[@]}" || exit 1
+        dnp::down_slurm "${remaining_args[@]}" || return 1
         n2st::print_msg_done "slurm container down"
     else
         source "${DNP_LIB_PATH}/core/execute/down.bash"
-        dnp::down_command "${remaining_args[@]}" || exit 1
+        dnp::down_command "${remaining_args[@]}" || return 1
     fi
 
 #    n2st::print_msg_done "Completed ${header_footer_name}"
