@@ -35,9 +35,6 @@ function dnp::version_command() {
         esac
     done
 
-#    # Import DNP lib to get access to DNP_ROOT
-#    source "${DNP_LIB_PATH}/core/utils/import_dnp_lib.bash"
-
     # Read version from version.txt
     if [[ -f "${DNP_ROOT}/version.txt" ]]; then
         local VERSION="$(cat "${DNP_ROOT}/version.txt")"

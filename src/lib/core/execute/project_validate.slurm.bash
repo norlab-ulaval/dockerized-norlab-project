@@ -53,7 +53,7 @@ function dnp::project_validate_slurm() {
 
   n2st::print_msg "Begin docker compose config test"
   for each_compose in "${config_test_compose_file_list[@]}"; do
-    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" ">"
+    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\"
     declare -a config_flag=()
     config_flag+=("--override-build-cmd" "config")
     config_flag+=("--file" "${each_compose}")
@@ -65,7 +65,7 @@ function dnp::project_validate_slurm() {
       dnp::excute_compose "${config_flag[@]}"
     fi
     config_test_exit_code+=("$?")
-    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "<"
+    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/"
   done
 
   n2st::print_formated_script_footer "testing config" "${MSG_LINE_CHAR_BUILDER_LVL1}"
@@ -85,7 +85,7 @@ function dnp::project_validate_slurm() {
 
   n2st::print_msg "Begin docker compose build --dry-run test"
   for each_compose in "${dryrun_compose_file_list[@]}"; do
-    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" ">"
+    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\"
     declare -a add_fct_flag=()
     add_fct_flag+=("--service-names" "project-slurm,project-slurm-no-gpu")
     declare -a build_flag=()
@@ -97,7 +97,7 @@ function dnp::project_validate_slurm() {
       dnp::build_services "${add_fct_flag[@]}" --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     fi
     build_test_exit_code+=("$?")
-    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "<"
+    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/"
   done
 
   n2st::print_msg "Completed build in dry-run mode tests"
@@ -136,7 +136,9 @@ function dnp::project_validate_slurm() {
   n2st::print_msg "Completed slurm job dry-run tests"
 
   # ....Config and dry-run build test summary........................................................
-  # n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_footer "dnp::project_validate_slurm" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+
+  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}" "negative"
 
   n2st::print_msg "Config test summary"
   for idx in "${!config_test_exit_code[@]}"; do
