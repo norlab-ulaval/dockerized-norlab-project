@@ -34,6 +34,7 @@ function dnp::up_command() {
         case "$1" in
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_UP}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")

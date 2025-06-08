@@ -138,11 +138,18 @@ EOF
 #!/bin/bash
 # Mock import_dnp_lib.bash
 
+# ....Setup........................................................................................
+
+# Set message formatting variables
+export MSG_DIMMED_FORMAT=""
+export MSG_END_FORMAT=""
+
 # Set up environment variables
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${DNP_ROOT}/src/lib"
 
-# Mock N2ST functions
+
+# ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {
   echo "Mock n2st::norlab_splash called with args: $*"
   return 0
@@ -163,12 +170,15 @@ function n2st::draw_horizontal_line_across_the_terminal_window() {
   return 0
 }
 
+# ....Load DNP lib functions.......................................................................
 source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || exit 1
 
-# Set message formatting variables
-export MSG_DIMMED_FORMAT=""
-export MSG_END_FORMAT=""
+# ....Export loaded functions......................................................................
+for func in $(compgen -A function | grep -e dnp:: -e nbs:: -e n2st::); do
+  export -f "$func"
+done
 
+# ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dnp_lib.bash has been loaded
 echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
 EOF

@@ -50,6 +50,7 @@ function dnp::config_command() {
                 ;;
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
+                exit 0
                 ;;
             *)
                 remaining_args=("$@")

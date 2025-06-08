@@ -53,9 +53,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help|-h)
             dnp::command_help_menu "${DOCUMENTATION_BUFFER_INSTALL}"
+            exit 0
             ;;
         *)
             dnp::unknown_option_msg "./install.bash" "$1"
+            exit 1
             ;;
     esac
 done

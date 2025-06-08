@@ -59,9 +59,6 @@ function dnp::build_command() {
                 shift
                 ;;
             --push-deploy-image)
-                if [[ "${deploy}" == false ]]; then
-                  dnp::illegal_command_msg "build" "${original_command}" "The --push-deploy-image flag can only be used in combination with --deploy.\n"
-                fi
                 push_deploy=true
                 shift
                 ;;
@@ -75,6 +72,7 @@ function dnp::build_command() {
                 ;;
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_BUILD}"
+                exit 0
                 ;;
             --) # no more option
                 shift
@@ -83,6 +81,7 @@ function dnp::build_command() {
                 ;;
             *)
                 dnp::unknown_subcommand_msg "build" "$*"
+                exit 1
                 ;;
         esac
     done
@@ -92,6 +91,18 @@ function dnp::build_command() {
     source "${DNP_LIB_EXEC_PATH}/build.all.bash" return 1
     source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" return 1
     source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" return 1
+
+    # ....Flag check...............................................................................
+    if [[ "${deploy}" == false ]] && [[ "${push_deploy}" == true ]]; then
+      dnp::illegal_command_msg "build" "${original_command}" "The --push-deploy-image flag can only be used in combination with --deploy.\n"
+      return 1
+
+    fi
+    if [[ "${deploy}" == true ]] && [[ "${multiarch}" == true ]]; then
+      # (Priority) ToDo: NMO-680 feat: improve project-deploy logic
+      dnp::illegal_command_msg "build" "${original_command}" "The build multiarch deploy image feature is not released yet!\nUse ${MSG_DIMMED_FORMAT}dnp build --multiarch${MSG_END_FORMAT} in the mean time to build multiarch project-deploy images.\nIssue NMO-680 feat: improve project-deploy logic\n"
+      return 1
+    fi
 
     # ....Set env variables (post cli).............................................................
     declare -a build_flag
@@ -112,44 +123,39 @@ function dnp::build_command() {
 
     if [[ "${deploy}" == true ]]; then
         # ....Deploy special case..................................................................
-        echo "Building deploy images (${architecture})..."
+        header_footer_name="deploy images (${architecture}) build"
         if [[ "${push_deploy}" == true ]]; then
           deploy_flag+=("--push-deploy-image")
         fi
-        if [[ "${multiarch}" == true ]]; then
-          dnp::illegal_command_msg "build" "${original_command}" "The build multiarch deploy image feature is not released yet!\nUse ${MSG_DIMMED_FORMAT}dnp build --multiarch${MSG_END_FORMAT} in the mean time to build multiarch project-deploy images.\nIssue NMO-680 feat: improve project-deploy logic\n"
-          # (Priority) ToDo: NMO-680 feat: improve project-deploy logic
-        fi
-        n2st::print_formated_script_header "dnp::build_project_deploy_service" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+
+        n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
         dnp::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
         fct_exit_code=$?
-        n2st::print_formated_script_footer "dnp::build_project_deploy_service" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+        n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
     else
       # ....General case...........................................................................
       if [[ "${ci_tests}" == true ]]; then
-          echo "Building CI tests images (${architecture})..."
+          header_footer_name="CI tests images (${architecture}) build"
           build_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
       elif [[ "${slurm}" == true ]]; then
-          echo "Building slurm images (${architecture})..."
+          header_footer_name="slurm images (${architecture}) build"
           build_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
       elif [[ "${develop}" == true ]]; then
-          echo "Building develop images (${architecture})..."
+          header_footer_name="develop images (${architecture}) build"
           build_flag+=("--service-names" "project-core,project-develop")
       else
-          echo "Building all images (${architecture})..."
+          header_footer_name="all images (${architecture}) build"
       fi
 
+      n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
       if [[ "${multiarch}" == true ]]; then
-          n2st::print_formated_script_header "dnp::build_services_multiarch" "${MSG_LINE_CHAR_BUILDER_LVL1}"
           dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
-          n2st::print_formated_script_footer "dnp::build_services_multiarch" "${MSG_LINE_CHAR_BUILDER_LVL1}"
       else
-          n2st::print_formated_script_header "dnp::build_services" "${MSG_LINE_CHAR_BUILDER_LVL1}"
           dnp::build_services  "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
-          n2st::print_formated_script_footer "dnp::build_services" "${MSG_LINE_CHAR_BUILDER_LVL1}"
       fi
+      n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
     fi
 
     return $fct_exit_code

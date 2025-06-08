@@ -91,6 +91,7 @@ function dnp::project_validate_command() {
                 ;;
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_VALIDATE:?err}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")
@@ -123,6 +124,7 @@ function dnp::project_sanity_command() {
         case "$1" in
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_SANITY:?err}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")
@@ -150,6 +152,7 @@ function dnp::project_dotenv_command() {
         case "$1" in
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_DOTENV:?err}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")

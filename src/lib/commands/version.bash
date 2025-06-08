@@ -26,6 +26,7 @@ function dnp::version_command() {
         case "$1" in
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_VERSION}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")

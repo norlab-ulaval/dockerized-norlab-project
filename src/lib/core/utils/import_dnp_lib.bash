@@ -81,10 +81,6 @@ function dnp::import_lib_and_dependencies() {
   cd "${NBS_PATH:?'Variable not set'}" || return 1
   source "import_norlab_build_system_lib.bash" || return 1
 
-  for func in $(compgen -A function | grep nbs::); do
-    export -f "$func"
-  done
-
   # (Quickhack) Reload project .env file for N2ST
   source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
@@ -94,10 +90,6 @@ function dnp::import_lib_and_dependencies() {
   cd "${N2ST_PATH:?'Variable not set'}" || return 1
   source "import_norlab_shell_script_tools_lib.bash" || return 1
 
-  for func in $(compgen -A function | grep n2st::); do
-    export -f "$func"
-  done
-
   # (Quickhack) Reload project .env file for N2ST
   source "${DNP_ROOT}/load_repo_main_dotenv.bash" || return 1
 
@@ -105,7 +97,8 @@ function dnp::import_lib_and_dependencies() {
   source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || return 1
   source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || return 1
 
-  for func in $(compgen -A function | grep dnp::); do
+  # ....Export loaded functions....................................................................
+  for func in $(compgen -A function | grep -e dnp:: -e nbs:: -e n2st::); do
     export -f "$func"
   done
 

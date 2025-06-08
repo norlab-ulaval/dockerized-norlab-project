@@ -34,6 +34,7 @@ function dnp::down_command() {
                 ;;
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_DOWN}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")

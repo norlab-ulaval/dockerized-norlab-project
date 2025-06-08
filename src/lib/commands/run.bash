@@ -43,6 +43,7 @@ function dnp::run_command() {
                 ;;
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN}"
+                exit 0
                 ;;
             *)
                 remaining_args+=("$@")

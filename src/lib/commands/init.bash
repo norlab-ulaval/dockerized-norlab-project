@@ -29,9 +29,11 @@ function dnp::init_command() {
         case "$1" in
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_INIT}"
+                exit 0
                 ;;
             *)
                 dnp::unknown_subcommand_msg "init" "${sub_the_command}"
+                return 1
                 ;;
         esac
     done
