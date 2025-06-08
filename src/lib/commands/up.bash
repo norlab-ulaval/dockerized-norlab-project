@@ -3,11 +3,12 @@
 
 DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 # =================================================================================================
-# Start and attach to a containers for the project
+# Start and attach to a DNP project containers
+#
 # Notes:
-# - spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'
-# - service are started in detach mode
-# - architecture specific docker-compose config are automaticaly selected at runtime
+#   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'
+#   • service(s) are started in detach mode
+#   • device and architecture specific docker-compose config are automaticaly selected at runtime
 #
 # Usage:
 #   $ dnp up [--service <theService>] [--] [<command&arguments>]
@@ -29,7 +30,7 @@ test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 function dnp::up_command() {
     local remaining_args=()
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
@@ -43,12 +44,19 @@ function dnp::up_command() {
         esac
     done
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    # Splash type: small, negative or big
+    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
+#    header_footer_name="up and attach procedure"
+#    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
-    echo "Starting containers..."
-    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" "${remaining_args[@]}"
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
 
-    return 0
+    # ....Begin....................................................................................
+    dnp::up_and_attach "${remaining_args[@]}"
+    fct_exit_code=$?
+    n2st::print_msg "Detached. ${MSG_DIMMED_FORMAT}Container is running in background${MSG_END_FORMAT}."
+    return $fct_exit_code
 }
 

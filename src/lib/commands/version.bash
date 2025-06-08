@@ -21,7 +21,7 @@ test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 function dnp::version_command() {
     local remaining_args=()
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)

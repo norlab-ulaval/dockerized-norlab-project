@@ -88,9 +88,9 @@ function dnp::build_command() {
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
-    source "${DNP_LIB_EXEC_PATH}/build.all.bash" return 1
-    source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" return 1
-    source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" return 1
+    source "${DNP_LIB_EXEC_PATH}/build.all.bash" || return 1
+    source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
+    source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" || return 1
 
     # ....Flag check...............................................................................
     if [[ "${deploy}" == false ]] && [[ "${push_deploy}" == true ]]; then
@@ -121,9 +121,10 @@ function dnp::build_command() {
       fi
     fi
 
+    # ....Begin....................................................................................
     if [[ "${deploy}" == true ]]; then
-        # ....Deploy special case..................................................................
-        header_footer_name="deploy images (${architecture}) build"
+        # Case: Deploy
+        header_footer_name="deploy images (${architecture}) build procedure"
         if [[ "${push_deploy}" == true ]]; then
           deploy_flag+=("--push-deploy-image")
         fi
@@ -133,18 +134,18 @@ function dnp::build_command() {
         fct_exit_code=$?
         n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
     else
-      # ....General case...........................................................................
+      # Case: general
       if [[ "${ci_tests}" == true ]]; then
-          header_footer_name="CI tests images (${architecture}) build"
+          header_footer_name="CI tests images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
       elif [[ "${slurm}" == true ]]; then
-          header_footer_name="slurm images (${architecture}) build"
+          header_footer_name="slurm images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
       elif [[ "${develop}" == true ]]; then
-          header_footer_name="develop images (${architecture}) build"
+          header_footer_name="develop images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-develop")
       else
-          header_footer_name="all images (${architecture}) build"
+          header_footer_name="all images (${architecture}) build procedure"
       fi
 
       n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"

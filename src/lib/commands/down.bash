@@ -25,7 +25,7 @@ function dnp::down_command() {
     local help=false
     local remaining_args=()
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --slurm)
@@ -43,17 +43,26 @@ function dnp::down_command() {
         esac
     done
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    header_footer_name="down procedure"
+    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+#    n2st::print_msg "Starting ${header_footer_name}"
 
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+
+    # ....Begin....................................................................................
     # Determine which down script to execute
     if [[ "${slurm}" == true ]]; then
-        echo "Stopping slurm containers..."
-        source "${DNP_LIB_PATH}/core/execute/down.slurm.bash" "${remaining_args[@]}"
+        source "${DNP_LIB_PATH}/core/execute/down.slurm.bash"
+        dnp::down_slurm "${remaining_args[@]}" || exit 1
+        n2st::print_msg_done "slurm container down"
     else
-        echo "Stopping containers..."
-        source "${DNP_LIB_PATH}/core/execute/down.bash" "${remaining_args[@]}"
+        source "${DNP_LIB_PATH}/core/execute/down.bash"
+        dnp::down_command "${remaining_args[@]}" || exit 1
     fi
+
+#    n2st::print_msg_done "Completed ${header_footer_name}"
+    n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
     return 0
 }

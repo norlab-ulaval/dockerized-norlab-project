@@ -24,7 +24,7 @@ test -d "${DNP_LIB_PATH:?err}" || { echo "The DNP lib load error!" ; exit 1 ; }
 function dnp::init_command() {
     local project_name=""
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
@@ -38,7 +38,7 @@ function dnp::init_command() {
         esac
     done
 
-
+    # ....Begin....................................................................................
     # Validate that we're in a git repository root
     if [[ ! -d ".git" ]]; then
         echo "Error: Not in a git repository root directory." >&2
@@ -106,7 +106,7 @@ function dnp::init_command() {
     fi
 
     # Validate the setup
-    source "${DNP_LIB_PATH}/core/utils/super_project_dnp_sanity_check.bash"
+    source "${DNP_LIB_PATH}/core/utils/super_project_dnp_sanity_check.bash" || return 1
 
     echo "DNP project initialized successfully."
     echo "You can now use 'dnp build', 'dnp up', etc. to manage your project."

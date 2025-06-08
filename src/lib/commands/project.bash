@@ -79,10 +79,10 @@ function dnp::project_validate_command() {
     local slurm=false
     local remaining_args=()
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --slurm)
@@ -100,26 +100,29 @@ function dnp::project_validate_command() {
         esac
     done
 
+    # ....Begin....................................................................................
     # Determine which validate script to execute
     if [[ "${slurm}" == true ]]; then
         echo "Validating slurm configuration..."
         source "${DNP_LIB_PATH}/core/execute/project_validate.slurm.bash" "${remaining_args[@]}"
+        fct_exit_code=$?
     else
         echo "Validating configuration..."
         source "${DNP_LIB_PATH}/core/execute/project_validate.all.bash"
+        fct_exit_code=$?
     fi
 
-    return 0
+    return $fct_exit_code
 }
 
 
 function dnp::project_sanity_command() {
     local remaining_args=()
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
@@ -133,21 +136,22 @@ function dnp::project_sanity_command() {
         esac
     done
 
-
+    # ....Begin....................................................................................
     # Execute super_project_dnp_sanity_check.bash
     echo "Validating super project setup..."
     source "${DNP_LIB_PATH}/core/utils/super_project_dnp_sanity_check.bash"
+    fct_exit_code=$?
 
-    return 0
+    return $fct_exit_code
 }
 
 function dnp::project_dotenv_command() {
     local remaining_args=()
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
@@ -161,6 +165,7 @@ function dnp::project_dotenv_command() {
         esac
     done
 
+    # ....Begin....................................................................................
     # Show consolidated and interpolated dotenv config files
     echo "Showing consolidated and interpolated dotenv config files..."
 

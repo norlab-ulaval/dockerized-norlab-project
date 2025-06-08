@@ -30,7 +30,7 @@ function dnp::run_command() {
     local slurm=false
     local remaining_args=()
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             ci-tests)
@@ -52,21 +52,24 @@ function dnp::run_command() {
         esac
     done
 
-    # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
+    # ....Begin....................................................................................
     # Determine which run script to execute
     if [[ "${ci_tests}" == true ]]; then
         echo "Running CI tests..."
         source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash" "${remaining_args[@]}"
+        fct_exit_code=$?
     elif [[ "${slurm}" == true ]]; then
         echo "Running slurm containers..."
         source "${DNP_LIB_PATH}/core/execute/run.slurm.bash" "${remaining_args[@]}"
+        fct_exit_code=$?
     else
         echo "Error: No run mode specified."
         dnp::run_help
         exit 1
     fi
 
-    return 0
+    return $fct_exit_code
 }

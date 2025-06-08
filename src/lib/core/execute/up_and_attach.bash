@@ -47,7 +47,7 @@ function dnp::up_and_attach() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  # ....Set env variables (pre cli)..................................................................
+  # ....Set env variables (pre cli)................................................................
   declare -a remaining_args
   declare -a interactive_login
   local the_service=project-develop
@@ -56,7 +56,7 @@ function dnp::up_and_attach() {
   # ToDo: assess if moving to DN `dn_entrypoint.attach.bash` and `dn_entrypoint.init.bash` for all services woud be better.
   interactive_login=("-e" "BASH_ENV")
 
-  # ....cli..........................................................................................
+  # ....cli........................................................................................
   while [ $# -gt 0 ]; do
 
     case $1 in
@@ -93,17 +93,17 @@ function dnp::up_and_attach() {
   local up_exit_code
   local exec_exit_code
 
-  # ====Begin========================================================================================
+  # ====Begin======================================================================================
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
-  # ....Display and xhost............................................................................
+  # ....Display and xhost..........................................................................
   # ToDo: assessment >> display forwarding between remote device and local [Ubuntu+MacOs]
   #   check: https://www.notion.so/redleader962/e4713bb868d949b1ab93351c564f66e7?pvs=4#a5e0797fb87f4f2aa1e3c628e9492a94
   #   ref task NMO-183 Fix GUI display issue
   # ToDo: validate >> check jetson-container implementation
   #     from https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
 
-  # ....Device specific config.......................................................................
+  # ....Device specific config.....................................................................
 
 
   n2st::set_which_architecture_and_os
@@ -182,11 +182,11 @@ function dnp::up_and_attach() {
 
   n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
 
-  # ....Start docker container.......................................................................
+  # ....Start docker container.....................................................................
   n2st::set_is_teamcity_run_environment_variable
   print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
 
-  n2st::print_msg "on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
+  n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
   # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   # (CRITICAL) ToDo: see newly added container name related implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash
@@ -199,7 +199,7 @@ function dnp::up_and_attach() {
       # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
       n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
     else
-      # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
       declare -a docker_exec_no_up=("exec")
       docker_exec_no_up+=("${interactive_login[@]}")
       docker_exec_no_up+=("${the_service}")
@@ -212,7 +212,7 @@ function dnp::up_and_attach() {
 
   else
 
-    # . . Launch service as a daemon. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    # . . Launch service as a daemon. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     declare -a docker_up=("up" "--detach" "--wait")
     #  docker_up+=("--build")
     docker_up+=("${the_service}")
@@ -232,7 +232,7 @@ function dnp::up_and_attach() {
       # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
       n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
     else
-      # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
       declare -a docker_exec=("exec")
       docker_exec+=("${interactive_login[@]}")
       docker_exec+=("${the_service}")
@@ -255,7 +255,7 @@ function dnp::up_and_attach() {
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
-  # ....Source project shell-scripts dependencies....................................................
+  # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
   if [[ -z $( declare -F dnp::import_lib_and_dependencies ) ]]; then

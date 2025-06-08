@@ -37,7 +37,7 @@ function dnp::config_command() {
 
     declare -a remaining_args
 
-    # Parse options
+    # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             dev|deploy|ci-tests|slurm|release)
@@ -65,13 +65,14 @@ function dnp::config_command() {
         exit 1
     fi
 
+    # ....Load dependencies........................................................................
 #    # Import DNP lib
 #    source "${DNP_LIB_PATH:?err}/core/utils/import_dnp_lib.bash"
 
     # Load super project configuration
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash"
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
-
+    # ....Begin....................................................................................
     # Determine which compose file to use
     local compose_file=""
 
@@ -100,7 +101,8 @@ function dnp::config_command() {
     # Execute docker-compose config command
     echo "Showing configuration for ${mode} mode with ${compose_file}..."
     docker-compose --file "${DNP_LIB_PATH}/core/docker/${compose_file}" config "${remaining_args[@]}"
+    fct_exit_code=$?
 
-    return 0
+    return $fct_exit_code
 }
 

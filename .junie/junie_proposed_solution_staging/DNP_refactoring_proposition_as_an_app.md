@@ -380,7 +380,7 @@ Each command script would implement the functionality of the corresponding curre
 # lib/commands/build.bash
 
 function dnp::build_command() {
-    # Parse options
+    # ....cli......................................................................................
     local MULTIARCH=false
     local SERVICE=""
     
@@ -425,7 +425,7 @@ Create an installation script that:
 # Default installation directory
 INSTALL_DIR="/usr/local"
 
-# Parse options
+# ....cli......................................................................................
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --prefix)

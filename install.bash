@@ -36,7 +36,7 @@ SYSTEM_WIDE_SYMLINK=true
 ADD_DNP_PATH_TO_BASHRC=false
 YES=false
 
-# Parse options
+# ....cli......................................................................................
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-system-wide-symlink-install)
