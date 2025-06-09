@@ -98,7 +98,7 @@ function dnp::init_command() {
     n2st::print_msg "Initializing DNP project: ${super_project_name} in ${super_project_root}"
 
     # Create the .dockerized_norlab_project directory
-    mkdir -p .dockerized_norlab_project
+    sudo mkdir -p .dockerized_norlab_project
 
     # Copy template files
     cp -r "${DNP_LIB_PATH}/template/.dockerized_norlab_project/"* .dockerized_norlab_project/
@@ -129,11 +129,11 @@ function dnp::init_command() {
     # ....Create root repository required directories..............................................
     cd "${super_project_root}" || exit 1
 
-    mkdir -p artifact
-    mkdir -p external_data
-    mkdir -p src/launcher
-    mkdir -p src/tools
-    mkdir -p tests
+    sudo mkdir -p artifact
+    sudo mkdir -p external_data
+    sudo mkdir -p src/launcher
+    sudo mkdir -p src/tools
+    sudo mkdir -p tests
 
     # ....Create root README.md files if it does't exist...........................................
     cd "${super_project_root}" || exit 1
@@ -195,8 +195,10 @@ EOF
 
     # ....Validate init procedure..................................................................
     cd "${super_project_root}" || exit 1
-
     source "${DNP_LIB_PATH}/core/utils/super_project_dnp_sanity_check.bash" || return 1
+
+    # ....Setup host procedure.....................................................................
+    source "${DNP_LIB_PATH}/core/utils/setup_host_for_running_this_super_project.bash" || return 1
 
     # ====Teardown=================================================================================
     n2st::print_msg "DNP project initialized successfully.

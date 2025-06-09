@@ -1,7 +1,8 @@
 #!/bin/bash
 # install.bash
 
-DOCUMENTATION_BUFFER_INSTALL=$( cat <<'EOF'
+DOCUMENTATION_BUFFER_INSTALL=$(
+  cat << 'EOF'
 # =================================================================================================
 # Install Dockerized-NorLab-Project
 #
@@ -10,144 +11,184 @@ DOCUMENTATION_BUFFER_INSTALL=$( cat <<'EOF'
 #
 # Options:
 #   --skip-system-wide-symlink-install  Skip creating a symlink in /usr/local/bin
-#   --add-dnp-path-to-bashrc            Add DNP_PATH to ~/.bashrc
+#   --add-dnp-path-to-bashrc            Add dnp entrypoint path to ~/.bashrc instead of a system wide symlink install
 #   --yes                               Bypass user interactive installation
 #   --help, -h                          Show this help message
 #
 # =================================================================================================
 EOF
 )
-
 # Set script to exit on error
 set -e
 
-# Determine the installation directory
-DNP_INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DNP_BIN_DIR="${DNP_INSTALL_DIR}/src/bin"
-DNP_SCRIPT="${DNP_BIN_DIR}/dnp"
 
+function dnp::create_bin_dnp_to_entrypoint_symlink() {
+  local dnp_entrypoint_path=$1
+  local show_symlink="${MSG_DIMMED_FORMAT}/usr/local/bin/dnp -> ${dnp_entrypoint_path}${MSG_END_FORMAT}"
+  n2st::print_msg "Creating symlink: ${show_symlink}"
+  sudo ln -sf "${dnp_entrypoint_path}" /usr/local/bin/dnp || return 1
+  test -h /usr/local/bin/dnp || n2st::print_msg_error_and_exit "Falied to create symlink ${show_symlink}!"
+  return 0
+}
 
-# Source minimum required library for install purposes
-source "${DNP_INSTALL_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
-source "${DNP_INSTALL_DIR}/lib/core/utils/ui.bash"
+#function dnp::seek_and_delete_string_in_file() {
+#  # Note: this is a tmp version
+#  # ToDo: remove and switch usage to n2st version when releassed (ref task N2ST-48)
+#  local TMP_SEEK="${1}"
+#  local TMP_FILE_PATH="${2}"
+#  # Note:
+#  #   - Character ';' is used as a delimiter
+#  #   - Keep -i flag for portability to Mac OsX (it's analogue to --in-place flag)
+#  #   - .bak is the backup extension convention and is required by -i
+#  sudo sed -i.bak ";${TMP_SEEK};d" "${TMP_FILE_PATH}" && rm "${TMP_FILE_PATH}.bak"
+#}
 
-# Default options
-SYSTEM_WIDE_SYMLINK=true
-ADD_DNP_PATH_TO_BASHRC=false
-YES=false
+function dnp::update_bashrc_dnp_path() {
+  local dnp_root="$1"
+  local relative_bin_dir="${2:-'src/bin'}"
+  n2st::print_msg "Updating dnp entrypoint path in ~/.bashrc"
+  n2st::seek_and_modify_string_in_file "export _DNP_ROOT=.*" "export _DNP_ROOT=\"${dnp_root}\"" "${HOME}/.bashrc" || return 1
+  n2st::seek_and_modify_string_in_file "export PATH=.*_DNP_ROOT.*" "export PATH=\"\$PATH:\$_DNP_ROOT/${relative_bin_dir}\"" "${HOME}/.bashrc" || return 1
+  return 0
+}
 
-# ....cli......................................................................................
-while [[ $# -gt 0 ]]; do
+function dnp::install_dockerized_norlab_project_on_host() {
+
+  # Determine the installation directory
+  dnp_install_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  dnp_bin_dir="${dnp_install_dir}/src/bin"
+  dnp_entrypoint="${dnp_bin_dir}/dnp"
+
+  # Source minimum required library for install purposes
+  source "${dnp_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
+  source "${dnp_install_dir}/lib/core/utils/ui.bash"
+
+  # ....Set env variables (pre cli))...............................................................
+  local option_system_wide_symlink=true
+  local option_add_dnp_path_to_bashrc=false
+  local option_yes=false
+
+  # ....cli........................................................................................
+  while [[ $# -gt 0 ]]; do
     case "$1" in
-        --skip-system-wide-symlink-install)
-            SYSTEM_WIDE_SYMLINK=false
-            shift
-            ;;
-        --add-dnp-path-to-bashrc)
-            ADD_DNP_PATH_TO_BASHRC=true
-            shift
-            ;;
-        --yes)
-            YES=true
-            shift
-            ;;
-        --help|-h)
-            dnp::command_help_menu "${DOCUMENTATION_BUFFER_INSTALL}"
-            exit 0
-            ;;
-        *)
-            dnp::unknown_option_msg "./install.bash" "$1"
-            exit 1
-            ;;
-    esac
-done
-
-
-# Make sure the dnp script is executable
-chmod +x "${DNP_SCRIPT}"
-
-# Create symlink in /usr/local/bin if requested
-if [[ "${SYSTEM_WIDE_SYMLINK}" == true ]]; then
-    if [[ ! -d "/usr/local/bin" ]]; then
-        echo "Error: /usr/local/bin directory does not exist." >&2
-        echo "Please create it or use --skip-system-wide-symlink-install option." >&2
+      --skip-system-wide-symlink-install)
+        option_system_wide_symlink=false
+        shift
+        ;;
+      --add-dnp-path-to-bashrc)
+        option_add_dnp_path_to_bashrc=true
+        option_system_wide_symlink=false
+        shift
+        ;;
+      --yes)
+        option_yes=true
+        shift
+        ;;
+      --help | -h)
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_INSTALL}"
+        exit 0
+        ;;
+      *)
+        dnp::unknown_option_msg "bash ./install.bash" "$1"
         exit 1
+        ;;
+    esac
+  done
+
+
+  # ====Begin======================================================================================
+  # Splash type: small, negative or big
+  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}" "small"
+  n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+
+  # ....Pre-conditions.............................................................................
+  # Make the dnp script is executable
+  chmod +x "${dnp_entrypoint}"
+
+  # ....Create symlink in /usr/local/bin if requested..............................................
+  if [[ "${option_system_wide_symlink}" == true ]]; then
+    if [[ ! -d "/usr/local/bin" ]]; then
+      n2st::print_msg_error_and_exit "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist.\nPlease create it or use ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} option."
     fi
 
     if [[ -L "/usr/local/bin/dnp" || -f "/usr/local/bin/dnp" ]]; then
-        if [[ "${YES}" == false ]]; then
-            read -p "Warning: /usr/local/bin/dnp already exists. Overwrite? [y/N] " OVERWRITE
-            if [[ "${OVERWRITE}" != "y" && "${OVERWRITE}" != "Y" ]]; then
-                echo "Skipping symlink creation."
-            else
-                echo "Creating symlink: /usr/local/bin/dnp -> ${DNP_SCRIPT}"
-                sudo ln -sf "${DNP_SCRIPT}" /usr/local/bin/dnp
-            fi
+      # Case symlink already exist
+      if [[ "${option_yes}" == false ]]; then
+        n2st::print_msg_warning "${MSG_DIMMED_FORMAT}/usr/local/bin/dnp${MSG_END_FORMAT} already exists"
+        read -r -n 1 -p "Overwrite? [y/N] " option_overwrite
+        if [[ "${option_overwrite}" != "y" && "${option_overwrite}" != "Y" ]]; then
+          n2st::print_msg "Skipping symlink creation."
         else
-            echo "Creating symlink: /usr/local/bin/dnp -> ${DNP_SCRIPT}"
-            sudo ln -sf "${DNP_SCRIPT}" /usr/local/bin/dnp
+          dnp::create_bin_dnp_to_entrypoint_symlink "${dnp_entrypoint}"
         fi
+      else
+        dnp::create_bin_dnp_to_entrypoint_symlink "${dnp_entrypoint}"
+      fi
     else
-        echo "Creating symlink: /usr/local/bin/dnp -> ${DNP_SCRIPT}"
-        sudo ln -sf "${DNP_SCRIPT}" /usr/local/bin/dnp
+      dnp::create_bin_dnp_to_entrypoint_symlink "${dnp_entrypoint}"
     fi
-fi
+  fi
 
-# Add DNP_PATH to ~/.bashrc if requested
-if [[ "${ADD_DNP_PATH_TO_BASHRC}" == true ]]; then
+  # ....Add dnp entrypoint path to ~/.bashrc if requested..........................................
+  if [[ "${option_add_dnp_path_to_bashrc}" == true ]]; then
     if [[ -f "${HOME}/.bashrc" ]]; then
-        if grep -q "DNP_PATH=" "${HOME}/.bashrc"; then
-            if [[ "${YES}" == false ]]; then
-                read -p "Warning: DNP_PATH already exists in ~/.bashrc. Update? [y/N] " UPDATE
-                if [[ "${UPDATE}" != "y" && "${UPDATE}" != "Y" ]]; then
-                    echo "Skipping ~/.bashrc update."
-                else
-                    echo "Updating DNP_PATH in ~/.bashrc"
-                    # Replace lines containing DNP_PATH with empty string (effectively deleting them)
-                    n2st::seek_and_modify_string_in_file "export DNP_PATH=.*" "" "${HOME}/.bashrc"
-                    n2st::seek_and_modify_string_in_file "export PATH=.*DNP_PATH.*" "" "${HOME}/.bashrc"
-                    echo "export DNP_PATH=\"${DNP_BIN_DIR}\"" >> "${HOME}/.bashrc"
-                    echo "export PATH=\"\${PATH}:\${DNP_PATH}\"" >> "${HOME}/.bashrc"
-                fi
-            else
-                echo "Updating DNP_PATH in ~/.bashrc"
-                # Replace lines containing DNP_PATH with empty string (effectively deleting them)
-                n2st::seek_and_modify_string_in_file "export DNP_PATH=.*" "" "${HOME}/.bashrc"
-                n2st::seek_and_modify_string_in_file "export PATH=.*DNP_PATH.*" "" "${HOME}/.bashrc"
-                echo "export DNP_PATH=\"${DNP_BIN_DIR}\"" >> "${HOME}/.bashrc"
-                echo "export PATH=\"\${PATH}:\${DNP_PATH}\"" >> "${HOME}/.bashrc"
-            fi
+      if [[ $( grep -q "_DNP_ROOT=" "${HOME}/.bashrc" )]] && [[ $( grep -q "PATH=\"\$PATH:\$_DNP_ROOT\/src\/bin" "${HOME}/.bashrc" )]]; then
+        if [[ "${option_yes}" == false ]]; then
+          n2st::print_msg_warning "dnp entrypoint path already exists in ~/.bashrc."
+          read -r -n 1 -p "Update? [y/N] " option_update
+          if [[ "${option_update}" != "y" && "${option_update}" != "Y" ]]; then
+            n2st::print_msg "Skipping ~/.bashrc option_update."
+          else
+            dnp::update_bashrc_dnp_path "${dnp_install_dir}" "src/bin"
+          fi
         else
-            echo "Adding DNP_PATH to ~/.bashrc"
-            echo "" >> "${HOME}/.bashrc"
-            echo "# Dockerized-NorLab-Project" >> "${HOME}/.bashrc"
-            echo "export DNP_PATH=\"${DNP_BIN_DIR}\"" >> "${HOME}/.bashrc"
-            echo "export PATH=\"\${PATH}:\${DNP_PATH}\"" >> "${HOME}/.bashrc"
+          dnp::update_bashrc_dnp_path "${dnp_install_dir}" "src/bin"
         fi
+      else
+        n2st::print_msg "Adding dnp entrypoint path to ~/.bashrc"
+        {
+          echo "" ;
+          echo "# >>>> Dockerized-NorLab-Project (start)" ;
+          echo "export _DNP_ROOT=\"${dnp_bin_dir}\"" ;
+          echo "export PATH=\"\$PATH:\$_DNP_ROOT/src/bin\"" ;
+          echo "# <<<< Dockerized-NorLab-Project (end)" ;
+          echo "" ;
+        } >> "${HOME}/.bashrc"
+      fi
     else
-        echo "Error: ~/.bashrc file does not exist." >&2
-        echo "Skipping ~/.bashrc update." >&2
+      n2st::print_msg_error_and_exit "~/.bashrc file does not exist.\nSkipping ~/.bashrc option_update."
     fi
-fi
+  fi
 
-# Setup host for this super project
-echo "Setting up host for Dockerized-NorLab-Project..."
-source "${DNP_INSTALL_DIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash"
+  # ....Setup host for this super project..........................................................
+  n2st::print_msg "Setting up host for Dockerized-NorLab-Project..."
+  bash "${dnp_install_dir}/src/lib/core/utils/setup_host_dnp_requirements.bash" || return 1
 
-# Validate the installation
-echo "Validating installation..."
-source "${DNP_INSTALL_DIR}/src/lib/core/utils/super_project_dnp_sanity_check.bash"
+  # ====Teardown===================================================================================
+  n2st::print_msg_done "Dockerized-NorLab-Project has been installed successfully!"
+  if [[ "${option_system_wide_symlink}" == true ]]; then
+    n2st::print_msg "You can now use 'dnp' command from anywhere."
+    echo -e "\nRun 'dnp help' for usage information."
+  elif [[ "${option_add_dnp_path_to_bashrc}" == true ]]; then
+    n2st::print_msg "After restarting your shell or sourcing ~/.bashrc, the current user can use 'dnp' command from anywhere."
+    echo -e "\nRun 'dnp help' for usage information."
+  else
+    n2st::print_msg "You can use '${dnp_entrypoint}' to run DNP commands."
+    echo -e "\nRun 'bash ${dnp_entrypoint} help' for usage information."
+  fi
 
-echo ""
-echo "Dockerized-NorLab-Project has been installed successfully!"
-echo ""
-if [[ "${SYSTEM_WIDE_SYMLINK}" == true ]]; then
-    echo "You can now use 'dnp' command from anywhere."
+  n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+}
+
+
+# ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  # This script is being run, ie: __name__="__main__"
+  dnp::install_dockerized_norlab_project_on_host "$@"
+  exit $?
 else
-    echo "You can use '${DNP_SCRIPT}' to run DNP commands."
-    if [[ "${ADD_DNP_PATH_TO_BASHRC}" == true ]]; then
-        echo "After restarting your shell or sourcing ~/.bashrc, you can use 'dnp' command from anywhere."
-    fi
+  # This script is being sourced, ie: __name__="__source__"
+  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+  echo -e "${dnp_error_prefix} This script must be run in shell i.e.: $ bash $(basename "$0")" 1>&2
+  exit 1
 fi
-echo ""
-echo "Run 'dnp help' for usage information."

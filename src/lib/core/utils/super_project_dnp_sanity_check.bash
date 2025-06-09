@@ -4,7 +4,9 @@
 # location in the super-project
 #
 # Usage:
-#   $ [bash|source] super_project_dnp_sanity_check.bash
+#   $ bash super_project_dnp_sanity_check.bash
+#   or
+#   $ source super_project_dnp_sanity_check.bash && dnp::super_project_dnp_sanity_check
 #
 # Global:
 #  read DNP_ROOT
@@ -144,6 +146,7 @@ function dnp::check_dockerignore() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
+
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"

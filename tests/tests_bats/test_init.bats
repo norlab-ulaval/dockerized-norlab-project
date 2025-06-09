@@ -123,6 +123,7 @@ setup() {
   # Copy the init.bash file to the temporary directory
   cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
   cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/super_project_dnp_sanity_check.bash" "${MOCK_DNP_DIR}/src/lib/core/utils/super_project_dnp_sanity_check.bash"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash" "${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash"
 
   source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
 
@@ -146,6 +147,9 @@ setup() {
 
 # ....Teardown.....................................................................................
 teardown() {
+  if [[ -n "${TEST_REPO_DIR}" && -d "${TEST_REPO_DIR}" ]]; then
+    temp_del "${TEST_REPO_DIR}"
+  fi
   bats_print_run_env_variable_on_error
   cd "${BATS_DOCKER_WORKDIR}" || exit 1
 }
@@ -153,9 +157,6 @@ teardown() {
 teardown_file() {
   # Clean up temporary directories
   temp_del "${MOCK_DNP_DIR}"
-  if [[ -n "${TEST_REPO_DIR}" && -d "${TEST_REPO_DIR}" ]]; then
-    temp_del "${TEST_REPO_DIR}"
-  fi
 }
 
 # ====Test cases==================================================================================

@@ -93,7 +93,6 @@ teardown() {
   assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNP dockerized-norlab-project-mock aliases and env variable"
   assert_file_not_contains "${HOME}/.bashrc" "#<<<<DNP dockerized-norlab-project-mock aliases and env variable end"
 
-#  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 #  cat "${HOME}/.bashrc"
   assert_success
@@ -137,10 +136,9 @@ teardown() {
 }
 
 @test "dnp::setup_host_for_this_super_project | DNP lib not loaded › expect fail" {
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::setup_host_for_this_super_project
+  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE} && dnp::setup_host_for_this_super_project"
   assert_failure
-  assert_output --partial 'DNP libs are not loaded, run import_dnp_lib.bash first'
+  assert_output --partial 'The DNP lib is not loaded'
 }
 
 @test "dnp::setup_host_for_this_super_project | super project not loaded › expect fail" {

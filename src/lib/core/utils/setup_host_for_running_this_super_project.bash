@@ -4,14 +4,14 @@
 # Dockerized-NorLab-Project super project.
 #
 # Usage:
-#   $ source setup_host_for_running_this_super_project.bash
+#   $ bash setup_host_for_running_this_super_project.bash
+#   or
+#   $ source setup_host_for_running_this_super_project.bash && dnp::setup_host_for_this_super_project
 #
 # Global:
 #  read SUPER_PROJECT_ROOT
 #  read SUPER_PROJECT_REPO_NAME
 #  read DN_PROJECT_ALIAS_PREFIX
-#  read PATH
-#  read LD_LIBRARY_PATH
 #
 # =================================================================================================
 
@@ -26,10 +26,6 @@ function dnp::setup_host_for_this_super_project() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  if [[ -z "${DNP_ROOT}" ]]; then
-    echo -e "\033[1;31m[DNP error]\033[0m DNP libs are not loaded, run import_dnp_lib.bash first!" 1>&2
-    exit 1
-  fi
   if [[ -z "${SUPER_PROJECT_ROOT}" ]] || [[ -z "${SUPER_PROJECT_REPO_NAME}" ]] || [[ -z "${DN_PROJECT_ALIAS_PREFIX}" ]]; then
     n2st::print_msg_error_and_exit "Super project configs are not loaded, run load_super_project_config.bash first!"
   fi
@@ -60,44 +56,6 @@ function dnp::setup_host_for_this_super_project() {
     echo "#<<<<DNP ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
     echo ""
   ) >>~/.bashrc
-
-  # ...CUDA toolkit path...........................................................................
-  # ref dusty_nv comment at https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068
-  if [[ $(uname -s) == "Darwin" ]]; then
-    n2st::print_msg_warning "CUDA is not supported yet on Apple M1 computer"
-  else
-    if ! command -v nvcc -V &>/dev/null; then
-      # nvcc command not working
-      n2st::print_msg_warning "Fixing CUDA path for nvcc"
-
-      (
-        echo ""
-        echo "# CUDA toolkit related"
-        echo "# ref dusty_nv comment at"
-        echo "#    https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068"
-        echo "export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}"
-        echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-        echo ""
-      ) >>~/.bashrc
-
-      source ~/.bashrc
-      n2st::print_msg_done "nvcc CUDA path hack completed. The following lines where added to ~/.bashrc
-      ${MSG_DIMMED_FORMAT}
-      # CUDA toolkit related
-      # ref dusty_nv comment at
-      #    https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068
-      export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
-      export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-      ${MSG_END_FORMAT}"
-    fi
-
-    if [[ $(nvcc -V | grep 'nvcc: NVIDIA (R) Cuda compiler driver') == "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
-      n2st::print_msg_done "nvcc installed properly"
-      nvcc -V
-    else
-      n2st::print_msg_error " Check your nvcc installation. It's stil NOT installed properly!"
-    fi
-  fi
 
   if [ -n "$ZSH_VERSION" ]; then
     # ToDo: validate >> appending .bashrc to .zshrc should let to the user choice
@@ -130,19 +88,24 @@ function dnp::setup_host_for_this_super_project() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
+
+  # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -F dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
-  fi
-  if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
-    source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
-  fi
+  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/load_super_project_config.bash" || exit 1
   dnp::setup_host_for_this_super_project || exit 1
+  exit $?
 else
   # This script is being sourced, ie: __name__="__source__"
-  :
+
+  # ....Pre-condition..............................................................................
+  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+  test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
+  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+
 fi

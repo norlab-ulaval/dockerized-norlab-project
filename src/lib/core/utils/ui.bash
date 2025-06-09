@@ -17,7 +17,8 @@ n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[
 # ====Help/doc=====================================================================================
 function dnp:help_header() {
     echo -n -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "." #| sed 's/.../\/../'
+    n2st::draw_horizontal_line_across_the_terminal_window "-"
+#    n2st::draw_horizontal_line_across_the_terminal_window "." | sed 's/.../\/../'
 #    n2st::echo_centering_str "❄︎" "${MSG_DIMMED_FORMAT}" "."
 #    n2st::echo_centering_str "▼" "${MSG_DIMMED_FORMAT}" "."
     echo -n -e "${MSG_END_FORMAT}"
@@ -25,8 +26,9 @@ function dnp:help_header() {
 
 function dnp::help_footer() {
     echo -n -e "${MSG_DIMMED_FORMAT}"
-#    n2st::draw_horizontal_line_across_the_terminal_window "." #| sed 's/..........$/.....❄︎.../'
-    n2st::echo_centering_str "❄︎" "${MSG_DIMMED_FORMAT}" "."
+    n2st::draw_horizontal_line_across_the_terminal_window "-" | sed 's/----------$/-----❄︎---/'
+#    n2st::draw_horizontal_line_across_the_terminal_window "." | sed 's/..........$/.....❄︎.../'
+#    n2st::echo_centering_str "❄︎" "${MSG_DIMMED_FORMAT}" "-"
 #    n2st::echo_centering_str "▲" "${MSG_DIMMED_FORMAT}" "."
     echo -n -e "${MSG_END_FORMAT}"
 }
