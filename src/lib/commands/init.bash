@@ -119,8 +119,12 @@ function dnp::init_command() {
     # Replace placeholders in the DNP readme file
     cd "${super_project_root}/.dockerized_norlab_project/" || exit 1
     n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNP_${super_project_acronym}" "README.md"
-    n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md"
     n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_USER" "${super_project_user}" "README.md"
+
+    # Note: There is three ocurence
+    n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md"
+    n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md"
+    n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md"
 
     # ....Create root repository required directories..............................................
     cd "${super_project_root}" || exit 1
