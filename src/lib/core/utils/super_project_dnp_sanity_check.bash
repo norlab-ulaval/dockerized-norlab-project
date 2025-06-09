@@ -29,7 +29,7 @@ function dnp::super_project_dnp_sanity_check() {
   # ====Begin======================================================================================
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
-  if [[ $( git -C "${SUPER_PROJECT_ROOT}" rev-parse --is-inside-work-tree ) != true ]]; then
+  if [[ $( git -C "${SUPER_PROJECT_ROOT}" rev-parse --is-inside-work-tree 2>/dev/null ) != true ]]; then
     n2st::print_msg_error_and_exit "The '.git' directory does not exist at super-project repository root as required!
 Dockerized-NorLab-Porject require that the super project be under version control using git."
   else
@@ -37,6 +37,26 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   fi
 
   # ....check super project directory structure....................................................
+  dnp::check_super_project_dir_structure
+
+  # ....check .dockerized_norlab_project directory structure.......................................
+  dnp::check_dockerized_project_configuration_dir_structure
+  dnp::check_project_configuration
+  dnp::check_project_entrypoints
+
+  # ....check .gitignore files entries.............................................................
+  dnp::check_gitignore
+
+  # ....check .dockerignore files entries..........................................................
+  dnp::check_dockerignore
+
+  #  ....Teardown...................................................................................
+  echo -e "${MSG_DONE_FORMAT}[DNP done]${MSG_END_FORMAT} Super project ${SUPER_PROJECT_REPO_NAME:?err} setup is OK"
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
+  return 0
+}
+
+function dnp::check_super_project_dir_structure() {
   test -d ".dockerized_norlab_project" || n2st::print_msg_error_and_exit "'.dockerized_norlab_project' is not installed at super-project repository root as required!"
   test -d "src/" || n2st::print_msg_error_and_exit "The 'src' directory is not installed at super-project repository root as required!"
   test -d "tests/" || n2st::print_msg_error_and_exit "The 'tests' directory is not installed at super-project repository root as required!"
@@ -45,14 +65,17 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   test -d "artifact/optuna_storage/" || n2st::print_msg_error_and_exit "The 'optuna_storage' directory is not installed in the super-project 'artifact/' directory as required!"
   test -f ".gitignore" || n2st::print_msg_error_and_exit "'.gitignore' is not installed at super-project repository root as required!"
   test -f ".dockerignore" || n2st::print_msg_error_and_exit "'.dockerignore' is not installed at super-project repository root as it should!"
+}
 
-  # ....check .dockerized_norlab_project directory structure.......................................
+function dnp::check_dockerized_project_configuration_dir_structure() {
   test_dir_path=".dockerized_norlab_project"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "configuration/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/configuration/' directory is not installed as required!"
   test -d "dn_container_env_variable/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/dn_container_env_variable/' directory is not installed as required!"
   test -d "slurm_jobs/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/slurm_jobs/' directory is not installed as required!"
+}
 
+function dnp::check_project_configuration() {
   test_dir_path=".dockerized_norlab_project/configuration"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "project_requirements/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project_requirements/' directory is not installed as required!"
@@ -61,16 +84,18 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   test -f ".env" || n2st::print_msg_error_and_exit "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || n2st::print_msg_error_and_exit "The '${test_dir_path}/.env.local' file is not installed as required!"
   test -f "Dockerfile" || n2st::print_msg_error_and_exit "The '${test_dir_path}/Dockerfile' file is not installed as required!"
+}
 
+function dnp::check_project_entrypoints() {
   test_dir_path=".dockerized_norlab_project/configuration/project_entrypoints"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "project-ci-tests/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-ci-tests/' directory is not installed as required!"
   test -d "project-ci-tests/test_jobs/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-ci-tests/test_jobs/' directory is not installed as required!"
   test -d "project-deploy/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-deploy/' directory is not installed as required!"
   test -d "project-develop/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-develop/' directory is not installed as required!"
+}
 
-
-  # ....check .gitignore files entries.............................................................
+function dnp::check_gitignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
   # Check required entry: **/.dockerized_norlab_project/dn_container_env_variable/
@@ -89,8 +114,9 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   if ! grep --silent -E "^\*\*\/artifact\/$" ".gitignore"; then
     n2st::print_msg_warning "The line '**/artifact/' is not present in .gitignore as recommended!"
   fi
+}
 
-  # ....check .dockerignore files entries..........................................................
+function dnp::check_dockerignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
   # Check required entry: !**/.dockerized_norlab_project/
@@ -113,12 +139,6 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   if ! grep --silent -E "^\*\*\/artifact\/$" ".dockerignore"; then
     n2st::print_msg_warning "The line '**/artifact/' is not present in .dockerignore as recommended!"
   fi
-
-
-  #  ....Teardown...................................................................................
-  echo -e "${MSG_DONE_FORMAT}[DNP done]${MSG_END_FORMAT} Super project ${SUPER_PROJECT_REPO_NAME:?err} setup is OK"
-  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
-  return 0
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -7,7 +7,6 @@
 #
 # Global
 #   read/write DNP_ROOT
-#   write DNP_LIB_LOADED
 #
 # =================================================================================================
 MSG_ERROR_FORMAT="\033[1;31m"
@@ -16,7 +15,6 @@ MSG_DONE_FORMAT="\033[1;32m"
 
 # ....Variable set for export......................................................................
 declare -x DNP_ROOT
-declare -x DNP_LIB_LOADED
 
 # =================================================================================================
 # Function that load DNP lib and all dependencies.
