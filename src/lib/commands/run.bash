@@ -9,14 +9,20 @@ DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 #   $ dnp run [OPTIONS] SERVICE [<specialized-option>]
 #
 # Service
-#   ci-tests               Run CI tests container.
-#   slurm                  Run slurm container. Run dnp run slurm --help to see available options
+#   ci-tests [<any-docker-argument>]       Run CI tests container.
+#   slurm <sjob-id>                        Run slurm job in container.
 #
 # Specialized options
 #   For details, execute $ dnp run SERVICE --help
 #
 # Options:
 #   --help, -h             Show this help message
+#
+# Notes about slurm run:
+#   To launch job on slurm/mamba server, prefer directly executing custom slurm script with
+#   enviroment variable header. See example 'slurm_job.template.bash' and 'slurm_job.dryrun.bash'
+#   in '.dockerized_norlab_project/slurm_jobs/' directory.
+#
 #
 # =================================================================================================
 EOF
@@ -64,14 +70,16 @@ function dnp::run_command() {
     # Determine which run script to execute
     if [[ "${ci_tests}" == true ]]; then
         echo "Running CI tests..."
-        source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash" "${remaining_args[@]}"
+        source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash"
+        dnp::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${slurm}" == true ]]; then
         echo "Running slurm containers..."
-        source "${DNP_LIB_PATH}/core/execute/run.slurm.bash" "${remaining_args[@]}"
+        source "${DNP_LIB_PATH}/core/execute/run.slurm.bash"
+        dnp::run_slurm "${remaining_args[@]}"
         fct_exit_code=$?
     else
-        echo "Error: No run mode specified."
+        echo "Error: No run service specified."
         dnp::run_help
         exit 1
     fi

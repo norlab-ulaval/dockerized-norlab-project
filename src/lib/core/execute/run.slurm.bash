@@ -25,8 +25,7 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # Globals:
 #   read DNP_ROOT
 #   read SUPER_PROJECT_ROOT
-#   read DNP_LIB_LOADED
-#   write SJOB_ID
+ #   write SJOB_ID
 #   write IS_SLURM_RUN
 #
 # =================================================================================================
@@ -83,6 +82,8 @@ function dnp::run_slurm() {
   # Positional argument
   SJOB_ID="$1"
   shift # Remove SJOB_ID argument value
+
+  test -n "${SJOB_ID}" || n2st::print_msg_error_and_exit "Missing sjob-id mandatory positional argument!"
 
   # ....Pre-condition..............................................................................
 

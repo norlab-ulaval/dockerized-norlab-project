@@ -1,4 +1,6 @@
 #!/bin/bash
+
+DOCUMENTATION_BUFFER_RUN_CI_TESTS=$( cat <<'EOF'
 # =================================================================================================
 # Run continuous integration tests container specified in docker-compose.project.build.native.yaml.
 # Require executing `build.ci_tests.bash` first.
@@ -12,13 +14,29 @@
 #   host architecture, either x86 or arm64 and are executed at runtime instead of at build time.
 #
 # =================================================================================================
+EOF
+)
 
 
 function dnp::run_ci_tests() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
-  declare -a any_docker_arg=("$@")
+  declare -a any_docker_arg=()
+
+  # ....cli......................................................................................
+  while [[ $# -gt 0 ]]; do
+      case "$1" in
+          --help|-h)
+              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS}"
+              exit 0
+              ;;
+          *)
+              any_docker_arg+=("$@")
+              break
+              ;;
+      esac
+  done
 
   # ....Begin......................................................................................
   compose_file="docker-compose.project.build.native.yaml"

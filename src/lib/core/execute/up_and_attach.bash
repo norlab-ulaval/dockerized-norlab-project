@@ -29,8 +29,6 @@ EOF
 # ToDo: refactor using Dockerized-NorLab scripts (ref task NMO-375)
 # ToDo: see newly added implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash (ref task NMO-375)
 
-
-# ToDo: move the help fct near the script/fct menu
 function show_help() {
   # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
   echo -e "${MSG_DIMMED_FORMAT}"
