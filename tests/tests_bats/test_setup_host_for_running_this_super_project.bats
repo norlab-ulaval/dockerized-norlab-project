@@ -148,7 +148,7 @@ teardown() {
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run dnp::setup_host_for_this_super_project
   assert_failure
-  assert_output --partial 'Super project config are not loaded, run load_super_project_config.bash first'
+  assert_output --partial 'Super project configs are not loaded, run load_super_project_config.bash first'
 }
 
 

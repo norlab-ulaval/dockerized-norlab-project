@@ -7,8 +7,8 @@ PYTEST_FLAG=()
 PYTEST_FLAG+=(--rootdir="${DN_PROJECT_PATH}/tests")
 
 # ....Optional flags...............................................................................
-PYTEST_FLAG+=(--config-file="${DN_PROJECT_PATH}/tests/pytest.ini")
-# pytest-xdist is configured through the pytest.ini file
+PYTEST_FLAG+=(--config-file="${DN_PROJECT_PATH}/tests/pytest.dnp.ini")
+# pytest-xdist is configured through the pytest.dnp.ini file
 
 PYTEST_FLAG+=(--reruns 5 --reruns-delay 2.5)
 #PYTEST_FLAG+=(--verbose)

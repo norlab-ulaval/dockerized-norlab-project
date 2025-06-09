@@ -31,7 +31,7 @@ function dnp::setup_host_for_this_super_project() {
     exit 1
   fi
   if [[ -z "${SUPER_PROJECT_ROOT}" ]] || [[ -z "${SUPER_PROJECT_REPO_NAME}" ]] || [[ -z "${DN_PROJECT_ALIAS_PREFIX}" ]]; then
-    n2st::print_msg_error_and_exit "Super project config are not loaded, run load_super_project_config.bash first!"
+    n2st::print_msg_error_and_exit "Super project configs are not loaded, run load_super_project_config.bash first!"
   fi
 
   if [[ ! -d "${SUPER_PROJECT_ROOT}" ]]; then

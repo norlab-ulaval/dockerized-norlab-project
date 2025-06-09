@@ -90,8 +90,7 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-# (!) Notes: the following tests assume `setup_host_for_running_this_super_project.bash` was already
-#  executed via `test_setup_host_for_this_dnp_user_project.bats`.
+# (CRITICAL) ToDo: NMO-689 test: expand test_super_project_dnp_sanity_check.bats
 
 @test "source $TESTED_FILE › expect pass" {
   assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab_project"
@@ -115,9 +114,10 @@ teardown() {
   assert_output --regexp "[DNP done].*Super project dockerized-norlab-project-mock setup is OK"
 }
 
-@test "dnp::super_project_dnp_sanity_check | DNP lib not loaded › expect fail" {
+@test "dnp::super_project_dnp_sanity_check | super project unreachable › expect fail" {
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run dnp::super_project_dnp_sanity_check
   assert_failure
-  assert_output --partial 'DNP libs are not loaded, run import_dnp_lib.bash first'
+  assert_output --partial 'Super project configs are not loaded, run load_super_project_config.bash first'
 }

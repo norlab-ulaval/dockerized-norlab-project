@@ -114,6 +114,24 @@ Its OK for developement but MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO 
 \n"
 }
 
+function helper::setup_ignore_related_tests() {
+  local tested_file=$1
+  local tested_entry=$2
+  local tested_file_path=$3
+  cd "${tested_file_path}" || exit 1
+  echo -e "\n\n
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+[DN ERROR] -> ignore file ${tested_file} misconfiguration error.
+Path: ${tested_file_path}${tested_file}
+
+Expected entry:
+  $( cat "${tested_file}" | grep -e "^${tested_entry}" )
+
+This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI BUILD.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+\n"
+}
+
 # ====Test casses==================================================================================
 
 # ....docker-compose tests.........................................................................
@@ -172,3 +190,66 @@ Its OK for developement but MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO 
   assert_file_contains ".env.dockerized-norlab-project" "^DNP_CLEAR_CONSOLE_ACTIVATED=false"
 }
 
+# ....DNP app .dockerignore files tests............................................................
+
+@test "check dev configs in .dockerignore | !**/.dockerized_norlab_project/ › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/.dockerized_norlab_project/' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".dockerignore"
+  assert_file_contains ".dockerignore" "^\!\*\*\/\.dockerized_norlab_project\/"
+}
+
+@test "check dev configs in .dockerignore | !**/version.txt › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/version.txt' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".dockerignore"
+  assert_file_contains ".dockerignore" "^\!\*\*\/version.txt"
+}
+
+@test "check dev configs in .dockerignore | !**/.git › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/.git' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".dockerignore"
+  assert_file_contains ".dockerignore" "^\!\*\*\/\.git"
+}
+
+@test "check dev configs in .dockerignore | !**/external_data/ › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/external_data/' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".dockerignore"
+  assert_file_contains ".dockerignore" "^\!\*\*\/external_data\/"
+}
+
+@test "check dev configs in .dockerignore | !**/artifact/ › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/artifact/' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".dockerignore"
+  assert_file_contains ".dockerignore" "^\!\*\*\/artifact\/"
+}
+
+@test "check dev configs in .dockerignore | !/utilities/tmp/dockerized-norlab-project-mock/ › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!/utilities/tmp/dockerized-norlab-project-mock/' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".dockerignore"
+  assert_file_contains ".dockerignore" "^\!\/utilities\/tmp\/dockerized-norlab-project-mock\/"
+}
+
+# ....DNP app .gitignore files tests...............................................................
+
+@test "check dev configs in .gitignore | /utilities/tmp/dockerized-norlab-project-mock › expect pass" {
+  helper::setup_ignore_related_tests '.gitignore' '/utilities/tmp/dockerized-norlab-project-mock' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".gitignore"
+  assert_file_contains ".gitignore" "^\/utilities\/tmp\/dockerized-norlab-project-mock"
+}
+
+@test "check dev configs in .gitignore | !**/external_data/README.md › expect pass" {
+  helper::setup_ignore_related_tests '.gitignore' '!**/external_data/README.md' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".gitignore"
+  assert_file_contains ".gitignore" "^\!\*\*\/external_data\/README\.md"
+}
+
+@test "check dev configs in .gitignore | !**/artifact/README.md › expect pass" {
+  helper::setup_ignore_related_tests '.gitignore' '!**/artifact/README.md' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".gitignore"
+  assert_file_contains ".gitignore" "^\!\*\*\/artifact\/README\.md"
+}
+
+@test "check dev configs in .gitignore | !**/artifact/optuna_storage/README.md › expect pass" {
+  helper::setup_ignore_related_tests '.gitignore' '!**/artifact/optuna_storage/README.md' "${TESTED_FILE_PATH3}"
+  assert_file_exist ".gitignore"
+  assert_file_contains ".gitignore" "^\!\*\*\/artifact\/optuna_storage\/README\.md"
+}

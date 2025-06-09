@@ -16,6 +16,7 @@ pushd "$(pwd)" >/dev/null || exit 1
 
 function dnp::global_install_hack() {
 
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab project
 #  apt-get update && apt-get update --fix-missing && apt-get upgrade -y
   apt-get install -y \
@@ -24,12 +25,61 @@ function dnp::global_install_hack() {
   echo "Cyclon DDS performance recommendations (ref https://github.com/ros2/rmw_cyclonedds?tab=readme-ov-file)"
   echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf
 
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab project
   # Temporary hack (might be resolved now)
   # Ref issues
   #  - https://github.com/ipython/ipython/issues/14390
   #  - https://github.com/ros2/launch/issues/765
   pip3 install 'pytest==8.0'
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+  # (STANDBY) ToDo: add the following Hydra requirements to Dockerized-NorLab
+
+  # ....pytest related.............................................................................
+  # https://github.com/Teemu/pytest-sugar
+  pip3 install 'pytest-sugar'
+
+  # ....Hydra related..............................................................................
+  pip3 install 'hydra-core >= 1.3'
+
+  # https://hydra.cc/docs/plugins/ray_launcher/
+  pip3 install 'hydra-ray-launcher'
+
+  # Hydra Experiment Sweeper
+  # https://github.com/martenlienen/hydra-experiment-sweeper
+  pip3 install 'hydra-experiment-sweeper'
+
+  # CPU based parallel job
+  # https://hydra.cc/docs/plugins/joblib_launcher/
+  pip3 install 'hydra-joblib-launcher'
+
+  # https://hydra.cc/docs/plugins/optuna_sweeper/
+  #hydra-optuna-sweeper >= 1.2.0
+  pip3 install 'hydra-optuna-sweeper >= 1.3.0.dev0'
+  pip3 install 'sqlalchemy<2.0' # Temporary compatibility quickhack for hydra-optuna-sweeper
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  # ....Hyperparameter optimization................................................................
+  # (StandBy) ToDo: add to Dockerized-NorLab
+  # https://github.com/optuna/optuna-dashboard
+  pip3 install 'optuna-dashboard'
+  pip3 install 'bottle == 0.12.*' # Fix the optuna-dashboard loading screen stall problem
+  # optional dependencies to make optuna-dashboard faster
+  pip3 install 'optuna-fast-fanova'
+  pip3 install 'gunicorn'
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  # ....Others.....................................................................................
+
+  # (StandBy) ToDo: add to Dockerized-NorLab
+  # Single-command clean up for Python bytecode files in your favorite directories i.e. __pycache__; .*pyc;*.pytest_cache;
+  # https://github.com/bittner/pyclean
+  pyclean
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
 
   return 0
 }

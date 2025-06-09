@@ -194,9 +194,9 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   n2st::norlab_splash "${DNP_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::excute_compose "$@"
-  FCT_EXIT_CODE=$?
+  fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  exit "${FCT_EXIT_CODE}"
+  exit "${fct_exit_code}"
 else
   # This script is being sourced, ie: __name__="__source__"
   :

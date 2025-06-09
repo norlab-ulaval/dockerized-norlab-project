@@ -5,47 +5,5 @@
 #
 # =================================================================================================
 
-# ....pytest related...............................................................................
-
-# https://github.com/Teemu/pytest-sugar
-pytest-sugar
-
-# ....Hydra related................................................................................
-hydra-core >= 1.3
-
-# https://hydra.cc/docs/plugins/ray_launcher/
-hydra-ray-launcher
-
-# Hydra Experiment Sweeper
-# https://github.com/martenlienen/hydra-experiment-sweeper
-hydra-experiment-sweeper
-
-# CPU based parallel job
-# https://hydra.cc/docs/plugins/joblib_launcher/
-hydra-joblib-launcher
-
-# https://hydra.cc/docs/plugins/optuna_sweeper/
-#hydra-optuna-sweeper >= 1.2.0
-hydra-optuna-sweeper >= 1.3.0.dev0
-sqlalchemy<2.0 # Temporary compatibility quickhack for hydra-optuna-sweeper
-
-# SLURM launcher
-# https://hydra.cc/docs/plugins/submitit_launcher/
-#hydra-submitit-launcher
-
-# ....Hyperparameter optimization..................................................................
-
-# https://github.com/optuna/optuna-dashboard
-optuna-dashboard
-bottle == 0.12.* # Fix the optuna-dashboard loading screen stall problem
-# optional dependencies to make optuna-dashboard faster
-optuna-fast-fanova
-gunicorn
-
-# ....Others.......................................................................................
-
-# (Priority) ToDo: add to Dockerized-NorLab
-# Single-command clean up for Python bytecode files in your favorite directories i.e. __pycache__; .*pyc;*.pytest_cache;
-# https://github.com/bittner/pyclean
+# Example
 pyclean
-
