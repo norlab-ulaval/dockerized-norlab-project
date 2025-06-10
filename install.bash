@@ -32,10 +32,10 @@ set -e
 # =================================================================================================
 function dnp::create_bin_dnp_to_entrypoint_symlink() {
   local dnp_entrypoint_path=$1
-  local bin_dnp_path="${2:-'/usr/local/bin/dnp'}"
-  local show_symlink="${MSG_DIMMED_FORMAT}${bin_dnp_path}} -> ${dnp_entrypoint_path}${MSG_END_FORMAT}"
+  local bin_dnp_path="${2:-/usr/local/bin/dnp}"
+  local show_symlink="${MSG_DIMMED_FORMAT}${bin_dnp_path} -> ${dnp_entrypoint_path}${MSG_END_FORMAT}"
   n2st::print_msg "Creating symlink: ${show_symlink}"
-  sudo ln -sf "${dnp_entrypoint_path}" "${bin_dnp_path}}" || return 1
+  sudo ln -sf "${dnp_entrypoint_path}" "${bin_dnp_path}" || return 1
   if [[ ! -h "${bin_dnp_path}" ]]; then
     n2st::print_msg_error "Failed to create symlink ${show_symlink}!"
     return 1
@@ -47,12 +47,12 @@ function dnp::create_bin_dnp_to_entrypoint_symlink() {
 # Helper function: Update the ~/.bashrc dnp path and add it to PATH
 #
 # Usage:
-#   $ dnp::update_bashrc_dnp_path <path/to/dnp/bin/dir>
+#   $ dnp::update_bashrc_dnp_bin_path <path/to/dnp/bin/dir>
 #
 # Global:
 #  read HOME
 # =================================================================================================
-function dnp::update_bashrc_dnp_path() {
+function dnp::update_bashrc_dnp_bin_path() {
   local dnp_bin_dir="$1"
   n2st::print_msg "Updating dnp entrypoint path in ~/.bashrc"
   n2st::seek_and_modify_string_in_file "export _DNP_PATH=.*" "export _DNP_PATH=\"${dnp_bin_dir}\"" "${HOME}/.bashrc" || return 1
@@ -68,9 +68,9 @@ function dnp::update_bashrc_dnp_path() {
 #
 # =================================================================================================
 function dnp::create_entrypoint_symlink_if_requested() {
-  locasl option_system_wide_symlink="$1"
-  locasl option_yes="$2"
-  locasl dnp_entrypoint="$3"
+  local option_system_wide_symlink="$1"
+  local option_yes="$2"
+  local dnp_entrypoint="$3"
   if [[ "${option_system_wide_symlink:?err}" == true ]]; then
     if [[ ! -d "/usr/local/bin" ]]; then
       n2st::print_msg_error_and_exit "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist.\nPlease create it or use ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} option."
@@ -100,7 +100,7 @@ function dnp::create_entrypoint_symlink_if_requested() {
 # Helper function: Add dnp entrypoint path to ~/.bashrc if requested
 #
 # Usage:
-#   $ dnp::add_dnp_entrypoint_path_to_bashrc_if_requested "$option_add_dnp_path_to_bashrc" "$option_yes" "$dnp_install_dir" "$dnp_bin_dir"
+#   $ dnp::add_dnp_entrypoint_path_to_bashrc_if_requested "$option_add_dnp_path_to_bashrc" "$option_yes" "$dnp_bin_dir"
 #
 # Global:
 #  read HOME
@@ -109,28 +109,27 @@ function dnp::create_entrypoint_symlink_if_requested() {
 function dnp::add_dnp_entrypoint_path_to_bashrc_if_requested() {
   local option_add_dnp_path_to_bashrc="$1"
   local option_yes="$2"
-  local dnp_install_dir="$3"
-  local dnp_bin_dir="$4"
-  if [[ "${option_add_dnp_path_to_bashrc:?err}" == true ]]; then
+  local dnp_bin_dir="$3"
+  if [[ "${option_add_dnp_path_to_bashrc}" == true ]]; then
     if [[ -f "${HOME}/.bashrc" ]]; then
       if grep --silent -E "_DNP_PATH=" "${HOME}/.bashrc" || grep --silent -E "PATH=\"\$PATH:\$_DNP_PATH" "${HOME}/.bashrc"; then
-        if [[ "${option_yes:?err}" == false ]]; then
+        if [[ "${option_yes}" == false ]]; then
           n2st::print_msg_warning "dnp entrypoint path already exists in ~/.bashrc."
           read -r -n 1 -p "Update? [y/N] " option_update
           if [[ "${option_update}" != "y" && "${option_update}" != "Y" ]]; then
             n2st::print_msg "Skipping ~/.bashrc option_update."
           else
-            dnp::update_bashrc_dnp_path "${dnp_install_dir:?err}"
+            dnp::update_bashrc_dnp_bin_path "${dnp_bin_dir}"
           fi
         else
-          dnp::update_bashrc_dnp_path "${dnp_install_dir}"
+          dnp::update_bashrc_dnp_bin_path "${dnp_bin_dir}"
         fi
       else
         n2st::print_msg "Adding dnp entrypoint path to ~/.bashrc"
         {
           echo "" ;
           echo "# >>>> Dockerized-NorLab-Project (start)" ;
-          echo "export _DNP_PATH=\"${dnp_bin_dir:?err}\"" ;
+          echo "export _DNP_PATH=\"${dnp_bin_dir}\"" ;
           echo "export PATH=\"\$PATH:\$_DNP_PATH\"" ;
           echo "# <<<< Dockerized-NorLab-Project (end)" ;
           echo "" ;
@@ -163,8 +162,9 @@ function dnp::install_dockerized_norlab_project_on_host() {
   dnp_entrypoint="${dnp_bin_dir}/dnp"
 
   # Source minimum required library for install purposes
+  source "${dnp_install_dir}/load_repo_main_dotenv.bash"
   source "${dnp_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
-  source "${dnp_install_dir}/lib/core/utils/ui.bash"
+  source "${dnp_install_dir}/src/lib/core/utils/ui.bash"
 
   # ....Set env variables (pre cli))...............................................................
   local option_system_wide_symlink=true
@@ -215,7 +215,7 @@ function dnp::install_dockerized_norlab_project_on_host() {
   dnp::create_entrypoint_symlink_if_requested "$option_system_wide_symlink" "$option_yes" "$dnp_entrypoint" || return 1
 
   # ....Add dnp entrypoint path to ~/.bashrc if requested..........................................
-  dnp::add_dnp_entrypoint_path_to_bashrc_if_requested "$option_add_dnp_path_to_bashrc" "$option_yes" "$dnp_install_dir" "$dnp_bin_dir" || return 1
+  dnp::add_dnp_entrypoint_path_to_bashrc_if_requested "$option_add_dnp_path_to_bashrc" "$option_yes" "$dnp_bin_dir" || return 1
 
   # ====Teardown===================================================================================
   n2st::print_msg_done "Dockerized-NorLab-Project has been installed successfully!"

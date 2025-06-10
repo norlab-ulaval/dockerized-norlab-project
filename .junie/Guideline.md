@@ -57,6 +57,7 @@ Stand-alone version with a PATH-accessible bash script approach
 - You can mock shell core command an docker command.
 - You can mock `docker [OPTIONS|COMMAND]` commands and `git [OPTIONS|COMMAND]` commands.
 - Don't mock the functions that are tested in the tested script.
+- Avoid mocking n2st functions, at the expection of those in `src/function_library/prompt_utilities.bash`. For eaxample, instead of re-implementaing `n2st::seek_and_modify_string_in_file`, just load the real one and test that the content of the file at `file_path` has been updated? You can find the real one in `src/function_library/general_utilities.bash`.
 - Avoid mocking the `read` command. Instead use `echo 'y'` or `echo 'N'` for piping a keyboard input to the function who use the `read` command which in turn expect a single character, example: `run bash -c "echo 'y' | <the-tested-function>"`. Alternatively, use the `yes [n]` shell command which optionaly send [y|Y|yes] n time, example: `run bash -c "yes 2 | <the-tested-function>"`.
 
 ### Instruction On Bats Tests
