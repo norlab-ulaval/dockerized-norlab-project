@@ -34,6 +34,7 @@ Stand-alone version with a PATH-accessible bash script approach
     - Unit-tests: 
       - use N2ST bats tests tools for unit-test. See `run_bats_core_test_in_n2st.bash` and `tests/tests_bats` directory;
       - a corresponding bats unit-test `.bats` file in the `tests/tests_bats` directory.
+      - Note that bats tests are running in a docker container in complete isolation.
     - Integration tests: 
       - those are test case where there is multiple script interacting whith each other or we want to assess execution from begining to end;
       - those tests are devided in two categories: 

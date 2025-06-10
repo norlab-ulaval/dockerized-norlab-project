@@ -95,7 +95,6 @@ function dnp::install_dockerized_norlab_project_on_host() {
     esac
   done
 
-
   # ====Begin======================================================================================
   # Splash type: small, negative or big
   n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}" "small"
@@ -104,6 +103,10 @@ function dnp::install_dockerized_norlab_project_on_host() {
   # ....Pre-conditions.............................................................................
   # Make the dnp script is executable
   chmod +x "${dnp_entrypoint}"
+
+  # ....Setup host for this super project..........................................................
+  n2st::print_msg "Setting up host for Dockerized-NorLab-Project..."
+  bash "${dnp_install_dir}/src/lib/core/utils/setup_host_dnp_requirements.bash" || return 1
 
   # ....Create symlink in /usr/local/bin if requested..............................................
   if [[ "${option_system_wide_symlink}" == true ]]; then
@@ -132,7 +135,7 @@ function dnp::install_dockerized_norlab_project_on_host() {
   # ....Add dnp entrypoint path to ~/.bashrc if requested..........................................
   if [[ "${option_add_dnp_path_to_bashrc}" == true ]]; then
     if [[ -f "${HOME}/.bashrc" ]]; then
-      if [[ $( grep -q "_DNP_ROOT=" "${HOME}/.bashrc" )]] && [[ $( grep -q "PATH=\"\$PATH:\$_DNP_ROOT\/src\/bin" "${HOME}/.bashrc" )]]; then
+      if ! grep --silent -E "_DNP_ROOT=" "${HOME}/.bashrc" && ! grep --silent -E "PATH=\"\$PATH:\$_DNP_ROOT\/src\/bin" "${HOME}/.bashrc"; then
         if [[ "${option_yes}" == false ]]; then
           n2st::print_msg_warning "dnp entrypoint path already exists in ~/.bashrc."
           read -r -n 1 -p "Update? [y/N] " option_update
@@ -156,13 +159,10 @@ function dnp::install_dockerized_norlab_project_on_host() {
         } >> "${HOME}/.bashrc"
       fi
     else
+      # shellcheck disable=SC2088
       n2st::print_msg_error_and_exit "~/.bashrc file does not exist.\nSkipping ~/.bashrc option_update."
     fi
   fi
-
-  # ....Setup host for this super project..........................................................
-  n2st::print_msg "Setting up host for Dockerized-NorLab-Project..."
-  bash "${dnp_install_dir}/src/lib/core/utils/setup_host_dnp_requirements.bash" || return 1
 
   # ====Teardown===================================================================================
   n2st::print_msg_done "Dockerized-NorLab-Project has been installed successfully!"
