@@ -101,15 +101,15 @@ function dnp::project_validate_command() {
         esac
     done
 
-    header_footer_name="project validate procedure"
-    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
     source "${DNP_LIB_EXEC_PATH}/build.all.bash" || return 1
     source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
 
     # ....Begin....................................................................................
+    header_footer_name="project validate procedure"
+    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+
     # Determine which validate script to execute
     if [[ "${slurm}" == true ]]; then
         echo "Validating slurm configuration..."
@@ -146,14 +146,14 @@ function dnp::project_sanity_command() {
         esac
     done
 
-    header_footer_name="project sanity procedure"
-    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
     source "${DNP_LIB_PATH}/core/utils/super_project_dnp_sanity_check.bash" || return 1
 
     # ....Begin....................................................................................
+    header_footer_name="project sanity procedure"
+    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+
     # Execute super_project_dnp_sanity_check.bash
     echo "Validating super project setup..."
     dnp::super_project_dnp_sanity_check "${remaining_args[@]}"
@@ -181,13 +181,13 @@ function dnp::project_dotenv_command() {
         esac
     done
 
-    header_footer_name="project dotenv procedure"
-    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
     # ....Begin....................................................................................
+    header_footer_name="project dotenv procedure"
+    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+
     # Show consolidated and interpolated dotenv config files
     n2st::print_msg "Showing consolidated and interpolated dotenv config files...\n"
 
