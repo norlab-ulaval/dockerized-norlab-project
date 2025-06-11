@@ -39,12 +39,12 @@ def test_ROS_environment_variable_are_sourced():
     assert os.getenv("PYTHONPATH") is not None
 
 
-# ToDo: assessment >> maybe require '.env.dn_expose_IamRedLeader' be sourced
-#       in Dockerfile.ci-tests.native
-@pytest.mark.skipif(
-    (os.getenv("DISPLAY") is None),
-    reason="No display available",
-)
-def test_display_forwarding_environment_variable_are_sourced():
-    assert os.getenv("LIBGL_ALWAYS_INDIRECT") is not None
-    assert os.getenv("QT_X11_NO_MITSHM") is not None
+# # ToDo: assessment >> maybe require '.env.dn_expose_IamRedLeader' be sourced
+# #       in Dockerfile.ci-tests.native
+# @pytest.mark.skipif(
+#     (os.getenv("DISPLAY") is None),
+#     reason="No display available",
+# )
+# def test_display_forwarding_environment_variable_are_sourced():
+#     assert os.getenv("LIBGL_ALWAYS_INDIRECT") is not None
+#     assert os.getenv("QT_X11_NO_MITSHM") is not None

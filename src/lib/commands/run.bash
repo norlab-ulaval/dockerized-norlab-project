@@ -70,6 +70,7 @@ function dnp::run_command() {
     # Determine which run script to execute
     if [[ "${ci_tests}" == true ]]; then
         n2st::print_msg "Running CI tests..."
+        dnp build --ci-tests
         source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash"
         dnp::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
