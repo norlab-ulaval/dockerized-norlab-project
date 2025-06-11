@@ -47,7 +47,7 @@ development, deployment, testing, continuous integration and release publishing.
 [//]: # (NorLab teamcity)
 [//]: # (TODO: Un-comment the next line if your repository has run configuration enable on the norlab-teamcity-server)
 [//]: # (<a href="http://132.203.26.125:8111"><img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" /></a>)
-<img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" />
+[//]: # (<img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" />)
 
 [//]: # (Dockerhub image badge)
 [//]: # (TODO: Un-comment the next line if you have docker images on dockerhub)
