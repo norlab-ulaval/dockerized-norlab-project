@@ -71,20 +71,19 @@ Vagrant.configure("2") do |config|
     ## Optimization cutomizations: --faster-vm on --resource-quota unlimited
   end
 
-  # ====Multimachine config================
   # Note:
   # - VM port mapping:
   #     - port 80 (mapped to host 8080) is for docker internet access, e.g. executin apt-get update inside docker container
   #     - port 2222 is for accessing the VM ssh server for Remote Developement setup
   # - Private network
-  #     - Private network address range 10.0.0.0 – 10.255.255.255
   #     - Parallel desktop address range preference:
   #         - shared:  10.211.55.1 <-> 10.211.55.254
   #         - host-only: 10.37.129.1 <-> 10.37.129.254
-  #     - ref:
-  #         - https://developer.hashicorp.com/vagrant/docs/networking/private_network#static-ip
-  #         - https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
-  #
+  #     - Note:
+  #         - Private network address range 10.0.0.0 – 10.255.255.255
+  #         - ref:
+  #             - https://developer.hashicorp.com/vagrant/docs/networking/private_network#static-ip
+  #             - https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
   config.vm.define "dockerized-norlab-project-vm", primary: true do |dnp|
     dnp.vm.box = UBUNTU_BOX
 
@@ -93,9 +92,8 @@ Vagrant.configure("2") do |config|
     dnp.ssh.username = "vagrant"
     dnp.ssh.password = "vagrant"
 
-#     dnp.vm.network "private_network", ip: "10.211.55.99"
-
     #dnp.vm.hostname = "redleader"
+    #dnp.vm.network "private_network", ip: "10.211.55.99"
     #config.vm.network "forwarded_port", guest: 80, host: 8080, auto_correct: true
     #config.vm.network "forwarded_port", guest: 22, host: 2222
     dnp.vm.provision "Check network", type: "shell", run: "always", inline: <<-SHELL
@@ -106,93 +104,68 @@ Vagrant.configure("2") do |config|
   end
 
   # ====Provisioning========================
-  #$INLINE_SCRIPT = <<-'SCRIPT'
-  #
-  #export DEBIAN_FRONTEND=noninteractive
-  #apt-get update
-  #apt-get install --assume-yes \
-  #    locales \
-  #    sudo \
-  #    apt-utils \
-  #    lsb-release \
-  #    ca-certificates \
-  #    software-properties-common \
-  #    build-essential \
-  #    bash-completion \
-  #    fontconfig \
-  #    vim \
-  #    tree \
-  #    git \
-  #    curl \
-  #    wget \
-  #    gnupg2 \
-  #    zip gzip tar unzip \
-  #    rsync \
-  #    net-tools \
-  #    dnsutils
-  #
-  #echo -e "\nCLone dockerized-norlab-project-mock in 'utilities/tmp/'\n"
-  #cd /opt/dockerized-norlab-project || exit 1
-  #source load_repo_main_dotenv.bash || exit 1
-  #bash tests/setup_mock.bash || exit 1
-  #
-  #echo -e "\nCreate an empty variant of dockerized-norlab-project-mock-EMPTY'\n"
-  #sudo mkdir -p "/opt/dockerized-norlab-project-mock-EMPTY" || exit 1
-  #cd "/opt/dockerized-norlab-project-mock-EMPTY" || exit 1
-  #git config --global init.defaultBranch "main"
-  #git init --quiet
-  #
-  #cat > "README.md" << EOF
-  ## Dockerized-NorLab-Project mock empty project
-  #This directory is meant to test DNP install procedure UX
-  #EOF
-  #
-  #git add .
-  #git commit -m "Initial commit"
-  #
-  #echo -e "\nSet DEV aliases\n"
-  #echo "alias dnp-dnp-cd='cd /opt/dockerized-norlab-project'" >> /home/vagrant/.bashrc
-  #echo "alias dnp-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" >> /home/vagrant/.bashrc
-  #echo "alias dnp-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" >> /home/vagrant/.bashrc
-  #
-  #echo -e "\nSet DEV default landing path to DNP mock super project\n"
-  #echo "cd /opt/dockerized-norlab-project-mock-EMPTY" >> /home/vagrant/.bashrc
-  #
-  ## echo -e "\nInstall The Ubuntu Desktop Gui\n"
-  ## apt-get install --assume-yes --no-install-recommends ubuntu-desktop
-  #
-  #SCRIPT
-  #
-  #config.vm.provision :shell do |shell|
-  #  shell.inline = $INLINE_SCRIPT
-  #  shell.privileged = true
-  #  shell.reboot = false
-  #end
+  $INLINE_SCRIPT = <<-'SCRIPT'
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update
+  apt-get install --assume-yes \
+     locales \
+     sudo \
+     apt-utils \
+     lsb-release \
+     ca-certificates \
+     software-properties-common \
+     build-essential \
+     bash-completion \
+     fontconfig \
+     vim \
+     tree \
+     git \
+     curl \
+     wget \
+     gnupg2 \
+     zip gzip tar unzip \
+     rsync \
+     net-tools \
+     dnsutils
 
-  config.vm.provision "shell", inline: <<-SHELL
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install --assume-yes \
-        sudo \
-        apt-utils \
-        lsb-release \
-        ca-certificates \
-        software-properties-common \
-        build-essential \
-        bash-completion \
-        fontconfig \
-        vim \
-        tree \
-        git \
-        curl \
-        wget \
-        gnupg2 \
-        zip gzip tar unzip \
-        rsync \
-        net-tools \
-        dnsutils
-  SHELL
+  echo -e "\nCLone dockerized-norlab-project-mock in 'utilities/tmp/'\n"
+  cd /opt/dockerized-norlab-project || exit 1
+  source load_repo_main_dotenv.bash || exit 1
+  bash tests/setup_mock.bash || exit 1
 
+  # Mock git config
+  git config --global user.name "vagrant"
+  git config --global user.email "vagrant@gmail.com"
+  git config --global init.defaultBranch "main"
+
+  echo -e "\nCreate an empty variant of dockerized-norlab-project-mock-EMPTY'\n"
+  sudo mkdir -p "/opt/dockerized-norlab-project-mock-EMPTY" || exit 1
+  cd "/opt/dockerized-norlab-project-mock-EMPTY" || exit 1
+  git init --quiet
+
+  touch "README.md"
+  echo "# Dockerized-NorLab-Project mock empty project" >> README.md
+  echo "This directory is meant to test DNP install procedure UX" >> README.md
+  git add .
+  git commit -m "Initial commit"
+
+  echo -e "\nSet DEV aliases\n"
+  echo "alias dnp-dnp-cd='cd /opt/dockerized-norlab-project'" >> /home/vagrant/.bashrc
+  echo "alias dnp-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" >> /home/vagrant/.bashrc
+  echo "alias dnp-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" >> /home/vagrant/.bashrc
+
+  echo -e "\nSet DEV default landing path to DNP mock super project\n"
+  echo "cd /opt/dockerized-norlab-project-mock-EMPTY" >> /home/vagrant/.bashrc
+
+  # echo -e "\nInstall The Ubuntu Desktop Gui\n"
+  # apt-get install --assume-yes --no-install-recommends ubuntu-desktop
+  SCRIPT
+
+  config.vm.provision :shell do |shell|
+   shell.inline = $INLINE_SCRIPT
+   shell.privileged = true
+   shell.reboot = false
+  end
 
   # Execute rsync from the host on 'vagrant up' trigger
   config.trigger.after :up do |trigger|
