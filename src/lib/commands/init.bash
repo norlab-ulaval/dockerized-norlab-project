@@ -164,15 +164,15 @@ function dnp::init_command() {
       sudo mkdir -p artifact/optuna_storage &&
       sudo mkdir -p external_data &&
       sudo mkdir -p src/launcher/configs &&
-      sudo mkdir -p src/tools &&
-      sudo mkdir -p tests
+      sudo mkdir -p src/dnp_example &&
+      sudo mkdir -p tests/test_dnp_example
     } || return 1
 
     sudo cp --update -r "${DNP_LIB_PATH}/template/artifact/README.md" artifact/ || return 1
     sudo cp --update -r "${DNP_LIB_PATH}/template/artifact/optuna_storage/README.md" artifact/optuna_storage/ || return 1
     sudo cp --update -r "${DNP_LIB_PATH}/template/external_data/README.md" external_data/ || return 1
     sudo cp --update -r "${DNP_LIB_PATH}/template/src/launcher" src/ || return 1
-    sudo cp --update -r "${DNP_LIB_PATH}/template/src/tools" src/ || return 1
+    sudo cp --update -r "${DNP_LIB_PATH}/template/src/dnp_example" src/ || return 1
     if [[ ! -f "src/README.md" ]]; then
       sudo cp --update -r "${DNP_LIB_PATH}/template/src/README.md" src/ || return 1
     fi

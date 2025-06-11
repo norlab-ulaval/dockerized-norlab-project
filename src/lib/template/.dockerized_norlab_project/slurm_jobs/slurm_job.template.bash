@@ -26,7 +26,7 @@ export SJOB_ID="default" # Open a YouTrack task and use the issue ID
 
 # ....Hydra app module.............................................................................
 # Note assume cwd is `src/`
-HYDRA_FLAGS+=("launcher/mock_app.py")
+HYDRA_FLAGS+=("launcher/example_app.py")
 
 # ....Optional flags...............................................................................
 # --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)

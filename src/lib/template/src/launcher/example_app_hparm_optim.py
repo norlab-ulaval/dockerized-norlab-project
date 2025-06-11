@@ -6,11 +6,11 @@ import omegaconf
 import hydra
 import os
 
-from mock_app import run_pytorch_check
+from example_app import run_pytorch_check
 
 
 @hydra.main(
-    config_path="configs", config_name="example_hparm_optim_exp_config", version_base=None
+    config_path="configs", config_name="example_app_hparm_optim", version_base=None
 )
 def hyperparam_opt_pipeline(cfg: omegaconf.DictConfig) -> Tuple[float, ...]:
     # .... Optuna related .........................................................................

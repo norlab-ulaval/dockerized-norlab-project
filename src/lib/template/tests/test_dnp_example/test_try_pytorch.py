@@ -2,7 +2,7 @@
 
 import pytest
 
-from tools.try_pytorch import verify_pytorch_install, verify_pytorch_cuda_install
+from dnp_example.try_pytorch import verify_pytorch_install, verify_pytorch_cuda_install
 
 from torch import cuda
 
