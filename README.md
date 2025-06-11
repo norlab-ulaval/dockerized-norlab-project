@@ -94,7 +94,7 @@ dnp up
 dnp down 
 ```
 
-### For beta tester or just to dry-run a DNP in an throwaway project
+### For beta tester or just to dry-run DNP in an throwaway project
 ```shell
 # CLone dockerized-norlab-project-mock-EMPTY
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
