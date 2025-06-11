@@ -6,7 +6,7 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # Handle stoping the container in case the slurm command `scancel` is issued.
 #
 # Usage:
-#   $ bash run.slurm.bash <sjob-id> [<optional-flag>] [--] [<any-python-arg>]
+#   $ bash run.slurm.bash <sjob-id> [<optional-flag>] [--] <any-python-arg>
 #
 # Optional flag:
 #   --log-name=<name>                                 The log file name without postfix
@@ -20,12 +20,12 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #
 # Positional argument:
 #   <sjob-id>              (required) Used to ID the docker container, slurm job, optuna study ...
-#   <any-docker-flag>       Any docker flag (optional)
+#   <any-python-arg>       (required) The python command with flags
 #
 # Globals:
 #   read DNP_ROOT
 #   read SUPER_PROJECT_ROOT
- #   write SJOB_ID
+#   write SJOB_ID
 #   write IS_SLURM_RUN
 #
 # =================================================================================================
@@ -83,8 +83,6 @@ function dnp::run_slurm() {
   SJOB_ID="$1"
   shift # Remove SJOB_ID argument value
 
-  test -n "${SJOB_ID}" || n2st::print_msg_error_and_exit "Missing sjob-id mandatory positional argument!"
-
   # ....Pre-condition..............................................................................
 
   # ....Set env variables (pre cli)................................................................
@@ -100,6 +98,12 @@ function dnp::run_slurm() {
   force_rebuild_project_core=true
   force_rebuild_slurm_img=true
   dry_run_slurm_job=false
+
+  if [[ "${SJOB_ID}" == "--help"  ]] || [[ "${SJOB_ID}" == "-h"  ]]; then
+    dnp::show_help
+    exit
+  fi
+
 
   # ....cli........................................................................................
   while [ $# -gt 0 ]; do
@@ -146,8 +150,11 @@ function dnp::run_slurm() {
 
   done
 
-  # ....Sanity check...............................................................................  test -n "${SJOB_ID}" || { echo "$(basename $0) | Positional argument <job-name> is empty" ; exit 1 ; }
-  test -n "${python_arg[0]}" || { echo "$(basename $0) | Positional argument <any-python-arg> is empty" ; exit 1 ; }
+  # ....Sanity check...............................................................................
+
+  test -n "${SJOB_ID}" || n2st::print_msg_error_and_exit "Missing sjob-id mandatory positional argument!"
+#  test -n "${SJOB_ID}" || { echo "$(basename $0) | Positional argument <job-name> is empty" ; exit 1 ; }
+#  test -n "${python_arg[0]}" || { echo "$(basename $0) | Positional argument <any-python-arg> is empty" ; exit 1 ; }
 
   # ....Set env variables (post cli)...............................................................
   dn_project_config_dir="${DNP_ROOT:?err}/src/lib/core/docker"

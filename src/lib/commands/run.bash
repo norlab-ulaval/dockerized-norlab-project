@@ -6,14 +6,14 @@ DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 # Run commands in containers
 #
 # Usage:
-#   $ dnp run [OPTIONS] SERVICE [<specialized-option>]
+#   $ dnp run [OPTIONS] SERVICE [--] [<specialized-option>]
 #
 # Service
 #   ci-tests [<any-docker-argument>]       Run CI tests container.
 #   slurm <sjob-id>                        Run slurm job in container.
 #
 # Specialized options
-#   For details, execute $ dnp run SERVICE --help
+#   For details, execute $ dnp run SERVICE -- --help
 #
 # Options:
 #   --help, -h             Show this help message
@@ -56,6 +56,11 @@ function dnp::run_command() {
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN}"
                 exit 0
                 ;;
+            --) # no more option
+                shift
+                remaining_args+=("$@")
+                break
+                ;;
             *)
                 remaining_args+=("$@")
                 break
@@ -69,9 +74,14 @@ function dnp::run_command() {
     # ....Begin....................................................................................
     # Determine which run script to execute
     if [[ "${ci_tests}" == true ]]; then
+        source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash"
+        # (temporary hack) ToDo: NMO-692 feat: add a build ci-tests option to run.ci_tests.bash
+        if [[ "${remaining_args[*]}" =~ .*"--help".* ]]; then
+          dnp::run_ci_tests "--help"
+          exit 0
+        fi
         n2st::print_msg "Running CI tests..."
         dnp build --ci-tests
-        source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash"
         dnp::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${slurm}" == true ]]; then

@@ -70,10 +70,9 @@ function dnp::config_command() {
         exit 1
     fi
 
-    # ....Load dependencies........................................................................
-#    # Import DNP lib
-#    source "${DNP_LIB_PATH:?err}/core/utils/import_dnp_lib.bash"
+    n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dnp config SERVICE${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
 
+    # ....Load dependencies........................................................................
     # Load super project configuration
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
@@ -81,13 +80,13 @@ function dnp::config_command() {
     # Determine which compose file to use
     local compose_file=""
 
+
     if [[ "${mode}" == "dev" ]]; then
         if [[ "${platform}" == "darwin" ]]; then
 #            compose_file="docker-compose.project.run.darwin.yaml"
             compose_file="docker-compose.project.build.native.yaml"
             # (CRITICAL) ToDo: implement <-- we are here
             docker compose --file "${DNP_LIB_PATH}/core/docker/${compose_file}" config project-core project-develop
-            echo -e "\n${0}: breakpoint\n" && exit 1 # (CRITICAL) ToDo: on task end >> delete this line <--
         elif [[ "${platform}" == "jetson" ]]; then
             compose_file="docker-compose.project.run.jetson.yaml"
         else

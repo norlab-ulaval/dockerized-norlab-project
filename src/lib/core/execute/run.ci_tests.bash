@@ -6,7 +6,7 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS=$( cat <<'EOF'
 # Require executing `build.ci_tests.bash` first.
 #
 # Usage:
-#   $ bash build.ci_tests.bash  [<any-build.all-argument>]
+#   $ bash build.ci_tests.bash [<any-build.all-argument>]
 #   $ bash run.ci_tests.bash [<any-docker-argument>]
 #
 # Notes:
