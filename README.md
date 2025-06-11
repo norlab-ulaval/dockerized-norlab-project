@@ -46,7 +46,8 @@ development, deployment, testing, continuous integration and release publishing.
 
 [//]: # (NorLab teamcity)
 [//]: # (TODO: Un-comment the next line if your repository has run configuration enable on the norlab-teamcity-server)
-<a href="http://132.203.26.125:8111"><img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" /></a>
+[//]: # (<a href="http://132.203.26.125:8111"><img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" /></a>)
+<img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" />
 
 [//]: # (Dockerhub image badge)
 [//]: # (TODO: Un-comment the next line if you have docker images on dockerhub)
@@ -68,9 +69,36 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 [//]: # ( ==== Body ================================================== ) 
 [//]: # (TODO: Make it your own)
 
-### Clone repository
+### Geting started
 
 ```shell
+# Clone repository
 git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab-project.git
+
+# Install DNP on host
+bash install.bash
+# Check install option with $ bash install.bash --help 
+
+# Check available commands
+dnp help
+
+# To initialize DNP in a project repository (must be git initialized)
+cd <path/to/your/git/project>
+dnp init
+
+# To spin a DNP container and open a terminal in it
+dnp build
+dnp up
+
+# When your done 
+dnp down 
+```
+
+### For beta tester or just to dry-run a DNP in an throwaway project
+```shell
+# CLone dockerized-norlab-project-mock-EMPTY
+git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
+cd dockerized-norlab-project-mock-EMPTY
+dnp init
 ```
 
