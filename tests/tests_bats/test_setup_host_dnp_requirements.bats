@@ -235,7 +235,7 @@ EOF
 
   # Mock command function
   function command() {
-    if [[ "$1" == "-v" && "$2" == "nvcc" ]]; then
+    if [[ "$1" == "-V" && "$2" == "nvcc" ]]; then
       if [[ "${MOCK_NVCC_COMMAND_EXISTS}" == "true" ]]; then
         return 0
       else
@@ -294,12 +294,6 @@ teardown_file() {
 
   # Should call install_docker_tools.bash
   assert_output --partial "Mock bash install_docker_tools.bash called"
-
-  # Should call docker buildx create
-  assert_output --partial "Mock docker buildx create called with args: buildx create --name local-builder-multiarch-virtualization"
-
-  # Should call docker buildx ls
-  assert_output --partial "Mock docker buildx ls called"
 }
 
 @test "dnp::setup_host_dnp_requirements - Install docker requirements failure › expect failure" {
@@ -409,5 +403,5 @@ teardown_file() {
   assert_success
 
   # Should show error about nvcc not installed properly
-  assert_output --partial "Mock n2st::print_msg_error called with args:  Check your nvcc installation. It's stil NOT installed properly!"
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Check your nvcc installation. It's stil NOT installed properly!"
 }

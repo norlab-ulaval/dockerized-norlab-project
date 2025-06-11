@@ -23,6 +23,7 @@ function dnp::setup_host_dnp_requirements() {
   # ....Install docker requirements................................................................
   cd "${DNP_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
   bash install_docker_tools.bash || return 1
+
   cd "$tmp_cwd" || return 1
 
   if [ -n "$ZSH_VERSION" ]; then
@@ -33,27 +34,13 @@ function dnp::setup_host_dnp_requirements() {
     n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNP."
   fi
 
-  local builder_name="local-builder-multiarch-virtualization"
-  echo
-  n2st::print_msg "Create a multi-architecture docker builder"
-  echo
-
-  docker buildx create \
-    --name "${builder_name}" \
-    --driver docker-container \
-    --platform linux/amd64,linux/arm64 \
-    --bootstrap \
-    --use
-
-  docker buildx ls
-
 
   # ...CUDA toolkit path...........................................................................
   # ref dusty_nv comment at https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068
   if [[ $(uname -s) == "Darwin" ]]; then
     n2st::print_msg_warning "CUDA is not supported yet on Apple M1 computer. Skipping cuda configuration."
   else
-    if ! command -v nvcc -V &>/dev/null; then
+    if ! command -V nvcc -V &>/dev/null; then
       # nvcc command not working
       n2st::print_msg_warning "Fixing CUDA path for nvcc"
 
@@ -80,11 +67,15 @@ function dnp::setup_host_dnp_requirements() {
       ${MSG_END_FORMAT}"
     fi
 
-    if [[ $(nvcc -V | grep 'nvcc: NVIDIA (R) Cuda compiler driver') == "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
-      n2st::print_msg_done "nvcc installed properly"
-      nvcc -V
+    if command -V nvcc -V &>/dev/null; then
+      if [[ $(nvcc -V | grep 'nvcc: NVIDIA (R) Cuda compiler driver') == "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
+        n2st::print_msg_done "nvcc installed properly"
+        nvcc -V
+      else
+        n2st::print_msg_warning "Check your nvcc installation. It's stil NOT installed properly!"
+      fi
     else
-      n2st::print_msg_error " Check your nvcc installation. It's stil NOT installed properly!"
+      n2st::print_msg_warning "Check your nvcc installation. It's NOT installed!"
     fi
   fi
 

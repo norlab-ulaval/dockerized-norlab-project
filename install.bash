@@ -217,6 +217,11 @@ function dnp::install_dockerized_norlab_project_on_host() {
   # ....Add dnp entrypoint path to ~/.bashrc if requested..........................................
   dnp::add_dnp_entrypoint_path_to_bashrc_if_requested "$option_add_dnp_path_to_bashrc" "$option_yes" "$dnp_bin_dir" || return 1
 
+  # ....Install other tools........................................................................
+  sudo apt-get update &&
+    sudo apt-get install --assume-yes \
+      tree
+
   # ====Teardown===================================================================================
   n2st::print_msg_done "Dockerized-NorLab-Project has been installed successfully!"
   if [[ "${option_system_wide_symlink}" == true ]]; then
@@ -229,6 +234,19 @@ function dnp::install_dockerized_norlab_project_on_host() {
     n2st::print_msg "You can use '${dnp_entrypoint}' to run DNP commands."
     echo -e "\nRun 'bash ${dnp_entrypoint} help' for usage information."
   fi
+
+  cd "${dnp_install_dir}"
+  print_msg "Remaining install instructions:
+1. Apply Docker group change without login out: execute ${MSG_DIMMED_FORMAT}$ newgrp docker${MSG_END_FORMAT}
+2. Restart the docker daemon to apply changes: execute ${MSG_DIMMED_FORMAT}$ sudo systemctl restart docker${MSG_END_FORMAT}
+3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
+    $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+    $ docker buildx ls
+${MSG_END_FORMAT}"
+#     $ cd ${dnp_install_dir}
+#     $ source load_repo_main_dotenv.bash
+#     $ cd utilities/norlab-build-system/install_scripts
+#     $ bash nbs_create_multiarch_docker_builder.bash
 
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   return 0

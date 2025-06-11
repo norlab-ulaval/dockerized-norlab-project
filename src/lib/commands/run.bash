@@ -69,19 +69,18 @@ function dnp::run_command() {
     # ....Begin....................................................................................
     # Determine which run script to execute
     if [[ "${ci_tests}" == true ]]; then
-        echo "Running CI tests..."
+        n2st::print_msg "Running CI tests..."
         source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash"
         dnp::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${slurm}" == true ]]; then
-        echo "Running slurm containers..."
+        n2st::print_msg "Running slurm containers..."
         source "${DNP_LIB_PATH}/core/execute/run.slurm.bash"
         dnp::run_slurm "${remaining_args[@]}"
         fct_exit_code=$?
     else
-        echo "Error: No run service specified."
-        dnp::run_help
-        exit 1
+        n2st::print_msg_error "No run service specified."
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN}"
     fi
 
     return $fct_exit_code

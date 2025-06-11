@@ -87,6 +87,11 @@ function n2st::print_msg() {
   return 0
 }
 
+function n2st::print_msg_warning() {
+  echo "Mock n2st::print_msg_warning called with args: $*"
+  return 0
+}
+
 function n2st::print_msg_error_and_exit() {
   echo "Mock n2st::print_msg_error_and_exit called with args: $*"
   exit 1
@@ -254,18 +259,32 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_error_and_exit called with args: Cwd is not at repository root"
 }
 
-@test "dnp::init_command with .dockerized_norlab_project already exists › expect error" {
+@test "dnp::init_command with .dockerized_norlab_project already exists › Y -> expect update" {
   # Test case: When init command is called in a directory with .dockerized_norlab_project, it should show an error
   # Create the .dockerized_norlab_project directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab_project"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && yes | dnp::init_command"
 
-  # Should fail
-  assert_failure
+  assert_success
 
-  # Should output the error message
-  assert_output --partial "Mock n2st::print_msg_error_and_exit called with args: \033[1;2m.dockerized_norlab_project\033[0m directory already exists.\nThis project is already DNP initialized"
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNP initialized"
+  assert_output --partial "Mock n2st::print_msg called with args: DNP project initialized successfully."
+}
+
+@test "dnp::init_command with .dockerized_norlab_project already exists › N -> expect see you" {
+  # Test case: When init command is called in a directory with .dockerized_norlab_project, it should show an error
+  # Create the .dockerized_norlab_project directory
+  mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab_project"
+
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && echo 'N' | dnp::init_command"
+
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNP initialized since"
+  assert_output --partial "Mock n2st::print_msg called with args: See you"
 }
 
 @test "dnp::init_command with valid repository › expect success" {
@@ -328,6 +347,23 @@ teardown_file() {
   assert_dir_exist "${TEST_REPO_DIR}/src/launcher"
   assert_dir_exist "${TEST_REPO_DIR}/src/tools"
   assert_dir_exist "${TEST_REPO_DIR}/tests"
+
+  assert_file_exist "${TEST_REPO_DIR}/src/launcher/configs/example_hparm_optim_exp_config.yaml"
+  assert_file_exist "${TEST_REPO_DIR}/src/launcher/configs/hparam_optimization_base.yaml"
+  assert_file_exist "${TEST_REPO_DIR}/src/launcher/configs/global_config.yaml"
+  assert_file_exist "${TEST_REPO_DIR}/src/launcher/mock_app.py"
+  assert_file_exist "${TEST_REPO_DIR}/src/launcher/mock_app_hparam_optim.py"
+  assert_file_exist "${TEST_REPO_DIR}/src/tools/try_pytorch.py"
+  assert_file_exist "${TEST_REPO_DIR}/src/README.md"
+
+  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dnp.ini"
+  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dnp_no_xdist.ini"
+  assert_file_exist "${TEST_REPO_DIR}/tests/test_python_interpreter_has_ros.py"
+  assert_file_exist "${TEST_REPO_DIR}/tests/test_try_pytorch.py"
+
+  assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/artifact/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/artifact/optuna_storage/README.md"
 }
 
 @test "dnp::init_command tests for README.md creation when it doesn't exist › expect README.md created" {

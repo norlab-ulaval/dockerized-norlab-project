@@ -66,7 +66,7 @@ function dnp::config_command() {
 
     if [[ -z "${mode}" ]]; then
         echo "Error: Mode is required." >&2
-        dnp::config_help
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
         exit 1
     fi
 
@@ -86,7 +86,7 @@ function dnp::config_command() {
 #            compose_file="docker-compose.project.run.darwin.yaml"
             compose_file="docker-compose.project.build.native.yaml"
             # (CRITICAL) ToDo: implement <-- we are here
-            docker-compose --file "${DNP_LIB_PATH}/core/docker/${compose_file}" config project-core project-develop
+            docker compose --file "${DNP_LIB_PATH}/core/docker/${compose_file}" config project-core project-develop
             echo -e "\n${0}: breakpoint\n" && exit 1 # (CRITICAL) ToDo: on task end >> delete this line <--
         elif [[ "${platform}" == "jetson" ]]; then
             compose_file="docker-compose.project.run.jetson.yaml"
@@ -105,7 +105,7 @@ function dnp::config_command() {
 
     # Execute docker-compose config command
     echo "Showing configuration for ${mode} mode with ${compose_file}..."
-    docker-compose --file "${DNP_LIB_PATH}/core/docker/${compose_file}" config "${remaining_args[@]}"
+    docker compose --file "${DNP_LIB_PATH}/core/docker/${compose_file}" config "${remaining_args[@]}"
     fct_exit_code=$?
 
     return $fct_exit_code
