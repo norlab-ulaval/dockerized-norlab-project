@@ -101,3 +101,4 @@ git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.
 cd dockerized-norlab-project-mock-EMPTY
 dnp init
 ```
+
