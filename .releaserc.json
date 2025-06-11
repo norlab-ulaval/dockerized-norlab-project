@@ -1,5 +1,10 @@
 {
-  "branches": "main",
+  "branches": ["main",
+    {
+      "name": "beta",
+      "prerelease": true
+    }
+  ],
   "debug": "true",
   "plugins": [
     [
