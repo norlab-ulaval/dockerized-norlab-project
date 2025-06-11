@@ -41,13 +41,13 @@ development, deployment, testing, continuous integration and release publishing.
 [//]: # (Note on shield.io release badge: it works only for public repository)
 
 [![semantic-release: conventional commits](https://img.shields.io/badge/semantic--release-conventional_commits-453032?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
-<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/norlab-ulaval/dockerized-norlab-project">
+<img alt="GitHub Release" src="https://img.shields.io/github/v/release/norlab-ulaval/dockerized-norlab-project?include_prereleases">
 
 
 [//]: # (NorLab teamcity)
 [//]: # (TODO: Un-comment the next line if your repository has run configuration enable on the norlab-teamcity-server)
 [//]: # (<a href="http://132.203.26.125:8111"><img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" /></a>)
-[//]: # (<img src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity" />)
+<img alt="Static Badge" src="https://img.shields.io/static/v1?label=JetBrains TeamCity&message=CI/CD&color=green?style=plastic&logo=teamcity">
 
 [//]: # (Dockerhub image badge)
 [//]: # (TODO: Un-comment the next line if you have docker images on dockerhub)
@@ -67,9 +67,11 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 </div>
 
 [//]: # ( ==== Body ================================================== ) 
-[//]: # (TODO: Make it your own)
 
-### Geting started
+
+![dnp_splash.png](visual/dnp_splash.png)
+
+### Getting started
 
 ```shell
 # Clone repository

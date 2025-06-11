@@ -81,6 +81,12 @@ function dnp::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
+  # (Priority) ToDo: delete both when NMO-694 is resolve
+  n2st::seek_and_modify_string_in_file "alias tree='tree -a -L 1'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
+  n2st::seek_and_modify_string_in_file "alias tree2='tree -a -L 2'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
   return 0
 }
 
