@@ -74,7 +74,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -F dnp::import_lib_and_dependencies ) ]]; then
+  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
@@ -97,7 +97,7 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -F dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -F n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
 fi

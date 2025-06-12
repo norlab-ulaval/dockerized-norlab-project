@@ -56,7 +56,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -F dnp::import_lib_and_dependencies ) ]]; then
+  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
