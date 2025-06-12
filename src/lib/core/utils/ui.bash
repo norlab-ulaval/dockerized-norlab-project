@@ -15,21 +15,27 @@ MSG_END_FORMAT="\033[0m"
 n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
 
 # ====Help/doc=====================================================================================
+_DNP_HELP_LINE_CHAR="."
+_DNP_HELP_LINE_CHAR="─" # Note: This is not an 'dash' char. UTF-8: E2 94 80
+#_DNP_HELP_LINE_CHAR="━"
+#_DNP_HELP_LINE_CHAR="═" # Note: This is not an 'equal' char. UTF-8: E2 95 90
+#_DNP_HELP_LINE_CENTER_CHAR="▼"
+_DNP_HELP_LINE_CENTER_CHAR="❄︎"
 function dnp:help_header() {
     echo -n -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "-"
-#    n2st::draw_horizontal_line_across_the_terminal_window "." | sed 's/.../\/../'
-#    n2st::echo_centering_str "❄︎" "${MSG_DIMMED_FORMAT}" "."
-#    n2st::echo_centering_str "▼" "${MSG_DIMMED_FORMAT}" "."
+#    echo -e "▶︎"
+    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
+#    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}" | sed 's/───/\/──/'
+#    n2st::echo_centering_str "❄${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_DIMMED_FORMAT}" "${_DNP_HELP_LINE_CHAR}"
     echo -n -e "${MSG_END_FORMAT}"
 }
 
 function dnp::help_footer() {
     echo -n -e "${MSG_DIMMED_FORMAT}"
-    n2st::draw_horizontal_line_across_the_terminal_window "-" | sed 's/----------$/-----❄︎---/'
-#    n2st::draw_horizontal_line_across_the_terminal_window "." | sed 's/..........$/.....❄︎.../'
-#    n2st::echo_centering_str "❄︎" "${MSG_DIMMED_FORMAT}" "-"
-#    n2st::echo_centering_str "▲" "${MSG_DIMMED_FORMAT}" "."
+#    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
+#    n2st::draw_horizontal_line_across_the_terminal_window "─" | sed 's/──────$/─❄︎───/'
+#    n2st::draw_horizontal_line_across_the_terminal_window " " | sed 's/      $/   ◀︎/'
+    n2st::echo_centering_str "${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_DIMMED_FORMAT}" "${_DNP_HELP_LINE_CHAR}"
     echo -n -e "${MSG_END_FORMAT}"
 }
 

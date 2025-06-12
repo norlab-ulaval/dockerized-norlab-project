@@ -55,7 +55,7 @@ function dnp::up_command() {
 #    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
     # ....Load dependencies........................................................................
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1lysse962
     source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
 
     # ....Begin....................................................................................

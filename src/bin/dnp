@@ -7,7 +7,8 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #                         A tool for managing Docker-based robotic projects
 #
 # What it does:
-#   • Provide a dockerized environment for [Local|remote] development, deployment, CI-testings and runing slurm jobs
+#   • Provide a containerized environment for development (local and remote), deployment,
+#     continuous integration, runing slurm jobs and publishing source code for release.
 #   • Support l4t/arm64 (jetson), darwin/arm64 (Mac OsX) and linux/x86 os and architecture
 #   • Support nvidia GPU through nvidia-docker on both l4t/arm64 and linux/x86
 #
@@ -20,9 +21,9 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #   up          Start containers
 #   down        Stop containers
 #   run         Run a command in a container
+#   project     Super project commands
 #   config      Show configuration
 #   version     Show DNP version
-#   project     Super project commands
 #   help        Show this help message
 #
 # Run 'dnp COMMAND --help' for more information on a command.
