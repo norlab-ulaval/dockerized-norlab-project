@@ -18,6 +18,7 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   --ci-tests                            Build CI tests images only
 #   --slurm                               Build slurm images only
 #   --deploy [--push-deploy-image]        Build deploy images only
+#   --release [--push-release-image]      (In-progress) Build release images only
 #   --help, -h                            Show this help message
 #
 # =================================================================================================

@@ -67,10 +67,18 @@ else
   n2st::print_msg_warning "project-slurm/dn_entrypoint.init.callback.bash unavailable"
 fi
 
+# (CRITICAL) ToDo: on task end >> delete next bloc ↓↓
+tree -L 5 -a "${DN_PROJECT_PATH}/artifact"
+mkdir -p "${DN_PROJECT_PATH}/artifact/mock_experiment_tmp/"
+tree -L 5 -a "${DN_PROJECT_PATH}/artifact"
+
 
 # ====Execute python command=======================================================================
 cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1
+
+# (CRITICAL) ToDo: on task end >> delete next bloc ↓↓
+tree -L 5 -a "${DN_PROJECT_PATH}/artifact"
 
 # ....Release......................................................................................
 echo "$(basename $0) done!"

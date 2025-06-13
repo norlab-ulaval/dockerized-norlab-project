@@ -22,7 +22,7 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #   down        Stop containers
 #   run         Run a command in a container
 #   project     Super project commands
-#   config      Show configuration
+#   config      (In-progress) Show configuration
 #   version     Show DNP version
 #   help        Show this help message
 #

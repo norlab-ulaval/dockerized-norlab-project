@@ -3,14 +3,19 @@
 
 DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 # =================================================================================================
-# Run commands in containers
+# Run commands in containers non-interactively
+# Notes:
+#   - This is a shoot and forget mode.
+#   - Use 'dnp up [OPTIONS] [<command>]' for executing command in interactive mode.
 #
 # Usage:
 #   $ dnp run [OPTIONS] SERVICE [--] [<specialized-option>]
 #
 # Service
-#   ci-tests [<any-docker-argument>]       Run CI tests container.
-#   slurm <sjob-id>                        Run slurm job in container.
+#   ci-tests [<command>]       Run CI tests container.
+#   slurm <sjob-id>            (In-progress) Run slurm job in container.
+#   develop [<command>]        (In-progress) Run command in a development container.
+#   deploy [<command>]         (In-progress) Run command in a deployment container.
 #
 # Specialized options
 #   For details, execute $ dnp run SERVICE -- --help
@@ -39,6 +44,8 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 function dnp::run_command() {
     local ci_tests=false
     local slurm=false
+    local deploy=false
+    local develop=false
     local remaining_args=()
 
     # ....cli......................................................................................
@@ -50,6 +57,14 @@ function dnp::run_command() {
                 ;;
             slurm)
                 slurm=true
+                shift
+                ;;
+            deploy)
+                deploy=true
+                shift
+                ;;
+            develop)
+                develop=true
                 shift
                 ;;
             --help|-h)
@@ -88,6 +103,16 @@ function dnp::run_command() {
         n2st::print_msg "Running slurm containers..."
         source "${DNP_LIB_PATH}/core/execute/run.slurm.bash"
         dnp::run_slurm "${remaining_args[@]}"
+        fct_exit_code=$?
+    elif [[ "${deploy}" == true ]]; then
+        n2st::print_msg "Running deploy containers..."
+        source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
+        dnp::up_and_attach --service project-deploy -- "${remaining_args[@]}"
+        fct_exit_code=$?
+    elif [[ "${develop}" == true ]]; then
+        n2st::print_msg "Running develop containers..."
+        source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
+        dnp::up_and_attach --service project-develop -- "${remaining_args[@]}"
         fct_exit_code=$?
     else
         n2st::print_msg_error "No run service specified."

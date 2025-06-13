@@ -7,7 +7,7 @@ services:
       # SJOB_ID: ${SJOB_ID}
       DN_HOST: 'linux/x86'
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}-slurm${SJOB_ID}
-      DN_ENTRYPOINT_TRACE_EXECUTION: false
+      DN_ENTRYPOINT_TRACE_EXECUTION: true
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_ACTIVATE_POWERLINE_PROMT: true
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
@@ -27,8 +27,8 @@ services:
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
         required: true

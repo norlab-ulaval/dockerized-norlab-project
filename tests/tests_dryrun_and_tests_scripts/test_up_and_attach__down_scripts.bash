@@ -16,7 +16,8 @@ cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 # ====begin========================================================================================
 bash "${DNP_LIB_EXEC_PATH:?err}"/build.develop.bash
 
-bash "${DNP_LIB_EXEC_PATH:?err}"/up_and_attach.bash --service project-develop -- tree -L 1
+
+bash "${DNP_LIB_EXEC_PATH:?err}"/up_and_attach.bash --service project-develop -- bash -c "echo -e \"\nExecute up and attach test command\n\" && tree -L 2 -a \$(pwd)"
 
 bash "${DNP_LIB_EXEC_PATH:?err}"/down.bash
 

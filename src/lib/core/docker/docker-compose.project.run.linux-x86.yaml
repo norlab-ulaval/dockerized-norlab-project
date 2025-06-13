@@ -54,8 +54,8 @@ services:
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
         required: true
