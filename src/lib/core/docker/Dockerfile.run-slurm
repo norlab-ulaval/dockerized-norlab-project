@@ -42,7 +42,6 @@ RUN <<EOF
     echo "backend : Agg" >> /etc/matplotlibrc
 
     chmod +x ./dn_entrypoint.slurm.bash
-#    chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash
 EOF
 
 
@@ -54,7 +53,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
 
-RUN test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
+RUN <<EOF
+  chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) "${DN_PROJECT_PATH}"
+  test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
+EOF
 
 ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.slurm.bash" ]
 CMD [ "-c","print('>>>Hello-slurm')" ]
