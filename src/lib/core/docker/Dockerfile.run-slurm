@@ -47,18 +47,14 @@ EOF
 
 # ====Execute slurm run============================================================================
 FROM norlab-slurm-setup AS execute-slurm-run
-RUN <<EOF
-  mkdir -p "${DN_PROJECT_PATH}/artifact/mock_experiment_tmp/"
-  chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) "${DN_PROJECT_PATH}"
-  test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
-EOF
+
 USER ${DN_PROJECT_USER:?err}
 SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
 
-
+RUN test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
 ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.slurm.bash" ]
 CMD [ "-c","print('>>>Hello-slurm')" ]
 

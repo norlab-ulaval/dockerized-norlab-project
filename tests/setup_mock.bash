@@ -32,9 +32,6 @@ function dnp::setup_mock() {
     "${DNP_ROOT}/utilities/tmp/dockerized-norlab-project-mock" \
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
 
-  # (Priority) ToDo: validate >> this line ↓ (Did not work build #28)
-#  chown -R "$(id -u "${DN_PROJECT_USER:?err}"):$(id -g "${DN_PROJECT_USER:?err}")" "${DNP_ROOT}/utilities/tmp/dockerized-norlab-project-mock"
-
   # ....Sanity check...............................................................................
   test -d "${DNP_ROOT}/utilities/tmp" || n2st::print_msg_error_and_exit "The directory ${DNP_ROOT}/utilities/tmp is unreachable"
   test -d "${DNP_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.git" \

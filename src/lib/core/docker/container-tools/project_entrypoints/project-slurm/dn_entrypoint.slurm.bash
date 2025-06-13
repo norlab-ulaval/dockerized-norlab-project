@@ -68,14 +68,20 @@ else
 fi
 
 # (CRITICAL) ToDo: on task end >> delete next bloc ↓↓
-tree -L 5 -aug "${DN_PROJECT_PATH}/artifact"
+echo "whoami: $(whoami)"
+tree -L 2 -aug "${DN_PROJECT_PATH}"
+tree -L 4 -aug "${DN_PROJECT_PATH}/artifact"
+sudo mkdir -p "${DN_PROJECT_PATH}/artifact/mock_experiment_tmp/"
+sudo chown -R "$(id -u "${DN_PROJECT_USER:?err}"):$(id -g "${DN_PROJECT_USER}")" "${DN_PROJECT_PATH}"
+tree -L 4 -aug "${DN_PROJECT_PATH}/artifact"
 
 # ====Execute python command=======================================================================
 cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1
 
 # (CRITICAL) ToDo: on task end >> delete next bloc ↓↓
-tree -L 5 -aug "${DN_PROJECT_PATH}/artifact"
+tree -L 2 -aug "${DN_PROJECT_PATH}"
+tree -L 4 -aug "${DN_PROJECT_PATH}/artifact"
 
 # ....Release......................................................................................
 echo "$(basename $0) done!"
