@@ -47,14 +47,22 @@ function dnp::entrypoint_helper_global_init() {
   ${MSG_END_FORMAT}"
 
   # ....Sanity check.................................................................................
+  if [[ "${DN_PROJECT_USER}" != "$(whoami)" ]]; then
+    n2st::print_msg_error_and_exit "Container login as user $(whoami) does not match project expected user DN_PROJECT_USER=${DN_PROJECT_USER}!\n
+Trouble shooting procedure:
+  1. Rebuild all images. Make sure build option ${MSG_DIMMED_FORMAT}--skip-core-force-rebuild${MSG_END_FORMAT} is not enable.
+  2. If it did not work, open a new terminal on the host machine, login as the desired user and rebuild project-core.
+  3. If nothing work, open a bug ticket on https://github.com/norlab-ulaval/dockerized-norlab-project/issues\n
+${MSG_DIMMED_FORMAT}$(tree -L 2 -aug "${DN_PROJECT_PATH}")${MSG_END_FORMAT}
+"
+  fi
+
   test -n "$(pgrep -x 'sshd')" || n2st::print_msg_warning "Be advised, ssh daemon is not running!\n" 1>&2
 
   # ....Remove byte-compiled files that could mess with tools on context/environment change..........
   pyclean "${DN_PROJECT_PATH}"
   # Remember the pycharm-debugger user path nightmare
-
 }
-
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then

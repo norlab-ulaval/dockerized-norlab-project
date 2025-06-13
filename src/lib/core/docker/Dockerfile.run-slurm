@@ -50,8 +50,8 @@ SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
-
 RUN test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
+
 ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.slurm.bash" ]
 CMD [ "-c","print('>>>Hello-slurm')" ]
 

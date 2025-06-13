@@ -7,7 +7,7 @@ services:
       # SJOB_ID: ${SJOB_ID}
       DN_HOST: 'linux/x86'
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}-slurm${SJOB_ID}
-      DN_ENTRYPOINT_TRACE_EXECUTION: true
+      DN_ENTRYPOINT_TRACE_EXECUTION: false
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_ACTIVATE_POWERLINE_PROMT: true
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
@@ -40,7 +40,7 @@ services:
         required: false
     tty: false
     stdin_open: false
-    privileged: true # (Priority) ToDo: assessment (true or false)
+    privileged: false # (Priority) ToDo: assessment (true or false)
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined

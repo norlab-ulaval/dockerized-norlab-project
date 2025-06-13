@@ -34,7 +34,6 @@ services:
     environment:
       DN_HOST: 'linux/x86'
       DN_ENTRYPOINT_TRACE_EXECUTION: false
-      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: true
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}

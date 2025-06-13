@@ -153,8 +153,7 @@ function dnp::run_slurm() {
   # ....Sanity check...............................................................................
 
   test -n "${SJOB_ID}" || n2st::print_msg_error_and_exit "Missing sjob-id mandatory positional argument!"
-#  test -n "${SJOB_ID}" || { echo "$(basename $0) | Positional argument <job-name> is empty" ; exit 1 ; }
-#  test -n "${python_arg[0]}" || { echo "$(basename $0) | Positional argument <any-python-arg> is empty" ; exit 1 ; }
+  test -n "${python_arg[0]}" || n2st::print_msg_error_and_exit "Missing <any-python-arg> mandatory positional argument!"
 
   # ....Set env variables (post cli)...............................................................
   dn_project_config_dir="${DNP_ROOT:?err}/src/lib/core/docker"
@@ -176,7 +175,7 @@ function dnp::run_slurm() {
     # shellcheck disable=SC2034
     add_docker_flag=("--no-cache" "project-core")
     add_docker_flag=("--quiet")
-    dnp::excute_compose "${add_docker_flag[@]}"
+    dnp::excute_compose "${add_docker_flag[@]}" || exit 1
   fi
 
   if [[ ${force_rebuild_slurm_img} == true ]]; then
@@ -184,7 +183,7 @@ function dnp::run_slurm() {
     docker_build+=("--no-cache")
     docker_build+=("--quiet")
     add_docker_flag=("${docker_build[@]}" "${the_service}")
-    dnp::excute_compose "${add_docker_flag[@]}"
+    dnp::excute_compose "${add_docker_flag[@]}" || exit 1
   fi
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
