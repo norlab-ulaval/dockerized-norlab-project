@@ -124,7 +124,7 @@ function dnp::project_validate_slurm() {
   slurm_job_flags=()
 
   # (CRITICAL) ToDo: validate delete (ref task NMO-696)
-  slurm_job_flags+=("--skip-core-force-rebuild")
+#  slurm_job_flags+=("--skip-core-force-rebuild")
 
   slurm_job_flags+=("--hydra-dry-run")
   cd "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" || exit 1
