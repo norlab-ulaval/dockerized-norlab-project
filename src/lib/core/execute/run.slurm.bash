@@ -54,7 +54,7 @@ function dnp::show_help() {
   echo -e "${MSG_END_FORMAT}"
 }
 
-function dnp::trap_teardown_callback() {
+function dnp::run_slurm_teardown_callback() {
   exit_code=$?
   compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   the_compose_file=docker-compose.project.run.slurm.yaml
@@ -214,7 +214,7 @@ function dnp::run_slurm() {
     container_id=$(
       docker compose "${compose_flags[@]}" "${docker_run[@]}"
     )
-    trap dnp::trap_teardown_callback EXIT
+    trap dnp::run_slurm_teardown_callback EXIT
     n2st::print_msg "container_id=${container_id}\n" # Require `--detach` flag
 
     if [[ -n "${log_path}" ]]; then
@@ -234,7 +234,7 @@ function dnp::run_slurm() {
   fi
 
   # ....Teardown...................................................................................
-  # The teardown logic of this script is handled by the trap function `dnp::trap_teardown_callback`
+  # The teardown logic of this script is handled by the trap function `dnp::run_slurm_teardown_callback`
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return $exit_code
 }

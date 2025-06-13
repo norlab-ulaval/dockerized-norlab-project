@@ -21,6 +21,7 @@ _DNP_HELP_LINE_CHAR="─" # Note: This is not an 'dash' char. UTF-8: E2 94 80
 #_DNP_HELP_LINE_CHAR="═" # Note: This is not an 'equal' char. UTF-8: E2 95 90
 #_DNP_HELP_LINE_CENTER_CHAR="▼"
 _DNP_HELP_LINE_CENTER_CHAR="❄︎"
+
 function dnp:help_header() {
     echo -n -e "${MSG_DIMMED_FORMAT}"
 #    echo -e "▶︎"
