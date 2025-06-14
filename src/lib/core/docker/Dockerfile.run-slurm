@@ -32,9 +32,6 @@ WORKDIR ${DN_PROJECT_SERVICE_DIR}
 COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" --from=context-dnp-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.slurm.bash ./
 COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" .dockerized_norlab_project/configuration/project_entrypoints/project-slurm .
 
-#WORKDIR /
-#COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/dn_entrypoint.python.bash .
-
 RUN <<EOF
     chmod 777 /tmp/numba_cache
 
@@ -42,18 +39,17 @@ RUN <<EOF
     echo "backend : Agg" >> /etc/matplotlibrc
 
     chmod +x ./dn_entrypoint.slurm.bash
-#    chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash
 EOF
 
 
 # ====Execute slurm run============================================================================
 FROM norlab-slurm-setup AS execute-slurm-run
+
 USER ${DN_PROJECT_USER:?err}
 SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
-
 RUN test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
 
 ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.slurm.bash" ]

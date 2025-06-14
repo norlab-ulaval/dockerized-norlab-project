@@ -32,8 +32,8 @@ services:
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data:ro
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
       # ....From jetson-container run.sh....
       - /tmp/argus_socket:/tmp/argus_socket
       - /etc/enctune.conf:/etc/enctune.conf

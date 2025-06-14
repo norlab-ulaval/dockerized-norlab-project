@@ -67,7 +67,6 @@ else
   n2st::print_msg_warning "project-slurm/dn_entrypoint.init.callback.bash unavailable"
 fi
 
-
 # ====Execute python command=======================================================================
 cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1

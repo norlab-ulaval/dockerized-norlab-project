@@ -37,7 +37,7 @@ function dnp::setup_mock() {
   test -d "${DNP_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.git" \
   || { \
     tree -a -L 2 "${DNP_ROOT}/utilities/tmp" &&
-    n2st::print_msg_error_and_exit "The directory ${DNP_ROOT}/utilities/tmp is unreachable" ;
+    n2st::print_msg_error_and_exit "Something is wrong with the cloned repository ${DNP_ROOT}/utilities/tmp/dockerized-norlab-project-mock/" ;
     }
 
   n2st::print_formated_script_footer "setup_mock.bash" "${MSG_LINE_CHAR_UTIL}"

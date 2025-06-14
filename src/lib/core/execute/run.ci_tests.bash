@@ -7,7 +7,7 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS=$( cat <<'EOF'
 #
 # Usage:
 #   $ bash build.ci_tests.bash [<any-build.all-argument>]
-#   $ bash run.ci_tests.bash [<any-docker-argument>]
+#   $ bash run.ci_tests.bash [<command>]
 #
 # Notes:
 #   The difference with `build.ci_tests.multiarch.bash` is that tests are only executed for the
@@ -22,7 +22,7 @@ function dnp::run_ci_tests() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
-  declare -a any_docker_arg=()
+  declare -a in_docker_command=()
 
   # ....cli......................................................................................
   while [[ $# -gt 0 ]]; do
@@ -32,7 +32,7 @@ function dnp::run_ci_tests() {
               exit 0
               ;;
           *)
-              any_docker_arg+=("$@")
+              in_docker_command+=("$@")
               break
               ;;
       esac
@@ -50,7 +50,7 @@ function dnp::run_ci_tests() {
 
   docker_run_flag=("--rm")
   docker_run_flag+=("${the_service}")
-  docker_run_flag+=("${any_docker_arg[@]}")
+  docker_run_flag+=("${in_docker_command[@]}")
   dnp::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"
   exit_code=$?
 
