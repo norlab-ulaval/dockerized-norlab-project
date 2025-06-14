@@ -11,14 +11,18 @@ DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 #   • device and architecture specific docker-compose config are automaticaly selected at runtime
 #
 # Usage:
-#   $ dnp up [--service <theService>] [--] [<command&arguments>]
+#   $ dnp up [OPTIONS] [-- COMMAND [ARGS...]]
 #
 # Options:
-#   --service service      Specify the service to start and to attach (default: project-develop)
-#   --help, -h             Show this help message
+#   --service                The service to attach once up (Default: project-develop)
+#   -e, --env stringArray    Set container environment variables
+#   -T, --no-TTY             Disable pseudo-TTY allocation
+#   --detach                 Don't attach to container
+#   --dry-run
+#   -h | --help
 #
 # Positional argument:
-#   <command&arguments>      Any command to be executed inside the docker container (default: bash)
+#   command & arguments    Any command to be executed inside the docker container (default: bash)
 #
 # =================================================================================================
 EOF
@@ -61,7 +65,7 @@ function dnp::up_command() {
     # ....Begin....................................................................................
     dnp::up_and_attach "${remaining_args[@]}"
     fct_exit_code=$?
-    n2st::print_msg "Detached. ${MSG_DIMMED_FORMAT}Container is running in background${MSG_END_FORMAT}."
+    n2st::print_msg "Detached. ${MSG_DIMMED_FORMAT}Container ${DN_CONTAINER_NAME} is running in background.${MSG_END_FORMAT}"
     return $fct_exit_code
 }
 

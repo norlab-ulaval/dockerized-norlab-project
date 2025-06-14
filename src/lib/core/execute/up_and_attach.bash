@@ -6,14 +6,18 @@ DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 # the terminal and it will keep running in the background.
 #
 # Usage:
-#   $ bash up_and_attach.bash [--service <theService>]  [--] [<command&arguments>]
+#   $ bash up_and_attach.bash [OPTIONS] [-- COMMAND [ARGS...]]
 #
-# Arguments:
+# Options:
 #   --service                The service to attach once up (Default: project-develop)
+#   -e, --env stringArray    Set container environment variables
+#   -T, --no-TTY             Disable pseudo-TTY allocation
+#   --detach                 Don't attach to container
+#   --dry-run
 #   -h | --help
 #
 # Positional argument:
-#   <command&arguments>      Any command to be executed inside the docker container (default: bash)
+#   command & arguments    Any command to be executed inside the docker container (default: bash)
 #
 # Globals:
 #   read DNP_ROOT
@@ -48,6 +52,7 @@ function dnp::up_and_attach() {
   # ....Set env variables (pre cli)................................................................
   declare -a remaining_args
   declare -a interactive_login
+  declare -a docker_compose_exec_flag
   local the_service=project-develop
 
   # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
@@ -68,15 +73,26 @@ function dnp::up_and_attach() {
         show_help
         exit
         ;;
-      --) # no more option
+      --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
+        docker_compose_exec_flag+=("$1")
+        if [[ ${1} == "--dry-run" ]]; then
+          docker_compose_exec_flag+=("--detach")
+        fi
+        shift
+        ;;
+      -e|--env) # Assume its a docker compose flag
+        docker_compose_exec_flag+=("$1" "$2")
+        shift
+        shift
+        ;;
+      --) # Imply its command & arguments
         shift
         remaining_args=( "$@" )
         unset interactive_login
         break
         ;;
-      *) # Default case
-        remaining_args=("$@")
-        unset interactive_login
+      *) # Base case
+        remaining_args=( "$@" )
         break
         ;;
     esac
@@ -200,6 +216,7 @@ function dnp::up_and_attach() {
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
       declare -a docker_exec_no_up=("exec")
       docker_exec_no_up+=("${interactive_login[@]}")
+      docker_exec_no_up+=("${docker_compose_exec_flag[@]}")
       docker_exec_no_up+=("${the_service}")
       docker_exec_no_up+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.attach.bash")
       docker_exec_no_up+=("${docker_exec_cmd_and_args[@]}")
@@ -222,8 +239,9 @@ function dnp::up_and_attach() {
       # (NICE TO HAVE) ToDo: implement case fetch docker context IP address
       :
     elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-      n2st::print_msg "Updating ssh key"
-      bash -c "ssh-keygen -R [localhost]:2222"
+      n2st::print_msg "Updating ssh key [localhost]:2222"
+      bash -c "ssh-keygen -R [localhost]:2222 >/dev/null 2>/dev/null"
+      bash -c "ssh-keygen -R [127.0.0.1]:2222 >/dev/null 2>/dev/null"
     fi
 
     if [[ ${IS_TEAMCITY_RUN} == true ]]; then
@@ -233,6 +251,7 @@ function dnp::up_and_attach() {
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
       declare -a docker_exec=("exec")
       docker_exec+=("${interactive_login[@]}")
+      docker_exec+=("${docker_compose_exec_flag[@]}")
       docker_exec+=("${the_service}")
       # Note: The init entrypoint is executed here on purpose, not at docker compose up.
       docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
