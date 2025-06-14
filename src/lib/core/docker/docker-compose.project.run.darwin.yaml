@@ -1,6 +1,7 @@
 
 services:
 
+  # ===============================================================================================
   #
   # Docker compose project run version for running on Apple M1 computer
   #
@@ -10,10 +11,10 @@ services:
     container_name: ${DN_CONTAINER_NAME:?err}
     environment:
       DN_HOST: 'darwin/arm64'
-      DN_ENTRYPOINT_TRACE_EXECUTION: false
+      DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
-      DN_ACTIVATE_POWERLINE_PROMT: true
+      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-true}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
       NVIDIA_VISIBLE_DEVICES: void
       NVIDIA_DRIVER_CAPABILITIES:
@@ -70,7 +71,7 @@ services:
 
   project-deploy:
     extends:
-      service: project-develop
+      service: project-core
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
     volumes:
       - /etc/localtime:/etc/localtime:ro

@@ -96,7 +96,7 @@ services:
     depends_on:
       - project-core
 
-  # ToDo: rethink ci-test run logic to use "up and ataach" but with ci-test entrypoint and env var
+  # ToDo: rethink ci-test run logic to use "up and attach" but with ci-test entrypoint and env var
   project-ci-tests:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
@@ -120,12 +120,12 @@ services:
       # DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: false
+      DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
       NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
       NVIDIA_DRIVER_CAPABILITIES: all
-    #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
-      DISPLAY: "" # Keep unset
+      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
       QT_X11_NO_MITSHM: 1
       XAUTHORITY: /tmp/.docker.xauth
     env_file:

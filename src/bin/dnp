@@ -9,9 +9,10 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 # What it does:
 #   • Provide a containerized environment for development, deployment,
 #     continuous integration, slurm jobs and source code release.
-#   • Run on l4t/arm64 (jetson), darwin/arm64 (Mac OsX) and linux/x86.
 #   • Design to support both local and remote workflow.
+#   • Run on l4t/arm64 (jetson), darwin/arm64 (Mac OsX) and linux/x86.
 #   • GPU support through nvidia-docker for both l4t/arm64 and linux/x86.
+#   • ROS2 ready out of the box.
 #
 # Usage:
 #   $ dnp COMMAND [OPTIONS]
@@ -19,7 +20,9 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 # Commands:
 #   init        Initialize a new DNP project
 #   build       Build Docker images
-#   up          Start and attach to a containers (daemon mode)
+#   up          Start and attach to a container (daemon mode)
+#   attach      Attach to a running container
+#   exec        Execute command in a running container
 #   down        Stop containers
 #   run         (In-progress) Run a command in a container
 #   project     Super project commands
@@ -67,6 +70,16 @@ function dnp::entrypoint() {
       build)
           source "${DNP_LIB_PATH}/commands/build.bash" || exit 1
           dnp::build_command "$@"
+          exit $?
+          ;;
+      exec)
+          source "${DNP_LIB_PATH}/commands/exec.bash" || exit 1
+          dnp::exec_command "$@"
+          exit $?
+          ;;
+      attach)
+          source "${DNP_LIB_PATH}/commands/attach.bash" || exit 1
+          dnp::attach_command "$@"
           exit $?
           ;;
       up)
