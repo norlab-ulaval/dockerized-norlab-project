@@ -4,10 +4,10 @@ DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
 # Build deploy images specified in docker-compose.project.build.native.yaml
 #
 # Usage:
-#   $ bash build.deploy.bash [--push-deploy-image] [<any-build.all-argument>] [--] [<any-docker-flag>]
+#   $ bash build.deploy.bash [--push] [<any-build.all-argument>] [--] [<any-docker-flag>]
 #
 # Arguments:
-#   --push-deploy-image
+#   --push
 #   -h | --help
 #
 # Positional argument:
@@ -44,9 +44,9 @@ function dnp::build_project_deploy_service() {
   while [ $# -gt 0 ]; do
 
     case $1 in
-      --push-deploy-image)
+      --push)
         push_deploy_image=true
-        shift # Remove argument (--push-deploy-image)
+        shift # Remove argument (--push)
         ;;
       -h | --help)
         clear
@@ -63,7 +63,7 @@ function dnp::build_project_deploy_service() {
 
   # ....Set env variables (post cli)...............................................................
   if [[ ${push_deploy_image} == true ]]; then
-    n2st::print_msg "Won't push the deploy image, use flag ${MSG_DIMMED_FORMAT}--push-deploy-image${MSG_END_FORMAT} to push it."
+    n2st::print_msg "Won't push the deploy image, use flag ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} to push it."
   fi
 
   # ....Build stage..................................................................................

@@ -13,8 +13,9 @@ function dnp::test_teardown_callback() {
 trap dnp::test_teardown_callback EXIT
 
 # ====begin========================================================================================
+#set +e # dont exit right away on error
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
-bash "${DNP_LIB_EXEC_PATH:?err}"/build.deploy.bash -- --no-cache
+bash "${DNP_LIB_EXEC_PATH:?err}"/build.all.multiarch.bash --no-force-push-project-core -- --no-cache
 
 # ....Teardown.....................................................................................
 # Handle by the trap command

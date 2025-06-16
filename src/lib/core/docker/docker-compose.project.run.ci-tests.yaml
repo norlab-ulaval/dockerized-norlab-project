@@ -2,6 +2,7 @@
 services:
 
   project-ci-tests:
+    pull_policy: never # (Priority) ToDo: validate >> pull_policy: never
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
     environment:
       # -----------
@@ -40,9 +41,13 @@ services:
       rtprio: 99
       rttime: -1 # corresponds to 'unlimited'
       memlock: 8428281856
+    pid: host
+    ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
+    init: true  # Propagate exit code (See remark in task NMO-266)
     runtime: nvidia
 
   project-ci-tests-no-gpu:
     extends:
       service: project-ci-tests
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
     runtime: !reset []

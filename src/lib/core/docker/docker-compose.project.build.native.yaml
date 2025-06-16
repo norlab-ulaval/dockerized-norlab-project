@@ -109,14 +109,16 @@ services:
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
         DNP_PYTEST_CI_RUN: true
-    pull_policy: never # (Priority) ToDo: validate >> pull_policy: never
+    pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
+    runtime: nvidia
     depends_on:
       - project-core
 
   project-ci-tests-no-gpu:
     extends:
       service: project-ci-tests
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
     runtime: !reset []
 
   project-slurm:

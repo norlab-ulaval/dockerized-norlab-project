@@ -105,7 +105,7 @@ function dnp::run_command() {
           exit 0
         fi
         n2st::print_msg "Running CI tests..."
-        dnp build --ci-tests
+        dnp build ci-tests -- --no-cache
         dnp::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${slurm}" == true ]]; then

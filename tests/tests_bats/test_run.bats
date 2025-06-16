@@ -147,8 +147,8 @@ function n2st::print_msg_error() {
 
 # ....Mock dnp build function......................................................................
 function dnp() {
-  if [[ "$1" == "build" && "$2" == "--ci-tests" ]]; then
-    echo "Mock dnp build --ci-tests called"
+  if [[ "$1" == "build" && "$2" == "ci-tests" ]]; then
+    echo "Mock dnp build ci-tests called"
     return 0
   fi
   echo "Mock dnp called with args: $*"
@@ -239,7 +239,7 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dnp build --ci-tests called"
+  assert_output --partial "Mock dnp build ci-tests called"
   assert_output --partial "Mock dnp::run_ci_tests called with args:"
 }
 
@@ -252,7 +252,7 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dnp build --ci-tests called"
+  assert_output --partial "Mock dnp build ci-tests called"
   assert_output --partial "Mock dnp::run_ci_tests called with args: --arg1 --arg2"
 }
 

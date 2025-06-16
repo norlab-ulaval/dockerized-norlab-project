@@ -77,7 +77,7 @@ function dnp::global_install_hack() {
   # (StandBy) ToDo: add to Dockerized-NorLab
   # Single-command clean up for Python bytecode files in your favorite directories i.e. __pycache__; .*pyc;*.pytest_cache;
   # https://github.com/bittner/pyclean
-  pyclean
+  pip3 install pyclean
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -86,6 +86,7 @@ function dnp::global_install_hack() {
   n2st::seek_and_modify_string_in_file "alias tree2='tree -a -L 2'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
+
   # (Priority) ToDo: delete on task NMO-702 completion >> those lines ↓↓
   local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
   n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dnp" "$dn_info_path"

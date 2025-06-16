@@ -8,18 +8,21 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 # Notes: build all services for host native architecture by default
 #
 # Usage:
-#   $ dnp build [OPTIONS] [-- <any-docker-argument>]
+#   $ dnp build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
 #
 # Options:
 #   --multiarch                           Build all service for multiple architectures
 #                                          (require a configured docker buildx multiarch builder)
-#   --force-push-project-core             Build images from the local image store
-#   --develop                             Build develop images only
-#   --ci-tests                            Build CI tests images only
-#   --slurm                               Build slurm images only
-#   --deploy [--push-deploy-image]        Build deploy images only
-#   --release [--push-release-image]      (In-progress) Build release images only
+#   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
+#                                          (instead of building images from the local image store).
+#   --push                                Push deploy image (only valid with SERVICE=deploy)
 #   --help, -h                            Show this help message
+#
+# SERVICE:
+#   develop                               Build develop images only
+#   deploy [--push]                       Build deploy images only
+#   ci-tests                              Build CI tests images only
+#   slurm                                 Build slurm images only
 #
 # =================================================================================================
 EOF
@@ -38,10 +41,7 @@ function dnp::build_command() {
     # ....Set env variables (pre cli)).............................................................
     local multiarch=false
     local force_push_project_core=false
-    local ci_tests=false
-    local deploy=false
-    local develop=false
-    local slurm=false
+    local service=""
     local push_deploy=false
     local remaining_args=()
     local original_command="$*"
@@ -57,24 +57,8 @@ function dnp::build_command() {
                 force_push_project_core=true
                 shift
                 ;;
-            --ci-tests)
-                ci_tests=true
-                shift
-                ;;
-            --deploy)
-                deploy=true
-                shift
-                ;;
-            --push-deploy-image)
+            --push)
                 push_deploy=true
-                shift
-                ;;
-            --develop)
-                develop=true
-                shift
-                ;;
-            --slurm)
-                slurm=true
                 shift
                 ;;
             --help|-h)
@@ -86,9 +70,24 @@ function dnp::build_command() {
                 remaining_args+=("$@")
                 break
                 ;;
+            ci-tests|deploy|develop|slurm)
+                # If service is already set, it's an error
+                if [[ -n "${service}" ]]; then
+                    dnp::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
+                    return 1
+                fi
+                service="$1"
+                shift
+                ;;
             *)
-                dnp::unknown_subcommand_msg "build" "$*"
-                exit 1
+                # Check if it starts with -- (unknown option)
+                if [[ "$1" == --* ]]; then
+                    dnp::unknown_subcommand_msg "build" "$*"
+                    exit 1
+                fi
+                # Otherwise it's an unknown service
+                dnp::illegal_command_msg "build" "${original_command}" "Unknown SERVICE: $1. Valid services are: ci-tests, deploy, develop, slurm.\n"
+                return 1
                 ;;
         esac
     done
@@ -100,14 +99,14 @@ function dnp::build_command() {
     source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" || return 1
 
     # ....Flag check...............................................................................
-    if [[ "${deploy}" == false ]] && [[ "${push_deploy}" == true ]]; then
-      dnp::illegal_command_msg "build" "${original_command}" "The --push-deploy-image flag can only be used in combination with --deploy.\n"
+    if [[ "${service}" != "deploy" ]] && [[ "${push_deploy}" == true ]]; then
+      dnp::illegal_command_msg "build" "${original_command}" "The --push flag can only be used with SERVICE=deploy.\n"
       return 1
-
     fi
-    if [[ "${deploy}" == true ]] && [[ "${multiarch}" == true ]]; then
+
+    if [[ "${service}" == "deploy" ]] && [[ "${multiarch}" == true ]] && [[ "${push_deploy}" == true ]]; then
       # (Priority) ToDo: NMO-680 feat: improve project-deploy logic
-      dnp::illegal_command_msg "build" "${original_command}" "The build multiarch deploy image feature is not released yet!\nUse ${MSG_DIMMED_FORMAT}dnp build --multiarch${MSG_END_FORMAT} in the mean time to build multiarch project-deploy images.\nIssue NMO-680 feat: improve project-deploy logic\n"
+      dnp::illegal_command_msg "build" "${original_command}" "The build and push multiarch deploy image feature is not released yet!\nIt only affect ${MSG_DIMMED_FORMAT}dnp build --multiarch --push deploy${MSG_END_FORMAT} flags combinaison.\nIssue NMO-680 feat: improve project-deploy logic\n"
       return 1
     fi
 
@@ -129,28 +128,30 @@ function dnp::build_command() {
     fi
 
     # ....Begin....................................................................................
-    if [[ "${deploy}" == true ]]; then
+    if [[ "${service}" == "deploy" ]] && [[ "${multiarch}" == false ]]; then
         # Case: Deploy
         header_footer_name="deploy images (${architecture}) build procedure"
         if [[ "${push_deploy}" == true ]]; then
-          deploy_flag+=("--push-deploy-image")
+          deploy_flag+=("--push")
         fi
-
         n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
         dnp::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
         fct_exit_code=$?
         n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
     else
       # Case: general
-      if [[ "${ci_tests}" == true ]]; then
+      if [[ "${service}" == "ci-tests" ]]; then
           header_footer_name="CI tests images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
-      elif [[ "${slurm}" == true ]]; then
+      elif [[ "${service}" == "slurm" ]]; then
           header_footer_name="slurm images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
-      elif [[ "${develop}" == true ]]; then
+      elif [[ "${service}" == "develop" ]]; then
           header_footer_name="develop images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-develop")
+      elif [[ "${service}" == "deploy" ]]; then
+          header_footer_name="develop images (${architecture}) build procedure"
+          build_flag+=("--service-names" "project-core,project-deploy")
       else
           header_footer_name="all images (${architecture}) build procedure"
       fi
@@ -168,4 +169,3 @@ function dnp::build_command() {
 
     return $fct_exit_code
 }
-

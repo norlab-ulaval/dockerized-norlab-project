@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
 bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
@@ -14,9 +15,7 @@ trap dnp::test_teardown_callback EXIT
 
 # ====begin========================================================================================
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
-bash "${DNP_LIB_EXEC_PATH:?err}"/build.deploy.bash -- --no-cache
+bash "${DNP_LIB_EXEC_PATH:?err}"/build.all.bash -- --no-cache
 
 # ....Teardown.....................................................................................
 # Handle by the trap command
-
-

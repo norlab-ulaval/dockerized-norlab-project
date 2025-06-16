@@ -14,7 +14,7 @@ trap dnp::test_teardown_callback EXIT
 
 # ====begin========================================================================================
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
-bash "${DNP_LIB_EXEC_PATH:?err}"/build.all.bash "$@"
+bash "${DNP_LIB_EXEC_PATH:?err}"/build.all.bash "$@" -- --no-cache
 
 # ....Teardown.....................................................................................
 # Handle by the trap command

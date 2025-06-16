@@ -38,8 +38,10 @@ function dnp::run_ci_tests() {
       esac
   done
 
-  # ....Begin......................................................................................
+    # ....Set env variables (post cli)...............................................................
   compose_file="docker-compose.project.run.ci-tests.yaml"
+
+  # ....Begin......................................................................................
 
   if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V 2>/dev/null | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
     n2st::print_msg_warning "Host computer does not support nvidia gpu, changing container runtime to docker default."
