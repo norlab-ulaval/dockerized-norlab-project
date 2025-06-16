@@ -3,8 +3,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --time=0-01:00
 #SBATCH --output=out/%x-%j.out
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=luc.coupal@norlab.ulaval.ca
+
 
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
 
@@ -12,7 +11,7 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.dryrun.bash [<any-hydra-argument>]
+#   $ bash slurm_job.dryrun.bash [<any-dnp-argument>]
 #
 # =================================================================================================
 declare -x SJOB_ID
@@ -65,7 +64,7 @@ dnp_run_slurm_flags+=("--dry-run")
 # ====DNP internal=================================================================================
 dnp_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
 dnp_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
-hydra_flags+=("$@")
+dnp_run_slurm_flags+=("$@")
 export SJOB_ID
 dnp::job_setup_callback
 trap dnp::job_teardown_callback EXIT
