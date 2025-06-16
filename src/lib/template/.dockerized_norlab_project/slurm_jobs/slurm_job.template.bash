@@ -12,46 +12,52 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.template.bash [<any-hydra-argument>]
+#   $ bash slurm_job.template.bash [<any-python-args>]
 #
 # =================================================================================================
-
-# ====Custom steps=================================================================================
-declare -a HYDRA_FLAGS
-declare -a FLAGS
 declare -x SJOB_ID
+declare -a dnp_run_slurm_flags=()
+declare -a python_arguments=()
+
+# ====Setup========================================================================================
+# ....Custom setup (optional)......................................................................
+function dnp::job_setup_callback() {
+  # Add any instruction that should be executed before 'dnp run slurm' command
+  :
+}
+
+# ....Custom teardown (optional)...................................................................
+function dnp::job_teardown_callback() {
+  local exit_code=$?
+  # TODO: Add any instruction that should be executed after 'dnp run slurm' exit.
+
+  # Note: Command 'dnp run slurm' already handle stoping the container in case the slurm command
+  #  `scancel` is issued.
+  exit ${exit_code:1}
+}
 
 # ....Set job name.................................................................................
-export SJOB_ID="default" # Open a YouTrack task and use the issue ID
+# TODO: Set SJOB_ID
+SJOB_ID="default"
+# Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
+#  and use its issue ID as an SJOB_ID.
 
-# ....Hydra app module.............................................................................
-# Note assume cwd is `src/`
-HYDRA_FLAGS+=("launcher/example_app.py")
-
-# ....Optional flags...............................................................................
-# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
-# --config-name,-cn : Overrides the config_name specified in hydra.main()
-# --config-dir,-cd : Adds an additional config dir to the config search path
-
-#HYDRA_FLAGS+=("--config-path=")
-#HYDRA_FLAGS+=("--config-dir=")
-#HYDRA_FLAGS+=("--config-name=")
+# ....Python module................................................................................
+# TODO: Set python module to launch
+python_arguments+=("launcher/example.py")
+# Note: assume container workdir is `<super-project>/src/`
 
 # ....Debug flags..................................................................................
-FLAGS+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
+#dnp_run_slurm_flags+=("--skip-core-force-rebuild")
+#dnp_run_slurm_flags+=("--dry-run")
 
-# (CRITICAL) ToDo: on task end >> mute next bloc ↓↓
-#FLAGS+=("--skip-core-force-rebuild")
-#FLAGS+=("--dry-run")
-#HYDRA_FLAGS+=("--cfg" "all")
+# ====DNP internal=================================================================================
+dnp_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
+dnp_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
+python_arguments+=("$@")
+export SJOB_ID
+dnp::job_setup_callback
+trap dnp::job_teardown_callback EXIT
 
-# .................................................................................................
-FLAGS+=("--log-name" "$(basename -s .bash $0)")
-FLAGS+=("--log-path" "artifact/slurm_jobs_logs")
-FLAGS+=("$@")
-
-# (Priority) ToDo: NMO-666 refactor: update slurm_jobs template
-bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID:?err}" "${FLAGS[@]}" "${HYDRA_FLAGS[@]}"
-
-# ====Teardown=====================================================================================
-exit $?
+# ====Launch slurm job=============================================================================
+dnp run slurm "${SJOB_ID:?err}" "${dnp_run_slurm_flags[@]}" "${python_arguments[@]}"

@@ -21,18 +21,18 @@ cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 # ====begin========================================================================================
 
 # Script locals env var
-declare -a flags
-declare -a hydra_flags
+declare -a run_slurm_flags=()
+declare -a hydra_flags=()
 
 # Exported env var
 declare -x SJOB_ID
 
 SJOB_ID="default"
 # ....Debug flags..................................................................................
-#flags+=("--hydra-dry-run")
-#flags+=(--register-hydra-dry-run-flag "+dev@_global_=math_env_slurm_job_dryrun")
-flags+=("--skip-core-force-rebuild")
+#run_slurm_flags+=("--hydra-dry-run")
+#run_slurm_flags+=(--register-hydra-dry-run-flag "+dev@_global_=math_env_slurm_job_dryrun")
+run_slurm_flags+=("--skip-core-force-rebuild")
 hydra_flags+=("--version")
 
-bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${flags[@]}" "${hydra_flags[@]}"
+bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${run_slurm_flags[@]}" "${hydra_flags[@]}"
 

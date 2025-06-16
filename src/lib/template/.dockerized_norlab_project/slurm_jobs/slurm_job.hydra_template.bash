@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --gres=gpu:0
-#SBATCH --cpus-per-task=2
-#SBATCH --time=0-01:00
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=12
+#SBATCH --time=7-00:00
 #SBATCH --output=out/%x-%j.out
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=luc.coupal@norlab.ulaval.ca
@@ -12,7 +12,7 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.dryrun.bash [<any-hydra-argument>]
+#   $ bash slurm_job.template.bash [<any-hydra-argument>]
 #
 # =================================================================================================
 declare -x SJOB_ID
@@ -22,7 +22,7 @@ declare -a hydra_flags=()
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
 function dnp::job_setup_callback() {
-  # Add any instruction that should be executed before 'dnp run slurm' command
+  # TODO: Add any instruction that should be executed before 'dnp run slurm' command
   :
 }
 
@@ -44,7 +44,7 @@ SJOB_ID="default"
 
 # ....Hydra app module.............................................................................
 # TODO: Set python module to launch
-hydra_flags+=("launcher/example_app_hparm_optim.py")
+hydra_flags+=("launcher/example_app.py")
 # Note: assume container workdir is `<super-project>/src/`
 
 # ....Optional hydra flags.........................................................................
@@ -57,10 +57,11 @@ hydra_flags+=("launcher/example_app_hparm_optim.py")
 #hydra_flags+=("--config-name=")
 
 # ....Debug flags..................................................................................
-dnp_run_slurm_flags+=(--register-hydra-dry-run-flag "run_pytorch_check=true")
+dnp_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
 
-dnp_run_slurm_flags+=("--skip-core-force-rebuild")
-dnp_run_slurm_flags+=("--dry-run")
+#dnp_run_slurm_flags+=("--skip-core-force-rebuild")
+#dnp_run_slurm_flags+=("--dry-run")
+#hydra_flags+=("--cfg" "all")
 
 # ====DNP internal=================================================================================
 dnp_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
