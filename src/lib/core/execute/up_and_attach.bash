@@ -219,7 +219,7 @@ function dnp::up_and_attach() {
     n2st::print_msg_error_and_exit "Support for current host not implemented yet!"
   fi
 
-  n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
+  #n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
 
   # ....Start docker container.....................................................................
   n2st::set_is_teamcity_run_environment_variable
@@ -228,6 +228,12 @@ function dnp::up_and_attach() {
   if [[ ${no_up} != true ]]; then
     n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
     # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  fi
+
+  if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then
+    export _THE_COMPOSE_FILE="${the_compose_file}"
+    export _THE_SERVICE="${the_service}"
+    return 0
   fi
 
   # (CRITICAL) ToDo: see newly added container name related implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash

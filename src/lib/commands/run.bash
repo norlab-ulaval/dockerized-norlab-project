@@ -4,30 +4,36 @@
 DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 # =================================================================================================
 # Run commands in containers non-interactively
-# Notes:
-#   - This is a shoot and forget mode.
-#   - Use 'dnp up [OPTIONS] [<command>]' for executing command in interactive mode.
 #
 # Usage:
-#   $ dnp run [OPTIONS] SERVICE [--] [<specialized-option>]
+#   $ dnp run SERVICE [OPTIONS]
 #
-# Service
-#   ci-tests [<command>]       Run CI tests container.
-#   slurm <sjob-id>            (In-progress) Run slurm job in container.
-#   develop [<command>]        (In-progress) Run command in a development container.
-#   deploy [<command>]         (In-progress) Run command in a deployment container.
-#
-# Specialized options
-#   For details, execute $ dnp run SERVICE -- --help
+# Service:
+#   Interactive:
+#     dnp run develop [OPTIONS] [-- COMMAND [ARGS...]]   Run command in a development container.
+#     dnp run deploy [OPTIONS] [-- COMMAND [ARGS...]]    Run command in a deployment container.
+#   Non-interactive:
+#     dnp run ci-tests [OPTIONS]          Run CI tests container.
+#     dnp run slurm <sjob-id> [OPTIONS]   Run slurm job in container.
 #
 # Options:
-#   --help, -h             Show this help message
+#   --help, -h                   Show this help message
+#
+# Options for interactive services:
+#   -e, --env stringArray        Set container environment variables
+#   -w, --workdir string         Override path to workdir directory
+#   -T, --no-TTY                 Disable pseudo-TTY allocation
+#   -v, --volume stringArray     Bind mount a volume
+#   --detach                     Execute COMMAND in the background
+#   --dry-run                    (Require --detach flag)
+#
+# Options for non-interactive services:
+#   For details, execute $ dnp run [ci-tests|slurm] -- --help
 #
 # Notes about slurm run:
 #   To launch job on slurm/mamba server, prefer directly executing custom slurm script with
-#   enviroment variable header. See example 'slurm_job.template.bash' and 'slurm_job.dryrun.bash'
+#   enviroment variable header. See example 'slurm_job.*template.bash' and 'slurm_job.dryrun.bash'
 #   in '.dockerized_norlab_project/slurm_jobs/' directory.
-#
 #
 # =================================================================================================
 EOF
@@ -37,6 +43,7 @@ EOF
 dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
 test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
 test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
+test -n "$( declare -f n2st::norlab_splash )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
 test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
 test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
 
@@ -72,7 +79,6 @@ function dnp::run_command() {
                 exit 0
                 ;;
             --) # no more option
-                shift
                 remaining_args+=("$@")
                 break
                 ;;
@@ -82,6 +88,9 @@ function dnp::run_command() {
                 ;;
         esac
     done
+
+        # Splash type: small, negative or big
+    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
@@ -102,17 +111,23 @@ function dnp::run_command() {
     elif [[ "${slurm}" == true ]]; then
         n2st::print_msg "Running slurm containers..."
         source "${DNP_LIB_PATH}/core/execute/run.slurm.bash"
+        if [[ "${remaining_args[*]}" =~ .*"--help".* ]]; then
+          dnp::run_slurm "--help"
+          exit 0
+        fi
         dnp::run_slurm "${remaining_args[@]}"
-        fct_exit_code=$?
-    elif [[ "${deploy}" == true ]]; then
-        n2st::print_msg "Running deploy containers..."
-        source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
-        dnp::up_and_attach --service project-deploy -- "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${develop}" == true ]]; then
         n2st::print_msg "Running develop containers..."
         source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
-        dnp::up_and_attach --service project-develop -- "${remaining_args[@]}"
+        source "${DNP_LIB_PATH}/core/execute/run.any.bash" || return 1
+        dnp::run_any --service project-develop "${remaining_args[@]}"
+        fct_exit_code=$?
+    elif [[ "${deploy}" == true ]]; then
+        n2st::print_msg "Running deploy containers..."
+        source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
+        source "${DNP_LIB_PATH}/core/execute/run.any.bash" || return 1
+        dnp::run_any --service project-deploy "${remaining_args[@]}"
         fct_exit_code=$?
     else
         n2st::print_msg_error "No run service specified."

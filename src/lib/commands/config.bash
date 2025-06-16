@@ -102,7 +102,7 @@ function dnp::config_command() {
     elif [[ "${mode}" == "deploy" ]]; then
         compose_file="docker-compose.project.build.native.yaml"
     elif [[ "${mode}" == "ci-tests" ]]; then
-        compose_file="docker-compose.project.build.native.yaml"
+        compose_file="docker-compose.project.run.ci-tests.yaml"
     elif [[ "${mode}" == "slurm" ]]; then
         compose_file="docker-compose.project.run.slurm.yaml"
     elif [[ "${mode}" == "release" ]]; then

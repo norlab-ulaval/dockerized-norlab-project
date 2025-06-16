@@ -7,12 +7,11 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #                         A tool for managing Docker-based robotic projects
 #
 # What it does:
-#   • Provide a containerized environment for development, deployment,
-#     continuous integration, slurm jobs and source code release.
-#   • Design to support both local and remote workflow.
-#   • Run on l4t/arm64 (jetson), darwin/arm64 (Mac OsX) and linux/x86.
-#   • GPU support through nvidia-docker for both l4t/arm64 and linux/x86.
-#   • ROS2 ready out of the box.
+# • Provide a containerized environment for development, deployment, continuous integration, slurm jobs and source code release.
+# • Design to support both local and remote workflow.
+# • Run on l4t/arm64 (jetson), darwin/arm64 (Mac OsX) and linux/x86.
+# • GPU support through nvidia-docker for both l4t/arm64 and linux/x86.
+# • ROS2 ready out of the box.
 #
 # Usage:
 #   $ dnp COMMAND [OPTIONS]
@@ -24,7 +23,7 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #   attach      Attach to a running container
 #   exec        Execute command in a running container
 #   down        Stop containers
-#   run         (In-progress) Run a command in a container
+#   run         Run a command in a container
 #   project     Super project commands
 #   config      (In-progress) Show configuration
 #   version     Show DNP version

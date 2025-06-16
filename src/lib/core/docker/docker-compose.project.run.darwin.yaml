@@ -5,9 +5,11 @@ services:
   #
   # Docker compose project run version for running on Apple M1 computer
   #
-  project-develop:
+  # ===============================================================================================
+
+  project-core:
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}
     entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
     container_name: ${DN_CONTAINER_NAME:?err}
     environment:
       DN_HOST: 'darwin/arm64'
@@ -20,16 +22,6 @@ services:
       NVIDIA_DRIVER_CAPABILITIES:
       DISPLAY: ${DN_DISPLAY:-${DISPLAY}}
       QT_X11_NO_MITSHM: 1
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
-      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
-      # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
         required: true
@@ -68,6 +60,20 @@ services:
 #          memory: 20gb
 
 
+  project-develop:
+    extends:
+      service: project-core
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # ....Add host volume you want to mount into the container...................................
+      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
+      # ....Add host volume you want to mount into the container...................................
+      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
 
   project-deploy:
     extends:
