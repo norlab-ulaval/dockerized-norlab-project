@@ -15,8 +15,6 @@
 # =================================================================================================
 pushd "$(pwd)" >/dev/null || exit 1
 
-export PATH="$PATH:$DNP_PATH"
-
 function dnp::setup_mock() {
   n2st::print_formated_script_header "setup_mock.bash" "${MSG_LINE_CHAR_UTIL}"
 

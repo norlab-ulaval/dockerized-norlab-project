@@ -28,11 +28,13 @@ declare -a hydra_flags=()
 declare -x SJOB_ID
 
 SJOB_ID="default"
+
 # ....Debug flags..................................................................................
 #run_slurm_flags+=("--hydra-dry-run")
 #run_slurm_flags+=(--register-hydra-dry-run-flag "+dev@_global_=math_env_slurm_job_dryrun")
 run_slurm_flags+=("--skip-core-force-rebuild")
 hydra_flags+=("--version")
 
+export PATH="$PATH:${DNP_PATH:?err}"
 bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${run_slurm_flags[@]}" "${hydra_flags[@]}"
 

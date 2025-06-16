@@ -14,6 +14,8 @@ trap dnp::test_teardown_callback EXIT
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
+export PATH="$PATH:${DNP_PATH:?err}"
+
 bash "${DNP_LIB_EXEC_PATH:?err}"/project_validate.slurm.bash ".dockerized_norlab_project/slurm_jobs"
 
 ## ....Teardown.....................................................................................
