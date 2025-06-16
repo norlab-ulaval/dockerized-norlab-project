@@ -2,6 +2,7 @@
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
+export PATH="$PATH:${DNP_PATH:?err}"
 bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
 
 function dnp::test_teardown_callback() {

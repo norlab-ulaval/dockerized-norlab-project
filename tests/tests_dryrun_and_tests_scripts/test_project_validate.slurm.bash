@@ -2,6 +2,7 @@
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
+export PATH="$PATH:${DNP_PATH:?err}"
 bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
 function dnp::test_teardown_callback() {
   exit_code=$?
@@ -14,8 +15,6 @@ trap dnp::test_teardown_callback EXIT
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-export PATH="$PATH:${DNP_PATH:?err}"
-
 bash "${DNP_LIB_EXEC_PATH:?err}"/project_validate.slurm.bash ".dockerized_norlab_project/slurm_jobs"
 
 ## ....Teardown.....................................................................................
