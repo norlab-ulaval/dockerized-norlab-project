@@ -133,6 +133,20 @@ function dnp::project_dotenv_command() {
 }
 EOF
 
+  cat > "${MOCK_DNP_DIR}/src/lib/commands/exec.bash" << 'EOF'
+function dnp::exec_command() {
+  echo "Mock dnp::exec_command called with args: $*"
+  return 0
+}
+EOF
+
+  cat > "${MOCK_DNP_DIR}/src/lib/commands/attach.bash" << 'EOF'
+function dnp::attach_command() {
+  echo "Mock dnp::attach_command called with args: $*"
+  return 0
+}
+EOF
+
   # Create a mock import_dnp_lib.bash that sets up the environment
   cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
 #!/bin/bash
@@ -384,4 +398,114 @@ teardown_file() {
 
   # Should output error message
   assert_output --partial "Unknown command dnp project unknown_subcommand"
+}
+
+@test "dnp exec command › expect exec function to be called" {
+  # Test case: When dnp is called with 'exec' command, it should call the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function
+  assert_output --partial "Mock dnp::exec_command called with args:"
+}
+
+@test "dnp exec command with options › expect options passed to exec function" {
+  # Test case: When dnp is called with 'exec' command and options, it should pass the options to the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec --service project-custom --detach
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function with the options
+  assert_output --partial "Mock dnp::exec_command called with args: --service project-custom --detach"
+}
+
+@test "dnp exec command with command › expect command passed to exec function" {
+  # Test case: When dnp is called with 'exec' command and a command, it should pass the command to the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec -- bash -c 'echo hello'
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function with the command
+  assert_output --partial "Mock dnp::exec_command called with args: -- bash -c echo hello"
+}
+
+@test "dnp attach command › expect attach function to be called" {
+  # Test case: When dnp is called with 'attach' command, it should call the attach function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp attach
+
+  # Should succeed
+  assert_success
+
+  # Should call the attach function
+  assert_output --partial "Mock dnp::attach_command called with args:"
+}
+
+@test "dnp attach command with service option › expect service passed to attach function" {
+  # Test case: When dnp is called with 'attach' command and service option, it should pass the service to the attach function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp attach --service project-custom
+
+  # Should succeed
+  assert_success
+
+  # Should call the attach function with the service
+  assert_output --partial "Mock dnp::attach_command called with args: --service project-custom"
+}
+
+@test "dnp exec command with multiple options › expect all options passed to exec function" {
+  # Test case: When dnp is called with 'exec' command and multiple options, it should pass all options to the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec --service project-custom --workdir /path --env VAR=value --no-TTY
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function with all options
+  assert_output --partial "Mock dnp::exec_command called with args: --service project-custom --workdir /path --env VAR=value --no-TTY"
+}
+
+@test "dnp exec command with short options › expect short options passed to exec function" {
+  # Test case: When dnp is called with 'exec' command and short options, it should pass them to the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec -e VAR=value -w /path -T
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function with the short options
+  assert_output --partial "Mock dnp::exec_command called with args: -e VAR=value -w /path -T"
+}
+
+@test "dnp exec command with options and command › expect options and command passed to exec function" {
+  # Test case: When dnp is called with 'exec' command, options, and a command, it should pass all to the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec --service project-custom --detach -- ls -la
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function with the options and command
+  assert_output --partial "Mock dnp::exec_command called with args: --service project-custom --detach -- ls -la"
+}
+
+@test "dnp exec command with --help option › expect help option passed to exec function" {
+  # Test case: When dnp is called with 'exec' command and --help option, it should pass it to the exec function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp exec --help
+
+  # Should succeed
+  assert_success
+
+  # Should call the exec function with the help option
+  assert_output --partial "Mock dnp::exec_command called with args: --help"
+}
+
+@test "dnp attach command with --help option › expect help option passed to attach function" {
+  # Test case: When dnp is called with 'attach' command and --help option, it should pass it to the attach function
+  run bash "${MOCK_DNP_DIR}"/src/bin/dnp attach --help
+
+  # Should succeed
+  assert_success
+
+  # Should call the attach function with the help option
+  assert_output --partial "Mock dnp::attach_command called with args: --help"
 }

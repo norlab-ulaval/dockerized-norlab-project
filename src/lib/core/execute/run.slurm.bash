@@ -6,21 +6,21 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # Handle stoping the container in case the slurm command `scancel` is issued.
 #
 # Usage:
-#   $ bash run.slurm.bash <sjob-id> [<optional-flag>] [--] <any-python-arg>
+#   $ bash run.slurm.bash <sjob-id> [<optional-flag>] [--] <any-python-args>
 #
 # Optional flag:
 #   --log-name=<name>                                 The log file name without postfix
 #   --log-path=<absolute-path-super-project-root>     The Absolute path to the slurm log directory.
 #                                                     Will be created if it does not exist.
 #   --skip-core-force-rebuild
-#   --hydra-dry-run                                         Dry-run slurm job using registered hydra flag
-#   --register-hydra-dry-run-flag                      Hydra flag used by '--hydra-dry-run'
+#   --hydra-dry-run                                   Dry-run slurm job using registered hydra flag
+#   --register-hydra-dry-run-flag                     Hydra flag used by '--hydra-dry-run'
 #                                                     e.g., "+dev@_global_=math_env_slurm_job_dryrun"
 #   -h | --help
 #
 # Positional argument:
 #   <sjob-id>              (required) Used to ID the docker container, slurm job, optuna study ...
-#   <any-python-arg>       (required) The python command with flags
+#   <any-python-args>      (required) The python command with flags
 #
 # Globals:
 #   read DNP_ROOT
@@ -31,7 +31,7 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: add missing flag options unit-test
 
 
 # ....Script setup.................................................................................
@@ -56,6 +56,9 @@ function dnp::show_help() {
 
 function dnp::run_slurm_teardown_callback() {
   exit_code=$?
+  if [[ ${exit_code} -ne 0 ]]; then
+    n2st::print_msg_error "Container exited with error ${exit_code}"
+  fi
   compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   the_compose_file=docker-compose.project.run.slurm.yaml
   running_container_ids=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
@@ -161,7 +164,7 @@ function dnp::run_slurm() {
   compose_file_path=${dn_project_config_dir}/${compose_file}
 
   # ====Begin======================================================================================
-  if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
+  if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V 2>/dev/null | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
     n2st::print_msg_warning "Host computer does not support nvidia gpu, changing container runtime to docker default."
     the_service="project-slurm-no-gpu"
   else

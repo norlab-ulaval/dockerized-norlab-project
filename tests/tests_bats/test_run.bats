@@ -81,6 +81,26 @@ function dnp::run_slurm() {
 }
 EOF
 
+  # Create mock run.any.bash
+  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/run.any.bash" << 'EOF'
+#!/bin/bash
+# Mock run.any.bash
+function dnp::run_any() {
+  echo "Mock dnp::run_any called with args: $*"
+  return 0
+}
+EOF
+
+  # Create mock up_and_attach.bash
+  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/up_and_attach.bash" << 'EOF'
+#!/bin/bash
+# Mock up_and_attach.bash
+function dnp::up_and_attach() {
+  echo "Mock dnp::up_and_attach called with args: $*"
+  return 0
+}
+EOF
+
   # Create a mock import_dnp_lib.bash that sets up the environment
   cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
 #!/bin/bash
@@ -110,6 +130,11 @@ function dnp::command_help_menu() {
 }
 
 # ....Mock N2ST functions..........................................................................
+function n2st::norlab_splash() {
+  echo "Mock n2st::norlab_splash called with args: $*"
+  return 0
+}
+
 function n2st::print_msg() {
   echo "Mock n2st::print_msg called with args: $*"
   return 0
@@ -122,8 +147,8 @@ function n2st::print_msg_error() {
 
 # ....Mock dnp build function......................................................................
 function dnp() {
-  if [[ "$1" == "build" && "$2" == "--ci-tests" ]]; then
-    echo "Mock dnp build --ci-tests called"
+  if [[ "$1" == "build" && "$2" == "ci-tests" ]]; then
+    echo "Mock dnp build ci-tests called"
     return 0
   fi
   echo "Mock dnp called with args: $*"
@@ -214,7 +239,7 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dnp build --ci-tests called"
+  assert_output --partial "Mock dnp build ci-tests called"
   assert_output --partial "Mock dnp::run_ci_tests called with args:"
 }
 
@@ -227,7 +252,7 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dnp build --ci-tests called"
+  assert_output --partial "Mock dnp build ci-tests called"
   assert_output --partial "Mock dnp::run_ci_tests called with args: --arg1 --arg2"
 }
 
@@ -276,6 +301,78 @@ teardown_file() {
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running slurm containers..."
   assert_output --partial "Mock dnp::run_slurm called with args: --help"
+}
+
+@test "dnp::run_command with develop › expect develop service to be called" {
+  # Test case: When run command is called with develop, it should call dnp::run_any with project-develop service
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/run.bash && dnp::run_command develop"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Mock n2st::print_msg called with args: Running develop containers..."
+  assert_output --partial "Mock dnp::run_any called with args: --service project-develop"
+}
+
+@test "dnp::run_command with develop and command › expect command passed to run_any" {
+  # Test case: When run command is called with develop and a command, it should pass it to dnp::run_any
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/run.bash && dnp::run_command develop -- ls -la"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Mock n2st::print_msg called with args: Running develop containers..."
+  assert_output --partial "Mock dnp::run_any called with args: --service project-develop -- ls -la"
+}
+
+@test "dnp::run_command with develop and multiple options › expect all options passed to run_any" {
+  # Test case: When run command is called with develop and multiple options, it should pass them all to dnp::run_any
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/run.bash && dnp::run_command develop -e VAR1=value1 -e VAR2=value2 -w /workdir -T -v /host:/container --detach -- ls -la"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Mock n2st::print_msg called with args: Running develop containers..."
+  assert_output --partial "Mock dnp::run_any called with args: --service project-develop -e VAR1=value1 -e VAR2=value2 -w /workdir -T -v /host:/container --detach -- ls -la"
+}
+
+@test "dnp::run_command with deploy › expect deploy service to be called" {
+  # Test case: When run command is called with deploy, it should call dnp::run_any with project-deploy service
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/run.bash && dnp::run_command deploy"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Mock n2st::print_msg called with args: Running deploy containers..."
+  assert_output --partial "Mock dnp::run_any called with args: --service project-deploy"
+}
+
+@test "dnp::run_command with deploy and command › expect command passed to run_any" {
+  # Test case: When run command is called with deploy and a command, it should pass it to dnp::run_any
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/run.bash && dnp::run_command deploy -- ls -la"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Mock n2st::print_msg called with args: Running deploy containers..."
+  assert_output --partial "Mock dnp::run_any called with args: --service project-deploy -- ls -la"
+}
+
+@test "dnp::run_command with deploy and options › expect options passed to run_any" {
+  # Test case: When run command is called with deploy and options, it should pass them to dnp::run_any
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/run.bash && dnp::run_command deploy -e VAR=value -w /workdir"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Mock n2st::print_msg called with args: Running deploy containers..."
+  assert_output --partial "Mock dnp::run_any called with args: --service project-deploy -e VAR=value -w /workdir"
 }
 
 @test "dnp::run_command with unknown service › expect error message and help menu" {

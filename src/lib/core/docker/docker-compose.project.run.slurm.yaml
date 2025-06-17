@@ -5,13 +5,14 @@ services:
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-slurm:${PROJECT_TAG:?err}
     environment:
       # SJOB_ID: ${SJOB_ID}
+      IS_SLURM_RUN: ${IS_SLURM_RUN}
+      # (CRITICAL) ToDo: validate deleting env var DN_PROJECT_USER (ref task NMO-696)
+      # DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_HOST: 'linux/x86'
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}-slurm${SJOB_ID}
-      DN_ENTRYPOINT_TRACE_EXECUTION: false
-      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
-      DN_ACTIVATE_POWERLINE_PROMT: true
+      DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
+      DN_ACTIVATE_POWERLINE_PROMT: false
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      IS_SLURM_RUN: ${IS_SLURM_RUN}
       # Use CUDA_VISIBLE_DEVICES instead of  NVIDIA_VISIBLE_DEVICES and NVIDIA_DRIVER_CAPABILITIES
       #  as the slurm server automatically assign gpu id per job
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}

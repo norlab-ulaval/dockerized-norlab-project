@@ -165,6 +165,12 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
   assert_file_not_contains "docker-compose.project.run.slurm.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
+@test "check dev configs are muted in docker-compose.project.run.ci-tests.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.project.run.ci-tests.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.project.run.ci-tests.yaml"
+  assert_file_not_contains "docker-compose.project.run.ci-tests.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+}
+
 # ....dotenv tests.................................................................................
 @test "check dev configs in .env.dnp | DN_GIT_BRANCH=dev › expect pass" {
   helper::setup_dotenv_related_tests '.env.dnp' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH2}"

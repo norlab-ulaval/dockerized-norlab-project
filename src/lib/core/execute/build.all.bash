@@ -12,12 +12,13 @@ DOCUMENTATION_BUILD_ALL=$(
 #   $ bash build.all.bash [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Arguments:
-#   --force-push-project-core             Build images from the local image store.
 #   --service-names "<name1>,<name2>"     Override the list of build services.
 #                                         Must be a comma separated string of service name.
 #   -f | --file "compose.yaml"            Override the docker compose file
 #                                         (default: "docker-compose.project.build.native.yaml")
 #   --multiarch                           Build in multi-architecture mode
+#   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
+#                                          (instead of building images from the local image store).
 #   --msg-line-level                      Set consol horizontal line character when used as a fct
 #   -h | --help
 #

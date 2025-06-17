@@ -17,9 +17,10 @@
 #   instead of at build time.
 #
 # =================================================================================================
+# Note: force push project core is set to false by default
+
 build_all_flag=()
 build_all_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
-# Note: force push project core is set to false by default
 
 # ....Path resolution..............................................................................
 script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"

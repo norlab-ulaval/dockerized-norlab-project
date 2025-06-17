@@ -225,9 +225,9 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_services called with args: --force-push-project-core"
 }
 
-@test "dnp::build_command with --develop › expect develop images only" {
-  # Test case: When build command is called with --develop, it should build develop images only
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --develop"
+@test "dnp::build_command with develop service › expect develop images only" {
+  # Test case: When build command is called with develop service, it should build develop images only
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop"
 
   # Should succeed
   assert_success
@@ -237,9 +237,9 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-develop"
 }
 
-@test "dnp::build_command with --ci-tests › expect CI tests images only" {
-  # Test case: When build command is called with --ci-tests, it should build CI tests images only
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --ci-tests"
+@test "dnp::build_command with ci-tests service › expect CI tests images only" {
+  # Test case: When build command is called with ci-tests service, it should build CI tests images only
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command ci-tests"
 
   # Should succeed
   assert_success
@@ -249,9 +249,9 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
-@test "dnp::build_command with --slurm › expect slurm images only" {
-  # Test case: When build command is called with --slurm, it should build slurm images only
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --slurm"
+@test "dnp::build_command with slurm service › expect slurm images only" {
+  # Test case: When build command is called with slurm service, it should build slurm images only
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command slurm"
 
   # Should succeed
   assert_success
@@ -261,9 +261,9 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
-@test "dnp::build_command with --deploy › expect deploy images only" {
-  # Test case: When build command is called with --deploy, it should build deploy images only
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --deploy"
+@test "dnp::build_command with deploy service › expect deploy images only" {
+  # Test case: When build command is called with deploy service, it should build deploy images only
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command deploy"
 
   # Should succeed
   assert_success
@@ -273,40 +273,40 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_project_deploy_service called with args:"
 }
 
-@test "dnp::build_command with --deploy --push-deploy-image › expect deploy images with push" {
-  # Test case: When build command is called with --deploy --push-deploy-image, it should build and push deploy images
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --deploy --push-deploy-image"
+@test "dnp::build_command with deploy service and --push › expect deploy images with push" {
+  # Test case: When build command is called with deploy service and --push, it should build and push deploy images
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command deploy --push"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
   assert_output --partial "deploy images (native) build"
-  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --push-deploy-image"
+  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --push"
 }
 
-@test "dnp::build_command with --push-deploy-image without --deploy › expect error" {
-  # Test case: When build command is called with --push-deploy-image without --deploy, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --push-deploy-image"
+@test "dnp::build_command with --push without deploy service › expect error" {
+  # Test case: When build command is called with --push without deploy service, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --push"
 
   # Should fail
   assert_failure
 
   # Should output the error message
   assert_output --partial "Mock dnp::illegal_command_msg called with args: build"
-  assert_output --partial "The --push-deploy-image flag can only be used in combination with --deploy"
+  assert_output --partial "The --push flag can only be used with SERVICE=deploy"
 }
 
-@test "dnp::build_command with --multiarch --deploy › expect error" {
-  # Test case: When build command is called with --multiarch --deploy, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch --deploy"
+@test "dnp::build_command with --multiarch --push and deploy service › expect error" {
+  # Test case: When build command is called with --multiarch --push and deploy service, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch --push deploy"
 
   # Should fail
   assert_failure
 
   # Should output the error message
   assert_output --partial "Mock dnp::illegal_command_msg called with args: build"
-  assert_output --partial "The build multiarch deploy image feature is not released yet"
+  assert_output --partial "The build and push multiarch deploy image feature is not released yet"
 }
 
 @test "dnp::build_command with --multiarch --force-push-project-core › expect multiarch build with force push" {
@@ -368,9 +368,9 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_services called with args: --no-cache --pull"
 }
 
-@test "dnp::build_command with --develop --multiarch › expect multiarch develop images" {
-  # Test case: When build command is called with --develop --multiarch, it should build multiarch develop images
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --develop --multiarch"
+@test "dnp::build_command with develop service and --multiarch › expect multiarch develop images" {
+  # Test case: When build command is called with develop service and --multiarch, it should build multiarch develop images
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch develop"
 
   # Should succeed
   assert_success
@@ -378,4 +378,28 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "develop images (multiarch) build"
   assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core --service-names project-core,project-develop"
+}
+
+@test "dnp::build_command with multiple services › expect error" {
+  # Test case: When build command is called with multiple services, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop ci-tests"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: build"
+  assert_output --partial "Only one SERVICE can be specified"
+}
+
+@test "dnp::build_command with unknown service › expect error" {
+  # Test case: When build command is called with an unknown service, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command unknown-service"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: build"
+  assert_output --partial "Unknown SERVICE: unknown-service. Valid services are: ci-tests, deploy, develop, slurm"
 }

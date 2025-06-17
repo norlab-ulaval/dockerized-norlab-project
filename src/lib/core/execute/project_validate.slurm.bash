@@ -110,9 +110,6 @@ function dnp::project_validate_slurm() {
   for each_file_path in "${SUPER_PROJECT_ROOT:?err}"/"${slurm_script_job_path}"/slurm_job.*.bash ; do
     each_file_name="$(basename $each_file_path)"
     slurm_job_file_name+=("$each_file_name")
-  #  if [[ "${each_file_name}" != "slurm_job.dryrun.bash" ]] && [[ "${each_file_name}" != "slurm_job.template.bash" ]]; then
-  #    slurm_job_file_name+=("$each_file_name")
-  #  fi
   done
 
   n2st::print_msg "Will dry-run the following slurm job files:"

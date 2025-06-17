@@ -1,40 +1,17 @@
 #!/bin/bash
-# lib/commands/up.bash
+# lib/commands/attach.bash
 
-DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
+DOCUMENTATION_BUFFER_Attach=$( cat <<'EOF'
 # =================================================================================================
-# Start and attach to a DNP containers. Optionaly execute command and arguments in container.
-#
-# Notes:
-#   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'.
-#   • device and architecture specific docker-compose config are automaticaly
-#     selected at runtime.
-#   • service(s) are started in daemon mode so that when you exit the attached
-#     container, it keep running in the bachground.
-#     This equivalent to 'docker compose up --detach && docker compose attach'.
+# Attach to a running DNP containers
 #
 # Usage:
-#   $ dnp up [OPTIONS] [-- COMMAND [ARGS...]]
+#   $ dnp attach [OPTIONS]
 #
-# Example:
-#   $ dnp up --workdir "/" -- bash -c 'tree -L 1 -a $(pwd)'
-#
-# Start options:
+# Options:
 #   --service SERVICE        The service to attach once up (Default: develop)
 #                            Service: develop, deploy, ...
-#   --no-attach              Don't attach to started containeror
-#                             (not compatible with 'execute options')
 #   -h | --help
-#
-# Execute options:
-#   -e, --env stringArray    Set container environment variables
-#   -w, --workdir string     Override path to workdir directory
-#   -T, --no-TTY             Disable pseudo-TTY allocation
-#   --detach                 Execute COMMAND in the background
-#   --dry-run                (Require --detach flag)
-#
-# Positional argument:
-#   command & arguments    Any command to be executed inside the docker container (default: bash)
 #
 # =================================================================================================
 EOF
@@ -48,23 +25,28 @@ test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error
 test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-function dnp::up_command() {
-    local remaining_args=()
+function dnp::attach_command() {
+    declare -a docker_compose_exec_flag=()
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_UP}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_Attach}"
                 exit 0
                 ;;
-            --no-up)
-                dnp::illegal_command_msg "up" "--no-up" "Its a dnp internal flag"
+            --service)
+                docker_compose_exec_flag+=("$1" "$2")
+                shift
+                shift
+                ;;
+            --no-attach)
+                dnp::illegal_command_msg "attach" "--no-attach" "Its a dnp internal flag"
                 exit 1
                 ;;
             *)
-                remaining_args+=("$@")
-                break
+                dnp::illegal_command_msg "attach" "$*"
+                exit 1
                 ;;
         esac
     done
@@ -77,7 +59,7 @@ function dnp::up_command() {
     source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
 
     # ....Begin....................................................................................
-    dnp::up_and_attach "${remaining_args[@]}"
+    dnp::up_and_attach --no-up "${docker_compose_exec_flag[@]}"
     fct_exit_code=$?
     if [[ ${fct_exit_code} -eq 0 ]]; then
       n2st::print_msg "Detached. ${MSG_DIMMED_FORMAT}Container ${DN_CONTAINER_NAME} is running in background${MSG_END_FORMAT}"

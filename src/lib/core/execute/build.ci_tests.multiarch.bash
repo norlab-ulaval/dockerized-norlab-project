@@ -15,14 +15,15 @@
 #     2. the test image and its dependent images are rebuild;
 #     3. tests are executed on both x86 and arm64 architecture.
 #
+
 # =================================================================================================
-add_docker_flag=()
-add_docker_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+build_all_flag=()
+build_all_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
 
 # ....Path resolution..............................................................................
 script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
 script_path_parent="$(dirname "${script_path}")"
 
 # ====Begin========================================================================================
-bash "${script_path_parent}"/build.all.multiarch.bash "${add_docker_flag[@]}" "$@"
+bash "${script_path_parent}"/build.all.multiarch.bash "${build_all_flag[@]}" "$@"
 exit $?

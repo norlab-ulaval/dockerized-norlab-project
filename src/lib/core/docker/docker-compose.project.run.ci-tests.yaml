@@ -1,0 +1,53 @@
+
+services:
+
+  project-ci-tests:
+    pull_policy: never # (Priority) ToDo: validate >> pull_policy: never
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
+    environment:
+      # -----------
+      PYTHONUNBUFFERED: 0 # Slightly faster
+      DISPLAY: "" # Keep unset
+      # -----------
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # DN_HOST: 'linux/x86'
+      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
+      DN_ACTIVATE_POWERLINE_PROMT: false
+      DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
+      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+      NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
+      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
+      NVIDIA_DRIVER_CAPABILITIES: all
+      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
+      QT_X11_NO_MITSHM: 1
+      XAUTHORITY: /tmp/.docker.xauth
+    env_file:
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
+        required: true
+      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
+        required: true
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
+        required: false
+    privileged: true
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    cap_add:
+      - SYS_PTRACE
+      - SYS_NICE
+    ulimits:  # Real-Time related: See https://github.com/2b-t/docker-realtime?tab=readme-ov-file
+      rtprio: 99
+      rttime: -1 # corresponds to 'unlimited'
+      memlock: 8428281856
+    pid: host
+    ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
+    init: true  # Propagate exit code (See remark in task NMO-266)
+    runtime: nvidia
+
+  project-ci-tests-no-gpu:
+    extends:
+      service: project-ci-tests
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
+    runtime: !reset []
