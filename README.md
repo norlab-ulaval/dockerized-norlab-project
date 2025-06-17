@@ -29,7 +29,7 @@
 
 [//]: # ( ==== Description =========================================== ) 
 [//]: # (TODO: Change the description)
-**The user side companion of [Dockerized-NorLab(DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main).**
+**The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main).**
 
 It provide a containerized workflow tailor-made for robotic research. <br>
 DNP handle the building and instanciation of DN container with functionality for <br> 
@@ -68,10 +68,16 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 
 [//]: # ( ==== Body ================================================== ) 
 
+## What it does:
 
-![dnp_splash.png](visual/dnp_splash.png)
+- Provide a containerized environment for robotic development, deployment, testing, continuous integration, running slurm jobs and source code release.
+- Design to support both local and remote workflow, i.e, personal workstation, remote embed computer, server.
+- Run on `l4t/arm64` (jetson), `darwin/arm64` (Mac OsX) and `linux/x86` whitout configuration change.
+- Support ROS2 out of the box.
+- Provide GPU support through nvidia-docker for both `l4t/arm64` and `linux/x86`.
+- Project configuration made easy whitout hidding _docker_ and _docker compose_ logic. 
 
-### Getting started
+## Getting started
 
 ```shell
 # Clone repository
@@ -82,8 +88,12 @@ bash install.bash
 # Check install option with $ bash install.bash --help 
 
 # Check available commands
-dnp help
+dnp 
+```
 
+![dnp_splash.png](visual/dnp_splash.png)
+
+```shell
 # To initialize DNP in a project repository (must be git initialized)
 cd <path/to/your/git/project>
 dnp init
@@ -93,10 +103,10 @@ dnp build
 dnp up
 
 # When your done 
-dnp down 
+dnp down
 ```
 
-### For beta tester or just to dry-run DNP in an throwaway project
+## For beta tester or just to dry-run DNP in an throwaway project
 ```shell
 # CLone dockerized-norlab-project-mock-EMPTY
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git

@@ -6,13 +6,6 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #                                  Dockerized-NorLab-Project (DNP)
 #                         A tool for managing Docker-based robotic projects
 #
-# What it does:
-# • Provide a containerized environment for development, deployment, continuous integration, slurm jobs and source code release.
-# • Design to support both local and remote workflow.
-# • Run on l4t/arm64 (jetson), darwin/arm64 (Mac OsX) and linux/x86.
-# • GPU support through nvidia-docker for both l4t/arm64 and linux/x86.
-# • ROS2 ready out of the box.
-#
 # Usage:
 #   $ dnp COMMAND [OPTIONS]
 #
