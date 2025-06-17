@@ -94,7 +94,7 @@ dnp
 ![dnp_splash.png](visual/dnp_splash.png)
 
 ```shell
-# To initialize DNP in a project repository (must be git initialized)
+# To DNP-initialize a project repository (must be git initialized)
 cd <path/to/your/git/project>
 dnp init
 
