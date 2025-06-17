@@ -4,7 +4,6 @@
 # ....Plan staging and drafts......................................................................
 # This directory is a staging area for proposed plan
 /.junie/junie_proposed_solution_staging/*
-/.junie/plans/*
 /.junie/scratch.md
 
 # ....Dockerized-NorLab-Project rlated.............................................................

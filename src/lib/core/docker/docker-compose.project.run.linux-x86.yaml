@@ -103,3 +103,4 @@ services:
       - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
