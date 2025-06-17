@@ -8,7 +8,7 @@
 #
 # Positional argument:
 #   <slurm/job/dir/path>     (Optional) The path to the directory containing the slurm job scripts.
-#                            Default to ".dockerized_norlab_project/slurm_jobs"
+#                            Default to "slurm_jobs/"
 #
 # Globals:
 #   read SUPER_PROJECT_ROOT
@@ -17,7 +17,7 @@
 
 
 function dnp::project_validate_slurm() {
-  local slurm_script_job_path="${1:-".dockerized_norlab_project/slurm_jobs"}"
+  local slurm_script_job_path="${1:-"slurm_jobs"}"
 
   # ....Validate user argument.......................................................................
   if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" ]]; then
