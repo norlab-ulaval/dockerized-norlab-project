@@ -144,6 +144,21 @@ function n2st::print_formated_script_footer() {
   return 0
 }
 
+function n2st::print_msg_error() {
+  echo "Mock n2st::print_msg_error called with args: $*"
+  return 0
+}
+
+# ....Mock DNP network functions...................................................................
+function dnp::is_online() {
+  # Default to online unless MOCK_OFFLINE is set
+  if [[ "${MOCK_OFFLINE:-false}" == "true" ]]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
   export -f "$func"
@@ -403,4 +418,112 @@ teardown_file() {
   # Should output the error message
   assert_output --partial "Mock dnp::illegal_command_msg called with args: build"
   assert_output --partial "Unknown SERVICE: unknown-service. Valid services are: ci-tests, deploy, develop, slurm"
+}
+
+@test "dnp::build_command when offline › expect error" {
+  # Test case: When build command is called while offline, it should show an error message
+  # Mock offline state by setting MOCK_OFFLINE environment variable
+  run bash -c "export MOCK_OFFLINE=true && source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message about being offline
+  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently, offline. Executing dnp build require internet connection."
+}
+
+@test "dnp::build_command when offline with service › expect error" {
+  # Test case: When build command is called with a service while offline, it should show an error message
+  # Mock offline state by setting MOCK_OFFLINE environment variable
+  run bash -c "export MOCK_OFFLINE=true && source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message about being offline
+  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently, offline. Executing dnp build require internet connection."
+}
+
+@test "dnp::build_command when offline with options › expect error" {
+  # Test case: When build command is called with options while offline, it should show an error message
+  # Mock offline state by setting MOCK_OFFLINE environment variable
+  run bash -c "export MOCK_OFFLINE=true && source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message about being offline
+  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently, offline. Executing dnp build require internet connection."
+}
+
+@test "dnp::build_command with ci-tests service and --multiarch › expect multiarch CI tests images" {
+  # Test case: When build command is called with ci-tests service and --multiarch, it should build multiarch CI tests images
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch ci-tests"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "CI tests images (multiarch) build"
+  assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+}
+
+@test "dnp::build_command with slurm service and --multiarch › expect multiarch slurm images" {
+  # Test case: When build command is called with slurm service and --multiarch, it should build multiarch slurm images
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch slurm"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "slurm images (multiarch) build"
+  assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+}
+
+@test "dnp::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
+  # Test case: When build command is called with ci-tests service and --online-build, it should build CI tests images with force push
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --online-build ci-tests"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "CI tests images (native) build"
+  assert_output --partial "Mock dnp::build_services called with args: --force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+}
+
+@test "dnp::build_command with slurm service and --online-build › expect slurm images with force push" {
+  # Test case: When build command is called with slurm service and --online-build, it should build slurm images with force push
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --online-build slurm"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "slurm images (native) build"
+  assert_output --partial "Mock dnp::build_services called with args: --force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+}
+
+@test "dnp::build_command with develop service and -- docker args › expect develop images with docker args" {
+  # Test case: When build command is called with develop service and docker arguments, it should pass them to the build function
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop -- --no-cache --pull"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "develop images (native) build"
+  assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-develop --no-cache --pull"
+}
+
+@test "dnp::build_command with deploy service and -- docker args › expect deploy images with docker args" {
+  # Test case: When build command is called with deploy service and docker arguments, it should pass them to the build function
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command deploy -- --no-cache --pull"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "deploy images (native) build"
+  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --no-cache --pull"
 }
