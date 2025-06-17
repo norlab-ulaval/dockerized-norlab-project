@@ -40,7 +40,7 @@ function dnp::config_command() {
     local platform=""
     local help=false
 
-    declare -a remaining_args
+    declare -a remaining_args=()
 
     n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dnp config MODE${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
 

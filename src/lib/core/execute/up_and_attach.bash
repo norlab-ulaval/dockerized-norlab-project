@@ -54,9 +54,9 @@ function dnp::up_and_attach() {
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a remaining_args
-  declare -a interactive_login
-  declare -a docker_compose_exec_flag
+  declare -a remaining_args=()
+  declare -a interactive_login=()
+  declare -a docker_compose_exec_flag=()
   local the_service=develop
   local no_attach=false
   local no_up=false

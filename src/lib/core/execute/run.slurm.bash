@@ -90,8 +90,8 @@ function dnp::run_slurm() {
 
   # ....Set env variables (pre cli)................................................................
   # Script locals env var
-  declare -a python_arg
-  declare -a registered_hydra_dryrun_flag
+  declare -a python_arg=()
+  declare -a registered_hydra_dryrun_flag=()
   declare log_name
   declare log_path
   declare dry_run_slurm_job

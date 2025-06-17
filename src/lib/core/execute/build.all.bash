@@ -40,13 +40,13 @@ function dnp::build_services() {
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli))...............................................................
-  local remaining_args=()
-  local build_exit_code=()
-  local services_names=("none")
+  declare -a remaining_args=()
+  declare -a build_exit_code=()
+  declare -a build_docker_flag=()
+  declare -a services_names=("none")
   local force_push_project_core=false
   local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
-  local build_docker_flag=()
   local msg_line_level=$MSG_LINE_CHAR_BUILDER_LVL1
 
   # ....cli........................................................................................

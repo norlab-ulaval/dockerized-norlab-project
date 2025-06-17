@@ -29,13 +29,13 @@ function dnp::project_validate_slurm() {
   pushd "$(pwd)" >/dev/null || exit 1
   # Note: Keep the pushd/popd logic for now
 
-  declare -a config_test_compose_file_list
-  declare -a dryrun_compose_file_list
-  declare -a config_test_exit_code
-  declare -a build_test_exit_code
-  declare -a slurm_job_dryrun_exit_code
-  declare -a slurm_job_file_name
-  declare -a slurm_job_flags
+  declare -a config_test_compose_file_list=()
+  declare -a dryrun_compose_file_list=()
+  declare -a config_test_exit_code=()
+  declare -a build_test_exit_code=()
+  declare -a slurm_job_dryrun_exit_code=()
+  declare -a slurm_job_file_name=()
+  declare -a slurm_job_flags=()
 
   # ....Config test..................................................................................
   n2st::print_msg "Begin config test"

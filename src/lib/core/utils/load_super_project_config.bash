@@ -144,7 +144,7 @@ function dnp::cd_to_dnp_super_project_root() {
 
     local current_working_dir
     local initial_working_dir
-    declare -a current_working_dir_trace
+    declare -a current_working_dir_trace=()
     initial_working_dir=$(pwd)
     current_working_dir="$initial_working_dir"
 

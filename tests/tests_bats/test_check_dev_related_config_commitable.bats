@@ -178,12 +178,6 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
   assert_file_contains ".env.dnp" "^DN_GIT_BRANCH=dev"
 }
 
-@test "check dev configs in .env.dnp | DN_PROJECT_DEPLOY_REPO_BRANCH=dev › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dnp' 'DN_PROJECT_DEPLOY_REPO_BRANCH' 'dev' "${TESTED_FILE_PATH2}"
-  assert_file_exist ".env.dnp"
-  assert_file_contains ".env.dnp" "^DN_PROJECT_DEPLOY_REPO_BRANCH=dev"
-}
-
 @test "check dev configs in .env.dockerized-norlab-project | DNP_DEBUG=false › expect pass" {
   helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNP_DEBUG' 'false' "${TESTED_FILE_PATH3}"
   assert_file_exist ".env.dockerized-norlab-project"

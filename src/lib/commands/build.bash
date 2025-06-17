@@ -111,8 +111,8 @@ function dnp::build_command() {
     fi
 
     # ....Set env variables (post cli).............................................................
-    declare -a build_flag
-    declare -a deploy_flag
+    declare -a build_flag=()
+    declare -a deploy_flag=()
     # build_flag+=("--msg-line-level" " ")
 
     local architecture="native"

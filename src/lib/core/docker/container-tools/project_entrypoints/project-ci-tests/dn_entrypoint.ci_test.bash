@@ -75,7 +75,7 @@ n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_UTIL}"
 echo -e "${MSG_END_FORMAT}"
 
 # ====Execute tests================================================================================
-declare -a exit_codes
+declare -a exit_codes=()
 test -d "${DN_PROJECT_SERVICE_DIR:?err}/test_jobs" || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} ${DN_PROJECT_SERVICE_DIR:?err}/test_jobs is unreachable" && exit 1 ; }
 for each_file_path in "${DN_PROJECT_SERVICE_DIR}"/test_jobs/run_ci_tests.*.bash ; do
   n2st::print_formated_script_header "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"

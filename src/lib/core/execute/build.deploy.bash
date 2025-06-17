@@ -37,7 +37,8 @@ function dnp::build_project_deploy_service() {
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a remaining_args
+  declare -a remaining_args=()
+  declare -a build_docker_flag=()
   local push_deploy_image=false
 
   # ....cli........................................................................................
@@ -47,6 +48,10 @@ function dnp::build_project_deploy_service() {
       --push)
         push_deploy_image=true
         shift # Remove argument (--push)
+        ;;
+      --multiarch)
+        build_docker_flag+=("--multiarch")
+        shift # Remove argument (--multiarch)
         ;;
       -h | --help)
         clear
@@ -60,6 +65,7 @@ function dnp::build_project_deploy_service() {
     esac
 
   done
+
 
   # ....Set env variables (post cli)...............................................................
   if [[ ${push_deploy_image} == true ]]; then

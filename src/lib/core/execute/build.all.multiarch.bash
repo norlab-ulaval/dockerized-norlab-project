@@ -39,8 +39,8 @@ function dnp::build_services_multiarch() {
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a dnp_build_all_args
-  declare -a remaining_args
+  declare -a dnp_build_all_args=()
+  declare -a remaining_args=()
   local force_push_project_core=true
   local the_compose_file="docker-compose.project.build.multiarch.yaml"
 

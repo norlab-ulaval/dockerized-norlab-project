@@ -13,10 +13,10 @@ function dnp::project_validate_all() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  declare -a config_test_compose_file_list
-  declare -a dryrun_compose_file_list
-  declare -a config_test_exit_code
-  declare -a build_test_exit_code
+  declare -a config_test_compose_file_list=()
+  declare -a dryrun_compose_file_list=()
+  declare -a config_test_exit_code=()
+  declare -a build_test_exit_code=()
 
   # ....Config test..................................................................................
   n2st::print_msg "Begin config test"
