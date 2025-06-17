@@ -33,7 +33,7 @@ DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 # Notes about slurm run:
 #   To launch job on slurm/mamba server, prefer directly executing custom slurm script with
 #   enviroment variable header. See example 'slurm_job.*template.bash' and 'slurm_job.dryrun.bash'
-#   in '.dockerized_norlab_project/slurm_jobs/' directory.
+#   in 'slurm_jobs/' directory.
 #
 # =================================================================================================
 EOF

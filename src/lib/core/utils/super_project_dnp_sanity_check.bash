@@ -62,6 +62,7 @@ function dnp::check_super_project_dir_structure() {
   test -d ".dockerized_norlab_project" || n2st::print_msg_error_and_exit "'.dockerized_norlab_project' is not installed at super-project repository root as required!"
   test -d "src/" || n2st::print_msg_error_and_exit "The 'src' directory is not installed at super-project repository root as required!"
   test -d "tests/" || n2st::print_msg_error_and_exit "The 'tests' directory is not installed at super-project repository root as required!"
+  test -d "slurm_jobs/" || n2st::print_msg_error_and_exit "The 'slurm_jobs/' directory is not installed as required!"
   test -d "external_data/" || n2st::print_msg_error_and_exit "The 'external_data' directory is not installed at super-project repository root as required!"
   test -d "artifact/" || n2st::print_msg_error_and_exit "The 'artifact' directory is not installed at super-project repository root as required!"
   test -d "artifact/optuna_storage/" || n2st::print_msg_error_and_exit "The 'optuna_storage' directory is not installed in the super-project 'artifact/' directory as required!"
@@ -74,7 +75,6 @@ function dnp::check_dockerized_project_configuration_dir_structure() {
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "configuration/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/configuration/' directory is not installed as required!"
   test -d "dn_container_env_variable/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/dn_container_env_variable/' directory is not installed as required!"
-  test -d "slurm_jobs/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/slurm_jobs/' directory is not installed as required!"
 }
 
 function dnp::check_project_configuration() {
