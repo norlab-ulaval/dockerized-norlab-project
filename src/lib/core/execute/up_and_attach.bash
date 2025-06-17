@@ -6,14 +6,22 @@ DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 # the terminal and it will keep running in the background.
 #
 # Usage:
-#   $ bash up_and_attach.bash [--service <theService>]  [--] [<command&arguments>]
+#   $ bash up_and_attach.bash [OPTIONS] [-- COMMAND [ARGS...]]
 #
-# Arguments:
-#   --service                The service to attach once up (Default: project-develop)
+# Options:
+#   --service SERVICE        The service to attach once up (Default: develop)
+#                            Service: develop, deploy, ...
+#   --no-attach              Don't attach to started container. Won't execute COMMAND
+#   --no-up                  Don't start container, only attach
+#   -e, --env stringArray    Set container environment variables
+#   -w, --workdir string     Override path to workdir directory
+#   -T, --no-TTY             Disable pseudo-TTY allocation
+#   --detach                 Execute COMMAND in the background
+#   --dry-run                (Require --detach flag)
 #   -h | --help
 #
 # Positional argument:
-#   <command&arguments>      Any command to be executed inside the docker container (default: bash)
+#   command & arguments    Any command to be executed inside the docker container (default: bash)
 #
 # Globals:
 #   read DNP_ROOT
@@ -48,7 +56,10 @@ function dnp::up_and_attach() {
   # ....Set env variables (pre cli)................................................................
   declare -a remaining_args
   declare -a interactive_login
-  local the_service=project-develop
+  declare -a docker_compose_exec_flag
+  local the_service=develop
+  local no_attach=false
+  local no_up=false
 
   # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
   # ToDo: assess if moving to DN `dn_entrypoint.attach.bash` and `dn_entrypoint.init.bash` for all services woud be better.
@@ -60,23 +71,45 @@ function dnp::up_and_attach() {
     case $1 in
       --service)
         the_service="${2}"
-        shift # Remove argument (--service)
-        shift # Remove argument value
+        shift
+        shift
+        ;;
+      --no-attach)
+        no_attach=true
+        shift
+        ;;
+      --no-up)
+        no_up=true
+        shift
         ;;
       -h | --help)
         clear
         show_help
         exit
         ;;
-      --) # no more option
+      --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
+        docker_compose_exec_flag+=("$1")
+        if [[ ${1} == "--dry-run" ]]; then
+          docker_compose_exec_flag+=("--detach")
+        fi
+        shift
+        ;;
+      -e|--env|-w|--workdir) # Assume its a docker compose flag
+        docker_compose_exec_flag+=("$1" "$2")
+        shift
+        shift
+        ;;
+      --) # Imply its command & arguments
         shift
         remaining_args=( "$@" )
+        if [[ ${no_attach} == true ]]; then
+          n2st::print_msg_warning "Be advised, ${MSG_DIMMED_FORMAT}--no-attach${MSG_END_FORMAT} imply that ${MSG_DIMMED_FORMAT}${remaining_args[*]}${MSG_END_FORMAT} won't be executed!\nUse ${MSG_DIMMED_FORMAT}--detach${MSG_END_FORMAT} if your intention is to run COMMAND in the background."
+        fi
         unset interactive_login
         break
         ;;
-      *) # Default case
-        remaining_args=("$@")
-        unset interactive_login
+      *) # Base case
+        remaining_args=( "$@" )
         break
         ;;
     esac
@@ -90,6 +123,14 @@ function dnp::up_and_attach() {
   local display_device=""
   local up_exit_code
   local exec_exit_code
+
+  local service_flag_options=("deploy" "develop")
+  for each in "${service_flag_options[@]}" ; do
+    if [[ "${the_service}" == "${each}" ]]; then
+      the_service="project-${the_service}"
+      break
+    fi
+  done
 
   # ====Begin======================================================================================
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -178,28 +219,41 @@ function dnp::up_and_attach() {
     n2st::print_msg_error_and_exit "Support for current host not implemented yet!"
   fi
 
-  n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
+  #n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
 
   # ....Start docker container.....................................................................
   n2st::set_is_teamcity_run_environment_variable
   print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
 
-  n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-  # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  if [[ ${no_up} != true ]]; then
+    n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
+    # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  fi
+
+  if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then
+    export _THE_COMPOSE_FILE="${the_compose_file}"
+    export _THE_SERVICE="${the_service}"
+    return 0
+  fi
 
   # (CRITICAL) ToDo: see newly added container name related implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash
   if [[ $(docker compose -f "${compose_path}/${the_compose_file}" ps --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME:?err} ${the_service} running" ]]; then
 
-    n2st::print_msg "Service ${MSG_DIMMED_FORMAT}${the_service}${MSG_END_FORMAT} is already running"
-    up_exit_code=0
+    if [[ ${no_up} != true ]]; then
+      n2st::print_msg "Service ${MSG_DIMMED_FORMAT}${the_service}${MSG_END_FORMAT} is already running"
+      up_exit_code=0
+    fi
 
     if [[ ${IS_TEAMCITY_RUN} == true ]]; then
       # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
       n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
+    elif [[ ${no_attach} == true ]]; then
+      :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
       declare -a docker_exec_no_up=("exec")
       docker_exec_no_up+=("${interactive_login[@]}")
+      docker_exec_no_up+=("${docker_compose_exec_flag[@]}")
       docker_exec_no_up+=("${the_service}")
       docker_exec_no_up+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.attach.bash")
       docker_exec_no_up+=("${docker_exec_cmd_and_args[@]}")
@@ -208,7 +262,7 @@ function dnp::up_and_attach() {
       exec_exit_code=$?
     fi
 
-  else
+  elif [[ ${no_up} != true ]]; then
 
     # . . Launch service as a daemon. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     declare -a docker_up=("up" "--detach" "--wait")
@@ -218,21 +272,27 @@ function dnp::up_and_attach() {
     docker compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
     up_exit_code=$?
 
+    n2st::print_msg "Updating ssh key [localhost]:2222"
+    bash -c "ssh-keygen -R [localhost]:2222 >/dev/null 2>/dev/null"
+    bash -c "ssh-keygen -R [127.0.0.1]:2222 >/dev/null 2>/dev/null"
+
     if [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]]; then
       # (NICE TO HAVE) ToDo: implement case fetch docker context IP address
       :
     elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-      n2st::print_msg "Updating ssh key"
-      bash -c "ssh-keygen -R [localhost]:2222"
+      :
     fi
 
     if [[ ${IS_TEAMCITY_RUN} == true ]]; then
       # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
       n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
+    elif [[ ${no_attach} == true ]]; then
+      :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
       declare -a docker_exec=("exec")
       docker_exec+=("${interactive_login[@]}")
+      docker_exec+=("${docker_compose_exec_flag[@]}")
       docker_exec+=("${the_service}")
       # Note: The init entrypoint is executed here on purpose, not at docker compose up.
       docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
@@ -241,6 +301,9 @@ function dnp::up_and_attach() {
       docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
       exec_exit_code=$?
     fi
+  elif [[ ${no_up} == true ]]; then
+      n2st::print_msg_error "Can't attach to ${MSG_DIMMED_FORMAT}${the_service}${MSG_END_FORMAT}, service is not running"
+      exec_exit_code=1
   fi
 
   # ....Teardown...................................................................................

@@ -36,7 +36,7 @@ DOCUMENTATION_BUFFER_PROJECT_VALIDATE=$( cat <<'EOF'
 #
 # Slurm flag positional argument:
 #   <slurm/job/dir/path>     (Optional) The path to the directory containing the slurm job scripts.
-#                            Default to ".dockerized_norlab_project/slurm_jobs"
+#                            Default to "slurm_jobs/"
 #
 # =================================================================================================
 EOF

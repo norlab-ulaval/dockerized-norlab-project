@@ -77,13 +77,24 @@ function dnp::global_install_hack() {
   # (StandBy) ToDo: add to Dockerized-NorLab
   # Single-command clean up for Python bytecode files in your favorite directories i.e. __pycache__; .*pyc;*.pytest_cache;
   # https://github.com/bittner/pyclean
-  pyclean
+  pip3 install pyclean
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
   # (Priority) ToDo: delete both when NMO-694 is resolve
   n2st::seek_and_modify_string_in_file "alias tree='tree -a -L 1'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
   n2st::seek_and_modify_string_in_file "alias tree2='tree -a -L 2'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  # (Priority) ToDo: delete on task NMO-702 completion >> those lines ↓↓
+  local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
+  n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dnp" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab_project/configuration/.env.dnp" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "  develop: # the service name" "Set environment variable DN_ACTIVATE_POWERLINE_PROMT to false" "$dn_info_path"
+  sed -i '/.*environment:/,/- DN_ACTIVATE_POWERLINE_PROMT=false/d' "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "dn_attach" "dnp [up|exec]" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "<the-running-container-name>" "bash" "$dn_info_path"
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 

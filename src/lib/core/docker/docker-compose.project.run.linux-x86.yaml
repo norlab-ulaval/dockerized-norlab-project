@@ -1,6 +1,5 @@
 services:
-
-  #
+  # ===============================================================================================
   # Docker compose project run version for running on an x86 linux workstation
   # Requirements:
   #   1. Nvidia driver are installed. See https://www.nvidia.com/Download/index.aspx
@@ -27,15 +26,17 @@ services:
   # Ref Nvidia container toolkit:
   #   - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
   #
+  # ===============================================================================================
+
   project-develop:
     entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
     container_name: ${DN_CONTAINER_NAME:?err}
     environment:
       DN_HOST: 'linux/x86'
-      DN_ENTRYPOINT_TRACE_EXECUTION: false
+      DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
-      DN_ACTIVATE_POWERLINE_PROMT: true
+      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-true}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
       NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec

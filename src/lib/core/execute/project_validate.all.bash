@@ -27,6 +27,7 @@ function dnp::project_validate_all() {
     "docker-compose.project.run.darwin.yaml"
     "docker-compose.project.run.jetson.yaml"
     "docker-compose.project.run.linux-x86.yaml"
+    "docker-compose.project.run.ci-tests.yaml"
     "docker-compose.project.run.slurm.yaml"
   )
 
@@ -45,6 +46,8 @@ function dnp::project_validate_all() {
     if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
       dnp::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
+      dnp::excute_compose "${config_flag[@]}"
+    elif [[ "${each_compose}" =~ .*".run.ci-tests.yaml" ]]; then
       dnp::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.".*".yaml" ]]; then
       dnp::excute_compose "${config_flag[@]}" "project-develop"

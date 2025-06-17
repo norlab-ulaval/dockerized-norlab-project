@@ -29,7 +29,7 @@
 
 [//]: # ( ==== Description =========================================== ) 
 [//]: # (TODO: Change the description)
-**The user side companion of [Dockerized-NorLab(DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main).**
+**The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main).**
 
 It provide a containerized workflow tailor-made for robotic research. <br>
 DNP handle the building and instanciation of DN container with functionality for <br> 
@@ -68,35 +68,70 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 
 [//]: # ( ==== Body ================================================== ) 
 
+## What it does:
+
+- Provide a containerized environment for robotic development, deployment, testing, continuous integration, running slurm jobs and source code release.
+- Design to support both local and remote workflow, i.e, personal workstation, remote embed computer, server.
+- Run on `l4t/arm64` (jetson), `darwin/arm64` (Mac OsX) and `linux/x86` whitout configuration change.
+- Support ROS2 out of the box.
+- Provide GPU support through nvidia-docker for both `l4t/arm64` and `linux/x86`.
+- Project configuration made easy whitout hidding _docker_ and _docker compose_ logic. 
+
+## Getting started
+
+### Install DNP
+
+```shell
+# Clone repository on host computer
+git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab-project.git
+cd dockerized-norlab-project
+
+# Install DNP on host (Check install option with $ bash install.bash --help) 
+bash install.bash
+
+# Check available commands
+dnp 
+```
 
 ![dnp_splash.png](visual/dnp_splash.png)
 
-### Getting started
+### Make a repository ready to use with DNP
 
 ```shell
-# Clone repository
-git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab-project.git
-
-# Install DNP on host
-bash install.bash
-# Check install option with $ bash install.bash --help 
-
-# Check available commands
-dnp help
-
-# To initialize DNP in a project repository (must be git initialized)
-cd <path/to/your/git/project>
+# To DNP-initialize a project repository (must be git initialized)
+cd <path/to/your/project/repository>
 dnp init
+```
 
-# To spin a DNP container and open a terminal in it
-dnp build
+Which add a few directories to your project repository
+```markup
+your-project-repository/
+  ├── .dockerized_norlab_project/     <- DNP configuration
+  ├── artifact/                       <- Runtime produced data (mounted)
+  ├── external_data/                  <- Pre-existing data made available in your container (mounted)
+  ├── src/                            <- Your repository source code (mounted/copied)
+  ├── tests/                          <- Your repository test code (mounted/copied)
+  ...
+  ├── .dockerignore                   <- Specify files/dir that won't be copied in container on build
+  ├── .gitignore                      <- Specify files/dir to keep out of VCS
+  └── README.md                       <- Created if it did not already exist
+```
+Note: 
+- Any directory or file that already exist will be updated, not overriden.
+- Content of the artifact direcotry is persistent. It will remain available even if the container is stoped or removed. 
+
+### Create, run and stop DNP container
+
+To spin a DNP container and open a terminal in it, run the following command from anywhere in the DNP-initialized repository
+```shell
+dnp build develop
 dnp up
 
 # When your done 
-dnp down 
+dnp down
 ```
 
-### For beta tester or just to dry-run DNP in an throwaway project
+## For beta tester or just to dry-run DNP in an throwaway project
 ```shell
 # CLone dockerized-norlab-project-mock-EMPTY
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git

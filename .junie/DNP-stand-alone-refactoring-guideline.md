@@ -219,7 +219,7 @@ user-super-project/
 │   └── .env.dockerized-norlab-project-mock
 ├── artifact/
 ├── external_data/
-├── src
+├── src/
 │   ├── README.md
 │   ├── launcher/
 │   └── tools/

@@ -96,7 +96,6 @@ services:
     depends_on:
       - project-core
 
-  # ToDo: rethink ci-test run logic to use "up and ataach" but with ci-test entrypoint and env var
   project-ci-tests:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
@@ -110,51 +109,16 @@ services:
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
         DNP_PYTEST_CI_RUN: true
-    # (Priority) ToDo: validate >> pull_policy: never
-    pull_policy: never
-    environment:
-      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
-      # DN_HOST: 'linux/x86'
-      PYTHONUNBUFFERED: 0 # Slightly faster
-      DN_ENTRYPOINT_TRACE_EXECUTION: false
-      # DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
-      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
-      DN_ACTIVATE_POWERLINE_PROMT: false
-      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
-      #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
-      NVIDIA_DRIVER_CAPABILITIES: all
-    #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
-      DISPLAY: "" # Keep unset
-      QT_X11_NO_MITSHM: 1
-      XAUTHORITY: /tmp/.docker.xauth
-    env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
-        required: true
-      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
-        required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
-        required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
-        required: false
-    security_opt:
-      - seccomp=unconfined
-      - apparmor=unconfined
-    cap_add:
-      - SYS_PTRACE
-      - SYS_NICE
-    ulimits:  # Real-Time related: See https://github.com/2b-t/docker-realtime?tab=readme-ov-file
-      rtprio: 99
-      rttime: -1 # corresponds to 'unlimited'
-      memlock: 8428281856
+    pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
     runtime: nvidia
-    privileged: true
     depends_on:
       - project-core
 
   project-ci-tests-no-gpu:
     extends:
       service: project-ci-tests
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
     runtime: !reset []
 
   project-slurm:
