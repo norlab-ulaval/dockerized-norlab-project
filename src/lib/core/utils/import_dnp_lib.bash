@@ -94,6 +94,7 @@ function dnp::import_lib_and_dependencies() {
   # ....Load DNP utils.............................................................................
   source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || return 1
   source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || return 1
+  source "${DNP_LIB_PATH:?err}/core/utils/network.bash" || return 1
 
   # ....Export loaded functions....................................................................
   for func in $(compgen -A function | grep -e dnp:: -e nbs:: -e n2st::); do

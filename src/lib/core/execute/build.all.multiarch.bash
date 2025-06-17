@@ -31,7 +31,7 @@ DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
 EOF
 )
 
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: unit-test of flag option
 
 # ....Function.....................................................................................
 function dnp::build_services_multiarch() {

@@ -2,7 +2,7 @@
 # Bats unit-test generation 
 
 Implement a bats test for `src/lib/commands/run.bash`.
-Follow the instructions in `.junie/Guideline.md`.
+Follow guidelines at `.junie/Guidelines.md`.
 Inspire yourself with `tests/tests_bats/test_up.bats`.
 Create at least one test case per command argument and/or options.
 Test relevant option and arguments combinaison.
@@ -13,7 +13,7 @@ You can mock their corresponding functions as the intended purposes of this test
 ---
 
 Update a bats test at `tests/tests_bats/test_run.bats` considering change made to `src/lib/commands/run.bash`.
-Follow the instructions in `.junie/Guideline.md`.
+Follow guidelines at `.junie/Guidelines.md`.
 Create at least one test case per new command argument and/or options.
 Test relevant option and arguments combinaison.
 You can mock their corresponding functions as the intended purposes of this test file is for unit-testing the CLI functionalities.
@@ -23,7 +23,7 @@ You can mock their corresponding functions as the intended purposes of this test
 
 Implement a bats test for `src/lib/core/utils/setup_host_dnp_requirements.bash`.
 Inspire yourself with `tests/tests_bats/test_init.bats`.
-Follow the instructions in `.junie/Guideline.md`.
+Follow guidelines at `.junie/Guidelines.md`.
 Create at least one test case per steps:
 - Install docker requirements;
 - CUDA toolkit path.
@@ -33,7 +33,7 @@ Don't mock `install_docker_tools.bash` function.
 ---
 
 Implement bats tests for `install.bash`.
-Follow the instructions in `.junie/Guideline.md`.
+Follow guidelines at `.junie/Guidelines.md`.
 Inspire yourself with `tests/tests_bats/test_init.bats`.
 Create at least one test case per cli options.
 Don't mock _helper functions_ and don't mock `dnp::install_dockerized_norlab_project_on_host`, those are the functions that we need to test.
@@ -46,7 +46,7 @@ Then test integration of helper function in `dnp::install_dockerized_norlab_proj
 ---
 
 Refactor `src/lib/commands/build.bash` from a command signature `dnp build [OPTIONS|--<SERVICE>]` to a command signature `dnp build [OPTIONS] [SERVICE]` with `<SERVICE>` being `ci-tests`, `deploy`, `develop`, `slurm`.
-Follow the instructions in `.junie/Guideline.md`.
+Follow guidelines at `.junie/Guidelines.md`.
 Update `test_build.bats` accordingly.
 Create at least one test case per command argument and/or options.
 Test relevant option and arguments combinaison.
@@ -56,3 +56,9 @@ Propose code base change if relevant.
 ---
 
 
+Review the repository source code and highlight implementation details that would prevent user from running `dnp` in offline mode but discard the files and directory in the _ignored list_ from your analysis as they are executed while online. 
+Files and directory _ignored list_: `install.bash`, `.env.dockerized-norlab-project`, `src/lib/core/docker/container-tools/project_entrypoints/project-ci-tests/`, `src/lib/core/docker/container-tools/project_entrypoints/project-slurm/`, `src/lib/core/docker/container-tools/dn_project_core.*.bash`, `src/lib/core/docker/docker-compose.project.build.*.yaml`, `src/lib/core/docker/docker-compose.project.run.ci-tests.yaml`, `src/lib/core/docker/docker-compose.project.run.slurm.yaml`, `setup_host_dnp_requirements.bash`, `src/lib/core/docker/Dockerfile.*`, `build.*.bash`, `project_validate.*.bash` or any build logic. 
+Consider in your analysis that environment variables from `src/lib/core/docker/.env.dnp-internal` can be set before sourcing it.
+Consider that the DNP repository will be cloned with NBS and N2ST submodule on the remote host before going offline.
+Suggest possible refactoring that would mitigate the highlighted issues and/or assess if those are required implementation details.
+Follow guidelines at `.junie/Guidelines.md`.

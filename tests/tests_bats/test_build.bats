@@ -213,9 +213,9 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core"
 }
 
-@test "dnp::build_command with --force-push-project-core › expect force push flag" {
-  # Test case: When build command is called with --force-push-project-core, it should pass the flag to build_services
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --force-push-project-core"
+@test "dnp::build_command with --online-build › expect force push flag" {
+  # Test case: When build command is called with --online-build, it should pass the flag to build_services
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --online-build"
 
   # Should succeed
   assert_success
@@ -285,6 +285,18 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_project_deploy_service called with args: --push"
 }
 
+@test "dnp::build_command with deploy service and --multiarch --push › expect deploy images with push" {
+  # Test case: When build command is called with deploy service and --multiarch --push, it should build and push deploy images
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command deploy --multiarch --push"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "deploy images (multiarch) build procedure"
+  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --multiarch --push"
+}
+
 @test "dnp::build_command with --push without deploy service › expect error" {
   # Test case: When build command is called with --push without deploy service, it should show an error
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --push"
@@ -297,21 +309,10 @@ teardown_file() {
   assert_output --partial "The --push flag can only be used with SERVICE=deploy"
 }
 
-@test "dnp::build_command with --multiarch --push and deploy service › expect error" {
-  # Test case: When build command is called with --multiarch --push and deploy service, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch --push deploy"
 
-  # Should fail
-  assert_failure
-
-  # Should output the error message
-  assert_output --partial "Mock dnp::illegal_command_msg called with args: build"
-  assert_output --partial "The build and push multiarch deploy image feature is not released yet"
-}
-
-@test "dnp::build_command with --multiarch --force-push-project-core › expect multiarch build with force push" {
-  # Test case: When build command is called with --multiarch --force-push-project-core, it should build multiarch images with force push
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch --force-push-project-core"
+@test "dnp::build_command with --multiarch --online-build › expect multiarch build with force push" {
+  # Test case: When build command is called with --multiarch --online-build, it should build multiarch images with force push
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --multiarch --online-build"
 
   # Should succeed
   assert_success
@@ -319,7 +320,7 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "all images (multiarch) build"
   assert_output --partial "Mock dnp::build_services_multiarch called with args:"
-  # Note: --no-force-push-project-core flag should not be present when --force-push-project-core is specified
+  # Note: --no-force-push-project-core flag should not be present when --online-build is specified
   refute_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core"
 }
 

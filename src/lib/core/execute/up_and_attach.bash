@@ -32,7 +32,7 @@ DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: unit-test of flag option
 # (Priority) ToDo: NMO-375 refactor: run and attach logic using 'RedLeader-research-codebase' implemention
 # ToDo: refactor using Dockerized-NorLab scripts (ref task NMO-375)
 # ToDo: see newly added implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash (ref task NMO-375)

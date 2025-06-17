@@ -5,24 +5,28 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 # =================================================================================================
 # Build project Docker images
 #
-# Notes: build all services for host native architecture by default
+# Notes:
+#   - build all services for host native architecture by default
+#   - build offline from the local image store by default
 #
 # Usage:
 #   $ dnp build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
 #
 # Options:
-#   --multiarch                           Build all service for multiple architectures
-#                                          (require a configured docker buildx multiarch builder)
-#   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
-#                                          (instead of building images from the local image store).
-#   --push                                Push deploy image (only valid with SERVICE=deploy)
-#   --help, -h                            Show this help message
+#   --multiarch                   Build services for multiple architectures (require a configured
+#                                  docker buildx multiarch builder)
+#   --online-build                Build image sequentialy by pushing/pulling intermediate images
+#                                  from Dockerhub
+#   --help, -h                    Show this help message
+#
+# Options (deploy only):
+#   --push                        Push deploy image
 #
 # SERVICE:
-#   develop                               Build develop images only
-#   deploy [--push]                       Build deploy images only
-#   ci-tests                              Build CI tests images only
-#   slurm                                 Build slurm images only
+#   develop                       Build develop images only
+#   deploy                        Build deploy images only
+#   ci-tests                      Build CI tests images only
+#   slurm                         Build slurm images only
 #
 # =================================================================================================
 EOF
@@ -37,6 +41,11 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::build_command() {
+
+    if ! dnp::is_online; then
+      n2st::print_msg_error "Be advised, you are currently, offline. Executing ${MSG_DIMMED_FORMAT}dnp build${MSG_END_FORMAT} require internet connection."
+      return 1
+    fi
 
     # ....Set env variables (pre cli)).............................................................
     local multiarch=false
@@ -53,7 +62,7 @@ function dnp::build_command() {
                 multiarch=true
                 shift
                 ;;
-            --force-push-project-core)
+            --online-build)
                 force_push_project_core=true
                 shift
                 ;;
@@ -104,12 +113,6 @@ function dnp::build_command() {
       return 1
     fi
 
-    if [[ "${service}" == "deploy" ]] && [[ "${multiarch}" == true ]] && [[ "${push_deploy}" == true ]]; then
-      # (Priority) ToDo: NMO-680 feat: improve project-deploy logic
-      dnp::illegal_command_msg "build" "${original_command}" "The build and push multiarch deploy image feature is not released yet!\nIt only affect ${MSG_DIMMED_FORMAT}dnp build --multiarch --push deploy${MSG_END_FORMAT} flags combinaison.\nIssue NMO-680 feat: improve project-deploy logic\n"
-      return 1
-    fi
-
     # ....Set env variables (post cli).............................................................
     declare -a build_flag=()
     declare -a deploy_flag=()
@@ -128,9 +131,12 @@ function dnp::build_command() {
     fi
 
     # ....Begin....................................................................................
-    if [[ "${service}" == "deploy" ]] && [[ "${multiarch}" == false ]]; then
+    if [[ "${service}" == "deploy" ]]; then
         # Case: Deploy
         header_footer_name="deploy images (${architecture}) build procedure"
+        if [[ "${multiarch}" == true ]]; then
+          deploy_flag+=("--multiarch")
+        fi
         if [[ "${push_deploy}" == true ]]; then
           deploy_flag+=("--push")
         fi
@@ -149,9 +155,6 @@ function dnp::build_command() {
       elif [[ "${service}" == "develop" ]]; then
           header_footer_name="develop images (${architecture}) build procedure"
           build_flag+=("--service-names" "project-core,project-develop")
-      elif [[ "${service}" == "deploy" ]]; then
-          header_footer_name="develop images (${architecture}) build procedure"
-          build_flag+=("--service-names" "project-core,project-deploy")
       else
           header_footer_name="all images (${architecture}) build procedure"
       fi

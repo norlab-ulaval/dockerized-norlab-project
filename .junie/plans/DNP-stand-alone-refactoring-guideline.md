@@ -1,4 +1,4 @@
-# Dockerized-NorLab-Project stand-alone refactoring guideline
+# Dockerized-NorLab-Project stand-alone refactoring guidelines
 
 Stand-alone version with a PATH-accessible bash script approach
 This approach maintains the current bash script structure but makes it accessible from anywhere via the system `PATH`.

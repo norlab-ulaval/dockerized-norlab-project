@@ -1,5 +1,5 @@
 
- # Dockerized-NorLab-Project guideline
+ # Dockerized-NorLab-Project guidelines
 
 Stand-alone version with a PATH-accessible bash script approach
 

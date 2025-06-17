@@ -32,7 +32,7 @@ DOCUMENTATION_BUILD_ALL=$(
 EOF
 )
 
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: unit-test of flag option
 
 # ....Function.....................................................................................
 function dnp::build_services() {
@@ -127,7 +127,7 @@ function dnp::build_services() {
   # ....Execute build..............................................................................
   n2st::print_msg "force_push_project_core: ${force_push_project_core}"
   if [[ ${force_push_project_core} == false ]]; then
-    n2st::print_msg "Building from the local image store. ${MSG_DIMMED_FORMAT}To pull/push from/to Dockerhub sequentialy, use the '--force-push-project-core' flag.${MSG_END_FORMAT}"
+    n2st::print_msg "Building from the local image store."
 
     dnp::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies "${services_names[@]}"
     build_exit_code=("$?")

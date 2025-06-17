@@ -1,5 +1,6 @@
 #!/bin/bash
-DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
+DOCUMENTATION_BUILD_DEPLOY=$(
+                              cat << 'EOF'
 # =================================================================================================
 # Build deploy images specified in docker-compose.project.build.native.yaml
 #
@@ -17,7 +18,7 @@ DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: unit-test of flag option
 
 # ToDo: move the help fct near the script/fct menu
 function show_help() {
@@ -31,15 +32,18 @@ function show_help() {
   echo -e "${MSG_END_FORMAT}"
 }
 
-
 function dnp::build_project_deploy_service() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a remaining_args=()
-  declare -a build_docker_flag=()
   local push_deploy_image=false
+  local multiarch=false
+  local build_core_exit_code
+  local build_deploy_exit_code
+  declare -a build_flag=()
+  declare -a push_flag=()
+  declare -a remaining_args=()
 
   # ....cli........................................................................................
   while [ $# -gt 0 ]; do
@@ -47,11 +51,11 @@ function dnp::build_project_deploy_service() {
     case $1 in
       --push)
         push_deploy_image=true
-        shift # Remove argument (--push)
+        shift
         ;;
       --multiarch)
-        build_docker_flag+=("--multiarch")
-        shift # Remove argument (--multiarch)
+        multiarch=true
+        shift
         ;;
       -h | --help)
         clear
@@ -66,40 +70,43 @@ function dnp::build_project_deploy_service() {
 
   done
 
-
   # ....Set env variables (post cli)...............................................................
-  if [[ ${push_deploy_image} == true ]]; then
-    n2st::print_msg "Won't push the deploy image, use flag ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} to push it."
+  if [[ ${push_deploy_image} != true ]]; then
+    n2st::print_msg "Won't push the deploy image to hub, use flag ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} to push it."
   fi
 
   # ....Build stage..................................................................................
   {
-    build_docker_flag=("--service-names" "project-core,project-deploy")
+    build_flag+=("--service-names" "project-core,project-deploy")
     if [[ ${push_deploy_image} == true ]]; then
-      build_docker_flag+=("--force-push-project-core")
+      build_flag+=("--force-push-project-core")
     fi
-    dnp::build_services "${build_docker_flag[@]}" "${remaining_args[@]}"
-    build_exit_code=$?
+    if [[ "${multiarch}" == true ]]; then
+      dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+      build_core_exit_code=$?
+    else
+      dnp::build_services "${build_flag[@]}" "${remaining_args[@]}"
+      build_core_exit_code=$?
+    fi
   }
 
   # ....Push deploy stage............................................................................
+  build_flag+=("--service-names" "project-deploy")
   if [[ ${push_deploy_image} == true ]]; then
-    {
-      push_docker_flag=("--push" "project-deploy")
-      # push_docker_flag=("--override-build-cmd" "push" "project-deploy")
-      dnp::excute_compose "${push_docker_flag[@]}"
-      push_exit_code=$?
-    }
+    remaining_args+=("--push")
+  fi
+  if [[ "${multiarch}" == true ]]; then
+    dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+    build_deploy_exit_code=$?
   else
-    push_exit_code=0
+    dnp::build_services "${build_flag[@]}" "${remaining_args[@]}"
+    build_deploy_exit_code=$?
   fi
 
   # ....Teardown...................................................................................
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
-  return $((build_exit_code + push_exit_code))
+  return $((build_core_exit_code + build_deploy_exit_code))
 }
-
-
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
@@ -108,7 +115,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
+  if [[ -z $( declare -f dnp::import_lib_and_dependencies)  ]]; then
     source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
@@ -116,6 +123,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
     source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   fi
   source "${script_path_parent}/build.all.bash" || exit 1
+  source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" || exit 1
 
   # ....Execute....................................................................................
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
@@ -132,7 +140,16 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies)"  || {
+                                                                  echo -e "${dnp_error_prefix} The DNP lib is not loaded!"
+                                                                                                                             exit 1
+  }
+  test -n "$( declare -f n2st::print_msg)"  || {
+                                                 echo -e "${dnp_error_prefix} The N2ST lib is not loaded!"
+                                                                                                             exit 1
+  }
+  test -n "${SUPER_PROJECT_ROOT}" || {
+                                       echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!"
+                                                                                                                          exit 1
+  }
 fi
