@@ -79,13 +79,15 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 
 ## Getting started
 
-```shell
-# Clone repository
-git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab-project.git
+### Install DNP
 
-# Install DNP on host
+```shell
+# Clone repository on host computer
+git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab-project.git
+cd dockerized-norlab-project
+
+# Install DNP on host (Check install option with $ bash install.bash --help) 
 bash install.bash
-# Check install option with $ bash install.bash --help 
 
 # Check available commands
 dnp 
@@ -93,13 +95,36 @@ dnp
 
 ![dnp_splash.png](visual/dnp_splash.png)
 
+### Make a repository ready to use with DNP
+
 ```shell
 # To DNP-initialize a project repository (must be git initialized)
-cd <path/to/your/git/project>
+cd <path/to/your/project/repository>
 dnp init
+```
 
-# To spin a DNP container and open a terminal in it
-dnp build
+Which add a few directories to your project repository
+```markup
+your-project-repository/
+  ├── .dockerized_norlab_project/     <- DNP configuration
+  ├── artifact/                       <- Runtime produced data (mounted)
+  ├── external_data/                  <- Pre-existing data made available in your container (mounted)
+  ├── src/                            <- Your repository source code (mounted/copied)
+  ├── tests/                          <- Your repository test code (mounted/copied)
+  ...
+  ├── .dockerignore                   <- Specify files/dir that won't be copied in container on build
+  ├── .gitignore                      <- Specify files/dir to keep out of VCS
+  └── README.md                       <- Created if it did not already exist
+```
+Note: 
+- Any directory or file that already exist will be updated, not overriden.
+- Content of the artifact direcotry is persistent. It will remain available even if the container is stoped or removed. 
+
+### Create, run and stop DNP container
+
+To spin a DNP container and open a terminal in it, run the following command from anywhere in the DNP-initialized repository
+```shell
+dnp build develop
 dnp up
 
 # When your done 
