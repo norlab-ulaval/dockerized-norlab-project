@@ -10,12 +10,12 @@ The intended use cases: (case 1) deployment in remote area i.e., build image loc
 # Highlevel
 Add new command `dnp save [OPTIONS] DIRPATH SERVICE` with `DIRPATH` being the save directory path.
 Add new command `dnp load [OPTIONS] DIRPATH/dnp-save-<SERVICE>-<SUPER_PROJECT_REPO_NAME>-<date><hour><minute>`.
-Add new save flag to `build` command following signature `dnp build [OPTIONS] --save DIRPATH [develop|deploy]` which call command `dnp save [OPTIONS] DIRPATH [develop|deploy]` and make it only available for `develop` and `deploy` services.
+Add new save flag to `build` command following signature `dnp build [OPTIONS] --save DIRPATH SERVICE` which call command `dnp save [OPTIONS] DIRPATH SERVICE` with `SERVICE` being restricted to `develop` or `deploy` only.
 
 # Implementation details
-The `.tar` file name will be generated using the follow the pattern `<DN_PROJECT_IMAGE_NAME>-SERVICE.<PROJECT_TAG>.tar` with `DN_PROJECT_IMAGE_NAME` and `PROJECT_TAG` env var subtitution and `SERVICE` being one of `develop` or `deploy`.
 Under the hood, use `docker image save --output <path/to/tar/archive/name>.tar IMAGE` with `IMAGE` being the image name and `docker image load --input <path/to/tar/archive/name>.tar` commands (Docker image references: https://docs.docker.com/reference/cli/docker/image/save/ and https://docs.docker.com/reference/cli/docker/image/load/).
-Load and save functionalities should collect and save to file relevant components so that `dnp [up|run] [develop|deploy]` can work offline on remote host once `dnp load ...` executed.
+The `.tar` file name will be generated using the follow the pattern `<DN_PROJECT_IMAGE_NAME>-SERVICE.<PROJECT_TAG>.tar` with `DN_PROJECT_IMAGE_NAME` and `PROJECT_TAG` env var subtitution and `SERVICE` being one of `develop` or `deploy`.
+Load and save functionalities should collect and save to file relevant components so that `dnp [up|run] [develop|deploy]` can work offline on remote host once `dnp load ...` is executed.
 
 The output of `dnp build --save DIRPATH deploy` should be like this:
 ```markup
@@ -32,7 +32,7 @@ dnp-save-deploy-<SUPER_PROJECT_REPO_NAME>-<date><hour><minute>/
   │   │   │   └── .env.local
   │   │   ├── dn_container_env_variable/
   │   │   └── .env.<SUPER_PROJECT_NAME>
-  │   ├── .git/
+  │   ├── .git/                     <- make a full copy of the .git directory
   │   ├── artifact/                 <- empty directory
   │   └── external_data/            <- empty directory
   ├── meta.txt
@@ -57,7 +57,7 @@ Command `dnp load ...` when it load a develop image, should execute alias `dnp-<
 
 
 # Update and refactoring
-Update `dnp` entrypoint at `src/bin/dnp`.
+Update `dnp` entrypoint at `src/bin/dnp` with the new available commands.
 
 # Testing
 Implement the corresponding the tests files.

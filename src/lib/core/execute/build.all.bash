@@ -264,5 +264,4 @@ else
   test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
 fi

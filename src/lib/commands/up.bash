@@ -3,15 +3,7 @@
 
 DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 # =================================================================================================
-# Start and attach to a DNP containers. Optionaly execute command and arguments in container.
-#
-# Notes:
-#   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'.
-#   • device and architecture specific docker-compose config are automaticaly
-#     selected at runtime.
-#   • service(s) are started in daemon mode so that when you exit the attached
-#     container, it keep running in the bachground.
-#     This equivalent to 'docker compose up --detach && docker compose attach'.
+# 'Start' and 'attach to' or' execute cmd in' a DNP containers.
 #
 # Usage:
 #   $ dnp up [OPTIONS] [-- COMMAND [ARGS...]]
@@ -19,14 +11,14 @@ DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 # Example:
 #   $ dnp up --workdir "/" -- bash -c 'tree -L 1 -a $(pwd)'
 #
-# Start options:
+# 'Start' options:
 #   --service SERVICE        The service to attach once up (Default: develop)
 #                            Service: develop, deploy, ...
 #   --no-attach              Don't attach to started containeror
 #                             (not compatible with 'execute options')
 #   -h | --help
 #
-# Execute options:
+# 'Execute' options:
 #   -e, --env stringArray    Set container environment variables
 #   -w, --workdir string     Override path to workdir directory
 #   -T, --no-TTY             Disable pseudo-TTY allocation
@@ -35,6 +27,14 @@ DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 #
 # Positional argument:
 #   command & arguments    Any command to be executed inside the docker container (default: bash)
+#
+# Notes:
+#   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'.
+#   • device and architecture specific docker-compose config are automaticaly
+#     selected at runtime.
+#   • service(s) are started in daemon mode so that when you exit the attached
+#     container, it keep running in the bachground.
+#     This equivalent to 'docker compose up --detach && docker compose attach'.
 #
 # =================================================================================================
 EOF

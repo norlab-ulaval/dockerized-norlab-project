@@ -15,8 +15,9 @@ MSG_END_FORMAT="\033[0m"
 n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
 
 # ====Help/doc=====================================================================================
-_DNP_HELP_LINE_CHAR="."
-_DNP_HELP_LINE_CHAR="─" # Note: This is not an 'dash' char. UTF-8: E2 94 80
+#_DNP_HELP_LINE_CHAR="."
+_DNP_HELP_LINE_CHAR="⠂" # Note: This is not a 'period' char. UTF-8: E2 A0 82
+#_DNP_HELP_LINE_CHAR="─" # Note: This is not a 'dash' char. UTF-8: E2 94 80
 #_DNP_HELP_LINE_CHAR="━"
 #_DNP_HELP_LINE_CHAR="═" # Note: This is not an 'equal' char. UTF-8: E2 95 90
 #_DNP_HELP_LINE_CENTER_CHAR="▼"
@@ -93,6 +94,7 @@ function n2st::print_msg_error() {
 
 # ====Entrypoint splash============================================================================
 function dnp::show_entrypoint_help() {
+    local documentation_buffer_dnp="${1:?err}"
     # Splash type: small, negative or big
     n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'negative'
     n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
@@ -101,14 +103,15 @@ function dnp::show_entrypoint_help() {
     #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
     #   - Delete both horizontal lines
     #   - Delet both header ligne
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
+    echo -e "${documentation_buffer_dnp}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
     echo -e "Run ${MSG_DIMMED_FORMAT}dnp COMMAND --help${MSG_END_FORMAT} for more information on a command."
 }
 
 function dnp::show_entrypoint_help_no_splash() {
+    local documentation_buffer_dnp="${1:?err}"
     # Note:
     #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
     #   - Delete both horizontal lines
     #   - Reformat the header left align
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
+    echo -e "${documentation_buffer_dnp}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
 }

@@ -11,13 +11,15 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #
 # Commands:
 #   init        Initialize a new DNP project
-#   build       Build Docker images
+#   build       Build DNP Docker images
 #   up          Start and attach to a container (daemon mode)
+#   down        Stop containers
 #   attach      Attach to a running container
 #   exec        Execute command in a running container
-#   down        Stop containers
 #   run         Run a command in a container
 #   project     Super project commands
+#   save        Save DNP Docker image to file for offline use
+#   load        Load DNP Docker image from file for offline use
 #   config      (In-progress) Show configuration
 #   version     Show DNP version
 #   help        Show this help message
@@ -49,7 +51,7 @@ function dnp::entrypoint() {
 
   # ....cli........................................................................................
   if [[ -z ${the_command}  ]]; then
-    dnp::show_entrypoint_help
+    dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP}"
     exit 0
   fi
 
@@ -62,6 +64,16 @@ function dnp::entrypoint() {
       build)
           source "${DNP_LIB_PATH}/commands/build.bash" || exit 1
           dnp::build_command "$@"
+          exit $?
+          ;;
+      save)
+          source "${DNP_LIB_PATH}/commands/save.bash" || exit 1
+          dnp::save_command "$@"
+          exit $?
+          ;;
+      load)
+          source "${DNP_LIB_PATH}/commands/load.bash" || exit 1
+          dnp::load_command "$@"
           exit $?
           ;;
       exec)
@@ -133,7 +145,7 @@ function dnp::entrypoint() {
           esac
           ;;
       help|--help|-h)
-          dnp::show_entrypoint_help
+          dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP}"
           exit 0
           ;;
       *)

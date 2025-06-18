@@ -12,7 +12,7 @@ You can mock their corresponding functions as the intended purposes of this test
 
 ---
 
-Update a bats test at `tests/tests_bats/test_run.bats` considering change made to `src/lib/commands/run.bash`.
+Update a bats test at `tests/tests_bats/test_build.bats` considering change made to `src/lib/commands/build.bash`.
 Follow guidelines at `.junie/Guidelines.md`.
 Create at least one test case per new command argument and/or options.
 Test relevant option and arguments combinaison.
@@ -62,3 +62,12 @@ Consider in your analysis that environment variables from `src/lib/core/docker/.
 Consider that the DNP repository will be cloned with NBS and N2ST submodule on the remote host before going offline.
 Suggest possible refactoring that would mitigate the highlighted issues and/or assess if those are required implementation details.
 Follow guidelines at `.junie/Guidelines.md`.
+
+---
+In `test_load.bats`, instead of mocking `find`, `grep`, `cut`, `cd`, `pwd`, `command` and `basename` command, use the real one and tests the result using bats assert functionalities as instructed in `Guidelines.md`
+
+---
+
+Follow guidelines at `.junie/Guidelines.md`.
+Integration tests `dryrun_load.bash`, `dryrun_save_deploy.bash`, `dryrun_save_develop.bash` and `test_save_load_pipeline.bash` and unit-test `test_load.bats` and `test_save.bats` are all failling. Please investigate and make the required changes. 
+Thanks

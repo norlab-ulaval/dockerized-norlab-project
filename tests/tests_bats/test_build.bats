@@ -54,6 +54,7 @@ setup_file() {
   # Create mock functions directory in the temporary directory
   mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute/"
   mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands/"
 
 
   # Create mock functions for dependencies
@@ -91,6 +92,15 @@ function dnp::build_project_deploy_service() {
 }
 EOF
 
+  # Create mock save.bash file
+  cat > "${MOCK_DNP_DIR}/src/lib/commands/save.bash" << 'EOF'
+#!/bin/bash
+function dnp::save_command() {
+  echo "Mock dnp::save_command called with args: $*"
+  return 0
+}
+EOF
+
   # Create a mock import_dnp_lib.bash that sets up the environment
   cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
 #!/bin/bash
@@ -114,6 +124,7 @@ function dnp::import_lib_and_dependencies() {
 }
 
 function n2st::print_msg() {
+  echo "Mock n2st::print_msg: $*"
   return 0
 }
 
@@ -225,7 +236,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "all images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core"
+  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core"
 }
 
 @test "dnp::build_command with --online-build › expect force push flag" {
@@ -237,7 +248,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "all images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --force-push-project-core"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --force-push-project-core"
 }
 
 @test "dnp::build_command with develop service › expect develop images only" {
@@ -249,7 +260,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-develop"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-develop"
 }
 
 @test "dnp::build_command with ci-tests service › expect CI tests images only" {
@@ -261,7 +272,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dnp::build_command with slurm service › expect slurm images only" {
@@ -273,7 +284,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dnp::build_command with deploy service › expect deploy images only" {
@@ -312,6 +323,80 @@ teardown_file() {
   assert_output --partial "Mock dnp::build_project_deploy_service called with args: --multiarch --push"
 }
 
+@test "dnp::build_command with --save flag but no service › expect error" {
+  # Test case: When build command is called with --save flag but no service, it should show error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --save ${MOCK_DNP_DIR}"
+
+  # Should fail
+  assert_failure
+
+  # Should output error message
+  assert_output --partial "The --save flag can only be used with SERVICE=develop or SERVICE=deploy"
+}
+
+@test "dnp::build_command with --save flag and invalid service › expect error" {
+  # Test case: When build command is called with --save flag and invalid service, it should show error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command ci-tests --save ${MOCK_DNP_DIR}"
+
+  # Should fail
+  assert_failure
+
+  # Should output error message
+  assert_output --partial "The --save flag can only be used with SERVICE=develop or SERVICE=deploy"
+}
+
+@test "dnp::build_command with --save flag and non-existent directory › expect error" {
+  # Test case: When build command is called with --save flag and non-existent directory, it should show error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop --save /non/existent/dir"
+
+  # Should fail
+  assert_failure
+
+  # Should output error message
+  assert_output --partial "Mock n2st::print_msg_error called with args: The DIRPATH does not exist: /non/existent/dir\n"
+}
+
+@test "dnp::build_command with --save flag missing DIRPATH › expect error" {
+  # Test case: When build command is called with --save flag but missing DIRPATH, it should show error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop --save"
+
+  # Should fail
+  assert_failure
+
+  # Should output error message
+  assert_output --partial "The --save flag requires a DIRPATH argument"
+}
+
+@test "dnp::build_command with develop service and --save › expect build and save" {
+  # Test case: When build command is called with develop service and --save, it should build and then save
+
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command develop --save ${MOCK_DNP_DIR}"
+
+  # Should succeed
+  assert_success
+
+  # Should output expected messages
+  assert_output --partial "develop images (native) build"
+  assert_output --partial "Mock dnp::build_services called"
+  assert_output --partial "Mock n2st::print_msg: Executing save command as requested"
+  assert_output --partial "Mock dnp::save_command called with args: ${MOCK_DNP_DIR} develop"
+}
+
+@test "dnp::build_command with deploy service and --save › expect build and save" {
+  # Test case: When build command is called with deploy service and --save, it should build and then save
+
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command deploy --save ${MOCK_DNP_DIR}"
+
+  # Should succeed
+  assert_success
+
+  # Should output expected messages
+  assert_output --partial "deploy images (native) build"
+  assert_output --partial "Mock dnp::build_project_deploy_service called"
+  assert_output --partial "Mock n2st::print_msg: Executing save command as requested"
+  assert_output --partial "Mock dnp::save_command called with args: ${MOCK_DNP_DIR} deploy"
+}
+
 @test "dnp::build_command with --push without deploy service › expect error" {
   # Test case: When build command is called with --push without deploy service, it should show an error
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/build.bash && dnp::build_command --push"
@@ -336,7 +421,7 @@ teardown_file() {
   assert_output --partial "all images (multiarch) build"
   assert_output --partial "Mock dnp::build_services_multiarch called with args:"
   # Note: --no-force-push-project-core flag should not be present when --online-build is specified
-  refute_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core"
+  refute_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core"
 }
 
 @test "dnp::build_command with --help › expect help menu" {
@@ -381,7 +466,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "all images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --no-cache --pull"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --no-cache --pull"
 }
 
 @test "dnp::build_command with develop service and --multiarch › expect multiarch develop images" {
@@ -393,7 +478,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core --service-names project-core,project-develop"
+  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core --service-names project-core,project-develop"
 }
 
 @test "dnp::build_command with multiple services › expect error" {
@@ -465,7 +550,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dnp::build_command with slurm service and --multiarch › expect multiarch slurm images" {
@@ -477,7 +562,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --no-force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dnp::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
@@ -489,7 +574,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dnp::build_command with slurm service and --online-build › expect slurm images with force push" {
@@ -501,7 +586,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dnp::build_command with develop service and -- docker args › expect develop images with docker args" {
@@ -513,7 +598,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --service-names project-core,project-develop --no-cache --pull"
+  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-develop --no-cache --pull"
 }
 
 @test "dnp::build_command with deploy service and -- docker args › expect deploy images with docker args" {
@@ -525,5 +610,5 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "deploy images (native) build"
-  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --no-cache --pull"
+  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --msg-line-level  --no-cache --pull"
 }

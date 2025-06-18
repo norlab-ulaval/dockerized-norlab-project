@@ -5,10 +5,6 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 # =================================================================================================
 # Build project Docker images
 #
-# Notes:
-#   - build all services for host native architecture by default
-#   - build offline from the local image store by default
-#
 # Usage:
 #   $ dnp build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
 #
@@ -17,16 +13,20 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #                                  docker buildx multiarch builder)
 #   --online-build                Build image sequentialy by pushing/pulling intermediate images
 #                                  from Dockerhub
+#   --save DIRPATH                Save built image to directory (develop or deploy services only)
+#   --push                        Push image to dockerhub (deploy services only)
 #   --help, -h                    Show this help message
 #
-# Options (deploy only):
-#   --push                        Push deploy image
 #
 # SERVICE:
 #   develop                       Build develop images only
 #   deploy                        Build deploy images only
 #   ci-tests                      Build CI tests images only
 #   slurm                         Build slurm images only
+#
+# Notes:
+#   - build all services for host native architecture by default
+#   - build offline from the local image store by default
 #
 # =================================================================================================
 EOF
@@ -52,6 +52,7 @@ function dnp::build_command() {
     local force_push_project_core=false
     local service=""
     local push_deploy=false
+    local save_dirpath=""
     local remaining_args=()
     local original_command="$*"
 
@@ -70,6 +71,14 @@ function dnp::build_command() {
                 push_deploy=true
                 shift
                 ;;
+            --save)
+                if [[ -z "$2" ]]; then
+                    dnp::illegal_command_msg "build" "${original_command}" "The --save flag requires a DIRPATH argument.\n"
+                    return 1
+                fi
+                save_dirpath="$2"
+                shift 2
+                ;;
             --help|-h)
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_BUILD}"
                 exit 0
@@ -79,7 +88,7 @@ function dnp::build_command() {
                 remaining_args+=("$@")
                 break
                 ;;
-            ci-tests|deploy|develop|slurm)
+            develop|deploy|ci-tests|slurm)
                 # If service is already set, it's an error
                 if [[ -n "${service}" ]]; then
                     dnp::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
@@ -109,14 +118,25 @@ function dnp::build_command() {
 
     # ....Flag check...............................................................................
     if [[ "${service}" != "deploy" ]] && [[ "${push_deploy}" == true ]]; then
-      dnp::illegal_command_msg "build" "${original_command}" "The --push flag can only be used with SERVICE=deploy.\n"
+      dnp::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} flag can only be used with SERVICE=deploy.\n"
       return 1
+    fi
+
+    if [[ -n "${save_dirpath}" ]]; then
+      if [[ "${service}" != "develop" && "${service}" != "deploy" ]]; then
+        dnp::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--save${MSG_END_FORMAT} flag can only be used with SERVICE=develop or SERVICE=deploy.\n"
+        return 1
+      fi
+      if [[ ! -d "${save_dirpath}" ]]; then
+        n2st::print_msg_error "The DIRPATH does not exist: ${MSG_DIMMED_FORMAT}${save_dirpath}${MSG_END_FORMAT}\n"
+        return 1
+      fi
     fi
 
     # ....Set env variables (post cli).............................................................
     declare -a build_flag=()
     declare -a deploy_flag=()
-    # build_flag+=("--msg-line-level" " ")
+    build_flag+=("--msg-line-level" "${MSG_LINE_CHAR_BUILDER_LVL2}")
 
     local architecture="native"
     if [[ "${multiarch}" == true ]]; then
@@ -140,10 +160,10 @@ function dnp::build_command() {
         if [[ "${push_deploy}" == true ]]; then
           deploy_flag+=("--push")
         fi
-        n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+        n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
         dnp::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
         fct_exit_code=$?
-        n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+        n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
     else
       # Case: general
       if [[ "${service}" == "ci-tests" ]]; then
@@ -159,7 +179,7 @@ function dnp::build_command() {
           header_footer_name="all images (${architecture}) build procedure"
       fi
 
-      n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+      n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
       if [[ "${multiarch}" == true ]]; then
           dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
@@ -167,7 +187,20 @@ function dnp::build_command() {
           dnp::build_services  "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
       fi
-      n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+      n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+    fi
+
+    # ....Post-build save if requested.................................................................
+    if [[ -n "${save_dirpath}" && $fct_exit_code -eq 0 ]]; then
+        n2st::print_msg "Executing save command as requested"
+        source "${DNP_LIB_PATH}/commands/save.bash" || {
+            n2st::print_msg_error "Failed to load save command"
+            return 1
+        }
+        dnp::save_command "${save_dirpath}" "${service}" || {
+            n2st::print_msg_error "Failed to save image"
+            return 1
+        }
     fi
 
     return $fct_exit_code

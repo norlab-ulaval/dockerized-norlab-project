@@ -28,22 +28,6 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-#function n2st::seek_and_modify_string_in_file() {
-#  # Note: Temporary ovverride of the original (see task N2ST-52)
-#  local TMP_SEEK="${1}"
-#  local TMP_CHANGE_FOR="${2}"
-#  local TMP_FILE_PATH="${3}"
-#
-#  # Note:
-#  #   - Character ';' is used as a delimiter
-#  #   - Keep -i flag for portability to Mac OsX (it's analogue to --in-place flag)
-#  #   - .bak is the backup extension convention and is required by -i
-#  sudo sed -i.bak "s;${TMP_SEEK};${TMP_CHANGE_FOR};" "${TMP_FILE_PATH}" || return 1
-#  sudo rm "${TMP_FILE_PATH}.bak" || return 1
-#  return 0
-#}
-
-
 function dnp::get_acronym() {
     # Find the acronym of a dash or underscrore sepatared multi-word name.
     local super_project_name="$1"
@@ -120,9 +104,6 @@ function dnp::init_command() {
 
     # ====Begin====================================================================================
     n2st::print_msg "Initializing DNP project: ${super_project_name} in ${super_project_root}"
-
-#    # Create the .dockerized_norlab_project directory
-#    sudo mkdir -p .dockerized_norlab_project || return 1
 
     # Copy template files
     sudo cp --update -r "${DNP_LIB_PATH}/template/.dockerized_norlab_project/" . || return 1

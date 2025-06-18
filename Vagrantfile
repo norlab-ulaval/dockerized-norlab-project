@@ -132,27 +132,19 @@ Vagrant.configure("2") do |config|
   git config --global user.email "vagrant@gmail.com"
   git config --global init.defaultBranch "main"
 
-  echo -e "\nCLone dockerized-norlab-project-mock in 'utilities/tmp/'\n"
-  cd /opt/dockerized-norlab-project || exit 1
-  source load_repo_main_dotenv.bash || exit 1
-  bash tests/setup_mock.bash || exit 1
+#   echo -e "\nCLone dockerized-norlab-project-mock in 'utilities/tmp/'\n"
+#   cd /opt/dockerized-norlab-project || exit 1
+#   source load_repo_main_dotenv.bash || exit 1
+# #   bash tests/setup_mock.bash || exit 1
+#   mkdir -p "/opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock"
+#   git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git "/opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock"
+#   chown -R $(id -u vagrant) /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock
 
   echo -e "\nCLone dockerized-norlab-project-mock-EMPTY in '/opt/'\n"
   cd /opt || exit 1
   rm -rf /opt/dockerized-norlab-project-mock-EMPTY
   git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
   chown -R $(id -u vagrant) /opt/dockerized-norlab-project-mock-EMPTY
-
-  #echo -e "\nCreate an empty variant of dockerized-norlab-project-mock-EMPTY'\n"
-  #sudo mkdir -p "/opt/dockerized-norlab-project-mock-EMPTY" || exit 1
-  #cd "/opt/dockerized-norlab-project-mock-EMPTY" || exit 1
-  #git init --quiet
-  #
-  #touch "README.md"
-  #echo "# Dockerized-NorLab-Project mock empty project" >> README.md
-  #echo "This directory is meant to test DNP install procedure UX" >> README.md
-  #git add .
-  #git commit -m "Initial commit"
 
   # Ressetting
   rm -f /usr/local/bin/dnp
@@ -165,7 +157,7 @@ Vagrant.configure("2") do |config|
       echo "" ;
       echo "# >>>> Dockerized-NorLab-Project DEV alias (start)" ;
       echo "alias dnp-dnp-cd='cd /opt/dockerized-norlab-project'" ;
-      echo "alias dnp-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" ;
+#       echo "alias dnp-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" ;
       echo "alias dnp-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" ;
       echo "alias dnp-test-symlink='tree -L 1 -a /usr/local/bin/'" ;
       echo "alias dnp-test-bashrc='tail -n 20 ~/.bashrc'" ;
@@ -174,7 +166,6 @@ Vagrant.configure("2") do |config|
   } >> /home/vagrant/.bashrc
 
   echo -e "\nSet DEV default landing path to DNP mock super project\n"
-  #echo "cd /opt/dockerized-norlab-project-mock-EMPTY" >> /home/vagrant/.bashrc
   echo "cd /opt/dockerized-norlab-project" >> /home/vagrant/.bashrc
 
   echo -e "\nInstall The Ubuntu Desktop Gui\n"
