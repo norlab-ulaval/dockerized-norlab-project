@@ -106,6 +106,11 @@ function dnp::illegal_command_msg() {
   return 1
 }
 
+function dnp::unknown_subcommand_msg() {
+  echo "Mock dnp::unknown_subcommand_msg called with args: $*"
+  return 1
+}
+
 # ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {
   echo "Mock n2st::norlab_splash called with args: $*"
@@ -156,7 +161,7 @@ teardown_file() {
 # ====Test cases==================================================================================
 
 @test "dnp::attach_command with no arguments › expect default behavior" {
-  # Test case: When attach command is called without arguments, it should attach to the default service
+  # Test case: When attach command is called without arguments, it should attach to the default service (develop)
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command"
 
   # Should succeed
@@ -164,7 +169,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
 
@@ -190,15 +195,50 @@ teardown_file() {
   assert_output --partial "Mock dnp::command_help_menu called with args:"
 }
 
-@test "dnp::attach_command with --service option › expect service passed to up_and_attach" {
-  # Test case: When attach command is called with --service option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command --service project-custom"
+@test "dnp::attach_command with develop service › expect develop service passed to up_and_attach" {
+  # Test case: When attach command is called with develop service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command develop"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service project-custom"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop"
+}
+
+@test "dnp::attach_command with deploy service › expect deploy service passed to up_and_attach" {
+  # Test case: When attach command is called with deploy service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command deploy"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service deploy"
+}
+
+@test "dnp::attach_command with invalid service › expect error" {
+  # Test case: When attach command is called with an invalid service, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command invalid-service"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: attach"
+  assert_output --partial "Unknown SERVICE: invalid-service"
+}
+
+@test "dnp::attach_command with multiple services › expect error" {
+  # Test case: When attach command is called with multiple services, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command develop deploy"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: attach"
+  assert_output --partial "Only one SERVICE can be specified"
 }
 
 @test "dnp::attach_command with invalid option › expect error" {
@@ -209,5 +249,5 @@ teardown_file() {
   assert_failure
 
   # Should output the error message
-  assert_output --partial "Mock dnp::illegal_command_msg called with args: attach --invalid-option"
+  assert_output --partial "Mock dnp::unknown_subcommand_msg called with args: attach --invalid-option"
 }

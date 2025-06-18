@@ -3,20 +3,15 @@
 
 DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 # =================================================================================================
-# 'Start' and 'attach to' or' execute cmd in' a DNP containers.
+# Start and 'attach to' or' execute cmd in' a DNP containers.
 #
 # Usage:
-#   $ dnp up [OPTIONS] [-- COMMAND [ARGS...]]
+#   $ dnp up [OPTIONS] [SERVICE] [-- COMMAND [ARGS...]]
 #
-# Example:
-#   $ dnp up --workdir "/" -- bash -c 'tree -L 1 -a $(pwd)'
-#
-# 'Start' options:
-#   --service SERVICE        The service to attach once up (Default: develop)
-#                            Service: develop, deploy, ...
+# Options:
 #   --no-attach              Don't attach to started containeror
 #                             (not compatible with 'execute options')
-#   -h | --help
+#   -h | --help              Show this help message
 #
 # 'Execute' options:
 #   -e, --env stringArray    Set container environment variables
@@ -25,8 +20,15 @@ DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 #   --detach                 Execute COMMAND in the background
 #   --dry-run                (Require --detach flag)
 #
+# SERVICE:
+#   develop                  Start develop service (default)
+#   deploy                   Start deploy service
+#
 # Positional argument:
 #   command & arguments    Any command to be executed inside the docker container (default: bash)
+#
+# Example:
+#   $ dnp up --workdir "/" -- bash -c 'tree -L 1 -a $(pwd)'
 #
 # Notes:
 #   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'.
@@ -50,6 +52,9 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::up_command() {
     local remaining_args=()
+    local service="develop"
+    local service_set=false
+    local original_command="$*"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -58,16 +63,30 @@ function dnp::up_command() {
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_UP}"
                 exit 0
                 ;;
+            develop|deploy)
+                # If service is already set, it's an error
+                if [[ "${service_set}" == true ]]; then
+                    dnp::illegal_command_msg "up" "${original_command}" "Only one SERVICE can be specified.\n"
+                    return 1
+                fi
+                service="$1"
+                service_set=true
+                shift
+                ;;
             --no-up)
                 dnp::illegal_command_msg "up" "--no-up" "Its a dnp internal flag"
                 exit 1
                 ;;
             *)
+                # Check if it starts with -- (unknown option) or allow other arguments to pass through as commands
                 remaining_args+=("$@")
                 break
                 ;;
         esac
     done
+
+    # Add service to remaining_args
+    remaining_args=("--service" "${service}" "${remaining_args[@]}")
 
     # Splash type: small, negative or big
     n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
@@ -84,4 +103,3 @@ function dnp::up_command() {
     fi
     return $fct_exit_code
 }
-

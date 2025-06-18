@@ -71,3 +71,14 @@ In `test_load.bats`, instead of mocking `find`, `grep`, `cut`, `cd`, `pwd`, `com
 Follow guidelines at `.junie/Guidelines.md`.
 Integration tests `dryrun_load.bash`, `dryrun_save_deploy.bash`, `dryrun_save_develop.bash` and `test_save_load_pipeline.bash` and unit-test `test_load.bats` and `test_save.bats` are all failling. Please investigate and make the required changes. 
 Thanks
+
+---
+
+Refactor `dnp::attach_command()` function signatures, which is curently using a `--service SERVICE` flag, to a `dnp attach [OPTIONS] [SERVICE]` function signature.
+Inspire yourself with `src/lib/commands/build.bash`.
+Repeat the same refactoring procedure for `dnp::exec_command()`, `dnp::run_command()` and `dnp::up_command()`.
+Keep `develop` as the default service.
+Update corresponding bats tests for all refactored functions.
+Execute all unit-tests and all integration tests before submiting
+Follow guidelines at `.junie/Guidelines.md`.
+

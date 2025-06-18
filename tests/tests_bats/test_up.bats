@@ -100,6 +100,16 @@ function dnp::command_help_menu() {
   return 0
 }
 
+function dnp::illegal_command_msg() {
+  echo "Mock dnp::illegal_command_msg called with args: $*"
+  return 1
+}
+
+function dnp::unknown_subcommand_msg() {
+  echo "Mock dnp::unknown_subcommand_msg called with args: $*"
+  return 1
+}
+
 # ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {
   echo "Mock n2st::norlab_splash called with args: $*"
@@ -192,7 +202,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: bash -c echo hello"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service develop bash -c echo hello"
 }
 
 @test "dnp::up_command with --arbitrary-flag option › expect service passed to up_and_attach" {
@@ -203,7 +213,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --arbitrary-flag flag-option"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service develop --arbitrary-flag flag-option"
 }
 
 @test "dnp::up_command with --arbitrary-flag option and custom command › expect both passed to up_and_attach" {
@@ -214,5 +224,5 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --arbitrary-flag flag-option bash -c echo hello"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service develop --arbitrary-flag flag-option bash -c echo hello"
 }

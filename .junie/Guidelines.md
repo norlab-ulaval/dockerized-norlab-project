@@ -1,8 +1,6 @@
 
  # Dockerized-NorLab-Project guidelines
-
-Stand-alone version with a PATH-accessible bash script approach
-
+ 
 ## General Requirements:
 - Don't repeat yourself. Use already implemented code such as:
   - `load_repo_main_dotenv.bash`
@@ -51,7 +49,8 @@ Stand-alone version with a PATH-accessible bash script approach
   - What's the test expected outcome (i.e, should it pass or fail); 
   - If you do mock something, justify why.
 - All tests in the `tests/` directory must pass.
-- The definition fo _Done_ mean that tests where executed and all tests passed.
+- Always execute all unit-tests and all integration tests before submiting.
+- The definition fo _Done_ mean that all tests where executed and all tests passed.
 
 ### Instruction On Mocking
 - You can mock shell core command an docker command.

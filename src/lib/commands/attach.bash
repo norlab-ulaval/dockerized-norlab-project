@@ -6,12 +6,14 @@ DOCUMENTATION_BUFFER_Attach=$( cat <<'EOF'
 # Attach to a running DNP containers
 #
 # Usage:
-#   $ dnp attach [OPTIONS]
+#   $ dnp attach [OPTIONS] [SERVICE]
 #
 # Options:
-#   --service SERVICE        The service to attach once up (Default: develop)
-#                            Service: develop, deploy, ...
-#   -h | --help
+#   -h | --help              Show this help message
+#
+# SERVICE:
+#   develop                  Attach to develop service (default)
+#   deploy                   Attach to deploy service
 #
 # =================================================================================================
 EOF
@@ -27,6 +29,9 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::attach_command() {
     declare -a docker_compose_exec_flag=()
+    local service="develop"
+    local service_set=false
+    local original_command="$*"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -35,9 +40,14 @@ function dnp::attach_command() {
                 dnp::command_help_menu "${DOCUMENTATION_BUFFER_Attach}"
                 exit 0
                 ;;
-            --service)
-                docker_compose_exec_flag+=("$1" "$2")
-                shift
+            develop|deploy)
+                # If service is already set, it's an error
+                if [[ "${service_set}" == true ]]; then
+                    dnp::illegal_command_msg "attach" "${original_command}" "Only one SERVICE can be specified.\n"
+                    return 1
+                fi
+                service="$1"
+                service_set=true
                 shift
                 ;;
             --no-attach)
@@ -45,11 +55,20 @@ function dnp::attach_command() {
                 exit 1
                 ;;
             *)
-                dnp::illegal_command_msg "attach" "$*"
-                exit 1
+                # Check if it starts with -- (unknown option)
+                if [[ "$1" == --* ]]; then
+                    dnp::unknown_subcommand_msg "attach" "$*"
+                    exit 1
+                fi
+                # Otherwise it's an unknown service
+                dnp::illegal_command_msg "attach" "${original_command}" "Unknown SERVICE: $1. Valid services are: develop, deploy.\n"
+                return 1
                 ;;
         esac
     done
+
+    # Add service to docker_compose_exec_flag
+    docker_compose_exec_flag+=("--service" "${service}")
 
     # Splash type: small, negative or big
     n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
@@ -66,4 +85,3 @@ function dnp::attach_command() {
     fi
     return $fct_exit_code
 }
-
