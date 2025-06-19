@@ -6,13 +6,15 @@ DOCUMENTATION_BUFFER_LOAD=$( cat <<'EOF'
 # Load Docker image from file for offline use
 #
 # Usage:
-#   $ dnp load [OPTIONS] SAVE_DIR_PATH
+#   $ dnp load [OPTIONS] [SAVE_DIR_PATH]
 #
 # Options:
 #   --help, -h                    Show this help message
 #
 # Arguments:
 #   SAVE_DIR_PATH                 Path to the saved directory (dnp-save-<SERVICE>-<REPO_NAME>-<timestamp>)
+#                                 If not provided, assumes current directory is SAVE_DIR_PATH or searches
+#                                 for DNP configuration directory.
 #
 # Notes:
 #   - Loads Docker image from the saved archive
@@ -28,8 +30,8 @@ EOF
 dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
 test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
 test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" ; exit 1 ; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" ; exit 1 ; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::load_command() {
@@ -58,10 +60,40 @@ function dnp::load_command() {
         esac
     done
 
-    # ....Validate arguments...........................................................................
+    # ....Determine save directory path................................................................
     if [[ -z "${save_dir_path}" ]]; then
-        dnp::illegal_command_msg "load" "${original_command}" "SAVE_DIR_PATH argument is required.\n"
-        return 1
+        # No SAVE_DIR_PATH provided, assume we are already in a 'dnp save' directory
+        #  - Case 1: cwd is at the root
+        #  - Case 2: cwd is deeper in the directory structure
+        if [[ -f "meta.txt" ]]; then
+            save_dir_path="$(pwd)"
+            n2st::print_msg "Using current directory as save directory: ${save_dir_path}"
+        else
+            # Try to find super project root (assume its a dnp saved deploy project)
+            local original_cwd
+            original_cwd="$(pwd)"
+
+            # Source the load_super_project_config to get access to dnp::cd_to_dnp_super_project_root
+            source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || {
+                n2st::print_msg_error "Failed to load super project configuration utilities"
+                return 1
+            }
+
+            if dnp::cd_to_dnp_super_project_root; then
+                if [[ -f "meta.txt" ]]; then
+                    save_dir_path="$(pwd)"
+                    n2st::print_msg "Found meta.txt in super project root: ${save_dir_path}"
+                else
+                    cd "${original_cwd}" || true
+                    n2st::print_msg_error "No meta.txt found in current directory or super project root. Please provide SAVE_DIR_PATH or ensure meta.txt exists in current directory."
+                    return 1
+                fi
+            else
+                cd "${original_cwd}" || true
+                n2st::print_msg_error "No meta.txt found in current directory and could not locate super project root. Please provide SAVE_DIR_PATH."
+                return 1
+            fi
+        fi
     fi
 
     if [[ ! -d "${save_dir_path}" ]]; then
@@ -156,17 +188,11 @@ function dnp::handle_deploy_post_load() {
         return 1
     fi
 
-    n2st::print_msg "Changing to project directory: ${project_path}"
+    n2st::print_msg_done "Load completed successfully. To change to the project directory, run:
+    cd \"${project_path}\"
 
-    # Change to the project directory
-    cd "${project_path}" || {
-        n2st::print_msg_error "Failed to change to project directory: ${project_path}"
-        return 1
-    }
-
-    n2st::print_msg_done "Changed to project directory: $(pwd)
-    You can now run 'dnp up deploy' or 'dnp run deploy' commands"
-    exit 0
+You can then run 'dnp up deploy' or 'dnp run deploy' commands"
+    return 0
 }
 
 # =================================================================================================
@@ -186,7 +212,7 @@ function dnp::handle_develop_post_load() {
         if command -v "${alias_command}" >/dev/null 2>&1; then
             if "${alias_command}"; then
                 n2st::print_msg_done "Executed alias: ${alias_command}"
-                exit 0
+                return 0
             else
                 n2st::print_msg_warning "Failed to execute alias: ${alias_command}"
                 n2st::print_msg "You may need to manually navigate to your project directory"

@@ -1,6 +1,6 @@
 
 # General instructions
-Follow guidelines at `.junie/Guidelines.md`.
+Follow guidelines at `.junie/guidelines.md`.
 
 # Main goal
 Implement a _save docker image to file_ and a _load docker image from file_ functionality for offline use.
@@ -64,4 +64,4 @@ Implement the corresponding the tests files.
 Add an integration tests script that validate the full pipeline: e.g., `dnp build --save DIRPATH deploy` -> to file at `DIRPATH` -> `dnp load DIRPATH/dnp-save-deploy-<SUPER_PROJECT_REPO_NAME>-<date><hour><minute>` 
 Create at least one test case per command argument and/or options.
 Test relevant option and arguments combinaison.
-Has instructed in `.junie/Guidelines.md`, both unit-tests and integration tests must pass.
+Has instructed in `.junie/guidelines.md`, both unit-tests and integration tests must pass.

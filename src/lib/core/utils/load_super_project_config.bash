@@ -59,6 +59,10 @@ function dnp::load_super_project_configurations() {
   dnp::cd_to_dnp_super_project_root || exit 1
   # Note: fail fast on super project not found
 
+  if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/.git" ]]; then
+      n2st::print_msg_error_and_exit "Can't find git directory at project root. DNP project are required to be under git version control."
+  fi
+
   local super_project_git_remote_url
   super_project_git_remote_url=$( cd "${SUPER_PROJECT_ROOT:?err}" && git remote get-url origin )
   SUPER_PROJECT_REPO_NAME="$( basename "${super_project_git_remote_url}" .git )"
@@ -73,7 +77,7 @@ function dnp::load_super_project_configurations() {
   #       e.g., teamcity CI src code pull, user cloned in a different dir, project renamed.
 
   if [[ ! -f "${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/${super_project_meta_dnp_dotenv:?err}" ]]; then
-    n2st::print_msg_error "can't find '.dockerized_norlab_project/${super_project_meta_dnp_dotenv}' in ${SUPER_PROJECT_ROOT}!" 1>&2
+    n2st::print_msg_error "can't find '.dockerized_norlab_project/.env.<SUPER_PROJECT_REPO_NAME>' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
   fi
 

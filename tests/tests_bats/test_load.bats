@@ -39,80 +39,11 @@ TESTED_FILE_PATH="src/lib/commands"
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
+  # This is the path to the mock super project (the user side) - same as test_setup_host_for_running_this_super_project.bats
+  export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
+
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
   export MOCK_SAVE_DIR=$(temp_make)
-
-  # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands/"
-
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
-#!/bin/bash
-# Mock import_dnp_lib.bash
-
-# Set message formatting variables
-export MSG_DIMMED_FORMAT=""
-export MSG_END_FORMAT=""
-export MSG_LINE_CHAR_BUILDER_LVL1="-"
-
-# Set up environment variables
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
-
-# ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
-  return 0
-}
-
-function n2st::print_msg() {
-  echo "Mock n2st::print_msg: $*"
-  return 0
-}
-
-function n2st::print_msg_error() {
-  echo "Mock n2st::print_msg_error: $*"
-  return 0
-}
-
-function n2st::print_msg_done() {
-  echo "Mock n2st::print_msg_done: $*"
-  return 0
-}
-
-function n2st::print_msg_warning() {
-  echo "Mock n2st::print_msg_warning: $*"
-  return 0
-}
-
-function n2st::print_formated_script_header() {
-  echo "Mock n2st::print_formated_script_header: $*"
-  return 0
-}
-
-function n2st::print_formated_script_footer() {
-  echo "Mock n2st::print_formated_script_footer: $*"
-  return 0
-}
-
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
-  return 0
-}
-
-function dnp::illegal_command_msg() {
-  echo "Mock dnp::illegal_command_msg called with args: $*"
-  return 1
-}
-
-# ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
-done
-
-echo "[DNP done] Mock import_dnp_lib.bash and its libraries loaded"
-EOF
 
   # Create mock save directories for testing
   export MOCK_DEPLOY_SAVE_DIR="${MOCK_SAVE_DIR}/dnp-save-deploy-test-project-202312151430"
@@ -177,40 +108,14 @@ SAVE_TIMESTAMP=202312151430
 TAR_FILENAME=test-image-develop.latest.tar
 EOF
 
-#  # Create mock metadata files
-#  cat > "${MOCK_DEPLOY_SAVE_DIR}/meta.txt" << 'EOF'
-## DNP Save Metadata
-#SERVICE=deploy
-#IMAGE_NAME=test-image-deploy.latest
-#SUPER_PROJECT_REPO_NAME=test-project
-#DN_PROJECT_ALIAS_PREFIX=test
-#EOF
-
-#  cat > "${MOCK_DEVELOP_SAVE_DIR}/meta.txt" << 'EOF'
-## DNP Save Metadata
-#SERVICE=develop
-#IMAGE_NAME=test-image-develop.latest
-#SUPER_PROJECT_REPO_NAME=test-project
-#DN_PROJECT_ALIAS_PREFIX=test
-#EOF
-
   # Create mock tar files
   touch "${MOCK_DEPLOY_SAVE_DIR}/test-image-deploy.latest.tar"
   touch "${MOCK_DEVELOP_SAVE_DIR}/test-image-develop.latest.tar"
 }
 
 setup() {
-  # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
-
-  # Copy the load.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
-
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
-
-  # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  # Change cwd to the mock super project directory - same as test_setup_host_for_running_this_super_project.bats
+  cd "${MOCK_PROJECT_PATH}" || exit 1
 
   # Mock docker command
   function docker() {
@@ -235,9 +140,6 @@ setup() {
   }
   export -f docker
 
-  # Note: Using real find, grep, cut, cd, pwd, command, and basename commands instead of mocking them
-  # This allows us to test actual command behavior and file operations
-
   # Create a mock alias for testing alias functionality
   function dnp-test-cd() {
     echo "Mock alias dnp-test-cd executed"
@@ -253,26 +155,34 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directories
-  temp_del "${MOCK_DNP_DIR}"
   temp_del "${MOCK_SAVE_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::load_command with no arguments › expect error" {
-  # Test case: When load command is called without arguments, it should show error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command"
+@test "dnp::load_command with no arguments and no meta.txt in cwd › expect error" {
+  # Test case: When load command is called without arguments and no meta.txt in current directory, it should show error
+  # Create a test directory without .dockerized_norlab_project to ensure dnp::cd_to_dnp_super_project_root fails
+  local test_dir="${MOCK_SAVE_DIR}/no_dnp_project"
+  mkdir -p "${test_dir}"
+
+  cd "${test_dir}"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash"
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command
 
   # Should fail
   assert_failure
 
-  # Should output error message
-  assert_output --partial "SAVE_DIR_PATH argument is required"
+  # Should output error message about .dockerized_norlab_project directory not found
+  assert_output --partial "directory not found"
 }
 
 @test "dnp::load_command with non-existent directory › expect error" {
   # Test case: When load command is called with non-existent directory, it should show error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command /non/existent/dir"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command /non/existent/dir
 
   # Should fail
   assert_failure
@@ -286,7 +196,9 @@ teardown_file() {
   local test_dir="${MOCK_SAVE_DIR}/no_meta"
   mkdir -p "${test_dir}"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command ${test_dir}"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command "${test_dir}"
 
   # Should fail
   assert_failure
@@ -334,18 +246,22 @@ EOF
 
   # Note: No tar file is created in this directory, so real find command will not find any *.tar files
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command ${test_dir}"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command "${test_dir}"
 
   # Should fail
   assert_failure
 
   # Should output error message
-  assert_output --partial "Mock n2st::print_msg_error: Docker image archive file .tar not found in ${test_dir}"
+  assert_output --partial "not found"
 }
 
 @test "dnp::load_command with develop service › expect success" {
   # Test case: When load command is called with develop service, it should succeed
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command ${MOCK_DEVELOP_SAVE_DIR}"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command "${MOCK_DEVELOP_SAVE_DIR}"
 
   # Should succeed
   assert_success
@@ -364,7 +280,9 @@ EOF
 
 @test "dnp::load_command with deploy service › expect success with directory change" {
   # Test case: When load command is called with deploy service, it should succeed and change directory
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command ${MOCK_DEPLOY_SAVE_DIR}"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command "${MOCK_DEPLOY_SAVE_DIR}"
 
   # Should succeed
   assert_success
@@ -377,38 +295,45 @@ EOF
   assert_output --partial "Repository: test-project"
   assert_output --partial "Loading Docker image from"
   assert_output --partial "Mock docker image load called"
-  assert_output --partial "Changing to project directory"
   assert_output --partial "Load completed successfully"
-  assert_output --partial "Changed to project directory"
+  assert_output --partial "To change to the project directory, run:"
+  assert_output --partial "You can then run 'dnp up deploy' or 'dnp run deploy' commands"
   refute_output --partial "Could not complete post-load actions for "
 }
 
 @test "dnp::load_command help flag › expect help output" {
   # Test case: When load command is called with help flag, it should show help
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::load_command --help"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command --help
 
   # Should succeed (exit 0 from help)
   assert_success
 
   # Should output help message
-  assert_output --partial "Mock dnp::command_help_menu"
+  assert_output --partial "Load Docker image from file for offline use"
 }
 
-@test "dnp::handle_deploy_post_load function › expect directory change" {
+@test "dnp::handle_deploy_post_load function › expect directory change instructions" {
   # Test case: Test the deploy post-load function directly
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::handle_deploy_post_load ${MOCK_DEPLOY_SAVE_DIR} test-project"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::handle_deploy_post_load "${MOCK_DEPLOY_SAVE_DIR}" test-project
 
   # Should succeed
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Changing to project directory"
-  assert_output --partial "Changed to project directory"
+  assert_output --partial "Load completed successfully"
+  assert_output --partial "To change to the project directory, run:"
+  assert_output --partial "You can then run 'dnp up deploy' or 'dnp run deploy' commands"
 }
 
 @test "dnp::handle_develop_post_load function with existing alias › expect alias execution" {
   # Test case: Test the develop post-load function with existing alias
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::handle_develop_post_load test"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::handle_develop_post_load test
 
   # Should succeed
   assert_success
@@ -421,7 +346,9 @@ EOF
 
 @test "dnp::handle_develop_post_load function with non-existing alias › expect warning" {
   # Test case: Test the develop post-load function with non-existing alias
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::handle_develop_post_load nonexistent"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::handle_develop_post_load nonexistent
 
   # Should succeed (warnings don't fail)
   assert_success
@@ -433,7 +360,9 @@ EOF
 
 @test "dnp::handle_develop_post_load function with empty alias › expect warning" {
   # Test case: Test the develop post-load function with empty alias
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/load.bash && dnp::handle_develop_post_load ''"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::handle_develop_post_load ''
 
   # Should succeed (warnings don't fail)
   assert_success
@@ -442,3 +371,41 @@ EOF
   assert_output --partial "DN_PROJECT_ALIAS_PREFIX not found"
   assert_output --partial "Please manually navigate"
 }
+
+@test "dnp::load_command with no arguments but meta.txt in current directory › expect success" {
+  # Test case: When load command is called without arguments but meta.txt exists in current directory
+  local test_dir="${MOCK_SAVE_DIR}/current_dir_test"
+  mkdir -p "${test_dir}/test-project"
+
+  # Create meta.txt in test directory
+  cat > "${test_dir}/meta.txt" << 'EOF'
+# DNP Save Metadata
+SERVICE=deploy
+IMAGE_NAME=test-image-deploy.latest
+SUPER_PROJECT_REPO_NAME=test-project
+DN_PROJECT_ALIAS_PREFIX=test
+TAR_FILENAME=test-image-deploy.latest.tar
+EOF
+
+  # Create mock tar file
+  touch "${test_dir}/test-image-deploy.latest.tar"
+
+  # Change to test directory and run load command without arguments
+  # Note: This test doesn't need load_super_project_config.bash since it tests the case where meta.txt is in current directory
+  cd "${test_dir}"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash"
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+  run dnp::load_command
+
+  # Should succeed
+  assert_success
+
+  # Should output expected messages
+  assert_output --partial "Using current directory as save directory"
+  assert_output --partial "Load deploy image procedure"
+  assert_output --partial "Loading saved image"
+}
+
+# Note: The test case for "dnp::load_command with no arguments and meta.txt in super project root"
+# is covered by the integration test test_save_load_pipeline.bash as it requires complex
+# DNP configuration setup that is better suited for integration testing rather than unit testing.

@@ -25,6 +25,9 @@
 - `utilities/tmp/dockerized-norlab-project-mock` is use for cloning a fresh copy of a mock "super project" from https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git on test execution.
   `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNP. We refer to this as a "super project" or the "user side".
 
+## Version Control
+- Never `git add` or `git commit` changes, all changes require explicit code review and acceptance by the codeowner.   
+
 ## Tests Requirements:
 
 ### Testing Strategy
