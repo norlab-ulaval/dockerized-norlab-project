@@ -23,6 +23,7 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   deploy                        Build deploy images only
 #   ci-tests                      Build CI tests images only
 #   slurm                         Build slurm images only
+#   release                       Build release images only
 #
 # Notes:
 #   - build all services for host native architecture by default
@@ -88,13 +89,17 @@ function dnp::build_command() {
                 remaining_args+=("$@")
                 break
                 ;;
-            develop|deploy|ci-tests|slurm)
+            develop|deploy|ci-tests|slurm|release)
                 # If service is already set, it's an error
                 if [[ -n "${service}" ]]; then
                     dnp::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
                     return 1
                 fi
                 service="$1"
+                if [[ "${service}" == "release" ]]; then
+                    n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dnp build release${MSG_END_FORMAT} is not released yet, stay tuned!\n ... yeah I know, an un-released release function" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
+                    return 1
+                fi
                 shift
                 ;;
             *)
