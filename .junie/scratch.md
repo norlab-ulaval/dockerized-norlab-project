@@ -12,7 +12,7 @@ You can mock their corresponding functions as the intended purposes of this test
 
 ---
 
-Update a bats test at `tests/tests_bats/test_build.bats` considering change made to `src/lib/commands/build.bash`.
+Update a bats test at `tests/tests_bats/test_run.bats` considering change made to `src/lib/commands/run.bash`.
 Follow guidelines at `.junie/Guidelines.md`.
 Create at least one test case per new command argument and/or options.
 Test relevant option and arguments combinaison.
@@ -74,11 +74,45 @@ Thanks
 
 ---
 
-Refactor `dnp::attach_command()` function signatures, which is curently using a `--service SERVICE` flag, to a `dnp attach [OPTIONS] [SERVICE]` function signature.
-Inspire yourself with `src/lib/commands/build.bash`.
-Repeat the same refactoring procedure for `dnp::exec_command()`, `dnp::run_command()` and `dnp::up_command()`.
-Keep `develop` as the default service.
-Update corresponding bats tests for all refactored functions.
+Refactor `dnp::run_command()` function signatures, which curently follow signature `dnp run SERVICE [OPTIONS]`, to `dnp run [OPTIONS] SERVICE`.
+Inspire yourself with `src/lib/commands/up.bash`.
+Develop and deploy version should have signature `dnp run [OPTIONS] develop|deploy [-- COMMAND [ARGS...]]`.
+Ci-tests version should have signature `dnp run [OPTIONS] ci-tests`.
+Slurm version should have signature `dnp run [OPTIONS] slurm <sjob-id>`.
+Update corresponding bats tests.
 Execute all unit-tests and all integration tests before submiting
 Follow guidelines at `.junie/Guidelines.md`.
 
+---
+
+The following proposed code in `run.bash` is overcomplicated 
+```shell
+-e|--env|-w|--workdir|-T|--no-TTY|-v|--volume|--detach|--dry-run)
+    # These are options that should be passed through to the underlying commands
+    remaining_args+=("$1")
+    if [[ "$1" == "-e" || "$1" == "--env" || "$1" == "-w" || "$1" == "--workdir" || "$1" == "-v" || "$1" == "--volume" ]]; then
+        # These options take a parameter
+        shift
+        if [[ $# -gt 0 ]]; then
+            remaining_args+=("$1")
+        fi
+    fi
+    shift
+    ;;
+```
+Instead, inspire yourself with `exec.bash` cli implementation:
+```shell
+--detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
+    docker_compose_exec_flag+=("$1")
+    if [[ ${1} == "--dry-run" ]]; then
+      docker_compose_exec_flag+=("--detach")
+    fi
+    shift
+    ;;
+-e|--env|-w|--workdir) # Assume its a docker compose flag
+    docker_compose_exec_flag+=("$1" "$2")
+    shift
+    shift
+    ;;
+```
+Its clearer, explicit and more intuitive.
