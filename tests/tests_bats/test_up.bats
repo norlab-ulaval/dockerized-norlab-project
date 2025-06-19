@@ -88,6 +88,8 @@ export MSG_LINE_CHAR_BUILDER_LVL1="-"
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
+export DNP_PROMPT_NAME="Dockerized-NorLab-Project"
+export DNP_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
 function dnp::import_lib_and_dependencies() {
@@ -167,7 +169,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
+  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
   assert_output --partial "Mock dnp::up_and_attach called with args:"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
@@ -226,3 +228,75 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "Mock dnp::up_and_attach called with args: --service develop --arbitrary-flag flag-option bash -c echo hello"
 }
+
+# ====New test cases for service selection====================================================
+
+@test "dnp::up_command with develop service › expect develop service passed to up_and_attach" {
+  # Test case: When up command is called with develop service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/up.bash && dnp::up_command develop"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service develop"
+}
+
+@test "dnp::up_command with deploy service › expect deploy service passed to up_and_attach" {
+  # Test case: When up command is called with deploy service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/up.bash && dnp::up_command deploy"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service deploy"
+}
+
+@test "dnp::up_command with develop service and command › expect both passed to up_and_attach" {
+  # Test case: When up command is called with develop service and command, it should pass both to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/up.bash && dnp::up_command develop -- bash -c 'echo hello'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service develop -- bash -c echo hello"
+}
+
+@test "dnp::up_command with deploy service and command › expect both passed to up_and_attach" {
+  # Test case: When up command is called with deploy service and command, it should pass both to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/up.bash && dnp::up_command deploy -- bash -c 'echo hello'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dnp::up_and_attach called with args: --service deploy -- bash -c echo hello"
+}
+
+# ====New test cases for error handling=======================================================
+
+@test "dnp::up_command with multiple services › expect error" {
+  # Test case: When up command is called with multiple services, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/up.bash && dnp::up_command develop deploy"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: up"
+  assert_output --partial "Only one SERVICE can be specified"
+}
+
+@test "dnp::up_command with --no-up flag › expect error" {
+  # Test case: When up command is called with --no-up flag, it should show an error as it's internal
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/up.bash && dnp::up_command --no-up"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: up --no-up Its a dnp internal flag"
+}
+

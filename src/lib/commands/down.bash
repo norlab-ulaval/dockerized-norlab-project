@@ -37,7 +37,7 @@ function dnp::down_command() {
                 shift
                 ;;
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_DOWN}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_DOWN:?err}"
                 exit 0
                 ;;
             *)

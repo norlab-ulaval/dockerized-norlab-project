@@ -54,7 +54,7 @@ function dnp::run_any() {
 #            shift
 #            ;;
           --help|-h)
-              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_ANY}"
+              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_ANY:?err}"
               exit 0
               ;;
           --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag

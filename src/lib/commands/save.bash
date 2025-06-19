@@ -44,7 +44,7 @@ function dnp::save_command() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_SAVE}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_SAVE:?err}"
                 exit 0
                 ;;
             develop|deploy)

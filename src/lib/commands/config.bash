@@ -45,7 +45,7 @@ function dnp::config_command() {
     n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dnp config MODE${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
 
     if [[ -z "$1" ]]; then
-        dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG:?err}"
         exit 1
     fi
 
@@ -61,7 +61,7 @@ function dnp::config_command() {
                 shift
                 ;;
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG:?err}"
                 exit 0
                 ;;
             *)

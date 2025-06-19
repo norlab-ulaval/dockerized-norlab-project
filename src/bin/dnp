@@ -51,7 +51,7 @@ function dnp::entrypoint() {
 
   # ....cli........................................................................................
   if [[ -z ${the_command}  ]]; then
-    dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP}"
+    dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP:?err}"
     exit 0
   fi
 
@@ -145,7 +145,7 @@ function dnp::entrypoint() {
           esac
           ;;
       help|--help|-h)
-          dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP}"
+          dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP:?err}"
           exit 0
           ;;
       *)

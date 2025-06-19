@@ -89,6 +89,8 @@ export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
 export DN_CONTAINER_NAME="mock-container"
+export DNP_PROMPT_NAME="Dockerized-NorLab-Project"
+export DNP_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
 function dnp::import_lib_and_dependencies() {
@@ -168,7 +170,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
+  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
   assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }

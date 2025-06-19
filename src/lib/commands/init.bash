@@ -65,7 +65,7 @@ function dnp::init_command() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_INIT}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_INIT:?err}"
                 exit 0
                 ;;
             *)

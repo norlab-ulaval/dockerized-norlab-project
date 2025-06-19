@@ -9,7 +9,7 @@ DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 #   $ dnp up [OPTIONS] [SERVICE] [-- COMMAND [ARGS...]]
 #
 # Options:
-#   --no-attach              Don't attach to started containeror
+#   --no-attach              Don't attach to started container
 #                             (not compatible with 'execute options')
 #   -h | --help              Show this help message
 #
@@ -53,24 +53,19 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 function dnp::up_command() {
     local remaining_args=()
     local service="develop"
-    local service_set=false
+    declare -i service_override=0
     local original_command="$*"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_UP}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_UP:?err}"
                 exit 0
                 ;;
             develop|deploy)
-                # If service is already set, it's an error
-                if [[ "${service_set}" == true ]]; then
-                    dnp::illegal_command_msg "up" "${original_command}" "Only one SERVICE can be specified.\n"
-                    return 1
-                fi
                 service="$1"
-                service_set=true
+                service_override+=1
                 shift
                 ;;
             --no-up)
@@ -85,11 +80,18 @@ function dnp::up_command() {
         esac
     done
 
+    # Check if a service was specified
+    if [[ ${service_override} -ge 2 ]]; then
+        # If service is already set, it's an error
+        dnp::illegal_command_msg "up" "${original_command}" "Only one SERVICE can be specified.\n"
+        return 1
+    fi
+
     # Add service to remaining_args
     remaining_args=("--service" "${service}" "${remaining_args[@]}")
 
     # Splash type: small, negative or big
-    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
+    n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1

@@ -13,6 +13,9 @@ You can mock their corresponding functions as the intended purposes of this test
 ---
 
 Update a bats test at `tests/tests_bats/test_run.bats` considering change made to `src/lib/commands/run.bash`.
+Update a bats test at `tests/tests_bats/test_up.bats` considering change made to `src/lib/commands/up.bash`.
+Update a bats test at `tests/tests_bats/test_attach.bats` considering change made to `src/lib/commands/attach.bash`.
+Update a bats test at `tests/tests_bats/test_exec.bats` considering change made to `src/lib/commands/exec.bash`.
 Follow guidelines at `.junie/Guidelines.md`.
 Create at least one test case per new command argument and/or options.
 Test relevant option and arguments combinaison.
@@ -116,3 +119,9 @@ Instead, inspire yourself with `exec.bash` cli implementation:
     ;;
 ```
 Its clearer, explicit and more intuitive.
+
+---
+
+You overcomplicated `test_up.bash` new test cases. 
+Don't test flag that are not part of the cli definition even if they are mentioned in the doc.
+You only need a test case for assessing arbitrary flag.

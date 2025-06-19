@@ -30,7 +30,7 @@ function dnp::version_command() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_VERSION}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_VERSION:?err}"
                 exit 0
                 ;;
             *)

@@ -28,7 +28,7 @@ function dnp::run_ci_tests() {
   while [[ $# -gt 0 ]]; do
       case "$1" in
           --help|-h)
-              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS}"
+              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS:?err}"
               exit 0
               ;;
           *)

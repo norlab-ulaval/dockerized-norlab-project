@@ -89,6 +89,8 @@ export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
 export DN_CONTAINER_NAME="mock-container"
+export DNP_PROMPT_NAME="Dockerized-NorLab-Project"
+export DNP_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
 function dnp::import_lib_and_dependencies() {
@@ -168,7 +170,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
+  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
   assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
@@ -217,16 +219,15 @@ teardown_file() {
   assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service deploy"
 }
 
-@test "dnp::exec_command with invalid service › expect error" {
-  # Test case: When exec command is called with an invalid service, it should show an error
+@test "dnp::exec_command with invalid service › expect service treated as command" {
+  # Test case: When exec command is called with an invalid service, it treats it as a command to execute
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command invalid-service"
 
-  # Should fail
-  assert_failure
+  # Should succeed (exec doesn't validate services, treats them as commands)
+  assert_success
 
-  # Should output the error message
-  assert_output --partial "Mock dnp::illegal_command_msg called with args: exec"
-  assert_output --partial "Unknown SERVICE: invalid-service"
+  # Should output the expected message with invalid-service passed as command
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop invalid-service"
 }
 
 @test "dnp::exec_command with multiple services › expect error" {
@@ -351,13 +352,13 @@ teardown_file() {
   assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --workdir /path --detach --service deploy -- bash -c echo hello"
 }
 
-@test "dnp::exec_command with invalid option › expect error" {
-  # Test case: When exec command is called with an invalid option, it should show an error
+@test "dnp::exec_command with invalid option › expect option treated as command" {
+  # Test case: When exec command is called with an invalid option, it treats it as a command to execute
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --invalid-option"
 
-  # Should fail
-  assert_failure
+  # Should succeed (exec doesn't validate options, treats them as commands)
+  assert_success
 
-  # Should output the error message
-  assert_output --partial "Mock dnp::unknown_subcommand_msg called with args: exec --invalid-option"
+  # Should output the expected message with invalid-option passed as command
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop --invalid-option"
 }

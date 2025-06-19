@@ -129,6 +129,11 @@ function dnp::command_help_menu() {
   return 0
 }
 
+function dnp::illegal_command_msg() {
+  echo "Mock dnp::illegal_command_msg called with args: $*"
+  return 1
+}
+
 # ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {
   echo "Mock n2st::norlab_splash called with args: $*"
@@ -443,8 +448,7 @@ teardown_file() {
   assert_failure
 
   # Should output the expected error message
-  assert_output --partial "Mock n2st::print_msg_error called with args: Only one SERVICE can be specified."
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: run develop deploy Only one SERVICE can be specified."
 }
 
 @test "dnp::run_command with ci-tests and slurm › expect error message" {
@@ -455,8 +459,7 @@ teardown_file() {
   assert_failure
 
   # Should output the expected error message
-  assert_output --partial "Mock n2st::print_msg_error called with args: Only one SERVICE can be specified."
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: run ci-tests slurm Only one SERVICE can be specified."
 }
 
 # ====New test cases for individual option testing===============================================

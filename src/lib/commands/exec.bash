@@ -6,7 +6,7 @@ DOCUMENTATION_BUFFER_EXEC=$( cat <<'EOF'
 # Execute command and arguments in a running DNP containers
 #
 # Usage:
-#   $ dnp exec [OPTIONS] [SERVICE] [-- COMMAND [ARGS...]]
+#   $ dnp exec [OPTIONS] [SERVICE] [--] COMMAND [ARGS...]
 #
 # Options:
 #   -e, --env stringArray    Set container environment variables
@@ -46,14 +46,14 @@ function dnp::exec_command() {
     declare -a remaining_args=()
     declare -a docker_compose_exec_flag=()
     local service="develop"
-    local service_set=false
+    declare -i service_override=0
     local original_command="$*"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_EXEC}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_EXEC:?err}"
                 exit 0
                 ;;
             --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
@@ -69,41 +69,34 @@ function dnp::exec_command() {
                 shift
                 ;;
             develop|deploy)
-                # If service is already set, it's an error
-                if [[ "${service_set}" == true ]]; then
-                    dnp::illegal_command_msg "exec" "${original_command}" "Only one SERVICE can be specified.\n"
-                    return 1
-                fi
                 service="$1"
-                service_set=true
+                service_override+=1
                 shift
                 ;;
             --) # no more option
-                remaining_args=("$@")
+                remaining_args+=("$@")
                 break
                 ;;
-            --no-attach)
-                dnp::illegal_command_msg "exec" "--no-attach" "Its a dnp internal flag"
-                exit 1
-                ;;
             *)
-                # Check if it starts with -- (unknown option)
-                if [[ "$1" == --* ]]; then
-                    dnp::unknown_subcommand_msg "exec" "$*"
-                    exit 1
-                fi
-                # Otherwise it's an unknown service
-                dnp::illegal_command_msg "exec" "${original_command}" "Unknown SERVICE: $1. Valid services are: develop, deploy.\n"
-                return 1
+                # Otherwise, pass remaining arguments through
+                remaining_args+=("$@")
+                break
                 ;;
         esac
     done
+
+    # Check if a service was specified
+    if [[ ${service_override} -ge 2 ]]; then
+        # If service is already set, it's an error
+        dnp::illegal_command_msg "exec" "${original_command}" "Only one SERVICE can be specified.\n"
+        return 1
+    fi
 
     # Add service to docker_compose_exec_flag
     docker_compose_exec_flag+=("--service" "${service}")
 
     # Splash type: small, negative or big
-    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
+    n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1

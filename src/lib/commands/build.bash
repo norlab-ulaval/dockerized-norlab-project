@@ -81,7 +81,7 @@ function dnp::build_command() {
                 shift 2
                 ;;
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_BUILD}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_BUILD:?err}"
                 exit 0
                 ;;
             --) # no more option

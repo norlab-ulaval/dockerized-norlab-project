@@ -58,7 +58,7 @@ DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 # - Rebuild images automaticaly
 #
 # Usage:
-#   $ dnp run [OPTIONS] <sjob-id> [--] <any-python-args>
+#   $ dnp run [OPTIONS] slurm <sjob-id> [--] <any-python-args>
 #
 # Optional flag:
 #   --log-name=<name>                                 The log file name without postfix
@@ -96,19 +96,6 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD=$( cat <<'EOF'
 EOF
 )
 
-DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD=$( cat <<'EOF'
-# =================================================================================================
-# Run continuous integration tests container.
-#
-# Usage:
-#   $ dnp build ci-tests
-#   $ dnp run ci_tests [COMMAND [ARG...]]
-#
-# Note: Require executing `dnp build ci-tests` first.
-#
-# =================================================================================================
-EOF
-)
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
@@ -122,26 +109,26 @@ test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load e
 function dnp::run_command() {
     local service=""
     declare -i service_set=0
-    local remaining_args=()
+    declare -a remaining_args=()
     local original_command="$*"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
                 exit 0
                 ;;
             --help-slurm)
-                dnp::command_help_menu "${DOCUMENTATION_RUN_SLURM_CMD}"
+                dnp::command_help_menu "${DOCUMENTATION_RUN_SLURM_CMD:?err}"
                 exit 0
                 ;;
             --help-ci-tests)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD:?err}"
                 exit 0
                 ;;
             --help-develop|--help-deploy)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_DEVELOP_DEPLOY_CMD}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_DEVELOP_DEPLOY_CMD:?err}"
                 exit 0
                 ;;
             --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
@@ -191,17 +178,16 @@ function dnp::run_command() {
     # Check if a service was specified
     if [[ ${service_set} -eq 0 ]]; then
         n2st::print_msg_error "Service is either unknown or not specified."
-        dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN}"
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
         return 1
     elif [[ ${service_set} -ge 2 ]]; then
         # If service is already set, it's an error
-        n2st::print_msg_error "Only one SERVICE can be specified."
-        dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN}"
+        dnp::illegal_command_msg "run" "${original_command}" "Only one SERVICE can be specified.\n"
         return 1
     fi
 
         # Splash type: small, negative or big
-    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'small'
+    n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
