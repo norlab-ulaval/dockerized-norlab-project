@@ -74,10 +74,7 @@ function dnp::load_command() {
             original_cwd="$(pwd)"
 
             # Source the load_super_project_config to get access to dnp::cd_to_dnp_super_project_root
-            source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || {
-                n2st::print_msg_error "Failed to load super project configuration utilities"
-                return 1
-            }
+            source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" --no-execute || return 1
 
             if dnp::cd_to_dnp_super_project_root; then
                 if [[ -f "meta.txt" ]]; then
@@ -206,12 +203,10 @@ function dnp::handle_develop_post_load() {
 
     if [[ -n "${alias_prefix}" ]]; then
         local alias_command="dnp-${alias_prefix}-cd"
-        n2st::print_msg "Executing alias: ${alias_command}"
+        n2st::print_msg "Check aliases: ${alias_command}"
 
-        # Check if the alias exists
         if command -v "${alias_command}" >/dev/null 2>&1; then
             if "${alias_command}"; then
-                n2st::print_msg_done "Executed alias: ${alias_command}"
                 return 0
             else
                 n2st::print_msg_warning "Failed to execute alias: ${alias_command}"
@@ -219,11 +214,11 @@ function dnp::handle_develop_post_load() {
             fi
         else
             n2st::print_msg_warning "Alias not found: ${alias_command}
-    Please manually navigate to your project directory and run 'dnp up develop' or 'dnp run develop'"
+    Please manually navigate to your project directory and run ${MSG_DIMMED_FORMAT}dnp [up|run] develop${MSG_END_FORMAT}"
         fi
     else
         n2st::print_msg_warning "DN_PROJECT_ALIAS_PREFIX not found in metadata
-    Please manually navigate to your project directory and run 'dnp up develop' or 'dnp run develop'"
+    Please manually navigate to your project directory and run ${MSG_DIMMED_FORMAT}dnp [up|run] develop${MSG_END_FORMAT}"
     fi
 
     return 0

@@ -152,4 +152,230 @@ teardown() {
   assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
+# ====Tests for dnp::check_offline_deploy_service_discovery function==============================
 
+@test "dnp::check_offline_deploy_service_discovery with valid meta.txt and loaded image › expect success" {
+  # Setup: Load DNP lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  # Create temporary directory for test
+  local test_dir
+  test_dir=$(temp_make)
+
+  # Create mock meta.txt file
+  cat > "${test_dir}/meta.txt" << 'EOF'
+SERVICE=deploy
+IMAGE_NAME=test-image-deploy.latest
+SUPER_PROJECT_REPO_NAME=test-project
+DN_PROJECT_ALIAS_PREFIX=test
+TAR_FILENAME=test-image-deploy.latest.tar
+EOF
+
+  # Mock docker command to simulate image being loaded
+  function docker() {
+    case "$1" in
+      "image")
+        case "$2" in
+          "ls")
+            echo "test-image-deploy.latest"
+            return 0
+            ;;
+          *)
+            return 0
+            ;;
+        esac
+        ;;
+      *)
+        return 0
+        ;;
+    esac
+  }
+  export -f docker
+
+  # Change to test directory and run function
+  cd "${test_dir}" || exit 1
+  run dnp::check_offline_deploy_service_discovery
+
+  assert_success
+  assert_output "deploy"
+
+  # Cleanup
+  temp_del "${test_dir}"
+}
+
+@test "dnp::check_offline_deploy_service_discovery with valid meta.txt but image not loaded › expect failure" {
+  # Setup: Load DNP lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  # Create temporary directory for test
+  local test_dir
+  test_dir=$(temp_make)
+
+  # Create mock meta.txt file
+  cat > "${test_dir}/meta.txt" << 'EOF'
+SERVICE=deploy
+IMAGE_NAME=test-image-deploy.latest
+SUPER_PROJECT_REPO_NAME=test-project
+DN_PROJECT_ALIAS_PREFIX=test
+TAR_FILENAME=test-image-deploy.latest.tar
+EOF
+
+  # Mock docker command to simulate image NOT being loaded
+  function docker() {
+    case "$1" in
+      "image")
+        case "$2" in
+          "ls")
+            echo ""  # No images loaded
+            return 0
+            ;;
+          *)
+            return 0
+            ;;
+        esac
+        ;;
+      *)
+        return 0
+        ;;
+    esac
+  }
+  export -f docker
+
+  # Change to test directory and run function
+  cd "${test_dir}" || exit 1
+  run dnp::check_offline_deploy_service_discovery
+
+  assert_failure
+  assert_output --regexp "Docker image 'test-image-deploy.latest' is not loaded"
+
+  # Cleanup
+  temp_del "${test_dir}"
+}
+
+@test "dnp::check_offline_deploy_service_discovery with missing meta.txt › expect failure" {
+  # Setup: Load DNP lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  # Create temporary directory for test (without meta.txt)
+  local test_dir
+  test_dir=$(temp_make)
+
+  # Change to test directory and run function
+  cd "${test_dir}" || exit 1
+  run dnp::check_offline_deploy_service_discovery
+
+  assert_failure
+  refute_output
+
+  # Cleanup
+  temp_del "${test_dir}"
+}
+
+@test "dnp::check_offline_deploy_service_discovery with invalid meta.txt (missing SERVICE) › expect failure" {
+  # Setup: Load DNP lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  # Create temporary directory for test
+  local test_dir
+  test_dir=$(temp_make)
+
+  # Create invalid meta.txt file (missing SERVICE)
+  cat > "${test_dir}/meta.txt" << 'EOF'
+IMAGE_NAME=test-image-deploy.latest
+SUPER_PROJECT_REPO_NAME=test-project
+DN_PROJECT_ALIAS_PREFIX=test
+TAR_FILENAME=test-image-deploy.latest.tar
+EOF
+
+  # Change to test directory and run function
+  cd "${test_dir}" || exit 1
+  run dnp::check_offline_deploy_service_discovery
+
+  assert_failure
+  assert_output --regexp "Invalid meta.txt: missing SERVICE or IMAGE_NAME field"
+
+  # Cleanup
+  temp_del "${test_dir}"
+}
+
+@test "dnp::check_offline_deploy_service_discovery with invalid meta.txt (missing IMAGE_NAME) › expect failure" {
+  # Setup: Load DNP lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  # Create temporary directory for test
+  local test_dir
+  test_dir=$(temp_make)
+
+  # Create invalid meta.txt file (missing IMAGE_NAME)
+  cat > "${test_dir}/meta.txt" << 'EOF'
+SERVICE=deploy
+SUPER_PROJECT_REPO_NAME=test-project
+DN_PROJECT_ALIAS_PREFIX=test
+TAR_FILENAME=test-image-deploy.latest.tar
+EOF
+
+  # Change to test directory and run function
+  cd "${test_dir}" || exit 1
+  run dnp::check_offline_deploy_service_discovery
+
+  assert_failure
+  assert_output --regexp "Invalid meta.txt: missing SERVICE or IMAGE_NAME field"
+
+  # Cleanup
+  temp_del "${test_dir}"
+}
+
+@test "dnp::check_offline_deploy_service_discovery with develop service › expect success" {
+  # Setup: Load DNP lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
+
+  # Create temporary directory for test
+  local test_dir
+  test_dir=$(temp_make)
+
+  # Create mock meta.txt file for develop service
+  cat > "${test_dir}/meta.txt" << 'EOF'
+SERVICE=develop
+IMAGE_NAME=test-image-develop.latest
+SUPER_PROJECT_REPO_NAME=test-project
+DN_PROJECT_ALIAS_PREFIX=test
+TAR_FILENAME=test-image-develop.latest.tar
+EOF
+
+  # Mock docker command to simulate image being loaded
+  function docker() {
+    case "$1" in
+      "image")
+        case "$2" in
+          "ls")
+            echo "test-image-develop.latest"
+            return 0
+            ;;
+          *)
+            return 0
+            ;;
+        esac
+        ;;
+      *)
+        return 0
+        ;;
+    esac
+  }
+  export -f docker
+
+  # Change to test directory and run function
+  cd "${test_dir}" || exit 1
+  run dnp::check_offline_deploy_service_discovery
+
+  assert_success
+  assert_output "develop"
+
+  # Cleanup
+  temp_del "${test_dir}"
+}

@@ -175,30 +175,38 @@ function dnp::run_command() {
         esac
     done
 
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash" || return 1
+    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
+    source "${DNP_LIB_PATH}/core/execute/run.any.bash" || return 1
+    source "${DNP_LIB_PATH}/core/execute/run.slurm.bash" || return 1
+
+    # ....Set service..............................................................................
     # Check if a service was specified
     if [[ ${service_set} -eq 0 ]]; then
-        n2st::print_msg_error "Service is either unknown or not specified."
-        dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
-        return 1
+        # If no service was specified, check for offline deployment
+        local offline_service
+        source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+        if offline_service=$(dnp::check_offline_deploy_service_discovery 2>/dev/null); then
+            service="${offline_service}"
+            service_set=1
+            n2st::print_msg "Using offline deployment service: ${service}"
+        else
+            n2st::print_msg_error "Service is either unknown or not specified."
+            dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
+            return 1
+        fi
     elif [[ ${service_set} -ge 2 ]]; then
-        # If service is already set, it's an error
+        # If service is set twice, it's an error
         dnp::illegal_command_msg "run" "${original_command}" "Only one SERVICE can be specified.\n"
         return 1
     fi
 
-        # Splash type: small, negative or big
+    # ....Begin....................................................................................
+    # Splash type: small, negative or big
     n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
 
-    # ....Load dependencies........................................................................
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash"
-    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/run.any.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/run.slurm.bash"
-
-
-
-    # ....Begin....................................................................................
     # Determine which run script to execute
     if [[ "${service}" == "ci-tests" ]]; then
         n2st::print_msg "Running CI tests..."

@@ -1,9 +1,15 @@
 #!/bin/bash
+DOCUMENTATION_LOAD_SUPER_PROJECT_CONFIG=$( cat <<'EOF'
 # =================================================================================================
-# Load Dockerized-NorLab and Dockerized-NorLab-Project resources and dependencies
+# Load Dockerized-NorLab and Dockerized-NorLab-Project resources and dependencies. The default
+# behavior is to execute the 'dnp::load_super_project_configurations()' function automaticaly.
 #
 # Usage:
-#   $ source import_dnp_lib.bash
+#   $ source import_dnp_lib.bash [OPTIONS]
+#
+# Options:
+#   --no-execute             Only load the functions definition
+#   -h | --help              Show this help message
 #
 # Globals:
 #   read DNP_ROOT
@@ -11,12 +17,38 @@
 #   write SUPER_PROJECT_REPO_NAME
 #
 # =================================================================================================
+EOF
+)
 MSG_ERROR_FORMAT="\033[1;31m"
 MSG_END_FORMAT="\033[0m"
 
 # ....Variable set for export......................................................................
 declare -x SUPER_PROJECT_ROOT
 declare -x SUPER_PROJECT_REPO_NAME
+
+
+# ....Set env variables (pre cli)................................................................
+_execute_now=true
+
+# ....cli..........................................................................................
+while [ $# -gt 0 ]; do
+
+  case $1 in
+    --no-execute)
+      _execute_now=false
+      shift
+      ;;
+    -h | --help)
+      dnp::command_help_menu "${DOCUMENTATION_LOAD_SUPER_PROJECT_CONFIG:?err}"
+      exit 0
+      ;;
+    *) # Default case
+      break
+      ;;
+  esac
+
+done
+
 
 # =================================================================================================
 # Function that load DNP lib, find the super project root and load all dependencies.
@@ -186,6 +218,74 @@ ${MSG_END_FORMAT}" >&2
     return 1
 }
 
+# =================================================================================================
+# Function to check for offline deploy service discovery using meta.txt file.
+# If meta.txt is found, validates that the docker image is loaded and returns the service name.
+#
+# Usage:
+#     $ dnp::check_offline_deploy_service_discovery
+#
+# Arguments:
+#   none
+# Outputs:
+#   Service name to stdout if offline deployment is available
+#   Error messages to stderr in case of failure
+# Globals:
+#   none
+# Returns:
+#   0 if offline deployment is available and service name is printed to stdout
+#   1 if meta.txt not found or docker image not loaded
+# =================================================================================================
+function dnp::check_offline_deploy_service_discovery() {
+    local meta_file=""
+    local service=""
+    local image_name=""
+
+    # Check for meta.txt in current directory first
+    if [[ -f "meta.txt" ]]; then
+        meta_file="$(pwd)/meta.txt"
+    else
+        # Try to find meta.txt in super project root
+        local original_cwd
+        original_cwd="$(pwd)"
+
+        if dnp::cd_to_dnp_super_project_root 2>/dev/null; then
+            if [[ -f "meta.txt" ]]; then
+                meta_file="$(pwd)/meta.txt"
+            fi
+            cd "${original_cwd}" || return 1
+        else
+            cd "${original_cwd}" || return 1
+            return 1
+        fi
+    fi
+
+    # If no meta.txt found, return failure
+    if [[ -z "${meta_file}" ]]; then
+        return 1
+    fi
+
+    # Extract SERVICE and IMAGE_NAME from meta.txt
+    service=$(grep "^SERVICE=" "${meta_file}" | cut -d'=' -f2)
+    image_name=$(grep "^IMAGE_NAME=" "${meta_file}" | cut -d'=' -f2)
+
+    # Validate required fields exist
+    if [[ -z "${service}" ]] || [[ -z "${image_name}" ]]; then
+        n2st::print_msg_error "Invalid meta.txt: missing SERVICE or IMAGE_NAME field" >&2
+        return 1
+    fi
+
+    # Check if docker image is loaded
+    if ! docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -q "^${image_name}$"; then
+        n2st::print_msg_error "Docker image '${image_name}' is not loaded. Please run 'dnp load' first." >&2
+        return 1
+    fi
+
+    # Return the service name
+    echo "${service}"
+    return 0
+}
+
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
@@ -195,6 +295,8 @@ else
   # Check if N2ST is loaded
   n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
 
-  dnp::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNP user project configurations" 1>&2 && exit 1; }
+  if [[ ${_execute_now} == true  ]]; then
+    dnp::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNP user project configurations" 1>&2 && exit 1; }
+  fi
+  unset _execute_now
 fi
-

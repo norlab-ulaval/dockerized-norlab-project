@@ -41,7 +41,6 @@ function dnp::attach_command() {
                 exit 0
                 ;;
             develop|deploy)
-                # If service is already set, it's an error
                 service="$1"
                 service_override+=1
                 shift
@@ -59,25 +58,32 @@ function dnp::attach_command() {
         esac
     done
 
-    # Check if a service was specified
-    if [[ ${service_override} -ge 2 ]]; then
-        # If service is already set, it's an error
-        dnp::illegal_command_msg "attach" "${original_command}" "Only one SERVICE can be specified.\n"
-        return 1
-    fi
-
-
-    # Add service to docker_compose_exec_flag
-    docker_compose_exec_flag+=("--service" "${service}")
-
-    # Splash type: small, negative or big
-    n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
     source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
 
+    # ....Set service..............................................................................
+    # Check if a service was specified
+    if [[ ${service_override} -eq 0 ]]; then
+        # If no service was explicitly specified, check for offline deployment
+        local offline_service
+        if offline_service=$(dnp::check_offline_deploy_service_discovery 2>/dev/null); then
+            service="${offline_service}"
+            n2st::print_msg "Using offline deployment service: ${service}"
+        fi
+    elif [[ ${service_override} -ge 2 ]]; then
+        # If service is set twice, it's an error
+        dnp::illegal_command_msg "attach" "${original_command}" "Only one SERVICE can be specified.\n"
+        return 1
+    fi
+
+    docker_compose_exec_flag+=("--service" "${service}")
+
     # ....Begin....................................................................................
+    # Splash type: small, negative or big
+    n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
+
     dnp::up_and_attach --no-up "${docker_compose_exec_flag[@]}"
     fct_exit_code=$?
     if [[ ${fct_exit_code} -eq 0 ]]; then

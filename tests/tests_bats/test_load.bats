@@ -339,9 +339,8 @@ EOF
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Executing alias: dnp-test-cd"
+  assert_output --partial "Check aliases: dnp-test-cd"
   assert_output --partial "Mock alias dnp-test-cd executed"
-  assert_output --partial "Executed alias: dnp-test-cd"
 }
 
 @test "dnp::handle_develop_post_load function with non-existing alias › expect warning" {

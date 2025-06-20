@@ -13,6 +13,10 @@ function dnp::test_teardown_callback() {
 trap dnp::test_teardown_callback EXIT
 # Note: command `dnp COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
 
+PROJECT_PROMPT_NAME="${PROJECT_PROMPT_NAME}-TESTS"
+cd "${N2ST_PATH:?'Variable not set'}" || exit 1
+source "import_norlab_shell_script_tools_lib.bash" || exit 1
+
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # Mock docker command for dryrun testing
@@ -53,7 +57,8 @@ echo "Using temporary directory: ${TEMP_SAVE_DIR}"
 
 # .................................................................................................
 # Step 1: Test build with save for develop service
-echo "Step 1: Testing 'dnp build develop --save ${TEMP_SAVE_DIR}'"
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg "Step 1: Testing 'dnp build develop --save ${TEMP_SAVE_DIR}'"
 dnp build develop --save "${TEMP_SAVE_DIR}" || exit 1
 
 # Check if save directory was created (in dry-run mode, this might not actually create files)
@@ -61,7 +66,8 @@ echo "Checking for save directory creation..."
 
 # .................................................................................................
 # Step 2: Test standalone save command for develop service
-echo "Step 2: Testing standalone 'dnp save ${TEMP_SAVE_DIR} develop'"
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg "Step 2: Testing standalone 'dnp save ${TEMP_SAVE_DIR} develop'"
 dnp save "${TEMP_SAVE_DIR}" develop || exit 1
 
 # Find the created save directory
@@ -73,10 +79,11 @@ CREATED_SAVE_DIR=$(find "${TEMP_SAVE_DIR}" -maxdepth 1 -type d -name "dnp-save-d
 if [[ -n "${CREATED_SAVE_DIR}" && -d "${CREATED_SAVE_DIR}" ]]; then
     echo "Found created save directory: ${CREATED_SAVE_DIR}"
 
-    echo "Step 3: Testing 'dnp load ${CREATED_SAVE_DIR}'"
+    n2st::draw_horizontal_line_across_the_terminal_window "/"
+    n2st::print_msg "Step 3: Testing 'dnp load ${CREATED_SAVE_DIR}'"
     dnp load "${CREATED_SAVE_DIR}" || exit 1
 
-    echo "✓ Develop service save/load pipeline test completed successfully"
+    n2st::print_msg_done "✓ Develop service save/load pipeline test completed successfully"
 else
     echo "⚠ Save directory not found, creating mock structure for load testing"
 
@@ -98,10 +105,11 @@ EOF
     touch "${MOCK_SAVE_DIR}/test-image-develop.latest.tar"
 
     # Test load command
-    echo "Step 3: Testing 'dnp load ${MOCK_SAVE_DIR}'"
+    n2st::draw_horizontal_line_across_the_terminal_window "/"
+    n2st::print_msg "Step 3: Testing 'dnp load ${MOCK_SAVE_DIR}'"
     dnp load "${MOCK_SAVE_DIR}" || exit 1
 
-    echo "✓ Mock develop service save/load pipeline test completed"
+    n2st::print_msg_done "✓ Mock develop service save/load pipeline test completed"
 fi
 
 echo ""
@@ -109,12 +117,14 @@ echo "Testing deploy service pipeline..."
 
 # .................................................................................................
 # Step 4: Test build with save for deploy service
-echo "Step 4: Testing 'dnp build deploy --save ${TEMP_SAVE_DIR}'"
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg "Step 4: Testing 'dnp build deploy --save ${TEMP_SAVE_DIR}'"
 dnp build deploy --save "${TEMP_SAVE_DIR}" || exit 1
 
 # .................................................................................................
 # Step 5: Test standalone save command for deploy service
-echo "Step 5: Testing standalone 'dnp save ${TEMP_SAVE_DIR} deploy'"
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg "Step 5: Testing standalone 'dnp save ${TEMP_SAVE_DIR} deploy'"
 dnp save "${TEMP_SAVE_DIR}" deploy || exit 1
 
 # Find the created deploy save directory
@@ -125,15 +135,17 @@ if [[ -n "${DEPLOY_SAVE_DIR}" && -d "${DEPLOY_SAVE_DIR}" ]]; then
 
     # .............................................................................................
     # Step 6: Test load command for deploy
-    echo "Step 6: Testing 'dnp load ${DEPLOY_SAVE_DIR}'"
+    n2st::draw_horizontal_line_across_the_terminal_window "/"
+    n2st::print_msg "Step 6: Testing 'dnp load ${DEPLOY_SAVE_DIR}'"
     dnp load "${DEPLOY_SAVE_DIR}" || exit 1
 
     # .............................................................................................
     # Step 7: Test run command for deploy to validate the loaded image works
-    echo "Step 7: Testing 'dnp run deploy' to validate loaded deploy image"
+    n2st::draw_horizontal_line_across_the_terminal_window "/"
+    n2st::print_msg "Step 7: Testing 'dnp run deploy' to validate loaded deploy image"
     dnp run deploy --dry-run || exit 1
 
-    echo "✓ Deploy service save/load pipeline test completed successfully"
+    n2st::print_msg_done "✓ Deploy service save/load pipeline test completed successfully"
 else
     echo "⚠ Deploy save directory not found, creating mock structure for load testing"
 
@@ -156,19 +168,21 @@ EOF
 
     # .............................................................................................
     # Step 6: Test load command for deploy
-    echo "Step 6: Testing 'dnp load ${MOCK_DEPLOY_SAVE_DIR}'"
+    n2st::draw_horizontal_line_across_the_terminal_window "/"
+    n2st::print_msg "Step 6: Testing 'dnp load ${MOCK_DEPLOY_SAVE_DIR}'"
     dnp load "${MOCK_DEPLOY_SAVE_DIR}" || exit 1
 
     # .............................................................................................
     # Step 7: Test run command for deploy to validate the loaded image works
-    echo "Step 7: Testing 'dnp run deploy' to validate loaded deploy image"
+    n2st::draw_horizontal_line_across_the_terminal_window "/"
+    n2st::print_msg "Step 7: Testing 'dnp run deploy' to validate loaded deploy image"
     dnp run deploy --dry-run || exit 1
 
-    echo "✓ Mock deploy service save/load pipeline test completed"
+    n2st::print_msg_done "✓ Mock deploy service save/load pipeline test completed"
 fi
 
 echo ""
-echo "✓ Full save/load pipeline integration test completed successfully"
+n2st::print_msg_done "✓ Full save/load pipeline integration test completed successfully"
 
 # Clean up
 rm -rf "${TEMP_SAVE_DIR}"

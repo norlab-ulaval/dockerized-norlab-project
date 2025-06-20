@@ -13,6 +13,10 @@ function dnp::test_teardown_callback() {
 trap dnp::test_teardown_callback EXIT
 # Note: command `dnp COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
 
+PROJECT_PROMPT_NAME="${PROJECT_PROMPT_NAME}-TESTS"
+cd "${N2ST_PATH:?'Variable not set'}" || exit 1
+source "import_norlab_shell_script_tools_lib.bash" || exit 1
+
 cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # Mock docker command for testing
@@ -47,7 +51,8 @@ echo "Using temporary directory: ${temp_save_dir}"
 
 # Test Case 1: Deploy service should change directory and persist
 echo ""
-echo "=== Test Case 1: Deploy service directory persistence ==="
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg "Test Case 1: Deploy service directory persistence\n"
 
 # Create mock deploy save directory structure
 mock_deploy_save_dir="${temp_save_dir}/dnp-save-deploy-test-project-202312151430"
@@ -92,7 +97,7 @@ output=$(dnp load "${mock_deploy_save_dir}" 2>&1)
 load_exit_code=$?
 
 if [[ ${load_exit_code} -ne 0 ]]; then
-    echo "✗ Load command failed with exit code: ${load_exit_code}"
+    n2st::print_msg_error "✗ Load command failed with exit code: ${load_exit_code}"
     echo "${output}"
     exit 1
 fi
@@ -101,9 +106,9 @@ echo "${output}"
 
 # Test that the load command provides correct instructions for directory change
 if echo "${output}" | grep -q "cd \"${project_dir}\""; then
-    echo "✓ Load command provided correct directory change instructions: ${project_dir}"
+    n2st::print_msg_done "✓ Load command provided correct directory change instructions: ${project_dir}"
 else
-    echo "✗ Load command did not provide correct directory change instructions"
+    n2st::print_msg_error "✗ Load command did not provide correct directory change instructions"
     echo "Expected to find: cd \"${project_dir}\""
     echo "Actual output:"
     echo "${output}"
@@ -113,9 +118,9 @@ fi
 # Verify that the current directory hasn't changed (realistic behavior)
 final_cwd="$(pwd)"
 if [[ "${final_cwd}" == "${initial_cwd}" ]]; then
-    echo "✓ Load command correctly did not change the current shell directory (expected behavior)"
+    n2st::print_msg_done "✓ Load command correctly did not change the current shell directory (expected behavior)"
 else
-    echo "✗ Load command unexpectedly changed the current shell directory"
+    n2st::print_msg_error "✗ Load command unexpectedly changed the current shell directory"
     echo "  Initial: ${initial_cwd}"
     echo "  Final: ${final_cwd}"
     exit 1
@@ -123,7 +128,8 @@ fi
 
 # Test Case 2: Develop service should NOT change directory (for comparison)
 echo ""
-echo "=== Test Case 2: Develop service should not change directory ==="
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg "Test Case 2: Develop service should not change directory\n"
 
 # Create mock develop save directory structure
 mock_develop_save_dir="${temp_save_dir}/dnp-save-develop-test-project-202312151430"
@@ -166,14 +172,15 @@ current_cwd=$(pwd)
 echo "Current working directory after develop load: ${current_cwd}"
 
 if [[ "${current_cwd}" == "${DNP_MOCK_SUPER_PROJECT_ROOT}" ]]; then
-    echo "✓ Develop service load did not change directory (expected behavior)"
+    n2st::print_msg_done "✓ Develop service load did not change directory (expected behavior)"
 else
-    echo "✗ Develop service load unexpectedly changed directory"
+    n2st::print_msg_error "✗ Develop service load unexpectedly changed directory"
     exit 1
 fi
 
 echo ""
-echo "=== Summary ==="
+n2st::draw_horizontal_line_across_the_terminal_window "/"
+n2st::print_msg_done "Summary\n"
 echo "✓ Deploy service load command correctly provides instructions for directory change to SAVE_DIR_PATH/SUPER_PROJECT_REPO_NAME"
 echo "✓ Deploy service load command correctly does not change the current shell directory (realistic behavior)"
 echo "✓ Develop service load command correctly does not change directory"

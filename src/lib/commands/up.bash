@@ -80,9 +80,21 @@ function dnp::up_command() {
         esac
     done
 
+    # ....Load dependencies........................................................................
+    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
+
+    # ....Set service..............................................................................
     # Check if a service was specified
-    if [[ ${service_override} -ge 2 ]]; then
-        # If service is already set, it's an error
+    if [[ ${service_override} -eq 0 ]]; then
+        # If no service was explicitly specified, check for offline deployment
+        local offline_service
+        if offline_service=$(dnp::check_offline_deploy_service_discovery 2>/dev/null); then
+            service="${offline_service}"
+            n2st::print_msg "Using offline deployment service: ${service}"
+        fi
+    elif [[ ${service_override} -ge 2 ]]; then
+        # If service is set twice, it's an error
         dnp::illegal_command_msg "up" "${original_command}" "Only one SERVICE can be specified.\n"
         return 1
     fi
@@ -90,14 +102,10 @@ function dnp::up_command() {
     # Add service to remaining_args
     remaining_args=("--service" "${service}" "${remaining_args[@]}")
 
+    # ....Begin....................................................................................
     # Splash type: small, negative or big
     n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
 
-    # ....Load dependencies........................................................................
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
-
-    # ....Begin....................................................................................
     dnp::up_and_attach "${remaining_args[@]}"
     fct_exit_code=$?
     if [[ ${fct_exit_code} -eq 0 ]]; then
