@@ -104,7 +104,7 @@ if [[ ${up_exit_code} -ne 0 ]]; then
     exit 1
 fi
 
-echo "${output}"
+#n2st::print_msg "output:\n${output//[DN/   >>> [DN}"
 
 # Check if the output indicates deploy service was used
 if echo "${output}" | grep -q "Using offline deployment service: deploy"; then
@@ -156,7 +156,7 @@ output=$(dnp exec --dry-run -- echo "test" 2>&1)
 exec_exit_code=$?
 
 # The exec command may fail because service is not running, but we should still see the detection message
-echo "${output}"
+#n2st::print_msg "output:\n${output//[DN/   >>> [DN}"
 
 # Check if the output indicates develop service was used (even if command failed)
 if echo "${output}" | grep -q "Using offline deployment service: develop"; then
@@ -180,7 +180,7 @@ output=$(dnp attach deploy 2>&1)
 attach_exit_code=$?
 
 # The attach command may fail because service is not running, but we should check the detection behavior
-echo "${output}"
+#n2st::print_msg "output:\n${output//[DN/   >>> [DN}"
 
 # Check that auto-detection message is NOT present when service is explicitly specified
 if echo "${output}" | grep -q "Using offline deployment service:"; then
@@ -204,7 +204,7 @@ output=$(dnp run --dry-run -- echo "test" 2>&1)
 run_exit_code=$?
 
 # The run command may fail, but we should still see the detection message
-echo "${output}"
+#n2st::print_msg "output:\n${output//[DN/   >>> [DN}"
 
 # Check if the output indicates develop service was used (even if command failed)
 if echo "${output}" | grep -q "Using offline deployment service: develop"; then
@@ -231,7 +231,7 @@ output=$(dnp up --dry-run 2>&1)
 up_no_meta_exit_code=$?
 
 # The up command may fail, but we should check the detection behavior
-echo "${output}"
+#n2st::print_msg "output:\n${output//[DN/   >>> [DN}"
 
 # Check that auto-detection message is NOT present when meta.txt is missing
 if echo "${output}" | grep -q "Using offline deployment service:"; then
