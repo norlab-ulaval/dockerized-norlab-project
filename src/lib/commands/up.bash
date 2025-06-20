@@ -104,7 +104,7 @@ function dnp::up_command() {
 
     # ....Begin....................................................................................
     # Splash type: small, negative or big
-    n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
 
     dnp::up_and_attach "${remaining_args[@]}"
     fct_exit_code=$?

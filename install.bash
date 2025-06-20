@@ -200,7 +200,7 @@ function dnp::install_dockerized_norlab_project_on_host() {
 
   # ====Begin======================================================================================
   # Splash type: small, negative or big
-  n2st::norlab_splash "${DNP_PROMPT_NAME}" "${DNP_GIT_REMOTE_URL}" "small"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
   # ....Pre-conditions.............................................................................

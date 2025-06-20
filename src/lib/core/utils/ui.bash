@@ -96,7 +96,7 @@ function n2st::print_msg_error() {
 function dnp::show_entrypoint_help() {
     local documentation_buffer_dnp="${1:?err}"
     # Splash type: small, negative or big
-    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'negative'
+    n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" 'negative'
     n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
 
     # Note:

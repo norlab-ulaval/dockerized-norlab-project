@@ -154,7 +154,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${DNP_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL:?err}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::super_project_dnp_sanity_check || exit 1
   fct_exit_code=$?

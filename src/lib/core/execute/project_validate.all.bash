@@ -92,7 +92,7 @@ function dnp::project_validate_all() {
   # ....Config and dry-run build test summary........................................................
   n2st::print_formated_script_footer "dnp::project_validate_all" "${MSG_LINE_CHAR_BUILDER_LVL1}"
 
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
 
   n2st::print_msg "Config test summary"
   for idx in "${!config_test_exit_code[@]}"; do
@@ -152,7 +152,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::project_validate_all "$@"
   fct_exit_code=$?

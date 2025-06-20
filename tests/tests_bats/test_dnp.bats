@@ -161,6 +161,10 @@ export MSG_END_FORMAT=""
 # Set up environment variables
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${DNP_ROOT}/src/lib"
+export DNP_PROMPT_NAME="Dockerized-NorLab-Project"
+export DNP_SPLASH_NAME_FULL="Dockerized-NorLab-Project"
+export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab-Project"
+export DNP_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
 function dnp::import_lib_and_dependencies() {
