@@ -162,7 +162,7 @@ teardown_file() {
 
 @test "dnp::load_command with no arguments and no meta.txt in cwd › expect error" {
   # Test case: When load command is called without arguments and no meta.txt in current directory, it should show error
-  # Create a test directory without .dockerized_norlab_project to ensure dnp::cd_to_dnp_super_project_root fails
+  # Create a test directory without .dockerized_norlab to ensure dnp::cd_to_dnp_super_project_root fails
   local test_dir="${MOCK_SAVE_DIR}/no_dnp_project"
   mkdir -p "${test_dir}"
 
@@ -174,7 +174,7 @@ teardown_file() {
   # Should fail
   assert_failure
 
-  # Should output error message about .dockerized_norlab_project directory not found
+  # Should output error message about .dockerized_norlab directory not found
   assert_output --partial "directory not found"
 }
 

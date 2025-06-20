@@ -3,13 +3,13 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 
 ## Usage
 
-1. Setup/validate `.dockerized_norlab_project/configuration/` files: 
+1. Setup/validate `.dockerized_norlab/configuration/` files: 
    - Setup dotenv files: `.env`, `.env.dnp` and `.env.local`;
    - Customize files in `project_requirements/`;
    - Customize files in `project_entrypoints/`. Add
       project-specific container runtime logic;
    - Customize `Dockerfile` to fit your need. It should work out of the box for most use cases;
-   - Check `.dockerized_norlab_project/configuration/README.md` for more details.
+   - Check `.dockerized_norlab/configuration/README.md` for more details.
 2. From your project `root`, execute the following
    ```shell
    dnp help 
@@ -31,7 +31,7 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
     - [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) with
       `docker-buildx-plugin` and `docker-compose-plugin`
     - [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) for GPU usage
-- The directory `.dockerized_norlab_project` need to be at the super-project repository root
+- The directory `.dockerized_norlab` need to be at the super-project repository root
 
 # Setup PyCharm IDE
 
@@ -41,7 +41,7 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 - Make sure `rsync` DO copy the `.git` directory to the remote host i.e. check if it is in the rsync excluded item list 
 - **Remote display**:
   - Start your DN container project using script `src/lib/core/execute/up_and_attach.bash`
-  - In the remote docker container terminal, execute command alias `dn_expose_container_env_variables` and download `.dockerized_norlab_project/dn_container_env_variable/.env.dn_expose_PLACEHOLDER_DN_CONTAINER_NAME`  to your source machine
+  - In the remote docker container terminal, execute command alias `dn_expose_container_env_variables` and download `.dockerized_norlab/dn_container_env_variable/.env.dn_expose_PLACEHOLDER_DN_CONTAINER_NAME`  to your source machine
    and set `Paths to ".env" files` in run configuration window 
     ![set_interpreter_env.png](visual/set_run_config_env.png)
 

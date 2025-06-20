@@ -90,7 +90,7 @@ function dnp::global_install_hack() {
   # (Priority) ToDo: delete on task NMO-702 completion >> those lines ↓↓
   local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
   n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dnp" "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab_project/configuration/.env.dnp" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab/configuration/.env.dnp" "$dn_info_path"
   n2st::seek_and_modify_string_in_file "  develop: # the service name" "Set environment variable DN_ACTIVATE_POWERLINE_PROMT to false" "$dn_info_path"
   sed -i '/.*environment:/,/- DN_ACTIVATE_POWERLINE_PROMT=false/d' "$dn_info_path"
   n2st::seek_and_modify_string_in_file "dn_attach" "dnp [up|exec]" "$dn_info_path"

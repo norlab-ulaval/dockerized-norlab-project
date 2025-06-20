@@ -21,7 +21,7 @@ The output of `dnp build --save DIRPATH deploy` should be like this:
 ```markup
 dnp-save-deploy-<SUPER_PROJECT_REPO_NAME>-<date><hour><minute>/
   ├── <SUPER_PROJECT_REPO_NAME>/
-  │   ├── .dockerized_norlab_project/
+  │   ├── .dockerized_norlab/
   │   │   ├── configuration/
   │   │   │   ├── project_entrypoints/
   │   │   │   │   ├── project-deploy/

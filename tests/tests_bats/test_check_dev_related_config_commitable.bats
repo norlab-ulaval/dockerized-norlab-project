@@ -36,7 +36,7 @@ fi
 # ====Setup========================================================================================
 TESTED_FILE_PATH="src/lib/core/docker"
 MOCK_PROJECT_PATH="utilities/tmp/dockerized-norlab-project-mock"
-TESTED_FILE_PATH2="${MOCK_PROJECT_PATH}/.dockerized_norlab_project/configuration/"
+TESTED_FILE_PATH2="${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/"
 TESTED_FILE_PATH3="./"
 
 # executed once before starting the first test (valide for all test in that file)
@@ -192,10 +192,10 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
 
 # ....DNP app .dockerignore files tests............................................................
 
-@test "check dev configs in .dockerignore | !**/.dockerized_norlab_project/ › expect pass" {
-  helper::setup_ignore_related_tests '.dockerignore' '!**/.dockerized_norlab_project/' "${TESTED_FILE_PATH3}"
+@test "check dev configs in .dockerignore | !**/.dockerized_norlab/ › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/.dockerized_norlab/' "${TESTED_FILE_PATH3}"
   assert_file_exist ".dockerignore"
-  assert_file_contains ".dockerignore" "^\!\*\*\/\.dockerized_norlab_project\/"
+  assert_file_contains ".dockerignore" "^\!\*\*\/\.dockerized_norlab\/"
 }
 
 @test "check dev configs in .dockerignore | !**/version.txt › expect pass" {

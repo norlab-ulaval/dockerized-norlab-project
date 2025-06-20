@@ -111,9 +111,9 @@ EOF
 
   # Create mock project structure for deploy tests
   export MOCK_PROJECT_ROOT="${MOCK_DNP_DIR}/mock_project"
-  mkdir -p "${MOCK_PROJECT_ROOT}/.dockerized_norlab_project/configuration"
+  mkdir -p "${MOCK_PROJECT_ROOT}/.dockerized_norlab/configuration"
   mkdir -p "${MOCK_PROJECT_ROOT}/.git"
-  echo "mock config" > "${MOCK_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env"
+  echo "mock config" > "${MOCK_PROJECT_ROOT}/.dockerized_norlab/configuration/.env"
   echo "mock git" > "${MOCK_PROJECT_ROOT}/.git/config"
 
   # Create mock load_super_project_config.bash (after MOCK_PROJECT_ROOT is defined)
@@ -339,10 +339,10 @@ teardown_file() {
   # Verify project directory was created
   assert_dir_exist "${project_copy_path}"
 
-  # Verify .dockerized_norlab_project directory was copied
-  assert_dir_exist "${project_copy_path}/.dockerized_norlab_project"
-  assert_dir_exist "${project_copy_path}/.dockerized_norlab_project/configuration"
-  assert_file_exist "${project_copy_path}/.dockerized_norlab_project/configuration/.env"
+  # Verify .dockerized_norlab directory was copied
+  assert_dir_exist "${project_copy_path}/.dockerized_norlab"
+  assert_dir_exist "${project_copy_path}/.dockerized_norlab/configuration"
+  assert_file_exist "${project_copy_path}/.dockerized_norlab/configuration/.env"
 
   # Verify .git directory was copied
   assert_dir_exist "${project_copy_path}/.git"

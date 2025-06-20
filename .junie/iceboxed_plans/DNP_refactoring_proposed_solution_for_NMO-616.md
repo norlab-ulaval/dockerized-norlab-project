@@ -8,7 +8,7 @@ After analyzing the project requirements and the three options presented, I reco
 
 ```
 user-super-project
-├── .dockerized_norlab_project # User-side configuration only
+├── .dockerized_norlab # User-side configuration only
 │    ├── README.md
 │    ├── configuration
 │    │   └── ...
@@ -27,7 +27,7 @@ user-super-project
 ### 1. Create the Dockerized-NorLab-Project Repository
 
 - Create a new repository called `dockerized-norlab-project`
-- Initialize it with the core logic from the current `.dockerized_norlab_project` directory, excluding user-specific configuration
+- Initialize it with the core logic from the current `.dockerized_norlab` directory, excluding user-specific configuration
 - The repository structure should follow the guidelines:
 
 ```
@@ -66,13 +66,13 @@ dockerized-norlab-project
 └── .env.dockerized-norlab-project
 ```
 
-### 2. Refactor the Current `.dockerized_norlab_project` Directory
+### 2. Refactor the Current `.dockerized_norlab` Directory
 
 - Keep only user-side configuration in this directory
 - The refactored structure should look like:
 
 ```
-.dockerized_norlab_project
+.dockerized_norlab
 ├── README.md
 ├── configuration
 │   ├── .env # User customizable environment var
@@ -161,7 +161,7 @@ function dnp::import_lib_and_dependencies() {
   # ....Load Dockerized-NorLab-Project .env file...................................................
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
   set -o allexport
-  source ".dockerized_norlab_project/configuration/.env" || exit 1
+  source ".dockerized_norlab/configuration/.env" || exit 1
   set +o allexport
   
   # ....Load Dockerized-NorLab-Project core logic..................................................
@@ -212,8 +212,8 @@ function dnp::validate_super_project_dnp_setup() {
   fi
   
   # ====Begin======================================================================================
-  if [[ ! -d ".dockerized_norlab_project" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '.dockerized_norlab_project' is not installed at super-project repository root as it should!" 1>&2
+  if [[ ! -d ".dockerized_norlab" ]]; then
+    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '.dockerized_norlab' is not installed at super-project repository root as it should!" 1>&2
     exit 1
   fi
   
@@ -256,7 +256,7 @@ popd >/dev/null || exit 1
 
 ### 5. Create Documentation for the New Structure
 
-Updated README.md for the `.dockerized_norlab_project` directory:
+Updated README.md for the `.dockerized_norlab` directory:
 
 ```markdown
 # Dockerized-NorLab Project
@@ -265,9 +265,9 @@ Updated README.md for the `.dockerized_norlab_project` directory:
 This directory contains the user-side configuration for Dockerized-NorLab-Project. The core logic is in the `@dockerized-norlab-project` submodule in the `utilities` directory.
 
 ## Usage
-1. Setup/validate `.dockerized_norlab_project/configuration/.env`
-2. Customize files in `.dockerized_norlab_project/configuration/project_requirements/`. Add
-3. Customize files in `.dockerized_norlab_project/configuration/project_entrypoints/`. Add
+1. Setup/validate `.dockerized_norlab/configuration/.env`
+2. Customize files in `.dockerized_norlab/configuration/project_requirements/`. Add
+3. Customize files in `.dockerized_norlab/configuration/project_entrypoints/`. Add
    project-specific container runtime logic.
 4. Customize any `Dockerfile` or `docker-compose.*.yaml` to fit your need. It should work out of
    the box for most use cases.
@@ -289,7 +289,7 @@ This directory contains the user-side configuration for Dockerized-NorLab-Projec
     - [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) with
       `docker-buildx-plugin` and `docker-compose-plugin`
     - [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) for GPU usage
-- The directory `.dockerized_norlab_project` need to be at the super-project repository root
+- The directory `.dockerized_norlab` need to be at the super-project repository root
 - The `@dockerized-norlab-project` submodule should be in the `utilities/` directory
 - The `@norlab-build-system` and `@norlab-shell-script-tools` submodules should be in the `utilities/` directory
 ```
@@ -331,21 +331,21 @@ function dnp::setup_dockerized_norlab_project() {
   
   # ....Create user-side configuration.............................................................
   echo "Creating user-side configuration..."
-  mkdir -p .dockerized_norlab_project/configuration/project_entrypoints
-  mkdir -p .dockerized_norlab_project/configuration/project_requirements
-  mkdir -p .dockerized_norlab_project/dn_container_env_variable
+  mkdir -p .dockerized_norlab/configuration/project_entrypoints
+  mkdir -p .dockerized_norlab/configuration/project_requirements
+  mkdir -p .dockerized_norlab/dn_container_env_variable
   
   # ....Copy template files........................................................................
   echo "Copying template files..."
-  cp utilities/dockerized-norlab-project/configuration.template/.env .dockerized_norlab_project/configuration/
-  cp utilities/dockerized-norlab-project/configuration.template/project_entrypoints/* .dockerized_norlab_project/configuration/project_entrypoints/
-  cp utilities/dockerized-norlab-project/configuration.template/project_requirements/* .dockerized_norlab_project/configuration/project_requirements/
-  cp utilities/dockerized-norlab-project/configuration.template/Dockerfile.project .dockerized_norlab_project/configuration/
-  cp utilities/dockerized-norlab-project/configuration.template/docker-compose.*.yaml .dockerized_norlab_project/configuration/
+  cp utilities/dockerized-norlab-project/configuration.template/.env .dockerized_norlab/configuration/
+  cp utilities/dockerized-norlab-project/configuration.template/project_entrypoints/* .dockerized_norlab/configuration/project_entrypoints/
+  cp utilities/dockerized-norlab-project/configuration.template/project_requirements/* .dockerized_norlab/configuration/project_requirements/
+  cp utilities/dockerized-norlab-project/configuration.template/Dockerfile.project .dockerized_norlab/configuration/
+  cp utilities/dockerized-norlab-project/configuration.template/docker-compose.*.yaml .dockerized_norlab/configuration/
   
   # ....Create symbolic links......................................................................
   echo "Creating symbolic links..."
-  ln -s utilities/dockerized-norlab-project/execute .dockerized_norlab_project/execute
+  ln -s utilities/dockerized-norlab-project/execute .dockerized_norlab/execute
   
   # ....Create .env file...........................................................................
   echo "Creating .env file..."
@@ -401,9 +401,9 @@ EOL
   # ....Done......................................................................................
   echo "Dockerized-NorLab-Project setup complete!"
   echo "Next steps:"
-  echo "1. Customize .dockerized_norlab_project/configuration/.env"
-  echo "2. Customize files in .dockerized_norlab_project/configuration/project_requirements/"
-  echo "3. Customize files in .dockerized_norlab_project/configuration/project_entrypoints/"
+  echo "1. Customize .dockerized_norlab/configuration/.env"
+  echo "2. Customize files in .dockerized_norlab/configuration/project_requirements/"
+  echo "3. Customize files in .dockerized_norlab/configuration/project_entrypoints/"
   echo "4. Run the following commands to build and start the Docker containers:"
   echo "   cd utilities/dockerized-norlab-project/execute/"
   echo "   bash build.all.bash"

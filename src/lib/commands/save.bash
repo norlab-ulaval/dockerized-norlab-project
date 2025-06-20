@@ -221,9 +221,9 @@ function dnp::copy_project_structure_for_deploy() {
     # Create project directory
     mkdir -p "${project_copy_path}" || return 1
 
-    # ....Copy .dockerized_norlab_project directory................................................
-    echo -e "       ↳ Copying .dockerized_norlab_project configuration"
-    cp -r "${SUPER_PROJECT_ROOT}/.dockerized_norlab_project" "${project_copy_path}/" || return 1
+    # ....Copy .dockerized_norlab directory................................................
+    echo -e "       ↳ Copying .dockerized_norlab configuration"
+    cp -r "${SUPER_PROJECT_ROOT}/.dockerized_norlab" "${project_copy_path}/" || return 1
 
     # ....Copy .git directory (full copy for complete git history).................................
     echo -e "       ↳ Copying .git directory"

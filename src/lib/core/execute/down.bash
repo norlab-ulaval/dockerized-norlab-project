@@ -25,7 +25,7 @@ function dnp::down_command() {
   n2st::set_is_teamcity_run_environment_variable
 
   # ....Device specific config.......................................................................
-  compose_path=".dockerized_norlab_project/configuration"
+  compose_path=".dockerized_norlab/configuration"
 
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then
     the_compose_file=docker-compose.project.run.jetson.yaml

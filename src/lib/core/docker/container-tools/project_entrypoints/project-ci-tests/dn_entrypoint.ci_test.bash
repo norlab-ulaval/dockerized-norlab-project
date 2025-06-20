@@ -3,7 +3,7 @@
 # This is the Dockerfile.ci-tests.native entrypoint and the test script run by Dockerfile.ci-tests.multiarch
 #
 # Will execute every tests in
-# `.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/test_jobs`
+# `.dockerized_norlab/configuration/project_entrypoints/project-ci-tests/test_jobs`
 # directory that follow the patern `run_ci_tests.*.bash`.
 #
 # Usage:
@@ -66,7 +66,7 @@ echo -e "DN container ${DN_CONTAINER_NAME:?err} test environment"
 echo -e "Pytest tests will follow"
 echo
 echo
-tree -L 2 "${DN_PROJECT_PATH}/.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests"
+tree -L 2 "${DN_PROJECT_PATH}/.dockerized_norlab/configuration/project_entrypoints/project-ci-tests"
 tree -L 3 "$DN_PROJECT_PATH"
 echo
 echo

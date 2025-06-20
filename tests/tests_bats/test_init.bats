@@ -259,10 +259,10 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_error_and_exit called with args: Cwd is not at repository root"
 }
 
-@test "dnp::init_command with .dockerized_norlab_project already exists › Y -> expect update" {
-  # Test case: When init command is called in a directory with .dockerized_norlab_project, it should show an error
-  # Create the .dockerized_norlab_project directory
-  mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab_project"
+@test "dnp::init_command with .dockerized_norlab already exists › Y -> expect update" {
+  # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
+  # Create the .dockerized_norlab directory
+  mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
 
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && yes | dnp::init_command"
 
@@ -273,10 +273,10 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg called with args: DNP project initialized successfully."
 }
 
-@test "dnp::init_command with .dockerized_norlab_project already exists › N -> expect see you" {
-  # Test case: When init command is called in a directory with .dockerized_norlab_project, it should show an error
-  # Create the .dockerized_norlab_project directory
-  mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab_project"
+@test "dnp::init_command with .dockerized_norlab already exists › N -> expect see you" {
+  # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
+  # Create the .dockerized_norlab directory
+  mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
 
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && echo 'N' | dnp::init_command"
 
@@ -307,21 +307,21 @@ teardown_file() {
   assert_success
 
   # Check .env.dnp file for replaced placeholders
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/configuration/.env.dnp" "https://github.com/user/test-project.git"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/configuration/.env.dnp" "IamDNP_tp"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/configuration/.env.dnp" "tp"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "https://github.com/user/test-project.git"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "IamDNP_tp"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "tp"
 
   # Check README.md file for replaced placeholders
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/README.md" "IamDNP_tp"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/README.md" "test-project"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNP_tp"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "test-project"
 
   # Verify placeholders are not present anymore
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/configuration/.env.dnp" "PLACEHOLDER_DN_PROJECT_GIT_REMOTE_URL"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/configuration/.env.dnp" "PLACEHOLDER_DN_CONTAINER_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/configuration/.env.dnp" "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab_project/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "PLACEHOLDER_DN_PROJECT_GIT_REMOTE_URL"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
 }
 
 @test "dnp::init_command tests for directory creation › expect required directories created" {
@@ -442,8 +442,8 @@ teardown_file() {
   run cat "${TEST_REPO_DIR}/.gitignore"
   assert_output --partial "# Existing .gitignore content"
   assert_output --partial "# ====Dockerized-NorLab(required)=="
-  assert_output --partial "**/.dockerized_norlab_project/dn_container_env_variable/"
-  assert_output --partial "**/.dockerized_norlab_project/configuration/.env.local"
+  assert_output --partial "**/.dockerized_norlab/dn_container_env_variable/"
+  assert_output --partial "**/.dockerized_norlab/configuration/.env.local"
 }
 
 @test "dnp::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
@@ -485,7 +485,7 @@ teardown_file() {
   run cat "${TEST_REPO_DIR}/.dockerignore"
   assert_output --partial "# Existing .dockerignore content"
   assert_output --partial "# ====Dockerized-NorLab(required)=="
-  assert_output --partial "!**/.dockerized_norlab_project/"
+  assert_output --partial "!**/.dockerized_norlab/"
   assert_output --partial "!**/version.txt"
   assert_output --partial "!**/.git"
 }

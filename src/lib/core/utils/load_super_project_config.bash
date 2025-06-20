@@ -108,8 +108,8 @@ function dnp::load_super_project_configurations() {
   #       root might be arbitrary different from the repository name for various reason,
   #       e.g., teamcity CI src code pull, user cloned in a different dir, project renamed.
 
-  if [[ ! -f "${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/${super_project_meta_dnp_dotenv:?err}" ]]; then
-    n2st::print_msg_error "can't find '.dockerized_norlab_project/.env.<SUPER_PROJECT_REPO_NAME>' in ${SUPER_PROJECT_ROOT}!" 1>&2
+  if [[ ! -f "${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/${super_project_meta_dnp_dotenv:?err}" ]]; then
+    n2st::print_msg_error "can't find '.dockerized_norlab/.env.<SUPER_PROJECT_REPO_NAME>' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
   fi
 
@@ -123,19 +123,19 @@ function dnp::load_super_project_configurations() {
   # ....Load super project DNP meta config dotenv file.............................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
-  source ".dockerized_norlab_project/${super_project_meta_dnp_dotenv}" || return 1
+  source ".dockerized_norlab/${super_project_meta_dnp_dotenv}" || return 1
   set +o allexport
 
 
   # ....Load build time DNP dotenv file for docker-compose.........................................
   set -o allexport
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
-  source ".dockerized_norlab_project/configuration/.env.dnp" || return 1
+  source ".dockerized_norlab/configuration/.env.dnp" || return 1
   source "${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal" || return 1
   set +o allexport
 
   if [[ "${super_project_git_remote_url}" != "${DN_PROJECT_GIT_REMOTE_URL:?err}" ]]; then
-    n2st::print_msg_error "super project ${SUPER_PROJECT_REPO_NAME} DNP configuration in .dockerized_norlab_project/configuration.env.dnp DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
+    n2st::print_msg_error "super project ${SUPER_PROJECT_REPO_NAME} DNP configuration in .dockerized_norlab/configuration.env.dnp DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
     return 1
   fi
 
@@ -143,8 +143,8 @@ function dnp::load_super_project_configurations() {
   # ....Load run time DNP dotenv file for docker-compose...........................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
-  source ".dockerized_norlab_project/configuration/.env" || return 1
-  source ".dockerized_norlab_project/configuration/.env.local" || return 1
+  source ".dockerized_norlab/configuration/.env" || return 1
+  source ".dockerized_norlab/configuration/.env.local" || return 1
   set +o allexport
 
 
@@ -160,7 +160,7 @@ function dnp::load_super_project_configurations() {
 
 
 # =================================================================================================
-# Function to find the DNP user side project path. It seek for the .dockerized_norlab_project
+# Function to find the DNP user side project path. It seek for the .dockerized_norlab
 # directory which should be at the project root by moving up the directory tree from cwd.
 #
 # Usage:
@@ -189,9 +189,9 @@ function dnp::cd_to_dnp_super_project_root() {
     local iterations_count=0
 
     while [[ "$current_working_dir" != "/" && $iterations_count -lt $max_iterations ]]; do
-        # Check if .dockerized_norlab_project exists in the current directory
-        if [[ -d "$current_working_dir/.dockerized_norlab_project" ]]; then
-            n2st::print_msg "Found .dockerized_norlab_project in: $current_working_dir"
+        # Check if .dockerized_norlab exists in the current directory
+        if [[ -d "$current_working_dir/.dockerized_norlab" ]]; then
+            n2st::print_msg "Found .dockerized_norlab in: $current_working_dir"
             export SUPER_PROJECT_ROOT="${current_working_dir}"
             return 0
         elif [[ "${DNP_DEBUG}" == "true" ]]; then
@@ -206,7 +206,7 @@ function dnp::cd_to_dnp_super_project_root() {
     done
 
     # If we get here, the directory was not found
-    n2st::print_msg_error "${MSG_ERROR_FORMAT}${MSG_DIMMED_FORMAT}.dockerized_norlab_project${MSG_END_FORMAT}${MSG_ERROR_FORMAT} directory not found in any parent directory.\n\n$(
+    n2st::print_msg_error "${MSG_ERROR_FORMAT}${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT}${MSG_ERROR_FORMAT} directory not found in any parent directory.\n\n$(
 echo -e "        cwd -> $initial_working_dir"
 for each in "${current_working_dir_trace[@]}" ; do
   echo -e "               $each"

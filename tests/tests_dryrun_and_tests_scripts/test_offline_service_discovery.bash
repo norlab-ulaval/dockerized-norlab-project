@@ -60,7 +60,7 @@ echo "Testing offline service discovery functionality"
 temp_test_dir=$(mktemp -d)
 echo "Using temporary directory: ${temp_test_dir}"
 
-# Test Case 1: Test offline service discovery with deploy service
+# ....Test Case 1: Test offline service discovery with deploy service..............................
 echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 1: Offline service discovery with deploy service\n"
@@ -117,7 +117,7 @@ else
     exit 1
 fi
 
-# Test Case 2: Test offline service discovery with develop service
+# ....Test Case 2: Test offline service discovery with develop service.............................
 echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 2: Offline service discovery with develop service\n"
@@ -169,7 +169,7 @@ else
     exit 1
 fi
 
-# Test Case 3: Test that explicit service specification overrides auto-detection
+# ....Test Case 3: Test that explicit service specification overrides auto-detection...............
 echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 3: Explicit service specification should override auto-detection\n"
@@ -193,7 +193,7 @@ else
     n2st::print_msg_done "✓ dnp attach correctly did not show auto-detection message when service was explicitly specified"
 fi
 
-# Test Case 4: Test dnp run command with offline service discovery
+# ....Test Case 4: Test dnp run command with offline service discovery.............................
 echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 4: dnp run command with offline service discovery\n"
@@ -217,7 +217,7 @@ else
     exit 1
 fi
 
-# Test Case 5: Test behavior when meta.txt is missing
+# ....Test Case 5: Test behavior when meta.txt is missing..........................................
 echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 5: Behavior when meta.txt is missing\n"
@@ -244,6 +244,7 @@ else
     n2st::print_msg_done "✓ dnp up correctly used default behavior when meta.txt was missing"
 fi
 
+# ====Teardown=====================================================================================
 echo ""
 n2st::print_msg_done "=== Summary ==="
 echo "✓ dnp up correctly detects and uses service from meta.txt when no service is specified"

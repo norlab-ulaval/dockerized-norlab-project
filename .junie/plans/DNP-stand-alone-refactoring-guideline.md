@@ -114,7 +114,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │       │       ├── setup_host_for_running_this_super_project.bash
 │       │       └── validate_super_project_dnp_setup.bash
 │       └── template/
-│           ├── .dockerized_norlab_project/
+│           ├── .dockerized_norlab/
 │           │   ├── .env.dockerized-norlab-project-mock
 │           │   ├── README.md
 │           │   ├── configuration/
@@ -141,7 +141,7 @@ dockerized-norlab-project/ # (stand-alone version)
 ├── visual/
 ├── utilities/
 │   ├── dockerized-norlab-project-mock/ <- git worktree https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git
-│   │   ├── .dockerized_norlab_project/
+│   │   ├── .dockerized_norlab/
 │   │   │   ├── .env.dockerized-norlab-project-mock
 │   │   │   ├── README.md
 │   │   │   ├── configuration/
@@ -187,7 +187,7 @@ dockerized-norlab-project/ # (stand-alone version)
 
 The script will initialize the DNP user side resources.
   1. validate that the user executed the command `dnp init` from the super project repository root, return an explicative error message otherwise
-  2. create the `.dockerized_norlab_project` directory in the user super project root
+  2. create the `.dockerized_norlab` directory in the user super project root
   3. copy the configuration template files
   4. create the `.env.user-super-project` file using N2ST script
   5. initialize any placeholder environment variable if needed
@@ -196,13 +196,13 @@ The script will initialize the DNP user side resources.
 - Command `dnp init` to initialize a project:
   - create `.env.<super-project-name>` dotenv file with environment variable `DNP_CONFIG_SCHEME_VERSION` env variable set in each dnp project to validate compatibility
   - create the super project config directory and files:
-    - `.dockerized_norlab_project` and all subdirectory
+    - `.dockerized_norlab` and all subdirectory
     - all super project repository required directory as tested by `validate_super_project_dnp_setup.bash`
   - need to pass `validate_super_project_dnp_setup.bash` tests
 
 ```
 user-super-project/
-├── .dockerized_norlab_project/ # DNP project user side specific configuration
+├── .dockerized_norlab/ # DNP project user side specific configuration
 │   ├── configuration/
 │   │   ├── .env
 │   │   ├── .env.dnp

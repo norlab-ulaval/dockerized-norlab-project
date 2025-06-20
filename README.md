@@ -106,7 +106,7 @@ dnp init
 Which add a few directories to your project repository
 ```markup
 your-project-repository/
-  ├── .dockerized_norlab_project/     <- DNP configuration
+  ├── .dockerized_norlab/     <- DNP configuration
   ├── artifact/                       <- Runtime produced data (mounted)
   ├── external_data/                  <- Pre-existing data made available in your container (mounted)
   ├── src/                            <- Your repository source code (mounted/copied)
