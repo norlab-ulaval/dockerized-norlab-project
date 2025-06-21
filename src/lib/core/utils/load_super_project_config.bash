@@ -127,6 +127,13 @@ function dnp::load_super_project_configurations() {
   source ".dockerized_norlab/configuration/.env.dnp" || return 1
   set +o allexport
 
+  # ....Load run time DNP dotenv file for docker-compose...........................................
+  cd "${SUPER_PROJECT_ROOT:?err}" || return 1
+  set -o allexport
+  source ".dockerized_norlab/configuration/.env" || return 1
+  source ".dockerized_norlab/configuration/.env.local" || return 1
+  set +o allexport
+  
   # ....Load build time DNP dotenv file for docker-compose.........................................
   # Set the Dockerized-NorLab repository branch for pulling base image and container internal tools
   # if not overriden by super project user. This is mostly for DNP developement.
@@ -146,6 +153,16 @@ function dnp::load_super_project_configurations() {
     if [[ "${DN_GIT_BRANCH}" != "main" ]]; then
       n2st::print_msg "Be advise, setting DN_GIT_BRANCH to ${DN_GIT_BRANCH}"
     fi
+    export DN_GIT_BRANCH
+  fi
+  if [[ ${DN_VERSION:-unset} == unset ]] || [[ -z ${DN_VERSION} ]]; then
+    if [[ "${DN_GIT_BRANCH}" == "main" ]]; then
+      DN_VERSION=latest
+    else
+      DN_VERSION=bleeding
+    fi
+    n2st::print_msg "Be advise, setting DN_VERSION to ${DN_VERSION}"
+    export DN_VERSION
   fi
 
   set -o allexport
@@ -158,12 +175,6 @@ function dnp::load_super_project_configurations() {
     return 1
   fi
 
-  # ....Load run time DNP dotenv file for docker-compose...........................................
-  cd "${SUPER_PROJECT_ROOT:?err}" || return 1
-  set -o allexport
-  source ".dockerized_norlab/configuration/.env" || return 1
-  source ".dockerized_norlab/configuration/.env.local" || return 1
-  set +o allexport
 
 
   #  ....Teardown...................................................................................
