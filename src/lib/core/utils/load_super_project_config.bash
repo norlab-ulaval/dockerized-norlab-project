@@ -124,13 +124,32 @@ function dnp::load_super_project_configurations() {
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   source ".dockerized_norlab/${super_project_meta_dnp_dotenv}" || return 1
+  source ".dockerized_norlab/configuration/.env.dnp" || return 1
   set +o allexport
 
-
   # ....Load build time DNP dotenv file for docker-compose.........................................
+  # Set the Dockerized-NorLab repository branch for pulling base image and container internal tools
+  # if not overriden by super project user. This is mostly for DNP developement.
+  if [[ ${DN_GIT_BRANCH:-unset} == unset ]] || [[ -z ${DN_GIT_BRANCH} ]]; then
+    local current_dnp_branch
+    current_dnp_branch=$(cd "${DNP_ROOT:?err}" && git rev-parse --abbrev-ref HEAD)
+    if [[ "${current_dnp_branch}" == "main" ]] || [[ "${current_dnp_branch}" == "dev" ]]; then
+      # Set DN to main or dev if DNP is in those ones
+      DN_GIT_BRANCH="${current_dnp_branch}"
+    elif dnp::check_git_branch_exists_on_remote "https://github.com/norlab-ulaval/dockerized-norlab" "${current_dnp_branch}" >/dev/null ; then
+      # Set DN to current DNP feature branch if it exist on DN
+      DN_GIT_BRANCH="${current_dnp_branch}"
+    else
+      # Fallback on dev otherwise
+      DN_GIT_BRANCH="dev"
+    fi
+    if [[ "${DN_GIT_BRANCH}" != "main" ]]; then
+      n2st::print_msg "Be advise, setting DN_GIT_BRANCH to ${DN_GIT_BRANCH}"
+    fi
+  fi
+
   set -o allexport
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
-  source ".dockerized_norlab/configuration/.env.dnp" || return 1
   source "${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal" || return 1
   set +o allexport
 
@@ -138,7 +157,6 @@ function dnp::load_super_project_configurations() {
     n2st::print_msg_error "super project ${SUPER_PROJECT_REPO_NAME} DNP configuration in .dockerized_norlab/configuration.env.dnp DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
     return 1
   fi
-
 
   # ....Load run time DNP dotenv file for docker-compose...........................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
