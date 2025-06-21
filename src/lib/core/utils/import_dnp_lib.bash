@@ -92,6 +92,10 @@ function dnp::import_lib_and_dependencies() {
   source "${DNP_ROOT}/load_repo_main_dotenv.bash" || return 1
 
   # ....Load DNP utils.............................................................................
+    set -o allexport
+  source "${DNP_LIB_PATH:?err}/core/docker/.env.cli_style" || return 1
+  set +o allexport
+
   source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || return 1
   source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || return 1
   source "${DNP_LIB_PATH:?err}/core/utils/online.bash" || return 1

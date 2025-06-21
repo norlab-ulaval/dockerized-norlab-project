@@ -283,7 +283,7 @@ function dnp::check_offline_deploy_service_discovery() {
         local original_cwd
         original_cwd="$(pwd)"
 
-        if dnp::cd_to_dnp_super_project_root 2>/dev/null; then
+        if dnp::cd_to_dnp_super_project_root 2>/dev/null >/dev/null; then
             if [[ -f "meta.txt" ]]; then
                 meta_file="$(pwd)/meta.txt"
             fi

@@ -6,12 +6,12 @@ DOCUMENTATION_BUILD_ALL=$(
 #
 # Usage as a function:
 #   $ source build.all.bash
-#   $ dnp::build_services [<any-arguments>] [--] [<any-docker-flag>]
+#   $ dnp::build_services [OPTIONS] [--] [<any-docker-flag>]
 #
 # Usage as a script:
-#   $ bash build.all.bash [<any-arguments>] [--] [<any-docker-flag>]
+#   $ bash build.all.bash [OPTIONS] [--] [<any-docker-flag>]
 #
-# Arguments:
+# Options:
 #   --service-names "<name1>,<name2>"     Override the list of build services.
 #                                         Must be a comma separated string of service name.
 #   -f | --file "compose.yaml"            Override the docker compose file
@@ -19,7 +19,7 @@ DOCUMENTATION_BUILD_ALL=$(
 #   --multiarch                           Build in multi-architecture mode
 #   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
 #                                          (instead of building images from the local image store).
-#   --msg-line-level                      Set consol horizontal line character when used as a fct
+#   --msg-line-level CHAR                 Set consol horizontal line character when used as a fct
 #   -h | --help
 #
 # Positional argument:
@@ -47,7 +47,9 @@ function dnp::build_services() {
   local force_push_project_core=false
   local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
-  local msg_line_level=$MSG_LINE_CHAR_BUILDER_LVL1
+  local msg_line_level="${MSG_LINE_CHAR_BUILDER_LVL1}"
+#  local line_style="${MSG_LINE_STYLE_LVL1}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # ....cli........................................................................................
   function show_help() {
@@ -144,8 +146,7 @@ function dnp::build_services() {
       done
 
       # Show build faillure summary
-      n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}"
-      echo
+      n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}" "${line_style}"
       n2st::print_msg "Build faillure summary\n"
       for idx in "${!build_exit_code[@]}"; do
         if [[ ${build_exit_code[idx]} != 0 ]]; then
@@ -156,9 +157,7 @@ function dnp::build_services() {
       done
     else
       # Show build succes
-      n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}"
-      echo
-      # n2st::print_msg_done "Building services ${MSG_DIMMED_FORMAT}${services_names[*]}${MSG_END_FORMAT} completed succesfully"
+      n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}" "${line_style}"
       n2st::print_msg "Build summary\n"
       for idx in "${!services_names[@]}"; do
         echo -e "$(dnp::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${services_names[idx]} completed build succesfully${MSG_END_FORMAT}"
@@ -196,9 +195,7 @@ function dnp::build_services() {
     done
 
     # ....Show build summary.......................................................................
-    n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}"
-    echo
-    n2st::print_msg "Build summary\n"
+    n2st::print_formated_script_header "Build summary" "${msg_line_level}" "${line_style}"
     local action="build"
     for idx in "${!build_exit_code[@]}"; do
       if [[ "${services_names[idx]}" == "project-core" ]]; then

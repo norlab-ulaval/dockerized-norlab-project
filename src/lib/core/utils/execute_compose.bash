@@ -8,12 +8,12 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #
 # Usage as a function:
 #   $ source execute_compose.bash
-#   $ dnp::excute_compose [<any-arguments>] [--] [<any-docker-flag>]
+#   $ dnp::excute_compose [OPTIONS] [--] [<any-docker-flag>]
 #
 # Usage as a script:
-#   $ bash execute_compose.bash [<any-arguments>] [--] [<any-docker-flag>]
+#   $ bash execute_compose.bash [OPTIONS] [--] [<any-docker-flag>]
 #
-# Arguments:
+# Options:
 #   --override-build-cmd <docker_cmd>      To override the docker command
 #                                           (defaul: 'build')
 #   -f | --file "compose.yaml"             To override the docker compose file
@@ -21,6 +21,7 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #   --compose-path "/path/to/compose/dir"  To override the compose file directory
 #   --multiarch
 #   --buildx-builder-name "name"           Default to "local-builder-multiarch-virtual"
+#   --msg-line-level CHAR                  Set consol horizontal line character when used as a fct
 #   -h | --help
 #
 # Positional argument:
@@ -50,6 +51,8 @@ function dnp::excute_compose() {
   local the_compose_file="docker-compose.project.build.native.yaml"
   local multiarch=false
   local local_buildx_builder_name="local-builder-multiarch-virtual"
+  local msg_line_level="${MSG_LINE_CHAR_BUILDER_LVL2}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # Note: The env var docker_cmd is required for using the script with 'push' or 'config' docker cmd
   local docker_cmd=build
@@ -93,6 +96,11 @@ function dnp::excute_compose() {
       shift # Remove argument (--buildx-builder-name)
       shift # Remove argument value
       ;;
+    --msg-line-level)
+      msg_line_level="${2}"
+      shift # Remove argument (--msg-line-level)
+      shift # Remove argument value CHAR
+      ;;
     -h | --help)
       clear
       show_help
@@ -115,7 +123,7 @@ function dnp::excute_compose() {
   docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
 
   # ====Begin======================================================================================
-  n2st::print_formated_script_header "dnp::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_header "dnp::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
@@ -175,7 +183,7 @@ function dnp::excute_compose() {
   fi
 
   # ....Teardown...................................................................................
-  n2st::print_formated_script_footer "dnp::excute_compose" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_footer "dnp::excute_compose" "${msg_line_level}" "${line_style}"
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
   return ${docker_exit_code}
 }
