@@ -12,6 +12,8 @@ function dnp::project_validate_all() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
+  local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   declare -a config_test_compose_file_list=()
   declare -a dryrun_compose_file_list=()
@@ -38,7 +40,7 @@ function dnp::project_validate_all() {
 
   n2st::print_msg "Begin docker compose config test"
   for each_compose in "${config_test_compose_file_list[@]}"; do
-    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\"
+    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a config_flag=()
     config_flag+=("--override-build-cmd" "config")
     config_flag+=("--file" "${each_compose}")
@@ -54,13 +56,13 @@ function dnp::project_validate_all() {
       dnp::excute_compose "${config_flag[@]}" "project-deploy"
     fi
     config_test_exit_code+=("$?")
-    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/"
+    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
   done
 
-  n2st::print_formated_script_footer "testing config" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_footer "testing config" "${line_format}" "${line_style}"
 
   # ....Dry-run build test...........................................................................
-  n2st::print_formated_script_header "build in dry-run mode testing" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_header "build in dry-run mode testing" "${line_format}" "${line_style}"
 
   dryrun_compose_file_list=(
     "docker-compose.project.build.native.yaml"
@@ -74,7 +76,7 @@ function dnp::project_validate_all() {
 
   n2st::print_msg "Begin docker compose build --dry-run test"
   for each_compose in "${dryrun_compose_file_list[@]}"; do
-    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\"
+    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a build_flag=()
     build_flag+=("--file" "${each_compose}")
     build_flag+=("--" "--dry-run")
@@ -84,14 +86,12 @@ function dnp::project_validate_all() {
       dnp::build_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     fi
     build_test_exit_code+=("$?")
-    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/"
+    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
   done
 
   n2st::print_msg "Completed build in dry-run mode tests"
 
   # ....Config and dry-run build test summary........................................................
-  n2st::print_formated_script_footer "dnp::project_validate_all" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-
   n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
 
   n2st::print_msg "Config test summary"

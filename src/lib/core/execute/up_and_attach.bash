@@ -60,6 +60,8 @@ function dnp::up_and_attach() {
   local the_service=develop
   local no_attach=false
   local no_up=false
+  local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
   # ToDo: assess if moving to DN `dn_entrypoint.attach.bash` and `dn_entrypoint.init.bash` for all services woud be better.
@@ -124,6 +126,7 @@ function dnp::up_and_attach() {
   local up_exit_code
   local exec_exit_code
 
+  local the_service_user_name="${the_service}"
   local service_flag_options=("deploy" "develop")
   for each in "${service_flag_options[@]}" ; do
     if [[ "${the_service}" == "${each}" ]]; then
@@ -258,6 +261,7 @@ function dnp::up_and_attach() {
       docker_exec_no_up+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.attach.bash")
       docker_exec_no_up+=("${docker_exec_cmd_and_args[@]}")
       n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} ${docker_exec_no_up[*]}${MSG_END_FORMAT}"
+      n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
       docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec_no_up[@]}"
       exec_exit_code=$?
     fi
@@ -298,6 +302,7 @@ function dnp::up_and_attach() {
       docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
       docker_exec+=("${docker_exec_cmd_and_args[@]}")
       n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} ${docker_exec[*]}${MSG_END_FORMAT}"
+      n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
       docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
       exec_exit_code=$?
     fi

@@ -48,6 +48,9 @@ function dnp::exec_command() {
     local service="develop"
     declare -i service_override=0
     local original_command="$*"
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
+
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -93,6 +96,7 @@ function dnp::exec_command() {
 
     # Splash type: small, negative or big
     n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::print_formated_script_header "exec procedure" "${line_format}" "${line_style}"
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1

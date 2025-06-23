@@ -267,7 +267,7 @@ EOF
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Load develop image procedure"
+  assert_output --partial "load develop image procedure"
   assert_output --partial "Loading saved image"
   assert_output --partial "Service: develop"
   assert_output --partial "Image: test-image-develop.latest"
@@ -288,7 +288,7 @@ EOF
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Load deploy image procedure"
+  assert_output --partial "load deploy image procedure"
   assert_output --partial "Loading saved image"
   assert_output --partial "Service: deploy"
   assert_output --partial "Image: test-image-deploy.latest"
@@ -401,7 +401,7 @@ EOF
 
   # Should output expected messages
   assert_output --partial "Using current directory as save directory"
-  assert_output --partial "Load deploy image procedure"
+  assert_output --partial "load deploy image procedure"
   assert_output --partial "Loading saved image"
 }
 

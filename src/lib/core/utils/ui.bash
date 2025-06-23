@@ -16,29 +16,30 @@ n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[
 
 # ====Help/doc=====================================================================================
 #_DNP_HELP_LINE_CHAR="."
-_DNP_HELP_LINE_CHAR="⠂" # Note: This is not a 'period' char. UTF-8: E2 A0 82
+#_DNP_HELP_LINE_CHAR="⠂" # Note: This is not a 'period' char. UTF-8: E2 A0 82
 #_DNP_HELP_LINE_CHAR="─" # Note: This is not a 'dash' char. UTF-8: E2 94 80
 #_DNP_HELP_LINE_CHAR="━"
 #_DNP_HELP_LINE_CHAR="═" # Note: This is not an 'equal' char. UTF-8: E2 95 90
+_DNP_HELP_LINE_CHAR="${MSG_LINE_CHAR_BUILDER_HELP}"
 #_DNP_HELP_LINE_CENTER_CHAR="▼"
 _DNP_HELP_LINE_CENTER_CHAR="❄︎"
 
 function dnp:help_header() {
-    echo -n -e "${MSG_DIMMED_FORMAT}"
+#    echo -n -e "${MSG_DIMMED_FORMAT}"
 #    echo -e "▶︎"
-    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
+    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}" "${MSG_LINE_STYLE_LVL2}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}" | sed 's/───/\/──/'
-#    n2st::echo_centering_str "❄${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_DIMMED_FORMAT}" "${_DNP_HELP_LINE_CHAR}"
-    echo -n -e "${MSG_END_FORMAT}"
+#    n2st::echo_centering_str "❄${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_LINE_STYLE_LVL2}" "${_DNP_HELP_LINE_CHAR}"
+#    echo -n -e "${MSG_END_FORMAT}"
 }
 
 function dnp::help_footer() {
-    echo -n -e "${MSG_DIMMED_FORMAT}"
+#    echo -n -e "${MSG_LINE_STYLE_LVL2}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "─" | sed 's/──────$/─❄︎───/'
 #    n2st::draw_horizontal_line_across_the_terminal_window " " | sed 's/      $/   ◀︎/'
-    n2st::echo_centering_str "${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_DIMMED_FORMAT}" "${_DNP_HELP_LINE_CHAR}"
-    echo -n -e "${MSG_END_FORMAT}"
+#    echo -n -e "${MSG_END_FORMAT}"
+    n2st::echo_centering_str "${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_LINE_STYLE_LVL2}" "${_DNP_HELP_LINE_CHAR}"
 }
 
 function dnp::documentation_buffer_to_help_parser() {

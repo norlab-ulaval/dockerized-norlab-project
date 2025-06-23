@@ -39,6 +39,8 @@ function dnp::load_command() {
     # ....Set env variables (pre cli)..............................................................
     local save_dir_path=""
     local original_command="$*"
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -59,6 +61,7 @@ function dnp::load_command() {
                 ;;
         esac
     done
+
 
     # ....Determine save directory path................................................................
     if [[ -z "${save_dir_path}" ]]; then
@@ -131,7 +134,7 @@ function dnp::load_command() {
 
 
     # ....Begin....................................................................................
-    n2st::print_formated_script_header "Load ${service} image procedure" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+    n2st::print_formated_script_header "load ${service} image procedure" "${line_format}" "${line_style}"
 
     # Display metadata information
     n2st::print_msg "Loading saved image:
@@ -147,7 +150,7 @@ function dnp::load_command() {
         n2st::print_msg_error "Failed to load Docker image from: ${save_dir_path}/${tar_filename}" && return 1
     }
     n2st::print_msg_done "Load completed successfully"
-    n2st::print_formated_script_footer "Load ${service} image procedure" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+    n2st::print_formated_script_footer "load ${service} image procedure" "${line_format}" "${line_style}"
 
     # Handle post-load actions based on service type
     if [[ "${service}" == "deploy" ]]; then

@@ -60,6 +60,8 @@ function dnp::get_super_project_acronym() {
 function dnp::init_command() {
     local super_project_root
     super_project_root=$(pwd)
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -83,13 +85,6 @@ function dnp::init_command() {
     Current workin directory: $(pwd)"
     fi
 
-    local project_git_remote_url
-    local super_project_name
-    local super_project_user
-    project_git_remote_url="$( git remote get-url origin )" || return 1
-    super_project_name="$( basename "${project_git_remote_url}" .git )"
-    super_project_user="$(id -un)"
-
     # Check if .dockerized_norlab already exists
     if [[ -d ".dockerized_norlab" ]]; then
         n2st::print_msg_warning "This project is already DNP initialized since ${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory already exists.\nIf you continue, missing file will be created and existing one will be updated."
@@ -103,6 +98,18 @@ function dnp::init_command() {
     fi
 
     # ====Begin====================================================================================
+    # Splash type: small, negative or big
+    n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::print_formated_script_header "init procedure" "${line_format}" "${line_style}"
+
+
+    local project_git_remote_url
+    local super_project_name
+    local super_project_user
+    project_git_remote_url="$( git remote get-url origin )" || return 1
+    super_project_name="$( basename "${project_git_remote_url}" .git )"
+    super_project_user="$(id -un)"
+
     n2st::print_msg "Initializing DNP project: ${super_project_name} in ${super_project_root}"
 
     # Copy template files
@@ -236,6 +243,8 @@ To get started:
   3. Check documentation at https://github.com/norlab-ulaval/dockerized-norlab-project
   4. Stay awesome
 "
+
+    n2st::print_formated_script_footer "init procedure" "${line_format}" "${line_style}"
     cd "$super_project_root" || return 1
     return 0
 }

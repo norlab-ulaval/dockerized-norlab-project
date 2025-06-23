@@ -271,7 +271,7 @@ teardown_file() {
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Save develop image procedure"
+  assert_output --partial "save develop image procedure"
   assert_output --partial "Creating save directory"
   assert_output --partial "Saving Docker image"
   assert_output --partial "Creating metadata file"
@@ -289,7 +289,7 @@ teardown_file() {
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Save deploy image procedure"
+  assert_output --partial "save deploy image procedure"
   assert_output --partial "Creating save directory"
   assert_output --partial "Saving Docker image"
   assert_output --partial "Creating metadata file"

@@ -39,6 +39,8 @@ function dnp::save_command() {
     local dirpath=""
     local service=""
     local original_command="$*"
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -89,6 +91,7 @@ function dnp::save_command() {
         return 1
     fi
 
+
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
@@ -107,7 +110,7 @@ function dnp::save_command() {
     local tar_filename="${DN_PROJECT_IMAGE_NAME}-${service}.${PROJECT_TAG}.tar"
 
     # ....Begin....................................................................................
-    n2st::print_formated_script_header "Save ${service} image procedure" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+    n2st::print_formated_script_header "save ${service} image procedure" "${line_format}" "${line_style}"
 
     # Create save directory
     n2st::print_msg "Creating save directory: ${save_dir_path}"
@@ -147,8 +150,7 @@ function dnp::save_command() {
 
     n2st::print_msg_done "Save completed successfully"
     n2st::print_msg "Saved to: ${save_dir_path}"
-    n2st::print_formated_script_footer "Save ${service} image procedure" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-
+    n2st::print_formated_script_footer "save ${service} image procedure" "${line_format}" "${line_style}"
     return 0
 }
 

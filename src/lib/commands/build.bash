@@ -57,7 +57,6 @@ function dnp::build_command() {
     local remaining_args=()
     local original_command="$*"
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
-#    local line_style="${MSG_DIMMED_FORMAT}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
 
 
@@ -123,7 +122,7 @@ function dnp::build_command() {
     declare -a build_flag=()
     declare -a deploy_flag=()
 
-    build_flag+=("--msg-line-level" "${MSG_LINE_CHAR_BUILDER_LVL1}")
+    build_flag+=("--msg-line-level" "${line_format}")
 
     local architecture="native"
     if [[ "${multiarch}" == true ]]; then
@@ -165,7 +164,6 @@ function dnp::build_command() {
     # Splash type: small, negative or big
     n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL}" "${DNP_GIT_REMOTE_URL}" "small"
     n2st::print_formated_script_header "${header_footer_name}" "${line_format}" "${line_style}"
-
 
     # ....Flag check...............................................................................
     if [[ "${service}" != "deploy" ]] && [[ "${push_deploy}" == true ]]; then

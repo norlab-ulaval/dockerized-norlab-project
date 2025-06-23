@@ -28,6 +28,8 @@ function dnp::down_command() {
     local slurm=false
     local help=false
     local remaining_args=()
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -47,9 +49,8 @@ function dnp::down_command() {
         esac
     done
 
-    header_footer_name="down procedure"
-    n2st::print_formated_script_header "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-#    n2st::print_msg "Starting ${header_footer_name}"
+    n2st::print_formated_script_header "down procedure" "${line_format}" "${line_style}"
+#    n2st::print_msg "Starting down procedure"
 
     # ....Load dependencies........................................................................
     source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
@@ -65,8 +66,8 @@ function dnp::down_command() {
         dnp::down_command "${remaining_args[@]}" || return 1
     fi
 
-#    n2st::print_msg_done "Completed ${header_footer_name}"
-    n2st::print_formated_script_footer "${header_footer_name}" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+#    n2st::print_msg_done "Completed down procedure"
+    n2st::print_formated_script_footer "down procedure" "${line_format}" "${line_style}"
 
     return 0
 }

@@ -111,6 +111,8 @@ function dnp::run_command() {
     declare -i service_set=0
     declare -a remaining_args=()
     local original_command="$*"
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -198,6 +200,7 @@ function dnp::run_command() {
 
     # Splash type: small, negative or big
     n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::print_formated_script_header "run procedure" "${line_format}" "${line_style}"
 
     if [[ -n ${offline_service} ]]; then
       n2st::print_msg "Using offline deployment service: ${service}"

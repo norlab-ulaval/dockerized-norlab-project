@@ -48,7 +48,6 @@ function dnp::build_services() {
   local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
   local msg_line_level="${MSG_LINE_CHAR_BUILDER_LVL1}"
-#  local line_style="${MSG_LINE_STYLE_LVL1}"
   local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # ....cli........................................................................................

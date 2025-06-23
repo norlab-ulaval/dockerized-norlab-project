@@ -39,6 +39,8 @@ function dnp::run_any() {
   declare -a docker_compose_run_flag=()
   local the_service=develop
   local no_rm=false
+  local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # ....cli......................................................................................
   while [[ $# -gt 0 ]]; do
@@ -115,6 +117,7 @@ function dnp::run_any() {
   docker_run_flag+=("${docker_run_cmd_and_args[@]}")
 #  dnp::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "${docker_run_flag[@]}"
   n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} run ${docker_run_flag[*]}${MSG_END_FORMAT}"
+  n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
   docker compose "-f" "${compose_path}/${compose_file}" run "${docker_run_flag[@]}"
   exit_code=$?
 
