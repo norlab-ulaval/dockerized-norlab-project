@@ -11,10 +11,13 @@ MSG_END_FORMAT="\033[0m"
 MSG_DONE_FORMAT="\033[1;32m"
 
 function dnp::load_repository_environment_variables() {
+
   # ....Setup......................................................................................
+  local debug_flag=false
   local tmp_cwd
-  tmp_cwd=$( pwd )
-  local debug_flag="false"
+  tmp_cwd=$(pwd)
+  local script_path
+  local target_path
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
@@ -30,13 +33,43 @@ function dnp::load_repository_environment_variables() {
   done
 
   # ....Find path to script........................................................................
-  # Note: can handle both sourcing cases
-  #   i.e. from within a script or from an interactive terminal session
-  local script_path
-  local target_path
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-  target_path="$(dirname "${script_path}")"
+  if [[ -z ${DNP_ROOT} ]]; then
+    # Note: can handle both sourcing cases
+    #   i.e. from within a script or from an interactive terminal session
+    # Check if running interactively
+    if [[ $- == *i* ]]; then
+      # Case: running in an interactive session
+      target_path=$(realpath .)
+    else
+      # Case: running in an non-interactive session
+      script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
+      target_path="$(dirname "${script_path}")"
+    fi
+
+    if [[ ${debug_flag} == true ]]; then
+      echo "
+      >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      BASH_SOURCE: ${BASH_SOURCE[*]}
+
+      tmp_cwd: ${tmp_cwd}
+      script_path: ${script_path}
+      target_path: ${target_path}
+
+      realpath: $(realpath .)
+      \$0: $0
+      <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      "  >&3
+    fi
+  else
+    target_path="${DNP_ROOT}"
+  fi
+
+
   cd "${target_path:?err}" || return 1
+  if [[ ! -f .env.dockerized-norlab-project ]]; then
+    echo -e "\n[\033[1;31mDN error\033[0m] Can't find Dockerized-NorLab-Project repository root!" 1>&2
+    return 1
+  fi
 
   # ....load environment variables in current shell................................................
   set -o allexport
@@ -57,7 +90,7 @@ function dnp::load_repository_environment_variables() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1

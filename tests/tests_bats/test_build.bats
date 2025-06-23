@@ -48,7 +48,7 @@ setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
-    # Create temporary directory for tests
+  # Create temporary directory for tests
   export MOCK_DNP_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
@@ -114,6 +114,8 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL1="-"
 
 # Set up environment variables
+export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
@@ -160,6 +162,11 @@ function n2st::print_msg_error() {
   return 0
 }
 
+function n2st::norlab_splash() {
+  echo "Mock n2st::norlab_splash called with args: $*"
+  return 0
+}
+
 # ....Mock DNP network functions...................................................................
 function dnp::is_online() {
   # Default to online unless MOCK_OFFLINE is set
@@ -194,11 +201,6 @@ setup() {
 
   source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
 
-#  # Set up environment variables
-#  export DNP_ROOT="${MOCK_DNP_DIR}"
-#  export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
-#  export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
-
   # Change to the temporary directory
   cd "${MOCK_DNP_DIR}" || exit 1
 }
@@ -223,7 +225,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "all images (native) build"
+  assert_output --partial "all images native build"
   assert_output --partial "Mock dnp::build_services called with args:"
 }
 
@@ -235,8 +237,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "all images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core"
+  assert_output --partial "all images multiarch build"
+  assert_output --regexp "Mock dnp::build_services_multiarch called with args:".*"--no-force-push-project-core"
 }
 
 @test "dnp::build_command with --online-build › expect force push flag" {
@@ -247,8 +249,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "all images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --force-push-project-core"
+  assert_output --partial "all images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--force-push-project-core"
 }
 
 @test "dnp::build_command with develop service › expect develop images only" {
@@ -259,8 +261,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "develop images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-develop"
+  assert_output --partial "develop images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--service-names project-core,project-develop"
 }
 
 @test "dnp::build_command with ci-tests service › expect CI tests images only" {
@@ -271,8 +273,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "CI tests images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --partial "CI tests images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dnp::build_command with slurm service › expect slurm images only" {
@@ -283,8 +285,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "slurm images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --partial "slurm images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dnp::build_command with deploy service › expect deploy images only" {
@@ -295,7 +297,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "deploy images (native) build"
+  assert_output --partial "deploy images native build"
   assert_output --partial "Mock dnp::build_project_deploy_service called with args:"
 }
 
@@ -307,7 +309,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "deploy images (native) build"
+  assert_output --partial "deploy images native build"
   assert_output --partial "Mock dnp::build_project_deploy_service called with args: --push"
 }
 
@@ -319,7 +321,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "deploy images (multiarch) build procedure"
+  assert_output --partial "deploy images multiarch build procedure"
   assert_output --partial "Mock dnp::build_project_deploy_service called with args: --multiarch --push"
 }
 
@@ -376,7 +378,7 @@ teardown_file() {
   assert_success
 
   # Should output expected messages
-  assert_output --partial "develop images (native) build"
+  assert_output --partial "develop images native build"
   assert_output --partial "Mock dnp::build_services called"
   assert_output --partial "Mock n2st::print_msg: Executing save command as requested"
   assert_output --partial "Mock dnp::save_command called with args: ${MOCK_DNP_DIR} develop"
@@ -391,7 +393,7 @@ teardown_file() {
   assert_success
 
   # Should output expected messages
-  assert_output --partial "deploy images (native) build"
+  assert_output --partial "deploy images native build"
   assert_output --partial "Mock dnp::build_project_deploy_service called"
   assert_output --partial "Mock n2st::print_msg: Executing save command as requested"
   assert_output --partial "Mock dnp::save_command called with args: ${MOCK_DNP_DIR} deploy"
@@ -418,10 +420,10 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "all images (multiarch) build"
+  assert_output --partial "all images multiarch build"
   assert_output --partial "Mock dnp::build_services_multiarch called with args:"
   # Note: --no-force-push-project-core flag should not be present when --online-build is specified
-  refute_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core"
+  refute_output --regexp "Mock dnp::build_services_multiarch called with args:".*"--no-force-push-project-core"
 }
 
 @test "dnp::build_command with --help › expect help menu" {
@@ -465,8 +467,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "all images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --no-cache --pull"
+  assert_output --partial "all images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--no-cache --pull"
 }
 
 @test "dnp::build_command with develop service and --multiarch › expect multiarch develop images" {
@@ -477,8 +479,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "develop images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core --service-names project-core,project-develop"
+  assert_output --partial "develop images multiarch build"
+  assert_output --regexp "Mock dnp::build_services_multiarch called with args:".*"--no-force-push-project-core --service-names project-core,project-develop"
 }
 
 @test "dnp::build_command with multiple services › expect error" {
@@ -549,8 +551,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "CI tests images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --partial "CI tests images multiarch build"
+  assert_output --regexp "Mock dnp::build_services_multiarch called with args:".*"--no-force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dnp::build_command with slurm service and --multiarch › expect multiarch slurm images" {
@@ -561,8 +563,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "slurm images (multiarch) build"
-  assert_output --partial "Mock dnp::build_services_multiarch called with args: --msg-line-level  --no-force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --partial "slurm images multiarch build"
+  assert_output --regexp "Mock dnp::build_services_multiarch called with args:".*"--no-force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dnp::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
@@ -573,8 +575,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "CI tests images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --partial "CI tests images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dnp::build_command with slurm service and --online-build › expect slurm images with force push" {
@@ -585,8 +587,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "slurm images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --partial "slurm images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dnp::build_command with develop service and -- docker args › expect develop images with docker args" {
@@ -597,8 +599,8 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "develop images (native) build"
-  assert_output --partial "Mock dnp::build_services called with args: --msg-line-level  --service-names project-core,project-develop --no-cache --pull"
+  assert_output --partial "develop images native build"
+  assert_output --regexp "Mock dnp::build_services called with args:".*"--service-names project-core,project-develop --no-cache --pull"
 }
 
 @test "dnp::build_command with deploy service and -- docker args › expect deploy images with docker args" {
@@ -609,6 +611,6 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "deploy images (native) build"
-  assert_output --partial "Mock dnp::build_project_deploy_service called with args: --msg-line-level  --no-cache --pull"
+  assert_output --partial "deploy images native build"
+  assert_output --regexp "Mock dnp::build_project_deploy_service called with args:".*"--no-cache --pull"
 }

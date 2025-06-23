@@ -70,12 +70,13 @@ export MSG_DIMMED_FORMAT=""
 export MSG_END_FORMAT=""
 
 # Set up environment variables
+export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 
-export N2ST_PATH="utilities/norlab-shell-script-tools"
-cd "${N2ST_PATH:?'Variable not set'}" || exit 1
-source "import_norlab_shell_script_tools_lib.bash"
+export N2ST_PATH="${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
+source "${N2ST_PATH}/import_norlab_shell_script_tools_lib.bash"
 
 # ....Mock dependencies loading test functions.....................................................
 function dnp::import_lib_and_dependencies() {

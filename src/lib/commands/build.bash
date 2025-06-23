@@ -163,7 +163,7 @@ function dnp::build_command() {
     fi
 
     # Splash type: small, negative or big
-    n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL}" "${DNP_GIT_REMOTE_URL}" "small"
     n2st::print_formated_script_header "${header_footer_name}" "${line_format}" "${line_style}"
 
 

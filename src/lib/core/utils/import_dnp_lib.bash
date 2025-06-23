@@ -36,7 +36,7 @@ function dnp::import_lib_and_dependencies() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
-  local debug_flag
+  local debug_flag=false
 
   # ....cli..........................................................................................
   while [ $# -gt 0 ]; do
@@ -76,8 +76,8 @@ function dnp::import_lib_and_dependencies() {
   source "${DNP_ROOT}/load_repo_main_dotenv.bash"
 
   # ....Load NBS...................................................................................
-  cd "${NBS_PATH:?'Variable not set'}" || return 1
-  source "import_norlab_build_system_lib.bash" || return 1
+#  cd "${NBS_PATH:?'Variable not set'}" || return 1
+  source "${NBS_PATH:?'Variable not set'}/import_norlab_build_system_lib.bash" || return 1
 
   # (Quickhack) Reload project .env file for N2ST
   source "${DNP_ROOT}/load_repo_main_dotenv.bash"
@@ -85,14 +85,14 @@ function dnp::import_lib_and_dependencies() {
   # ....Load N2ST..................................................................................
   # Note: load n2st after nbs to make sure that the n2st functions version are not those of
   # the nbs n2st submodule.
-  cd "${N2ST_PATH:?'Variable not set'}" || return 1
-  source "import_norlab_shell_script_tools_lib.bash" || return 1
+#  cd "${N2ST_PATH:?'Variable not set'}" || return 1
+  source "${N2ST_PATH:?'Variable not set'}/import_norlab_shell_script_tools_lib.bash" || return 1
 
   # (Quickhack) Reload project .env file for N2ST
   source "${DNP_ROOT}/load_repo_main_dotenv.bash" || return 1
 
   # ....Load DNP utils.............................................................................
-    set -o allexport
+  set -o allexport
   source "${DNP_LIB_PATH:?err}/core/docker/.env.cli_style" || return 1
   set +o allexport
 
@@ -137,13 +137,23 @@ function dnp::import_lib_and_dependencies() {
 # =================================================================================================
 function dnp::find_dnp_root_path() {
 
-    # ....Find path to script........................................................................
+    # ....Find path to script......................................................................
     # Note: can handle both sourcing cases
     #   i.e. from within a script or from an interactive terminal session
     local script_path
-    script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-    dnp_root="$(dirname "${script_path}")"
+    local dnp_root
+    # Check if running interactively
+    if [[ $- == *i* ]]; then
+      # Case: running in an interactive session
+      dnp_root=$(realpath .)
+    else
+      # Case: running in an non-interactive session
+      script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
+      dnp_root="$(dirname "${script_path}")"
+    fi
 
+
+    # ....Find path to dnp root....................................................................
     local max_iterations=10  # Safety limit to prevent infinite loops
     local iterations_count=0
 
@@ -171,7 +181,7 @@ function dnp::find_dnp_root_path() {
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1

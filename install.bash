@@ -254,7 +254,7 @@ ${MSG_END_FORMAT}"
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   dnp::install_dockerized_norlab_project_on_host "$@"
   exit $?

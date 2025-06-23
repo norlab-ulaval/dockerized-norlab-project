@@ -30,10 +30,22 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 EOF
 )
 
+# ....Find path to script........................................................................
+# Note: can handle both sourcing cases
+#   i.e. from within a script or from an interactive terminal session
+# Check if running interactively
+if [[ $- == *i* ]]; then
+  # Case: running in an interactive session
+  _target_path=$(realpath .)
+else
+  # Case: running in an non-interactive session
+  _script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
+  _target_path="$(dirname "${_script_path}")"
+fi
+dnp_core="$(dirname "${_target_path}")/lib/core"
+
 # ::::Load dependencies::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-dnp_core="$(dirname "$(dirname "${script_path}")")/lib/core"
-source "${dnp_core}/utils/import_dnp_lib.bash"
+source "${dnp_core}/utils/import_dnp_lib.bash" || exit 1
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dnp_error_prefix="\033[1;31m[DNP error]\033[0m"

@@ -103,7 +103,7 @@ function dnp::global_install_hack() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   MSG_ERROR_FORMAT="\033[1;31m"
   MSG_END_FORMAT="\033[0m"
