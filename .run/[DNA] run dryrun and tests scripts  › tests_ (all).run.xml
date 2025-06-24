@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[DNP] run dryrun and tests scripts  › tests/ (all)" type="ShConfigurationType" folderName="[DNP] B | script tests" focusToolWindowBeforeRun="true">
+  <configuration default="false" name="[DNA] run dryrun and tests scripts  › tests/ (all)" type="ShConfigurationType" folderName="[DNA] B | script tests" focusToolWindowBeforeRun="true">
     <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests &amp;&amp; bash run_all_dryrun_and_tests_script.bash" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />

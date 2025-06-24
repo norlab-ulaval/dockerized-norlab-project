@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[DNP] run exec_build.all.bash" type="ShConfigurationType" folderName="[DNP] C | stability check" focusToolWindowBeforeRun="true">
-    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests/stability_check &amp;&amp; bash exec_build.all.bash" />
+  <configuration default="false" name="[DNA] run test_build_and_run_ci_tests_script.bash" type="ShConfigurationType" folderName="[DNA] B | script tests" focusToolWindowBeforeRun="true">
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests/tests_dryrun_and_tests_scripts/ &amp;&amp; bash test_build_and_run_ci_tests_script.bash" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
