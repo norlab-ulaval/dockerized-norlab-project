@@ -29,9 +29,9 @@
 [//]: # ( ==== Description =========================================== ) 
 **The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main).**
 
-It provide a containerized workflow tailor-made for robotic research. <br>
-Dockerized-NorLab project application (DNA) handle the building and instanciation of DN container with functionality for <br> 
-development, deployment, testing, continuous integration and release publishing. 
+It provide a containerized workflow tailor-made for robotic research.<br>
+Dockerized-NorLab project application (DNA) handle the building and instanciation of DN container<br> 
+with functionality for development, deployment, testing, continuous integration and release publishing. 
 
 <br>
 
@@ -104,7 +104,7 @@ dna init
 Which add a few directories to your project repository
 ```markup
 your-project-repository/
-  ├── .dockerized_norlab/     <- DNA configuration
+  ├── .dockerized_norlab/             <- DNA configuration
   ├── artifact/                       <- Runtime produced data (mounted)
   ├── external_data/                  <- Pre-existing data made available in your container (mounted)
   ├── src/                            <- Your repository source code (mounted/copied)
