@@ -28,7 +28,7 @@
 ## Version Control
 - Never `git add` or `git commit` changes, all changes require explicit code review and acceptance by the codeowner.   
 
-## Tests Requirements:
+## Tests Requirements
 - In the context of testing:
   - the definition of _pass_ is that a test exit whitout error. Synomym: _green_, _successfull_; 
   - the definition fo _done_ mean that all tests where executed and all tests passed.

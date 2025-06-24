@@ -1,10 +1,17 @@
 # README improvement plan
 
+Goal: improve the repository documentation. 
+
 ## General instructions
-Review the code base and improve the main `README.md` file. 
+Review the code base.
+Dont execute `dna COMMAND`, read the implementation instead. Each script implementation, command implementation and shell function implementation are well documented. 
+Code documentation are provided either using a commented text documentation header or using a `DOCUMENTATION_*` environment variable which contains the help documentation displayed to user when using an `--help` flag.
+
+## Writing instructions
 Use clear and concise sentences.
 Use technical terminology when necessary.
 Link to official documentation when refering to _docker_, _docker compose_ or _buildx_.
+Add a Markdown TOC on semanticaly grouping page e.g., `dna` command documentation -> `dna build` command page, `dna up` command page, `dna exec` command page, ... with `dna` command documentation being the semantic group page.   
 Add navigation link on each markdown pages so that user can easily and intuitively know where they are and how to go where they want.
 Add diagram, directory tree structure or code example when its relevant. A picture is worth a thousand word. 
 
