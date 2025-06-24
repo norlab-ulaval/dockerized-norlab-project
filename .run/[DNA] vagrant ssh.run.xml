@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[DNP ] vagrant destroy &amp; check global status" type="ShConfigurationType" folderName="[DNP] E | Vagrant">
-    <option name="SCRIPT_TEXT" value="sudo vagrant destroy --graceful --force &amp;&amp; vagrant global-status --prune" />
+  <configuration default="false" name="[DNA] vagrant ssh" type="ShConfigurationType" folderName="[DNA] E | Vagrant">
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; vagrant ssh" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
@@ -11,7 +11,7 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="EXECUTE_IN_TERMINAL" value="true" />
     <option name="EXECUTE_SCRIPT_FILE" value="false" />
-    <envs />
+    <envs pass-parent-envs="false" />
     <method v="2" />
   </configuration>
 </component>
