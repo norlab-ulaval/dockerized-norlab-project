@@ -7,39 +7,35 @@
 # Globals:
 #   read N2ST
 # =================================================================================================
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
 
 # ....Pre-condition................................................................................
 # Check if N2ST is loaded
-n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
 
-# ====Help/doc=====================================================================================
-#_DNP_HELP_LINE_CHAR="."
-#_DNP_HELP_LINE_CHAR="⠂" # Note: This is not a 'period' char. UTF-8: E2 A0 82
-#_DNP_HELP_LINE_CHAR="─" # Note: This is not a 'dash' char. UTF-8: E2 94 80
-#_DNP_HELP_LINE_CHAR="━"
-#_DNP_HELP_LINE_CHAR="═" # Note: This is not an 'equal' char. UTF-8: E2 95 90
-_DNP_HELP_LINE_CHAR="${MSG_LINE_CHAR_BUILDER_HELP}"
-#_DNP_HELP_LINE_CENTER_CHAR="▼"
-_DNP_HELP_LINE_CENTER_CHAR="❄︎"
+# ....Load DNP utils.............................................................................
+set -o allexport
+source "${DNP_LIB_PATH:?err}/core/utils/.env.cli_format_and_style" || exit 1
+set +o allexport
+
 
 function dnp:help_header() {
 #    echo -n -e "${MSG_DIMMED_FORMAT}"
 #    echo -e "▶︎"
-    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}" "${MSG_LINE_STYLE_LVL2}"
-#    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}" | sed 's/───/\/──/'
-#    n2st::echo_centering_str "❄${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_LINE_STYLE_LVL2}" "${_DNP_HELP_LINE_CHAR}"
+    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}"
+#    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}" | sed 's/───/\/──/'
+#    n2st::echo_centering_str "❄${MSG_LINE_CENTER_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}" "${MSG_LINE_CHAR_HELP:?err}"
 #    echo -n -e "${MSG_END_FORMAT}"
 }
 
 function dnp::help_footer() {
-#    echo -n -e "${MSG_LINE_STYLE_LVL2}"
-#    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
+#    echo -n -e "${MSG_LINE_STYLE_LVL2:?err}"
+#    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "─" | sed 's/──────$/─❄︎───/'
 #    n2st::draw_horizontal_line_across_the_terminal_window " " | sed 's/      $/   ◀︎/'
 #    echo -n -e "${MSG_END_FORMAT}"
-    n2st::echo_centering_str "${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_LINE_STYLE_LVL2}" "${_DNP_HELP_LINE_CHAR}"
+    n2st::echo_centering_str "${MSG_LINE_CENTER_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}" "${MSG_LINE_CHAR_HELP:?err}"
 }
 
 function dnp::documentation_buffer_to_help_parser() {

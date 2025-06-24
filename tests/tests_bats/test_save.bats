@@ -105,7 +105,8 @@ function dnp::illegal_command_msg() {
 
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 echo "[DNP done] Mock import_dnp_lib.bash and its libraries loaded"

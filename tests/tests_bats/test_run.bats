@@ -168,7 +168,8 @@ function dnp() {
 
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Export dnp function..........................................................................

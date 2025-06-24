@@ -169,7 +169,7 @@ function dnp::import_lib_and_dependencies() {
   source "import_dockerized_norlab_project_lib.bash" || exit 1
   
   #  ....Teardown...................................................................................
-  cd "${TMP_CWD}" || { echo "Return to original dir error" 1>&2 && exit 1; }
+  cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" && exit 1; }
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

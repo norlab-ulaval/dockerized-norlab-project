@@ -99,7 +99,8 @@ function n2st::print_msg_error() {
 
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
@@ -165,7 +166,8 @@ function n2st::print_formated_script_footer() {
 
 # Export functions
 for func in $(compgen -A function | grep -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 EOF
 
@@ -180,7 +182,8 @@ function n2st::add_user_to_the_docker_group() {
 
 # Export functions
 for func in $(compgen -A function | grep -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 EOF
 

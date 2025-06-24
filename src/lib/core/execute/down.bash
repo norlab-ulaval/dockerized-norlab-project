@@ -33,8 +33,10 @@ function dnp::down_command() {
     the_compose_file=docker-compose.project.run.darwin.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
     the_compose_file=docker-compose.project.run.linux-x86.yaml
+  elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
+    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNP_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else
-    n2st::print_msg_error_and_exit "Support for current host not implemented yet!"
+    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNP_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
   docker compose -f "${compose_path}/${the_compose_file}" down "${remaining_args[@]}"

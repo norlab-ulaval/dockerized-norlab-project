@@ -19,8 +19,6 @@ DOCUMENTATION_LOAD_SUPER_PROJECT_CONFIG=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
 
 # ....Variable set for export......................................................................
 declare -x SUPER_PROJECT_ROOT
@@ -321,16 +319,17 @@ function dnp::check_offline_deploy_service_discovery() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${dnp_error_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # Check if N2ST is loaded
-  n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   if [[ ${_execute_now} == true  ]]; then
-    dnp::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNP user project configurations" 1>&2 && exit 1; }
+    dnp::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNP user project configurations" && exit 1; }
   fi
   unset _execute_now
 fi

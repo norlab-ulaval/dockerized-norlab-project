@@ -6,9 +6,8 @@
 #   $ source load_repo_main_dotenv.bash
 #
 # =================================================================================================
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
-MSG_DONE_FORMAT="\033[1;32m"
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+dnp_done_prefix="\033[1;32m[DNP done]\033[0m"
 
 function dnp::load_repository_environment_variables() {
 
@@ -79,7 +78,7 @@ function dnp::load_repository_environment_variables() {
   # ....Teardown...................................................................................
   if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
     export DNP_DEBUG=true
-    echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} .env.dockerized-norlab-project loaded"
+    echo -e "${dnp_error_prefix} .env.dockerized-norlab-project loaded"
     # Debug flags
     set -v # echo lines as they are read
     export BUILDKIT_PROGRESS=plain
@@ -92,7 +91,7 @@ function dnp::load_repository_environment_variables() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${dnp_done_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"

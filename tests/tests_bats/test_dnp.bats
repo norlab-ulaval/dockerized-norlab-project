@@ -199,7 +199,8 @@ source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || exit 1
 
 # ....Export loaded functions......................................................................
 for func in $(compgen -A function | grep -e dnp:: -e nbs:: -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
@@ -217,6 +218,7 @@ setup() {
   # Copy the dnp script to the src/bin directory in the mock project
   cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/bin/"
   cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/ui.bash" "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/.env.cli_format_and_style" "${MOCK_DNP_DIR}/src/lib/core/utils/"
 
   # Make the dnp script executable
   chmod +x "${MOCK_DNP_DIR}/src/bin/dnp"

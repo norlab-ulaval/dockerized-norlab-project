@@ -184,7 +184,7 @@ function dnp::excute_compose() {
 
   # ....Teardown...................................................................................
   n2st::print_formated_script_footer "dnp::excute_compose" "${msg_line_level}" "${line_style}"
-  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
+  cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" && exit 1; }
   return ${docker_exit_code}
 }
 

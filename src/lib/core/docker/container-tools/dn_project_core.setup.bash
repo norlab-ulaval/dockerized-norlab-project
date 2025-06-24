@@ -19,8 +19,7 @@
 # =================================================================================================
 set -e
 pushd "$(pwd)" >/dev/null || exit 1
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
 
 # (CRITICAL) ToDo: unit-test
 
@@ -85,7 +84,7 @@ function dnp::setup_dockerized_norlab_project() {
     test -f project-develop/dn_entrypoint.init.callback.bash && \
     test -f dn_entrypoint.global.attach.callback.bash && \
     test -f dn_entrypoint.global.init.callback.bash ;
-  } || { echo -e "${MSG_ERROR_FORMAT}[DNP error] Missing super project configuration file or directory in .dockerized_norlab/configuration/${MSG_END_FORMAT}" && return 1 ; }
+  } || { echo -e "${dnp_error_prefix} Missing super project configuration file or directory in .dockerized_norlab/configuration/" && return 1 ; }
 
   for each_file in ./dn_entrypoint.*.bash; do
     chmod +x "${each_file}"
@@ -117,7 +116,7 @@ function dnp::setup_dockerized_norlab_project() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} This script must be sourced!
+  echo -e "${dnp_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else

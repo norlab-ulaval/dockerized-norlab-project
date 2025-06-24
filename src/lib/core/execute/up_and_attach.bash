@@ -160,8 +160,6 @@ function dnp::up_and_attach() {
       cat /proc/device-tree/model >/tmp/nv_jetson_model
 
     elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
-      # (Priority) inprogress: implement case >> NorLab-CI-server
-      # (Priority) ToDo: implement case >> User workstation
       the_compose_file=docker-compose.project.run.linux-x86.yaml
     fi
 
@@ -218,8 +216,10 @@ function dnp::up_and_attach() {
     xhost +localhost
     export DN_DISPLAY=host.docker.internal:0
 
+  elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
+    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet! Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNP_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else
-    n2st::print_msg_error_and_exit "Support for current host not implemented yet!"
+    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNP_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
   #n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
@@ -239,7 +239,6 @@ function dnp::up_and_attach() {
     return 0
   fi
 
-  # (CRITICAL) ToDo: see newly added container name related implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash
   if [[ $(docker compose -f "${compose_path}/${the_compose_file}" ps --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME:?err} ${the_service} running" ]]; then
 
     if [[ ${no_up} != true ]]; then
@@ -347,8 +346,8 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
 fi
 

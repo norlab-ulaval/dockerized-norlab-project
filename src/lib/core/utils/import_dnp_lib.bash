@@ -9,9 +9,9 @@
 #   read/write DNP_ROOT
 #
 # =================================================================================================
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
-MSG_DONE_FORMAT="\033[1;32m"
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+dnp_done_prefix="\033[1;32m[DNP done]\033[0m"
+
 
 # ....Variable set for export......................................................................
 declare -x DNP_ROOT
@@ -61,14 +61,14 @@ function dnp::import_lib_and_dependencies() {
   #       e.g., teamcity CI src code pull, user cloned in a different dir, project renamed.
 
   if [[ ! -d "${DNP_ROOT:?err}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project is unreachable at '${DNP_ROOT}'!" 1>&2
+    echo -e "\n${dnp_error_prefix} dockerized-norlab-project is unreachable at '${DNP_ROOT}'!" 1>&2
     return 1
   fi
 
   local git_project_path
   git_project_path="$( cd "${DNP_ROOT}" && git rev-parse --show-toplevel )"
   if [[ "${DNP_ROOT:?err}" != "${git_project_path}" ]]; then
-    echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} found project root '${DNP_ROOT}' does not match the repository .git config '${git_project_path}'!" 1>&2
+    echo -e "\n${dnp_error_prefix} found project root '${DNP_ROOT}' does not match the repository .git config '${git_project_path}'!" 1>&2
     return 1
   fi
 
@@ -92,23 +92,20 @@ function dnp::import_lib_and_dependencies() {
   source "${DNP_ROOT}/load_repo_main_dotenv.bash" || return 1
 
   # ....Load DNP utils.............................................................................
-  set -o allexport
-  source "${DNP_LIB_PATH:?err}/core/docker/.env.cli_style" || return 1
-  set +o allexport
-
   source "${DNP_LIB_PATH:?err}/core/utils/execute_compose.bash" || return 1
   source "${DNP_LIB_PATH:?err}/core/utils/ui.bash" || return 1
   source "${DNP_LIB_PATH:?err}/core/utils/online.bash" || return 1
 
   # ....Export loaded functions....................................................................
   for func in $(compgen -A function | grep -e dnp:: -e nbs:: -e n2st::); do
-    export -f "$func"
+    # shellcheck disable=SC2163
+    export -f "${func}"
   done
 
   # ....Teardown...................................................................................
   if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
     export DNP_DEBUG=true
-    echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} librairies loaded"
+    echo -e "${dnp_done_prefix} librairies loaded"
   fi
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
@@ -161,7 +158,7 @@ function dnp::find_dnp_root_path() {
       # Check if DNP main dotenv exists in the current directory
       if [[ -f "${dnp_root}/.env.dockerized-norlab-project" ]]; then
         if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
-          echo -e "${MSG_DONE_FORMAT}[DNP]${MSG_END_FORMAT} Found .env.dockerized-norlab-project in: $dnp_root"
+          echo -e "${dnp_done_prefix} Found .env.dockerized-norlab-project in: $dnp_root"
         fi
         export DNP_ROOT="${dnp_root}"
         return 0
@@ -175,7 +172,7 @@ function dnp::find_dnp_root_path() {
     done
 
     # If we get here, the repository root was not found
-    echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} dockerized-norlab-project root directory not found in any parent directory" >&2
+    echo -e "${dnp_error_prefix} dockerized-norlab-project root directory not found in any parent directory" >&2
     return 1
 }
 
@@ -183,7 +180,7 @@ function dnp::find_dnp_root_path() {
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${dnp_error_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   dnp::import_lib_and_dependencies "$@" || exit 1
