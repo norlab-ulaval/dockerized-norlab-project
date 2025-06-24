@@ -41,7 +41,7 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   # ....check super project directory structure....................................................
   dnp::check_super_project_dir_structure
 
-  # ....check .dockerized_norlab_project directory structure.......................................
+  # ....check .dockerized_norlab directory structure.......................................
   dnp::check_dockerized_project_configuration_dir_structure
   dnp::check_project_configuration
   dnp::check_project_entrypoints
@@ -59,7 +59,7 @@ Dockerized-NorLab-Porject require that the super project be under version contro
 }
 
 function dnp::check_super_project_dir_structure() {
-  test -d ".dockerized_norlab_project" || n2st::print_msg_error_and_exit "'.dockerized_norlab_project' is not installed at super-project repository root as required!"
+  test -d ".dockerized_norlab" || n2st::print_msg_error_and_exit "'.dockerized_norlab' is not installed at super-project repository root as required!"
   test -d "src/" || n2st::print_msg_error_and_exit "The 'src' directory is not installed at super-project repository root as required!"
   test -d "tests/" || n2st::print_msg_error_and_exit "The 'tests' directory is not installed at super-project repository root as required!"
   test -d "slurm_jobs/" || n2st::print_msg_error_and_exit "The 'slurm_jobs/' directory is not installed as required!"
@@ -71,14 +71,14 @@ function dnp::check_super_project_dir_structure() {
 }
 
 function dnp::check_dockerized_project_configuration_dir_structure() {
-  test_dir_path=".dockerized_norlab_project"
+  test_dir_path=".dockerized_norlab"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "configuration/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/configuration/' directory is not installed as required!"
   test -d "dn_container_env_variable/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/dn_container_env_variable/' directory is not installed as required!"
 }
 
 function dnp::check_project_configuration() {
-  test_dir_path=".dockerized_norlab_project/configuration"
+  test_dir_path=".dockerized_norlab/configuration"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "project_requirements/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project_requirements/' directory is not installed as required!"
   test -d "project_entrypoints/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project_entrypoints/' directory is not installed as required!"
@@ -89,7 +89,7 @@ function dnp::check_project_configuration() {
 }
 
 function dnp::check_project_entrypoints() {
-  test_dir_path=".dockerized_norlab_project/configuration/project_entrypoints"
+  test_dir_path=".dockerized_norlab/configuration/project_entrypoints"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "project-ci-tests/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-ci-tests/' directory is not installed as required!"
   test -d "project-ci-tests/test_jobs/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-ci-tests/test_jobs/' directory is not installed as required!"
@@ -100,13 +100,13 @@ function dnp::check_project_entrypoints() {
 function dnp::check_gitignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
-  # Check required entry: **/.dockerized_norlab_project/dn_container_env_variable/
-  if ! grep --silent -E "^\*\*\/\.dockerized_norlab_project\/dn_container_env_variable\/$" ".gitignore"; then
-    n2st::print_msg_error_and_exit "The line '**/.dockerized_norlab_project/dn_container_env_variable/' is not present in .gitignore as required!"
+  # Check required entry: **/.dockerized_norlab/dn_container_env_variable/
+  if ! grep --silent -E "^\*\*\/\.dockerized_norlab\/dn_container_env_variable\/$" ".gitignore"; then
+    n2st::print_msg_error_and_exit "The line '**/.dockerized_norlab/dn_container_env_variable/' is not present in .gitignore as required!"
   fi
-  # Check required entry: **/.dockerized_norlab_project/configuration/.env.local
-  if ! grep --silent -E "^\*\*\/\.dockerized_norlab_project\/configuration\/\.env.local$" ".gitignore"; then
-    n2st::print_msg_error_and_exit "The line '**/.dockerized_norlab_project/configuration/.env.local' is not present in .gitignore as required!"
+  # Check required entry: **/.dockerized_norlab/configuration/.env.local
+  if ! grep --silent -E "^\*\*\/\.dockerized_norlab\/configuration\/\.env.local$" ".gitignore"; then
+    n2st::print_msg_error_and_exit "The line '**/.dockerized_norlab/configuration/.env.local' is not present in .gitignore as required!"
   fi
   # Check recommended entry: **/external_data/
   if ! grep --silent -E "^\*\*\/external_data\/$" ".gitignore"; then
@@ -121,9 +121,9 @@ function dnp::check_gitignore() {
 function dnp::check_dockerignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
-  # Check required entry: !**/.dockerized_norlab_project/
-  if ! grep --silent -E "^\!\*\*\/\.dockerized_norlab_project\/$" ".dockerignore"; then
-    n2st::print_msg_error_and_exit "The line '!**/.dockerized_norlab_project/' is not present in .dockerignore as it should be!"
+  # Check required entry: !**/.dockerized_norlab/
+  if ! grep --silent -E "^\!\*\*\/\.dockerized_norlab\/$" ".dockerignore"; then
+    n2st::print_msg_error_and_exit "The line '!**/.dockerized_norlab/' is not present in .dockerignore as it should be!"
   fi
   # Check required entry: !**/version.txt
   if ! grep --silent -E "^\!\*\*\/version.txt$" ".dockerignore"; then
@@ -144,17 +144,17 @@ function dnp::check_dockerignore() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   source "${script_path_parent}/import_dnp_lib.bash" || exit 1
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${DNP_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL:?err}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::super_project_dnp_sanity_check || exit 1
   fct_exit_code=$?
@@ -165,9 +165,9 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
 
 fi

@@ -11,13 +11,15 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 #
 # Commands:
 #   init        Initialize a new DNP project
-#   build       Build Docker images
+#   build       Build DNP Docker images
 #   up          Start and attach to a container (daemon mode)
+#   down        Stop containers
 #   attach      Attach to a running container
 #   exec        Execute command in a running container
-#   down        Stop containers
 #   run         Run a command in a container
 #   project     Super project commands
+#   save        Save DNP Docker image to file for offline use
+#   load        Load DNP Docker image from file for offline use
 #   config      (In-progress) Show configuration
 #   version     Show DNP version
 #   help        Show this help message
@@ -28,17 +30,29 @@ DOCUMENTATION_BUFFER_DNP=$( cat <<'EOF'
 EOF
 )
 
+# ....Find path to script........................................................................
+# Note: can handle both sourcing cases
+#   i.e. from within a script or from an interactive terminal session
+# Check if running interactively
+if [[ $- == *i* ]]; then
+  # Case: running in an interactive session
+  _target_path=$(realpath .)
+else
+  # Case: running in an non-interactive session
+  _script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
+  _target_path="$(dirname "${_script_path}")"
+fi
+dnp_core="$(dirname "${_target_path}")/lib/core"
+
 # ::::Load dependencies::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
-dnp_core="$(dirname "$(dirname "${script_path}")")/lib/core"
-source "${dnp_core}/utils/import_dnp_lib.bash"
+source "${dnp_core}/utils/import_dnp_lib.bash" || exit 1
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::entrypoint() {
@@ -49,7 +63,7 @@ function dnp::entrypoint() {
 
   # ....cli........................................................................................
   if [[ -z ${the_command}  ]]; then
-    dnp::show_entrypoint_help
+    dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP:?err}"
     exit 0
   fi
 
@@ -62,6 +76,16 @@ function dnp::entrypoint() {
       build)
           source "${DNP_LIB_PATH}/commands/build.bash" || exit 1
           dnp::build_command "$@"
+          exit $?
+          ;;
+      save)
+          source "${DNP_LIB_PATH}/commands/save.bash" || exit 1
+          dnp::save_command "$@"
+          exit $?
+          ;;
+      load)
+          source "${DNP_LIB_PATH}/commands/load.bash" || exit 1
+          dnp::load_command "$@"
           exit $?
           ;;
       exec)
@@ -133,7 +157,7 @@ function dnp::entrypoint() {
           esac
           ;;
       help|--help|-h)
-          dnp::show_entrypoint_help
+          dnp::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNP:?err}"
           exit 0
           ;;
       *)

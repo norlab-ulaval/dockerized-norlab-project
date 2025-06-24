@@ -95,11 +95,11 @@ function dnp::setup_host_dnp_requirements() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   source "${script_path_parent}/import_dnp_lib.bash" || exit 1
   dnp::setup_host_dnp_requirements || exit 1
@@ -109,9 +109,9 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
 
 fi

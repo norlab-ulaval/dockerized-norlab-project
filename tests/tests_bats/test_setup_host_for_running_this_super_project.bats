@@ -98,9 +98,9 @@ teardown() {
   assert_success
 
   assert_file_contains "${HOME}/.bashrc" "^#>>>>DNP dockerized-norlab-project-mock aliases and env variable$"
-  assert_file_contains "${HOME}/.bashrc" "^export _DNP_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab_project$"
+  assert_file_contains "${HOME}/.bashrc" "^export _DNP_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab$"
   assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cd='cd ${MOCK_PROJECT_PATH}'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab_project'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab'$"
   assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cds='cd ${MOCK_PROJECT_PATH}/src'$"
   assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${MOCK_PROJECT_PATH}/tests'$"
   assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cda='cd ${MOCK_PROJECT_PATH}/artifact'$"
@@ -113,7 +113,7 @@ teardown() {
 
     New available alias added to ~/.bashrc:
       - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cd -> cd to dockerized-norlab-project-mock root
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab_project dir
+      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab dir
       - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cds -> cd to dockerized-norlab-project-mock src dir
       - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to dockerized-norlab-project-mock tests dir
       - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cda -> cd to dockerized-norlab-project-mock artifact dir

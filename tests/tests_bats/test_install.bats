@@ -115,7 +115,8 @@ function n2st::norlab_splash() {
 
 # Export mock functions
 for func in $(compgen -A function | grep -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # Print a message to indicate that the mock import_norlab_shell_script_tools_lib.bash has been loaded
@@ -139,7 +140,8 @@ function dnp::unknown_option_msg() {
 
 # Export mock functions
 for func in $(compgen -A function | grep -e dnp::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # Print a message to indicate that the mock ui.bash has been loaded

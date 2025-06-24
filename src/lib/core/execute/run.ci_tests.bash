@@ -28,7 +28,7 @@ function dnp::run_ci_tests() {
   while [[ $# -gt 0 ]]; do
       case "$1" in
           --help|-h)
-              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS}"
+              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS:?err}"
               exit 0
               ;;
           *)
@@ -70,11 +70,11 @@ function dnp::run_ci_tests() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
@@ -88,7 +88,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::run_ci_tests "$@"
   fct_exit_code=$?
@@ -99,7 +99,7 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
 fi

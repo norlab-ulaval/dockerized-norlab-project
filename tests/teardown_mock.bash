@@ -40,7 +40,7 @@ function dnp::teardown_mock() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   cd "${N2ST_PATH:?'Variable not set'}" || exit 1
@@ -50,9 +50,8 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
 
 else
   # This script is being sourced, ie: __name__="__source__"
-  MSG_ERROR_FORMAT="\033[1;31m"
-  MSG_END_FORMAT="\033[0m"
-  echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} This script must executed with bash! i.e.: $ bash $( basename "$0" )" 1>&2
+  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+  echo -e "${dnp_error_prefix} This script must executed with bash! i.e.: $ bash $( basename "$0" )" 1>&2
   exit 1
 fi
 

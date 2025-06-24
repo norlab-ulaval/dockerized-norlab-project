@@ -22,7 +22,7 @@ services:
   project-core:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ".dockerized_norlab_project/configuration/Dockerfile"
+      dockerfile: ".dockerized_norlab/configuration/Dockerfile"
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
         context-dnp-lib-container-tools: ${DNP_ROOT:?err}/src/lib/core/docker/container-tools
@@ -43,13 +43,13 @@ services:
         norlab.tools.norlab-shell-script-tools: "${N2ST_VERSION:?err}"
         norlab.tools.norlab-build-system: "${NBS_VERSION:?err}"
     env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dnp
         required: true
       - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
         required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
         required: false
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}

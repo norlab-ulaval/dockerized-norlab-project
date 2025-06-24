@@ -29,10 +29,10 @@ EOF
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} librairy load error!" ; exit 1 ; }
+test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dnp::config_command() {
@@ -40,12 +40,12 @@ function dnp::config_command() {
     local platform=""
     local help=false
 
-    declare -a remaining_args
+    declare -a remaining_args=()
 
     n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dnp config MODE${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
 
     if [[ -z "$1" ]]; then
-        dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG:?err}"
         exit 1
     fi
 
@@ -61,7 +61,7 @@ function dnp::config_command() {
                 shift
                 ;;
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
+                dnp::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG:?err}"
                 exit 0
                 ;;
             *)

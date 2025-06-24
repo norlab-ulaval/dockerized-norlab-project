@@ -29,11 +29,7 @@
 # =================================================================================================
 params=( "$@" )
 
-set -e            # exit on error
-set -o nounset    # exit on unbound variable
-set -o pipefail   # exit if errors within pipes
-
-if [[ -z $params ]]; then
+if [[ -z ${params[0]} ]]; then
   # Set to default bats tests directory if none specified
   params=("tests/tests_bats/")
 fi

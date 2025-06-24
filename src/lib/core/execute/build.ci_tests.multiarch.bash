@@ -21,7 +21,7 @@ build_all_flag=()
 build_all_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
 
 # ....Path resolution..............................................................................
-script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
 script_path_parent="$(dirname "${script_path}")"
 
 # ====Begin========================================================================================

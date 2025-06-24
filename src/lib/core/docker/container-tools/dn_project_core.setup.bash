@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================================================
 # Dockerized-NorLab project-core image setup script i.e., user configuration install steps.
-# Is executed by '.dockerized_norlab_project/configuration/Dockerfile' in a DN project image
+# Is executed by '.dockerized_norlab/configuration/Dockerfile' in a DN project image
 #
 # Usage:
 #   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_core.setup.bash
@@ -19,8 +19,7 @@
 # =================================================================================================
 set -e
 pushd "$(pwd)" >/dev/null || exit 1
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
 
 # (CRITICAL) ToDo: unit-test
 
@@ -51,7 +50,7 @@ function dnp::setup_dockerized_norlab_project() {
       echo ""
       echo "# Project specific aliases (general)"
       echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-cd='cd ${DN_PROJECT_PATH:?err}'"
-      echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-cdd='cd ${DN_PROJECT_PATH:?err}/.dockerized_norlab_project'"
+      echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-cdd='cd ${DN_PROJECT_PATH:?err}/.dockerized_norlab'"
       echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-cds='cd ${DN_PROJECT_PATH:?err}/src'"
       echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-cdt='cd ${DN_PROJECT_PATH:?err}/tests'"
       echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-cda='cd ${DN_PROJECT_PATH:?err}/artifact'"
@@ -85,7 +84,7 @@ function dnp::setup_dockerized_norlab_project() {
     test -f project-develop/dn_entrypoint.init.callback.bash && \
     test -f dn_entrypoint.global.attach.callback.bash && \
     test -f dn_entrypoint.global.init.callback.bash ;
-  } || { echo -e "${MSG_ERROR_FORMAT}[DNP error] Missing super project configuration file or directory in .dockerized_norlab_project/configuration/${MSG_END_FORMAT}" && return 1 ; }
+  } || { echo -e "${dnp_error_prefix} Missing super project configuration file or directory in .dockerized_norlab/configuration/" && return 1 ; }
 
   for each_file in ./dn_entrypoint.*.bash; do
     chmod +x "${each_file}"
@@ -115,9 +114,9 @@ function dnp::setup_dockerized_norlab_project() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} This script must be sourced!
+  echo -e "${dnp_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else

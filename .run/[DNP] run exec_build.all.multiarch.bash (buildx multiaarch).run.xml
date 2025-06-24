@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="[DNP] run exec_build.all.multiarch.bash (buildx multiaarch)" type="ShConfigurationType" folderName="[DNP] C | stability check" focusToolWindowBeforeRun="true">
-    <option name="SCRIPT_TEXT" value="cd tests/stability_check &amp;&amp; bash exec_build.all.multiarch.bash --no-force-push-project-core" />
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests/stability_check &amp;&amp; bash exec_build.all.multiarch.bash --no-force-push-project-core" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />

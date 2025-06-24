@@ -36,8 +36,9 @@ fi
 # ====Setup========================================================================================
 TESTED_FILE_PATH="src/lib/core/docker"
 MOCK_PROJECT_PATH="utilities/tmp/dockerized-norlab-project-mock"
-TESTED_FILE_PATH2="${MOCK_PROJECT_PATH}/.dockerized_norlab_project/configuration/"
-TESTED_FILE_PATH3="./"
+TESTED_FILE_PATH2="${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration"
+TESTED_FILE_PATH3="."
+TESTED_FILE_PATH4="src/lib/template/.dockerized_norlab/configuration"
 
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
@@ -101,7 +102,7 @@ function helper::setup_dotenv_related_tests() {
   echo -e "\n\n
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 [DN ERROR] -> dotenv file ${tested_file} misconfiguration error.
-Path: ${tested_file_path}${tested_file}
+Path: ${tested_file_path}/${tested_file}
 
 Actual:
   $( cat "${tested_file}" | grep -e "^${tested_env_var}" )
@@ -122,7 +123,7 @@ function helper::setup_ignore_related_tests() {
   echo -e "\n\n
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 [DN ERROR] -> ignore file ${tested_file} misconfiguration error.
-Path: ${tested_file_path}${tested_file}
+Path: ${tested_file_path}/${tested_file}
 
 Expected entry:
   $( cat "${tested_file}" | grep -e "^${tested_entry}" )
@@ -172,16 +173,18 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
 }
 
 # ....dotenv tests.................................................................................
-@test "check dev configs in .env.dnp | DN_GIT_BRANCH=dev › expect pass" {
+@test "check mock configs in .env.dnp | DN_GIT_BRANCH=dev › expect pass" {
   helper::setup_dotenv_related_tests '.env.dnp' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH2}"
   assert_file_exist ".env.dnp"
-  assert_file_contains ".env.dnp" "^DN_GIT_BRANCH=dev"
+  assert_file_contains ".env.dnp" "^\#DN_GIT_BRANCH=dev"
+
 }
 
-@test "check dev configs in .env.dnp | DN_PROJECT_DEPLOY_REPO_BRANCH=dev › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dnp' 'DN_PROJECT_DEPLOY_REPO_BRANCH' 'dev' "${TESTED_FILE_PATH2}"
+@test "check template configs in .env.dnp | DN_GIT_BRANCH=dev › expect pass" {
+  helper::setup_dotenv_related_tests '.env.dnp' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH4}"
   assert_file_exist ".env.dnp"
-  assert_file_contains ".env.dnp" "^DN_PROJECT_DEPLOY_REPO_BRANCH=dev"
+  assert_file_contains ".env.dnp" "^\#DN_GIT_BRANCH=dev"
+
 }
 
 @test "check dev configs in .env.dockerized-norlab-project | DNP_DEBUG=false › expect pass" {
@@ -198,10 +201,10 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
 
 # ....DNP app .dockerignore files tests............................................................
 
-@test "check dev configs in .dockerignore | !**/.dockerized_norlab_project/ › expect pass" {
-  helper::setup_ignore_related_tests '.dockerignore' '!**/.dockerized_norlab_project/' "${TESTED_FILE_PATH3}"
+@test "check dev configs in .dockerignore | !**/.dockerized_norlab/ › expect pass" {
+  helper::setup_ignore_related_tests '.dockerignore' '!**/.dockerized_norlab/' "${TESTED_FILE_PATH3}"
   assert_file_exist ".dockerignore"
-  assert_file_contains ".dockerignore" "^\!\*\*\/\.dockerized_norlab_project\/"
+  assert_file_contains ".dockerignore" "^\!\*\*\/\.dockerized_norlab\/"
 }
 
 @test "check dev configs in .dockerignore | !**/version.txt › expect pass" {

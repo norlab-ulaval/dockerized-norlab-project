@@ -188,7 +188,7 @@ function dnp::install_dockerized_norlab_project_on_host() {
         shift
         ;;
       --help | -h)
-        dnp::command_help_menu "${DOCUMENTATION_BUFFER_INSTALL}"
+        dnp::command_help_menu "${DOCUMENTATION_BUFFER_INSTALL:?err}"
         exit 0
         ;;
       *)
@@ -200,8 +200,8 @@ function dnp::install_dockerized_norlab_project_on_host() {
 
   # ====Begin======================================================================================
   # Splash type: small, negative or big
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}" "small"
-  n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1:?err}"
 
   # ....Pre-conditions.............................................................................
   # Make the dnp script is executable
@@ -254,7 +254,7 @@ ${MSG_END_FORMAT}"
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   dnp::install_dockerized_norlab_project_on_host "$@"
   exit $?

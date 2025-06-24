@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="[DNP] run exec_build.all.bash (core, ci-tests, ci-tests-no-gpu) only" type="ShConfigurationType" folderName="[DNP] C | stability check" focusToolWindowBeforeRun="true">
-    <option name="SCRIPT_TEXT" value="cd tests/stability_check &amp;&amp; bash exec_build.all.bash --service-names &quot;project-core,project-ci-tests,project-ci-tests-no-gpu&quot;" />
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests/stability_check &amp;&amp; bash exec_build.all.bash --service-names &quot;project-core,project-ci-tests,project-ci-tests-no-gpu&quot;" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />

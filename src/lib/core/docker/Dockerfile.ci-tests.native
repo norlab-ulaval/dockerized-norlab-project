@@ -9,7 +9,7 @@
 # Notes:
 #   - Tests are executed at run time on host architecture.
 #   - At runtime, the entrypoint execute one by one all `run_ci_tests.*.bash` files, located in
-#      `.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/test_jobs`
+#      `.dockerized_norlab/configuration/project_entrypoints/project-ci-tests/test_jobs`
 #      directory.
 #
 # =================================================================================================
@@ -51,7 +51,7 @@ EOF
 WORKDIR ${DN_PROJECT_SERVICE_DIR}
 COPY --chown=${DN_PROJECT_USER} --from=context-dnp-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.ci_test.bash ./
 RUN chmod +x ./dn_entrypoint.ci_test.bash
-COPY --chown=${DN_PROJECT_USER} .dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests ./
+COPY --chown=${DN_PROJECT_USER} .dockerized_norlab/configuration/project_entrypoints/project-ci-tests ./
 
 # ====Execute tests================================================================================
 # (CRITICAL) ToDo: validate single platform setup

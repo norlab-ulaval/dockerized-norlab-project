@@ -112,7 +112,7 @@ teardown_file() {
   assert_exist "${DNP_ROOT}"
   assert_not_empty "${DNP_ROOT}"
   assert_dir_exist "${DNP_ROOT}"
-  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab_project"
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab"
   assert_file_exist "${MOCK_PROJECT_PATH}/.dockerignore"
 
 #  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
@@ -142,21 +142,21 @@ teardown_file() {
   assert_success
 }
 
-@test "dnp::check_super_project_dir_structure › expect fail with missing .dockerized_norlab_project" {
-  # Test case: When .dockerized_norlab_project is missing, the function should fail
+@test "dnp::check_super_project_dir_structure › expect fail with missing .dockerized_norlab" {
+  # Test case: When .dockerized_norlab is missing, the function should fail
   # Create a temporary directory with an incomplete structure
   mkdir -p "${TEST_TEMP_DIR}"
   cd "${TEST_TEMP_DIR}" || exit 1
 
   run dnp::check_super_project_dir_structure
   assert_failure
-  assert_output --partial "'.dockerized_norlab_project' is not installed at super-project repository root"
+  assert_output --partial "'.dockerized_norlab' is not installed at super-project repository root"
 }
 
 @test "dnp::check_super_project_dir_structure › expect fail with missing src directory" {
   # Test case: When src directory is missing, the function should fail
   # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab_project"
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab"
   cd "${TEST_TEMP_DIR}" || exit 1
 
   run dnp::check_super_project_dir_structure
@@ -165,7 +165,7 @@ teardown_file() {
 }
 
 @test "dnp::check_dockerized_project_configuration_dir_structure › expect pass with valid structure" {
-  # Test case: When the .dockerized_norlab_project directory has a valid structure, the function should pass
+  # Test case: When the .dockerized_norlab directory has a valid structure, the function should pass
   run dnp::check_dockerized_project_configuration_dir_structure
   assert_success
 }
@@ -173,7 +173,7 @@ teardown_file() {
 @test "dnp::check_dockerized_project_configuration_dir_structure › expect fail with missing configuration directory" {
   # Test case: When configuration directory is missing, the function should fail
   # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab_project"
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab"
 
   # Set up environment for the test
   export SUPER_PROJECT_ROOT="${TEST_TEMP_DIR}"
@@ -181,7 +181,7 @@ teardown_file() {
 
   run dnp::check_dockerized_project_configuration_dir_structure
   assert_failure
-  assert_output --partial "The '.dockerized_norlab_project/configuration/' directory is not installed"
+  assert_output --partial "The '.dockerized_norlab/configuration/' directory is not installed"
 }
 
 @test "dnp::check_project_configuration › expect pass with valid configuration" {
@@ -193,7 +193,7 @@ teardown_file() {
 @test "dnp::check_project_configuration › expect fail with missing project_requirements directory" {
   # Test case: When project_requirements directory is missing, the function should fail
   # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab_project/configuration"
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration"
 
   # Set up environment for the test
   export SUPER_PROJECT_ROOT="${TEST_TEMP_DIR}"
@@ -201,7 +201,7 @@ teardown_file() {
 
   run dnp::check_project_configuration
   assert_failure
-  assert_output --partial "The '.dockerized_norlab_project/configuration/project_requirements/' directory is not installed"
+  assert_output --partial "The '.dockerized_norlab/configuration/project_requirements/' directory is not installed"
 }
 
 @test "dnp::check_project_entrypoints › expect pass with valid entrypoints" {
@@ -213,7 +213,7 @@ teardown_file() {
 @test "dnp::check_project_entrypoints › expect fail with missing project-ci-tests directory" {
   # Test case: When project-ci-tests directory is missing, the function should fail
   # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab_project/configuration/project_entrypoints"
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/project_entrypoints"
 
   # Set up environment for the test
   export SUPER_PROJECT_ROOT="${TEST_TEMP_DIR}"
@@ -221,7 +221,7 @@ teardown_file() {
 
   run dnp::check_project_entrypoints
   assert_failure
-  assert_output --partial "The '.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/' directory is not installed"
+  assert_output --partial "The '.dockerized_norlab/configuration/project_entrypoints/project-ci-tests/' directory is not installed"
 }
 
 @test "dnp::check_gitignore › expect pass with valid gitignore entries" {
@@ -242,7 +242,7 @@ teardown_file() {
 
   run dnp::check_gitignore
   assert_failure
-  assert_output --partial "The line '**/.dockerized_norlab_project/dn_container_env_variable/' is not present in .gitignore"
+  assert_output --partial "The line '**/.dockerized_norlab/dn_container_env_variable/' is not present in .gitignore"
 }
 
 @test "dnp::check_dockerignore › expect pass with valid dockerignore entries" {
@@ -263,7 +263,7 @@ teardown_file() {
 
   run dnp::check_dockerignore
   assert_failure
-  assert_output --partial "The line '!**/.dockerized_norlab_project/' is not present in .dockerignore"
+  assert_output --partial "The line '!**/.dockerized_norlab/' is not present in .dockerignore"
 }
 
 # ....Test integration of dnp::super_project_dnp_sanity_check.....................................
@@ -292,7 +292,7 @@ teardown_file() {
   # Test case: When the super project is invalid, the function should fail without mocking any check functions
 
   # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab_project"
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab"
 
   # Set up environment for the test
   export SUPER_PROJECT_ROOT="${TEST_TEMP_DIR}"

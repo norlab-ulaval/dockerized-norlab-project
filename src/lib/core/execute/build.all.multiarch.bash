@@ -31,7 +31,7 @@ DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
 EOF
 )
 
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: unit-test of flag option
 
 # ....Function.....................................................................................
 function dnp::build_services_multiarch() {
@@ -39,8 +39,8 @@ function dnp::build_services_multiarch() {
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a dnp_build_all_args
-  declare -a remaining_args
+  declare -a dnp_build_all_args=()
+  declare -a remaining_args=()
   local force_push_project_core=true
   local the_compose_file="docker-compose.project.build.multiarch.yaml"
 
@@ -106,16 +106,16 @@ function dnp::build_services_multiarch() {
   build_exit_code=$?
 
   # ....Teardown...................................................................................
-  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
+  cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" && exit 1; }
   return $build_exit_code
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
   source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
@@ -125,7 +125,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::build_services_multiarch "$@"
   fct_exit_code=$?
@@ -136,8 +136,8 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" 1>&2 && exit 1; }
 fi

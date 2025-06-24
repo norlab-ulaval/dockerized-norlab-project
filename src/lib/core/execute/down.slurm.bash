@@ -50,11 +50,11 @@ function dnp::down_slurm() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
@@ -68,7 +68,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::down_slurm "$@"
   fct_exit_code=$?

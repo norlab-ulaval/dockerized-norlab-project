@@ -7,37 +7,35 @@
 # Globals:
 #   read N2ST
 # =================================================================================================
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
 
 # ....Pre-condition................................................................................
 # Check if N2ST is loaded
-n2st::print_msg "test" 2>/dev/null >/dev/null || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} The N2ST lib is not loaded!" ; exit 1 ; }
+dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
 
-# ====Help/doc=====================================================================================
-_DNP_HELP_LINE_CHAR="."
-_DNP_HELP_LINE_CHAR="─" # Note: This is not an 'dash' char. UTF-8: E2 94 80
-#_DNP_HELP_LINE_CHAR="━"
-#_DNP_HELP_LINE_CHAR="═" # Note: This is not an 'equal' char. UTF-8: E2 95 90
-#_DNP_HELP_LINE_CENTER_CHAR="▼"
-_DNP_HELP_LINE_CENTER_CHAR="❄︎"
+# ....Load DNP utils.............................................................................
+set -o allexport
+source "${DNP_LIB_PATH:?err}/core/utils/.env.cli_format_and_style" || exit 1
+set +o allexport
+
 
 function dnp:help_header() {
-    echo -n -e "${MSG_DIMMED_FORMAT}"
+#    echo -n -e "${MSG_DIMMED_FORMAT}"
 #    echo -e "▶︎"
-    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
-#    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}" | sed 's/───/\/──/'
-#    n2st::echo_centering_str "❄${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_DIMMED_FORMAT}" "${_DNP_HELP_LINE_CHAR}"
-    echo -n -e "${MSG_END_FORMAT}"
+    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}"
+#    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}" | sed 's/───/\/──/'
+#    n2st::echo_centering_str "❄${MSG_LINE_CENTER_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}" "${MSG_LINE_CHAR_HELP:?err}"
+#    echo -n -e "${MSG_END_FORMAT}"
 }
 
 function dnp::help_footer() {
-    echo -n -e "${MSG_DIMMED_FORMAT}"
-#    n2st::draw_horizontal_line_across_the_terminal_window "${_DNP_HELP_LINE_CHAR}"
+#    echo -n -e "${MSG_LINE_STYLE_LVL2:?err}"
+#    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "─" | sed 's/──────$/─❄︎───/'
 #    n2st::draw_horizontal_line_across_the_terminal_window " " | sed 's/      $/   ◀︎/'
-    n2st::echo_centering_str "${_DNP_HELP_LINE_CENTER_CHAR}" "${MSG_DIMMED_FORMAT}" "${_DNP_HELP_LINE_CHAR}"
-    echo -n -e "${MSG_END_FORMAT}"
+#    echo -n -e "${MSG_END_FORMAT}"
+    n2st::echo_centering_str "${MSG_LINE_CENTER_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}" "${MSG_LINE_CHAR_HELP:?err}"
 }
 
 function dnp::documentation_buffer_to_help_parser() {
@@ -93,22 +91,24 @@ function n2st::print_msg_error() {
 
 # ====Entrypoint splash============================================================================
 function dnp::show_entrypoint_help() {
+    local documentation_buffer_dnp="${1:?err}"
     # Splash type: small, negative or big
-    n2st::norlab_splash 'Dockerized-NorLab-Project' 'https://github.com/norlab-ulaval/dockerized-norlab-project.git' 'negative'
+    n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" 'negative'
     n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
 
     # Note:
     #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
     #   - Delete both horizontal lines
     #   - Delet both header ligne
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
+    echo -e "${documentation_buffer_dnp}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
     echo -e "Run ${MSG_DIMMED_FORMAT}dnp COMMAND --help${MSG_END_FORMAT} for more information on a command."
 }
 
 function dnp::show_entrypoint_help_no_splash() {
+    local documentation_buffer_dnp="${1:?err}"
     # Note:
     #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
     #   - Delete both horizontal lines
     #   - Reformat the header left align
-    echo -e "${DOCUMENTATION_BUFFER_DNP}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
+    echo -e "${documentation_buffer_dnp}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
 }

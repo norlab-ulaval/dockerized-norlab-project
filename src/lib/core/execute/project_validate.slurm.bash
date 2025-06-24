@@ -18,6 +18,8 @@
 
 function dnp::project_validate_slurm() {
   local slurm_script_job_path="${1:-"slurm_jobs"}"
+  local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # ....Validate user argument.......................................................................
   if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" ]]; then
@@ -29,13 +31,13 @@ function dnp::project_validate_slurm() {
   pushd "$(pwd)" >/dev/null || exit 1
   # Note: Keep the pushd/popd logic for now
 
-  declare -a config_test_compose_file_list
-  declare -a dryrun_compose_file_list
-  declare -a config_test_exit_code
-  declare -a build_test_exit_code
-  declare -a slurm_job_dryrun_exit_code
-  declare -a slurm_job_file_name
-  declare -a slurm_job_flags
+  declare -a config_test_compose_file_list=()
+  declare -a dryrun_compose_file_list=()
+  declare -a config_test_exit_code=()
+  declare -a build_test_exit_code=()
+  declare -a slurm_job_dryrun_exit_code=()
+  declare -a slurm_job_file_name=()
+  declare -a slurm_job_flags=()
 
   # ....Config test..................................................................................
   n2st::print_msg "Begin config test"
@@ -53,7 +55,7 @@ function dnp::project_validate_slurm() {
 
   n2st::print_msg "Begin docker compose config test"
   for each_compose in "${config_test_compose_file_list[@]}"; do
-    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\"
+    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a config_flag=()
     config_flag+=("--override-build-cmd" "config")
     config_flag+=("--file" "${each_compose}")
@@ -65,13 +67,13 @@ function dnp::project_validate_slurm() {
       dnp::excute_compose "${config_flag[@]}"
     fi
     config_test_exit_code+=("$?")
-    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/"
+    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
   done
 
-  n2st::print_formated_script_footer "testing config" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_footer "testing config" "${line_format}" "${line_style}"
 
   # ....Dry-run build test...........................................................................
-  n2st::print_formated_script_header "build in dry-run mode testing" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_header "build in dry-run mode testing" "${line_format}" "${line_style}"
 
   dryrun_compose_file_list=(
     "docker-compose.project.build.native.yaml"
@@ -85,7 +87,7 @@ function dnp::project_validate_slurm() {
 
   n2st::print_msg "Begin docker compose build --dry-run test"
   for each_compose in "${dryrun_compose_file_list[@]}"; do
-    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\"
+    n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a add_fct_flag=()
     add_fct_flag+=("--service-names" "project-slurm,project-slurm-no-gpu")
     declare -a build_flag=()
@@ -97,13 +99,13 @@ function dnp::project_validate_slurm() {
       dnp::build_services "${add_fct_flag[@]}" --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     fi
     build_test_exit_code+=("$?")
-    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/"
+    n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
   done
 
   n2st::print_msg "Completed build in dry-run mode tests"
 
   # ....Dry-run SLURM/Mamba jobs.....................................................................
-  n2st::print_formated_script_header "Dry-run slurm job" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_header "Dry-run slurm job" "${line_format}" "${line_style}"
   pushd "$(pwd)" >/dev/null || exit 1
 
   slurm_job_file_name=()
@@ -132,9 +134,7 @@ function dnp::project_validate_slurm() {
   n2st::print_msg "Completed slurm job dry-run tests"
 
   # ....Config and dry-run build test summary........................................................
-  n2st::print_formated_script_footer "dnp::project_validate_slurm" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
 
   n2st::print_msg "Config test summary"
   for idx in "${!config_test_exit_code[@]}"; do
@@ -184,11 +184,11 @@ function dnp::project_validate_slurm() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
@@ -204,7 +204,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dnp::project_validate_slurm "$@"
   fct_exit_code=$?
@@ -215,11 +215,11 @@ else
 
   # ....Pre-condition..............................................................................
   dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f dnp::build_services_multiarch )" || { echo -e "${dnp_error_prefix} The DNP build multiarch lib is not loaded!" ; exit 1 ; }
+  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dnp::build_services_multiarch )" || { echo -e "${dnp_error_prefix} The DNP build multiarch lib is not loaded!" 1>&2 && exit 1; }
 
 fi
 

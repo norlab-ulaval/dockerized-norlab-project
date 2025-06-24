@@ -90,7 +90,7 @@ function dnp::global_install_hack() {
   # (Priority) ToDo: delete on task NMO-702 completion >> those lines ↓↓
   local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
   n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dnp" "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab_project/configuration/.env.dnp" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab/configuration/.env.dnp" "$dn_info_path"
   n2st::seek_and_modify_string_in_file "  develop: # the service name" "Set environment variable DN_ACTIVATE_POWERLINE_PROMT to false" "$dn_info_path"
   sed -i '/.*environment:/,/- DN_ACTIVATE_POWERLINE_PROMT=false/d' "$dn_info_path"
   n2st::seek_and_modify_string_in_file "dn_attach" "dnp [up|exec]" "$dn_info_path"
@@ -103,11 +103,10 @@ function dnp::global_install_hack() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  MSG_ERROR_FORMAT="\033[1;31m"
-  MSG_END_FORMAT="\033[0m"
-  echo -e "${MSG_ERROR_FORMAT}[ERROR]${MSG_END_FORMAT} This script must be sourced!
+  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
+  echo -e "${dnp_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else

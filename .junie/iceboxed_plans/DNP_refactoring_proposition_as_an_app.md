@@ -8,7 +8,7 @@ This document outlines two approaches to convert the Dockerized-NorLab-Project f
 The current Dockerized-NorLab-Project is organized as follows:
 
 ```
-.dockerized_norlab_project/
+.dockerized_norlab/
 ├── README.md
 ├── configuration/
 │   ├── .env
@@ -213,7 +213,7 @@ This approach maintains the current bash script structure but makes it accessibl
 
 ```
 user-super-project/
-├── .dockerized_norlab_project
+├── .dockerized_norlab
 │   ├── README.md
 │   ├── configuration/
 │   │   ├── .env # This is the user side customizable DNP environment var

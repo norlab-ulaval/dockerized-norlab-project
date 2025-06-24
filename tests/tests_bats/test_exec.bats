@@ -85,10 +85,16 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL1="-"
 
 # Set up environment variables
+export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNP_ROOT="${MOCK_DNP_DIR}"
 export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
 export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
 export DN_CONTAINER_NAME="mock-container"
+export DNP_PROMPT_NAME="Dockerized-NorLab-Project"
+export DNP_SPLASH_NAME_FULL="Dockerized-NorLab-Project"
+export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab-Project"
+export DNP_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
 function dnp::import_lib_and_dependencies() {
@@ -106,6 +112,11 @@ function dnp::illegal_command_msg() {
   return 1
 }
 
+function dnp::unknown_subcommand_msg() {
+  echo "Mock dnp::unknown_subcommand_msg called with args: $*"
+  return 1
+}
+
 # ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {
   echo "Mock n2st::norlab_splash called with args: $*"
@@ -119,7 +130,8 @@ function n2st::print_msg() {
 
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
@@ -156,15 +168,15 @@ teardown_file() {
 # ====Test cases==================================================================================
 
 @test "dnp::exec_command with no arguments › expect default behavior" {
-  # Test case: When exec command is called without arguments, it should execute the default command
+  # Test case: When exec command is called without arguments, it should execute with the default service (develop)
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up"
+  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
 
@@ -190,15 +202,49 @@ teardown_file() {
   assert_output --partial "Mock dnp::command_help_menu called with args:"
 }
 
-@test "dnp::exec_command with --service option › expect service passed to up_and_attach" {
-  # Test case: When exec command is called with --service option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --service project-custom"
+@test "dnp::exec_command with develop service › expect develop service passed to up_and_attach" {
+  # Test case: When exec command is called with develop service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command develop"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service project-custom"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop"
+}
+
+@test "dnp::exec_command with deploy service › expect deploy service passed to up_and_attach" {
+  # Test case: When exec command is called with deploy service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command deploy"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service deploy"
+}
+
+@test "dnp::exec_command with invalid service › expect service treated as command" {
+  # Test case: When exec command is called with an invalid service, it treats it as a command to execute
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command invalid-service"
+
+  # Should succeed (exec doesn't validate services, treats them as commands)
+  assert_success
+
+  # Should output the expected message with invalid-service passed as command
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop invalid-service"
+}
+
+@test "dnp::exec_command with multiple services › expect error" {
+  # Test case: When exec command is called with multiple services, it should show an error
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command develop deploy"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dnp::illegal_command_msg called with args: exec"
+  assert_output --partial "Only one SERVICE can be specified"
 }
 
 @test "dnp::exec_command with --detach option › expect detach flag passed to up_and_attach" {
@@ -297,27 +343,27 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up -- bash -c echo hello"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop -- bash -c echo hello"
 }
 
 @test "dnp::exec_command with multiple options and command › expect all options and command passed to up_and_attach" {
   # Test case: When exec command is called with multiple options and a command, it should pass all to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --service project-custom --workdir /path --detach -- bash -c 'echo hello'"
+  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command deploy --workdir /path --detach -- bash -c 'echo hello'"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service project-custom --workdir /path --detach -- bash -c echo hello"
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --workdir /path --detach --service deploy -- bash -c echo hello"
 }
 
-@test "dnp::exec_command with invalid option › expect error" {
-  # Test case: When exec command is called with an invalid option, it should show an error
+@test "dnp::exec_command with invalid option › expect option treated as command" {
+  # Test case: When exec command is called with an invalid option, it treats it as a command to execute
   run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --invalid-option"
 
-  # Should fail
-  assert_failure
+  # Should succeed (exec doesn't validate options, treats them as commands)
+  assert_success
 
-  # Should output the error message
-  assert_output --partial "Mock dnp::illegal_command_msg called with args: exec --invalid-option"
+  # Should output the expected message with invalid-option passed as command
+  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service develop --invalid-option"
 }
