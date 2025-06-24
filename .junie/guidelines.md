@@ -4,26 +4,26 @@
 ## General Requirements:
 - Don't repeat yourself. Use already implemented code such as:
   - `load_repo_main_dotenv.bash`
-  - `import_dnp_lib.bash`
+  - `import_dna_lib.bash`
   - `load_super_project_config.bash`
   - _N2ST_ library
   - _NBS_ library
 - Path management:
   - Case 1 › system wide:
-    - via symlink `/usr/local/bin/dnp` → `/path/to/dockerized-norlab-project/src/bin/dnp`;
-    - via `~/.bashrc` ← `PATH=${PATH}:${DNP_PATH}:${NBS_PATH}:${N2ST_PATH}`.
+    - via symlink `/usr/local/bin/dna` → `/path/to/dockerized-norlab-project/src/bin/dna`;
+    - via `~/.bashrc` ← `PATH=${PATH}:${DNA_PATH}:${NBS_PATH}:${N2ST_PATH}`.
   - Case 2 › manual load: 
-    - each super project can optionally use the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.dockerized-norlab-project`.
+    - each super project can optionally use the env var `DNA_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.dockerized-norlab-project`.
   
 ## Repository Organization
-- `src/bin/dnp` is the DNP application entrypoint
+- `src/bin/dna` is the DNA application entrypoint
 - `src/lib/` contain library files
 - `tests/` contain tests files
 - `tests/tests_bats/` contain N2ST bats framework files that are mainly used for unit-testing
 - `tests/tests_dryrun_and_tests_scripts/` contain integration test (see details below)
 - `utilities/` contain external libraries such as N2ST and NBS
 - `utilities/tmp/dockerized-norlab-project-mock` is use for cloning a fresh copy of a mock "super project" from https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git on test execution.
-  `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNP. We refer to this as a "super project" or the "user side".
+  `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNA. We refer to this as a "super project" or the "user side".
 
 ## Version Control
 - Never `git add` or `git commit` changes, all changes require explicit code review and acceptance by the codeowner.   
@@ -73,7 +73,7 @@
 - Use bats test function `assert_file_executable` and `assert_file_not_executable` to test executable.
 - Use bats test function `assert_symlink_to` and `assert_not_symlink_to` to test symlink.
 - You can test directory/file mode, existence, permision, content and symlink directly without mocking since bats tests are running in a docker container in complete isolation.
-- Test `/usr/local/bin/dnp` symlink related logic directly without mocking.
+- Test `/usr/local/bin/dna` symlink related logic directly without mocking.
 
 Bats helper library documentation:
   - https://github.com/bats-core/bats-assert

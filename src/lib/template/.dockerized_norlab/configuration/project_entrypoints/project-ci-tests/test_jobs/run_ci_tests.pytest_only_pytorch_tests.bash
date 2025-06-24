@@ -7,7 +7,7 @@ PYTEST_FLAG=()
 PYTEST_FLAG+=(--rootdir="${DN_PROJECT_PATH}/tests")
 
 # ....Optional flags...............................................................................
-PYTEST_FLAG+=(--config-file="${DN_PROJECT_PATH}/tests/pytest.dnp_no_xdist.ini")
+PYTEST_FLAG+=(--config-file="${DN_PROJECT_PATH}/tests/pytest.dna_no_xdist.ini")
 
 # pytest-xdist manual setting
 # ref: https://pytest-xdist.readthedocs.io

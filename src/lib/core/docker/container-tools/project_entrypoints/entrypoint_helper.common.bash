@@ -3,7 +3,7 @@
 # Helper script executed by all dn_entrypoint.*.callback.bash.
 #
 # Usage:
-#   source /dnp-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash
+#   source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash
 #
 # Globals:
 #   Read/write all environment variable exposed in DN at runtime

@@ -8,7 +8,7 @@
 #
 # =================================================================================================
 
-function dnp::project_validate_all() {
+function dna::project_validate_all() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -46,14 +46,14 @@ function dnp::project_validate_all() {
     config_flag+=("--file" "${each_compose}")
     config_flag+=("--" "--dry-run")
     if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
-      dnp::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
-      dnp::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.ci-tests.yaml" ]]; then
-      dnp::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.".*".yaml" ]]; then
-      dnp::excute_compose "${config_flag[@]}" "project-develop"
-      dnp::excute_compose "${config_flag[@]}" "project-deploy"
+      dna::excute_compose "${config_flag[@]}" "project-develop"
+      dna::excute_compose "${config_flag[@]}" "project-deploy"
     fi
     config_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
@@ -81,9 +81,9 @@ function dnp::project_validate_all() {
     build_flag+=("--file" "${each_compose}")
     build_flag+=("--" "--dry-run")
     if [[ "${each_compose}" =~ .*".multiarch.yaml" ]]; then
-      dnp::build_services_multiarch --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dna::build_services_multiarch --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     else
-      dnp::build_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dna::build_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     fi
     build_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
@@ -92,7 +92,7 @@ function dnp::project_validate_all() {
   n2st::print_msg "Completed build in dry-run mode tests"
 
   # ....Config and dry-run build test summary........................................................
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
 
   n2st::print_msg "Config test summary"
   for idx in "${!config_test_exit_code[@]}"; do
@@ -138,8 +138,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
@@ -149,23 +149,23 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   source "${script_path_parent}/build.all.multiarch.bash" || exit 1
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::project_validate_all "$@"
+  dna::project_validate_all "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
 else
   # This script is being sourced, ie: __name__="__source__"
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f dnp::build_services_multiarch )" || { echo -e "${dnp_error_prefix} The DNP build multiarch lib is not loaded!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dna::build_services )" || { echo -e "${dna_error_prefix} The DNA build native lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dna::build_services_multiarch )" || { echo -e "${dna_error_prefix} The DNA build multiarch lib is not loaded!" 1>&2 && exit 1; }
 
 fi

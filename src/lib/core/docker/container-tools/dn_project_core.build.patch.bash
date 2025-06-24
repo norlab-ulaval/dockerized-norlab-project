@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Add to dnp::global_install_hack(), install step that should be executed on all DN-Project
+# Add to dna::global_install_hack(), install step that should be executed on all DN-Project
 # service variations: project-develop, project-deploy, project-ci-tests, project-slurm
 #
 # Usage:
@@ -14,7 +14,7 @@
 set -e
 pushd "$(pwd)" >/dev/null || exit 1
 
-function dnp::global_install_hack() {
+function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab project
@@ -89,11 +89,11 @@ function dnp::global_install_hack() {
 
   # (Priority) ToDo: delete on task NMO-702 completion >> those lines ↓↓
   local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
-  n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dnp" "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab/configuration/.env.dnp" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dna" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab/configuration/.env.dna" "$dn_info_path"
   n2st::seek_and_modify_string_in_file "  develop: # the service name" "Set environment variable DN_ACTIVATE_POWERLINE_PROMT to false" "$dn_info_path"
   sed -i '/.*environment:/,/- DN_ACTIVATE_POWERLINE_PROMT=false/d' "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "dn_attach" "dnp [up|exec]" "$dn_info_path"
+  n2st::seek_and_modify_string_in_file "dn_attach" "dna [up|exec]" "$dn_info_path"
   n2st::seek_and_modify_string_in_file "<the-running-container-name>" "bash" "$dn_info_path"
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,13 +105,13 @@ function dnp::global_install_hack() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  echo -e "${dnp_error_prefix} This script must be sourced!
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  echo -e "${dna_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dnp::global_install_hack || exit 1
+  dna::global_install_hack || exit 1
 fi
 
 # ====Teardown=====================================================================================

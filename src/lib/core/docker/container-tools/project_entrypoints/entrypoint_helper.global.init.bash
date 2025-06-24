@@ -7,11 +7,11 @@
 # =================================================================================================
 pushd "$(pwd)" >/dev/null || exit 1
 
-function dnp::show_container_dn_related_tree() {
+function dna::show_container_dn_related_tree() {
   n2st::draw_horizontal_line_across_the_terminal_window "="
   echo "Dev tools to check in container available directories and files"
   echo
-  tree -L 4 -a /dnp-lib-container-tools
+  tree -L 4 -a /dna-lib-container-tools
   tree -L 4 -a -I .git /dockerized-norlab
   tree -L 4 -a /home/redleader
   tree -L 2 -a /opt
@@ -26,12 +26,12 @@ function dnp::show_container_dn_related_tree() {
   n2st::draw_horizontal_line_across_the_terminal_window "="
 }
 
-function dnp::entrypoint_helper_global_init() {
+function dna::entrypoint_helper_global_init() {
 
-  source /dnp-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash || exit 1
+  source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash || exit 1
 
   if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == 'true' ]]; then
-    dnp::show_container_dn_related_tree
+    dna::show_container_dn_related_tree
   fi
 
   # ....User feedback................................................................................
@@ -42,7 +42,7 @@ function dnp::entrypoint_helper_global_init() {
   \n$(
     SP="    " &&
       cd "/dockerized-norlab/dockerized-norlab-images/container-tools" &&
-      sed "s;alias dnp-${DN_PROJECT_ALIAS_PREFIX:?err}-;${SP}$ dnp-${DN_PROJECT_ALIAS_PREFIX}-;" ./dn_bash_alias.bash | sed "s;='.*;;" | grep -e "dnp-${DN_PROJECT_ALIAS_PREFIX}-"
+      sed "s;alias dna-${DN_PROJECT_ALIAS_PREFIX:?err}-;${SP}$ dna-${DN_PROJECT_ALIAS_PREFIX}-;" ./dn_bash_alias.bash | sed "s;='.*;;" | grep -e "dna-${DN_PROJECT_ALIAS_PREFIX}-"
   )
   ${MSG_END_FORMAT}"
 
@@ -72,7 +72,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dnp::entrypoint_helper_global_init || n2st::print_msg_error_and_exit "$0 script exited with error!"
+  dna::entrypoint_helper_global_init || n2st::print_msg_error_and_exit "$0 script exited with error!"
 fi
 
 # ====Teardown=====================================================================================

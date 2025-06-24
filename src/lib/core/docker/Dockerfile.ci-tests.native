@@ -49,7 +49,7 @@ EOF
 
 # ....DN and DN-project entrypoints and utilities................................................
 WORKDIR ${DN_PROJECT_SERVICE_DIR}
-COPY --chown=${DN_PROJECT_USER} --from=context-dnp-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.ci_test.bash ./
+COPY --chown=${DN_PROJECT_USER} --from=context-dna-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.ci_test.bash ./
 RUN chmod +x ./dn_entrypoint.ci_test.bash
 COPY --chown=${DN_PROJECT_USER} .dockerized_norlab/configuration/project_entrypoints/project-ci-tests ./
 
@@ -63,7 +63,7 @@ ARG BUILDPLATFORM
 USER ${DN_PROJECT_USER:?err}
 SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
-ENV DNP_PYTEST_CI_RUN=true
+ENV DNA_PYTEST_CI_RUN=true
 
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 #COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/

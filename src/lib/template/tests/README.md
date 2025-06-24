@@ -1,3 +1,3 @@
 
-# Dockerized-NorLab-Project required directory
+# Dockerized-NorLab Project required directory
 Add project test code here

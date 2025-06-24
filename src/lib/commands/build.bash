@@ -6,7 +6,7 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 # Build project Docker images
 #
 # Usage:
-#   $ dnp build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
+#   $ dna build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
 #
 # Options:
 #   --multiarch                   Build services for multiple architectures (require a configured
@@ -34,17 +34,17 @@ EOF
 )
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-function dnp::build_command() {
+function dna::build_command() {
 
-    if ! dnp::is_online; then
-      n2st::print_msg_error "Be advised, you are currently, offline. Executing ${MSG_DIMMED_FORMAT}dnp build${MSG_END_FORMAT} require internet connection."
+    if ! dna::is_online; then
+      n2st::print_msg_error "Be advised, you are currently, offline. Executing ${MSG_DIMMED_FORMAT}dna build${MSG_END_FORMAT} require internet connection."
       return 1
     fi
 
@@ -77,14 +77,14 @@ function dnp::build_command() {
                 ;;
             --save)
                 if [[ -z "$2" ]]; then
-                    dnp::illegal_command_msg "build" "${original_command}" "The --save flag requires a DIRPATH argument.\n"
+                    dna::illegal_command_msg "build" "${original_command}" "The --save flag requires a DIRPATH argument.\n"
                     return 1
                 fi
                 save_dirpath="$2"
                 shift 2
                 ;;
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_BUILD:?err}"
+                dna::command_help_menu "${DOCUMENTATION_BUFFER_BUILD:?err}"
                 exit 0
                 ;;
             --) # no more option
@@ -95,12 +95,12 @@ function dnp::build_command() {
             develop|deploy|ci-tests|slurm|release)
                 # If service is already set, it's an error
                 if [[ -n "${service}" ]]; then
-                    dnp::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
+                    dna::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
                     return 1
                 fi
                 service="$1"
                 if [[ "${service}" == "release" ]]; then
-                    n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dnp build release${MSG_END_FORMAT} is not released yet, stay tuned!\n ... yeah I know, an un-released release function" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
+                    n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dna build release${MSG_END_FORMAT} is not released yet, stay tuned!\n ... yeah I know, an un-released release function" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
                     return 1
                 fi
                 shift
@@ -108,11 +108,11 @@ function dnp::build_command() {
             *)
                 # Check if it starts with -- (unknown option)
                 if [[ "$1" == --* ]]; then
-                    dnp::unknown_subcommand_msg "build" "$*"
+                    dna::unknown_subcommand_msg "build" "$*"
                     exit 1
                 fi
                 # Otherwise it's an unknown service
-                dnp::illegal_command_msg "build" "${original_command}" "Unknown SERVICE: $1. Valid services are: ci-tests, deploy, develop, slurm.\n"
+                dna::illegal_command_msg "build" "${original_command}" "Unknown SERVICE: $1. Valid services are: ci-tests, deploy, develop, slurm.\n"
                 return 1
                 ;;
         esac
@@ -162,18 +162,18 @@ function dnp::build_command() {
     fi
 
     # Splash type: small, negative or big
-    n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::norlab_splash "${DNA_SPLASH_NAME_SMALL}" "${DNA_GIT_REMOTE_URL}" "small"
     n2st::print_formated_script_header "${header_footer_name}" "${line_format}" "${line_style}"
 
     # ....Flag check...............................................................................
     if [[ "${service}" != "deploy" ]] && [[ "${push_deploy}" == true ]]; then
-      dnp::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} flag can only be used with SERVICE=deploy.\n"
+      dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} flag can only be used with SERVICE=deploy.\n"
       return 1
     fi
 
     if [[ -n "${save_dirpath}" ]]; then
       if [[ "${service}" != "develop" && "${service}" != "deploy" ]]; then
-        dnp::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--save${MSG_END_FORMAT} flag can only be used with SERVICE=develop or SERVICE=deploy.\n"
+        dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--save${MSG_END_FORMAT} flag can only be used with SERVICE=develop or SERVICE=deploy.\n"
         return 1
       fi
       if [[ ! -d "${save_dirpath}" ]]; then
@@ -183,21 +183,21 @@ function dnp::build_command() {
     fi
 
     # ....Load dependencies........................................................................
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
-    source "${DNP_LIB_EXEC_PATH}/build.all.bash" || return 1
-    source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
-    source "${DNP_LIB_EXEC_PATH}/build.deploy.bash" || return 1
+    source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
+    source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
+    source "${DNA_LIB_EXEC_PATH}/build.deploy.bash" || return 1
 
     # ....Begin....................................................................................
     if [[ "${service}" == "deploy" ]]; then
-        dnp::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
+        dna::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
         fct_exit_code=$?
     else
       if [[ "${multiarch}" == true ]]; then
-          dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+          dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
       else
-          dnp::build_services  "${build_flag[@]}" "${remaining_args[@]}"
+          dna::build_services  "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
       fi
     fi
@@ -205,11 +205,11 @@ function dnp::build_command() {
     # ....Post-build save if requested.............................................................
     if [[ -n "${save_dirpath}" && $fct_exit_code -eq 0 ]]; then
         n2st::print_msg "Executing save command as requested"
-        source "${DNP_LIB_PATH}/commands/save.bash" || {
+        source "${DNA_LIB_PATH}/commands/save.bash" || {
             n2st::print_msg_error "Failed to load save command"
             return 1
         }
-        dnp::save_command "${save_dirpath}" "${service}" || {
+        dna::save_command "${save_dirpath}" "${service}" || {
             n2st::print_msg_error "Failed to save image"
             return 1
         }

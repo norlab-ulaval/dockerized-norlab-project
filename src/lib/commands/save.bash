@@ -6,7 +6,7 @@ DOCUMENTATION_BUFFER_SAVE=$( cat <<'EOF'
 # Save Docker image to file for offline use
 #
 # Usage:
-#   $ dnp save [OPTIONS] DIRPATH SERVICE
+#   $ dna save [OPTIONS] DIRPATH SERVICE
 #
 # Options:
 #   --help, -h                    Show this help message
@@ -19,21 +19,21 @@ DOCUMENTATION_BUFFER_SAVE=$( cat <<'EOF'
 #   - Creates a portable archive containing the Docker image and necessary files
 #   - For deploy service: includes full project structure for self-contained deployment
 #   - For develop service: includes only the Docker image (assumes project is cloned on target)
-#   - Output directory follows pattern: dnp-save-<SERVICE>-<REPO_NAME>-<timestamp>
+#   - Output directory follows pattern: dna-save-<SERVICE>-<REPO_NAME>-<timestamp>
 #
 # =================================================================================================
 EOF
 )
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-function dnp::save_command() {
+function dna::save_command() {
 
     # ....Set env variables (pre cli)..............................................................
     local dirpath=""
@@ -46,13 +46,13 @@ function dnp::save_command() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_SAVE:?err}"
+                dna::command_help_menu "${DOCUMENTATION_BUFFER_SAVE:?err}"
                 exit 0
                 ;;
             develop|deploy)
                 # If service is already set, it's an error
                 if [[ -n "${service}" ]]; then
-                    dnp::illegal_command_msg "save" "${original_command}" "Only one SERVICE can be specified.\n"
+                    dna::illegal_command_msg "save" "${original_command}" "Only one SERVICE can be specified.\n"
                     return 1
                 fi
                 service="$1"
@@ -65,10 +65,10 @@ function dnp::save_command() {
                     shift
                 elif [[ -z "${service}" ]]; then
                     # This might be an invalid service
-                    dnp::illegal_command_msg "save" "${original_command}" "Invalid SERVICE: $1. Valid services are: develop, deploy.\n"
+                    dna::illegal_command_msg "save" "${original_command}" "Invalid SERVICE: $1. Valid services are: develop, deploy.\n"
                     return 1
                 else
-                    dnp::illegal_command_msg "save" "${original_command}" "Unknown argument: $1\n"
+                    dna::illegal_command_msg "save" "${original_command}" "Unknown argument: $1\n"
                     return 1
                 fi
                 ;;
@@ -77,23 +77,23 @@ function dnp::save_command() {
 
     # ....Validate arguments.......................................................................
     if [[ -z "${dirpath}" ]]; then
-        dnp::illegal_command_msg "save" "${original_command}" "DIRPATH argument is required.\n"
+        dna::illegal_command_msg "save" "${original_command}" "DIRPATH argument is required.\n"
         return 1
     fi
 
     if [[ -z "${service}" ]]; then
-        dnp::illegal_command_msg "save" "${original_command}" "SERVICE argument is required. Valid services are: develop, deploy.\n"
+        dna::illegal_command_msg "save" "${original_command}" "SERVICE argument is required. Valid services are: develop, deploy.\n"
         return 1
     fi
 
     if [[ "${service}" != "develop" && "${service}" != "deploy" ]]; then
-        dnp::illegal_command_msg "save" "${original_command}" "Invalid SERVICE: ${service}. Valid services are: develop, deploy.\n"
+        dna::illegal_command_msg "save" "${original_command}" "Invalid SERVICE: ${service}. Valid services are: develop, deploy.\n"
         return 1
     fi
 
 
     # ....Load dependencies........................................................................
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
     # ....Validate dirpath.........................................................................
     if [[ ! -d "${dirpath}" ]]; then
@@ -104,7 +104,7 @@ function dnp::save_command() {
     # ....Set env variables (post cli).............................................................
     local timestamp
     timestamp=$(date +"%Y%m%d%H%M")
-    local save_dir_name="dnp-save-${service}-${SUPER_PROJECT_REPO_NAME}-${timestamp}"
+    local save_dir_name="dna-save-${service}-${SUPER_PROJECT_REPO_NAME}-${timestamp}"
     local save_dir_path="${dirpath}/${save_dir_name}"
     local image_name=${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-${service}:${PROJECT_TAG:?err}
     local tar_filename="${DN_PROJECT_IMAGE_NAME}-${service}.${PROJECT_TAG}.tar"
@@ -128,14 +128,14 @@ function dnp::save_command() {
 
     # Create meta.txt file
     n2st::print_msg "Creating metadata file"
-    dnp::create_save_metadata "${save_dir_path}/meta.txt" "${service}" "${tar_filename}" "${timestamp}" || {
+    dna::create_save_metadata "${save_dir_path}/meta.txt" "${service}" "${tar_filename}" "${timestamp}" || {
         n2st::print_msg_error "Failed to create metadata file"
         return 1
     }
 
     # For deploy service, copy project structure
     if [[ "${service}" == "deploy" ]]; then
-        dnp::copy_project_structure_for_deploy "${save_dir_path}" || {
+        dna::copy_project_structure_for_deploy "${save_dir_path}" || {
             n2st::print_msg_error "Failed to copy project structure"
             return 1
         }
@@ -161,7 +161,7 @@ function dnp::save_command() {
 #   $1: Path to metadata file
 #   $2: Service name (develop or deploy)
 # =================================================================================================
-function dnp::create_save_metadata() {
+function dna::create_save_metadata() {
     local meta_file="$1"
     local service="$2"
     local tar_filename="$3"
@@ -179,14 +179,14 @@ function dnp::create_save_metadata() {
     n2st::set_which_architecture_and_os
 
     cat > "${meta_file}" << EOF
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: $(date)
 #   From host:
 #     Name: ${the_hostname}
 #     Architecture and OS: ${IMAGE_ARCH_AND_OS:?err}
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=${DNP_CONFIG_SCHEME_VERSION:-unknown}
+DNA_CONFIG_SCHEME_VERSION=${DNA_CONFIG_SCHEME_VERSION:-unknown}
 DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL:-unknown}
 DN_PROJECT_ALIAS_PREFIX=${DN_PROJECT_ALIAS_PREFIX:-unknown}
 
@@ -214,7 +214,7 @@ EOF
 # Arguments:
 #   $1: Save directory path
 # =================================================================================================
-function dnp::copy_project_structure_for_deploy() {
+function dna::copy_project_structure_for_deploy() {
     local save_dir_path="$1"
     local project_copy_path="${save_dir_path}/${SUPER_PROJECT_REPO_NAME}"
 

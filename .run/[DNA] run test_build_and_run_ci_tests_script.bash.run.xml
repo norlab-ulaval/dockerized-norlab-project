@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="[DNA] run test_build_and_run_ci_tests_script.bash" type="ShConfigurationType" folderName="[DNA] B | script tests" focusToolWindowBeforeRun="true">
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests/tests_dryrun_and_tests_scripts/ &amp;&amp; bash test_build_and_run_ci_tests_script.bash" />
+    <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+    <option name="SCRIPT_PATH" value="" />
+    <option name="SCRIPT_OPTIONS" value="" />
+    <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+    <option name="INTERPRETER_PATH" value="/bin/zsh" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="EXECUTE_IN_TERMINAL" value="false" />
+    <option name="EXECUTE_SCRIPT_FILE" value="false" />
+    <envs>
+      <env name="DOCKER_CONTEXT" value="desktop-linux" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

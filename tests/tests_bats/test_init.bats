@@ -49,19 +49,19 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Copy the real template files
-  mkdir -p "${MOCK_DNP_DIR}/src/lib"
-  cp -r "${BATS_DOCKER_WORKDIR}/src/lib/template" "${MOCK_DNP_DIR}/src/lib/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib"
+  cp -r "${BATS_DOCKER_WORKDIR}/src/lib/template" "${MOCK_DNA_DIR}/src/lib/"
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -70,16 +70,16 @@ export MSG_DIMMED_FORMAT=""
 export MSG_END_FORMAT=""
 
 # Set up environment variables
-export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
-export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 
 export N2ST_PATH="${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
 source "${N2ST_PATH}/import_norlab_shell_script_tools_lib.bash"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
@@ -100,39 +100,39 @@ function n2st::print_msg_error_and_exit() {
 
 
 # ....Mock ui.bash functions.......................................................................
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
-function dnp::unknown_subcommand_msg() {
-  echo "Mock dnp::unknown_subcommand_msg called with args: $*"
+function dna::unknown_subcommand_msg() {
+  echo "Mock dna::unknown_subcommand_msg called with args: $*"
   return 1
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
 
   # Copy the init.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
-  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/super_project_dnp_sanity_check.bash" "${MOCK_DNP_DIR}/src/lib/core/utils/super_project_dnp_sanity_check.bash"
-  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash" "${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/super_project_dna_sanity_check.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/super_project_dna_sanity_check.bash"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Create a test git repository
   if [[ -z "${TEST_REPO_DIR}" ]]; then
@@ -163,15 +163,15 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directories
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-# Test cases for dnp::get_super_project_acronym
-@test "dnp::get_super_project_acronym with onewordname › expect first three letters" {
+# Test cases for dna::get_super_project_acronym
+@test "dna::get_super_project_acronym with onewordname › expect first three letters" {
   # Test case: When the project name is a single word, it should return the first three letters
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::get_super_project_acronym 'onewordname'"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'onewordname'"
 
   # Should succeed
   assert_success
@@ -180,9 +180,9 @@ teardown_file() {
   assert_output "one"
 }
 
-@test "dnp::get_super_project_acronym with multi-word-name › expect acronym 'mwn'" {
+@test "dna::get_super_project_acronym with multi-word-name › expect acronym 'mwn'" {
   # Test case: When the project name has multiple words separated by dashes, it should return the acronym
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::get_super_project_acronym 'multi-word-name'"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multi-word-name'"
 
   # Should succeed
   assert_success
@@ -191,9 +191,9 @@ teardown_file() {
   assert_output "mwn"
 }
 
-@test "dnp::get_super_project_acronym with multti_word_name › expect acronym 'mwn'" {
+@test "dna::get_super_project_acronym with multti_word_name › expect acronym 'mwn'" {
   # Test case: When the project name has multiple words separated by underscores, it should return the acronym
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::get_super_project_acronym 'multti_word_name'"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multti_word_name'"
 
   # Should succeed
   assert_success
@@ -202,9 +202,9 @@ teardown_file() {
   assert_output "mwn"
 }
 
-@test "dnp::get_super_project_acronym with multi-1word-2name-3with-number › expect acronym 'm123n'" {
+@test "dna::get_super_project_acronym with multi-1word-2name-3with-number › expect acronym 'm123n'" {
   # Test case: When the project name has multiple words with numbers, it should return the acronym including numbers
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::get_super_project_acronym 'multi-1word-2name-3with-number'"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multi-1word-2name-3with-number'"
 
   # Should succeed
   assert_success
@@ -213,46 +213,46 @@ teardown_file() {
   assert_output "m123n"
 }
 
-# Test cases for dnp::init_command
-@test "dnp::init_command with --help › expect help menu" {
+# Test cases for dna::init_command
+@test "dna::init_command with --help › expect help menu" {
   # Test case: When init command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::init_command with -h › expect help menu" {
+@test "dna::init_command with -h › expect help menu" {
   # Test case: When init command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::init_command with unknown option › expect error" {
+@test "dna::init_command with unknown option › expect error" {
   # Test case: When init command is called with an unknown option, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command --unknown-option"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --unknown-option"
 
   # Should fail
   assert_failure
 
   # Should output the error message
-  assert_output --partial "Mock dnp::unknown_subcommand_msg called with args: init"
+  assert_output --partial "Mock dna::unknown_subcommand_msg called with args: init"
 }
 
-@test "dnp::init_command without .git directory › expect error" {
+@test "dna::init_command without .git directory › expect error" {
   # Test case: When init command is called in a directory without .git, it should show an error
   # Remove the .git directory
   rm -rf "${TEST_REPO_DIR}/.git"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should fail
   assert_failure
@@ -261,72 +261,72 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_error_and_exit called with args: Cwd is not at repository root"
 }
 
-@test "dnp::init_command with .dockerized_norlab already exists › Y -> expect update" {
+@test "dna::init_command with .dockerized_norlab already exists › Y -> expect update" {
   # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
   # Create the .dockerized_norlab directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && yes | dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && yes | dna::init_command"
 
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNP initialized"
-  assert_output --partial "Mock n2st::print_msg called with args: DNP project initialized successfully."
+  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNA initialized"
+  assert_output --partial "Mock n2st::print_msg called with args: DNA project initialized successfully."
 }
 
-@test "dnp::init_command with .dockerized_norlab already exists › N -> expect see you" {
+@test "dna::init_command with .dockerized_norlab already exists › N -> expect see you" {
   # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
   # Create the .dockerized_norlab directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && echo 'N' | dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'N' | dna::init_command"
 
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNP initialized since"
+  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNA initialized since"
   assert_output --partial "Mock n2st::print_msg called with args: See you"
 }
 
-@test "dnp::init_command with valid repository › expect success" {
+@test "dna::init_command with valid repository › expect success" {
   # Test case: When init command is called in a valid repository, it should initialize the project
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Initializing DNP project: test-project"
-  assert_output --partial "Mock n2st::print_msg called with args: DNP project initialized successfully"
+  assert_output --partial "Mock n2st::print_msg called with args: Initializing DNA project: test-project"
+  assert_output --partial "Mock n2st::print_msg called with args: DNA project initialized successfully"
 }
 
-@test "dnp::init_command tests for PLACEHOLDER_* substitutions › expect all placeholders replaced" {
+@test "dna::init_command tests for PLACEHOLDER_* substitutions › expect all placeholders replaced" {
   # Test case: When init command is called, it should replace all placeholders
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
 
-  # Check .env.dnp file for replaced placeholders
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "https://github.com/user/test-project.git"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "IamDNP_tp"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "tp"
+  # Check .env.dna file for replaced placeholders
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "https://github.com/user/test-project.git"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "IamDNA_tp"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "tp"
 
   # Check README.md file for replaced placeholders
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNP_tp"
+  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNA_tp"
   assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "test-project"
 
   # Verify placeholders are not present anymore
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "PLACEHOLDER_DN_PROJECT_GIT_REMOTE_URL"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "PLACEHOLDER_DN_CONTAINER_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dnp" "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_PROJECT_GIT_REMOTE_URL"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
 }
 
-@test "dnp::init_command tests for directory creation › expect required directories created" {
+@test "dna::init_command tests for directory creation › expect required directories created" {
   # Test case: When init command is called, it should create required directories
 
   # Create a mock function for mkdir to track directory creation
@@ -338,7 +338,7 @@ teardown_file() {
   export -f mkdir
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
@@ -347,7 +347,7 @@ teardown_file() {
   assert_dir_exist "${TEST_REPO_DIR}/artifact"
   assert_dir_exist "${TEST_REPO_DIR}/external_data"
   assert_dir_exist "${TEST_REPO_DIR}/src/launcher"
-  assert_dir_exist "${TEST_REPO_DIR}/src/dnp_example"
+  assert_dir_exist "${TEST_REPO_DIR}/src/dna_example"
   assert_dir_exist "${TEST_REPO_DIR}/tests"
 
   assert_file_exist "${TEST_REPO_DIR}/src/launcher/configs/example_app_hparm_optim.yaml"
@@ -355,27 +355,27 @@ teardown_file() {
   assert_file_exist "${TEST_REPO_DIR}/src/launcher/configs/global_config.yaml"
   assert_file_exist "${TEST_REPO_DIR}/src/launcher/example_app.py"
   assert_file_exist "${TEST_REPO_DIR}/src/launcher/example_app_hparm_optim.py"
-  assert_file_exist "${TEST_REPO_DIR}/src/dnp_example/try_pytorch.py"
+  assert_file_exist "${TEST_REPO_DIR}/src/dna_example/try_pytorch.py"
   assert_file_exist "${TEST_REPO_DIR}/src/README.md"
 
-  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dnp.ini"
-  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dnp_no_xdist.ini"
-  assert_file_exist "${TEST_REPO_DIR}/tests/test_dnp_example/test_python_interpreter_has_ros.py"
-  assert_file_exist "${TEST_REPO_DIR}/tests/test_dnp_example/test_try_pytorch.py"
+  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dna.ini"
+  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dna_no_xdist.ini"
+  assert_file_exist "${TEST_REPO_DIR}/tests/test_dna_example/test_python_interpreter_has_ros.py"
+  assert_file_exist "${TEST_REPO_DIR}/tests/test_dna_example/test_try_pytorch.py"
 
   assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
   assert_file_exist "${TEST_REPO_DIR}/artifact/README.md"
   assert_file_exist "${TEST_REPO_DIR}/artifact/optuna_storage/README.md"
 }
 
-@test "dnp::init_command tests for README.md creation when it doesn't exist › expect README.md created" {
+@test "dna::init_command tests for README.md creation when it doesn't exist › expect README.md created" {
   # Test case: When init command is called and README.md doesn't exist, it should create it
 
   # Make sure README.md doesn't exist
   rm -f "${TEST_REPO_DIR}/README.md"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
@@ -386,17 +386,17 @@ teardown_file() {
   # Check README.md content
   run cat "${TEST_REPO_DIR}/README.md"
   assert_output --partial "# test-project"
-  assert_output --partial "This project is initialized with [Dockerized-NorLab-Project]"
+  assert_output --partial "This project is initialized with [Dockerized-NorLab Project]"
 }
 
-@test "dnp::init_command tests for README.md creation when it exists › expect README.md not modified" {
+@test "dna::init_command tests for README.md creation when it exists › expect README.md not modified" {
   # Test case: When init command is called and README.md exists, it should not modify it
 
   # Create a README.md file
   touch "${TEST_REPO_DIR}/README.md"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
@@ -405,18 +405,18 @@ teardown_file() {
   refute_output --partial "cat > \"README.md\" << EOF"
 }
 
-@test "dnp::init_command tests for .gitignore setup when it doesn't exist › expect .gitignore created from template" {
+@test "dna::init_command tests for .gitignore setup when it doesn't exist › expect .gitignore created from template" {
   # Test case: When init command is called and .gitignore doesn't exist, it should create it from template
 
   # Make sure .gitignore doesn't exist
   rm -f "${TEST_REPO_DIR}/.gitignore"
 
   # Create a mock template .gitignore file
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/template"
-  echo "# Template .gitignore file" > "${MOCK_DNP_DIR}/src/lib/template/.gitignore"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/template"
+  echo "# Template .gitignore file" > "${MOCK_DNA_DIR}/src/lib/template/.gitignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
@@ -425,14 +425,14 @@ teardown_file() {
   assert_file_exist "${TEST_REPO_DIR}/.gitignore"
 }
 
-@test "dnp::init_command tests for .gitignore setup when it exists › expect .gitignore appended" {
+@test "dna::init_command tests for .gitignore setup when it exists › expect .gitignore appended" {
   # Test case: When init command is called and .gitignore exists, it should append required entries
 
   # Create a .gitignore file with some content
   echo "# Existing .gitignore content" > "${TEST_REPO_DIR}/.gitignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
@@ -448,18 +448,18 @@ teardown_file() {
   assert_output --partial "**/.dockerized_norlab/configuration/.env.local"
 }
 
-@test "dnp::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
+@test "dna::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
   # Test case: When init command is called and .dockerignore doesn't exist, it should create it from template
 
   # Make sure .dockerignore doesn't exist
   rm -f "${TEST_REPO_DIR}/.dockerignore"
 
   # Create a mock template .dockerignore file
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/template"
-  echo "# Template .dockerignore file" > "${MOCK_DNP_DIR}/src/lib/template/.dockerignore"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/template"
+  echo "# Template .dockerignore file" > "${MOCK_DNA_DIR}/src/lib/template/.dockerignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success
@@ -468,14 +468,14 @@ teardown_file() {
   assert_file_exist "${TEST_REPO_DIR}/.dockerignore"
 }
 
-@test "dnp::init_command tests for .dockerignore setup when it exists › expect .dockerignore appended" {
+@test "dna::init_command tests for .dockerignore setup when it exists › expect .dockerignore appended" {
   # Test case: When init command is called and .dockerignore exists, it should append required entries
 
   # Create a .dockerignore file with some content
   echo "# Existing .dockerignore content" > "${TEST_REPO_DIR}/.dockerignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/init.bash && dnp::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
 
   # Should succeed
   assert_success

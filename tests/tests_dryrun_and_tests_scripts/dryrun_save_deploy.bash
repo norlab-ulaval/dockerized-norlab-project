@@ -2,18 +2,18 @@
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
-export PATH="$PATH:${DNP_PATH:?err}"
-bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
-function dnp::test_teardown_callback() {
+export PATH="$PATH:${DNA_PATH:?err}"
+bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
+function dna::test_teardown_callback() {
   exit_code=$?
-  cd "${DNP_ROOT:?err}" || exit 1
+  cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
   exit ${exit_code:1}
 }
-trap dnp::test_teardown_callback EXIT
-# Note: command `dnp COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
+trap dna::test_teardown_callback EXIT
+# Note: command `dna COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
 
-cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # Mock docker command for dryrun testing
 function docker() {
@@ -46,7 +46,7 @@ TEMP_SAVE_DIR=$(mktemp -d)
 echo "Testing save deploy command with temporary directory: ${TEMP_SAVE_DIR}"
 
 # Test save deploy command (this should work with mocked docker commands)
-dnp save "${TEMP_SAVE_DIR}" deploy || exit 1
+dna save "${TEMP_SAVE_DIR}" deploy || exit 1
 
 # Clean up
 rm -rf "${TEMP_SAVE_DIR}"

@@ -1,5 +1,5 @@
 #!/bin/bash
-DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
+DOCUMENTATION_DNA_EXECUTE_COMPOSE=$(
   cat <<'EOF'
 # =================================================================================================
 # Convenient script for executin a compose command on a single images specified in a compose file.
@@ -8,7 +8,7 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #
 # Usage as a function:
 #   $ source execute_compose.bash
-#   $ dnp::excute_compose [OPTIONS] [--] [<any-docker-flag>]
+#   $ dna::excute_compose [OPTIONS] [--] [<any-docker-flag>]
 #
 # Usage as a script:
 #   $ bash execute_compose.bash [OPTIONS] [--] [<any-docker-flag>]
@@ -29,7 +29,7 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #
 # Global
 #   read SUPER_PROJECT_ROOT
-#   read DNP_ROOT
+#   read DNA_ROOT
 #
 # =================================================================================================
 EOF
@@ -38,7 +38,7 @@ EOF
 # (CRITICAL) ToDo: unit-test
 
 # ....Functions....................................................................................
-function dnp::excute_compose() {
+function dna::excute_compose() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
@@ -47,7 +47,7 @@ function dnp::excute_compose() {
   # ....Set env variables (pre cli)................................................................
   local remaining_args=()
   local docker_command_w_flags=()
-  local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
   local multiarch=false
   local local_buildx_builder_name="local-builder-multiarch-virtual"
@@ -64,7 +64,7 @@ function dnp::excute_compose() {
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "$0 --help"
     # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_DNP_EXECUTE_COMPOSE}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
+    echo -e "${DOCUMENTATION_DNA_EXECUTE_COMPOSE}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "${MSG_END_FORMAT}"
   }
@@ -123,7 +123,7 @@ function dnp::excute_compose() {
   docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
 
   # ====Begin======================================================================================
-  n2st::print_formated_script_header "dnp::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
+  n2st::print_formated_script_header "dna::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
@@ -183,7 +183,7 @@ function dnp::excute_compose() {
   fi
 
   # ....Teardown...................................................................................
-  n2st::print_formated_script_footer "dnp::excute_compose" "${msg_line_level}" "${line_style}"
+  n2st::print_formated_script_footer "dna::excute_compose" "${msg_line_level}" "${line_style}"
   cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" && exit 1; }
   return ${docker_exit_code}
 }
@@ -195,13 +195,13 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/import_dna_lib.bash" || exit 1
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL:?err}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL:?err}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::excute_compose "$@"
+  dna::excute_compose "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"

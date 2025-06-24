@@ -2,9 +2,9 @@
 
 [//]: # ( ToDo: NMO-670 docs: write user side config readme ) 
 
-#### DNP dotenv file loading precedence:
- 1. .env.dnp (super project)
- 2. .env.dnp-internal (DNP repo)
+#### DNA dotenv file loading precedence:
+ 1. .env.dna (super project)
+ 2. .env.dna-internal (DNA repo)
  3. .env (super project)
  4. .env.local (super project)
 

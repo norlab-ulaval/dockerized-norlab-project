@@ -83,19 +83,19 @@ Vagrant.configure("2") do |config|
   #         - ref:
   #             - https://developer.hashicorp.com/vagrant/docs/networking/private_network#static-ip
   #             - https://en.wikipedia.org/wiki/Private_network#Private_IPv4_address_spaces
-  config.vm.define "dockerized-norlab-project-vm", primary: true do |dnp|
-    dnp.vm.box = UBUNTU_BOX
+  config.vm.define "dockerized-norlab-project-vm", primary: true do |dna|
+    dna.vm.box = UBUNTU_BOX
 
     # Add these SSH configurations
-    dnp.ssh.insert_key = true
-    dnp.ssh.username = "vagrant"
-    dnp.ssh.password = "vagrant"
+    dna.ssh.insert_key = true
+    dna.ssh.username = "vagrant"
+    dna.ssh.password = "vagrant"
 
-    #dnp.vm.hostname = "redleader"
-    #dnp.vm.network "private_network", ip: "10.211.55.99"
+    #dna.vm.hostname = "redleader"
+    #dna.vm.network "private_network", ip: "10.211.55.99"
     #config.vm.network "forwarded_port", guest: 80, host: 8080, auto_correct: true
     #config.vm.network "forwarded_port", guest: 22, host: 2222
-    dnp.vm.provision "Check network", type: "shell", run: "always", inline: <<-SHELL
+    dna.vm.provision "Check network", type: "shell", run: "always", inline: <<-SHELL
        echo
        echo "I am '$(whoami)', my address is $(ifconfig eth0 | grep inet | awk '$1==\"inet\" {print $2}')"
        echo
@@ -147,25 +147,25 @@ Vagrant.configure("2") do |config|
   chown -R $(id -u vagrant) /opt/dockerized-norlab-project-mock-EMPTY
 
   # Ressetting
-  rm -f /usr/local/bin/dnp
-  sed -i '/# >>>> Dockerized-NorLab-Project (start)/,/# <<<< Dockerized-NorLab-Project (end)/d' "${HOME}/.bashrc"
-  sed -i '/# >>>> Dockerized-NorLab-Project CUDA (start)/,/# <<<< Dockerized-NorLab-Project CUDA (end)/d' "${HOME}/.bashrc"
-  sed -i '/# >>>> Dockerized-NorLab-Project DEV alias (start)/,/# <<<< Dockerized-NorLab-Project DEV alias (end)/d' "${HOME}/.bashrc"
+  rm -f /usr/local/bin/dna
+  sed -i '/# >>>> Dockerized-NorLab Project (start)/,/# <<<< Dockerized-NorLab Project (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> Dockerized-NorLab Project CUDA (start)/,/# <<<< Dockerized-NorLab Project CUDA (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> Dockerized-NorLab Project DEV alias (start)/,/# <<<< Dockerized-NorLab Project DEV alias (end)/d' "${HOME}/.bashrc"
 
   echo -e "\nSet DEV aliases\n"
   {
       echo "" ;
-      echo "# >>>> Dockerized-NorLab-Project DEV alias (start)" ;
-      echo "alias dnp-dnp-cd='cd /opt/dockerized-norlab-project'" ;
-#       echo "alias dnp-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" ;
-      echo "alias dnp-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" ;
-      echo "alias dnp-test-symlink='tree -L 1 -a /usr/local/bin/'" ;
-      echo "alias dnp-test-bashrc='tail -n 20 ~/.bashrc'" ;
-      echo "# <<<< Dockerized-NorLab-Project DEV alias (end)" ;
+      echo "# >>>> Dockerized-NorLab Project DEV alias (start)" ;
+      echo "alias dna-dna-cd='cd /opt/dockerized-norlab-project'" ;
+#       echo "alias dna-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" ;
+      echo "alias dna-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" ;
+      echo "alias dna-test-symlink='tree -L 1 -a /usr/local/bin/'" ;
+      echo "alias dna-test-bashrc='tail -n 20 ~/.bashrc'" ;
+      echo "# <<<< Dockerized-NorLab Project DEV alias (end)" ;
       echo "" ;
   } >> /home/vagrant/.bashrc
 
-  echo -e "\nSet DEV default landing path to DNP mock super project\n"
+  echo -e "\nSet DEV default landing path to DNA mock super project\n"
   echo "cd /opt/dockerized-norlab-project" >> /home/vagrant/.bashrc
 
   echo -e "\nInstall The Ubuntu Desktop Gui\n"

@@ -2,22 +2,22 @@
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
-export PATH="$PATH:${DNP_PATH:?err}"
-bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
-function dnp::test_teardown_callback() {
+export PATH="$PATH:${DNA_PATH:?err}"
+bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
+function dna::test_teardown_callback() {
   exit_code=$?
   if [[ ${exit_code} != 0 ]]; then
     # Make sure there is no slurm container running
-    bash "${DNP_LIB_EXEC_PATH:?err}"/down.slurm.bash >/dev/null
+    bash "${DNA_LIB_EXEC_PATH:?err}"/down.slurm.bash >/dev/null
   fi
   echo "test_run.slurm.bash DONE"
-  cd "${DNP_ROOT:?err}" || exit 1
+  cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
   exit ${exit_code:1}
 }
-trap dnp::test_teardown_callback EXIT
+trap dna::test_teardown_callback EXIT
 
-cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
 
@@ -36,5 +36,5 @@ SJOB_ID="default"
 run_slurm_flags+=("--skip-core-force-rebuild")
 hydra_flags+=("--version")
 
-bash "${DNP_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${run_slurm_flags[@]}" "${hydra_flags[@]}"
+bash "${DNA_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${run_slurm_flags[@]}" "${hydra_flags[@]}"
 

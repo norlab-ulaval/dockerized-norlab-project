@@ -1,0 +1,171 @@
+#!/bin/bash
+# bin/dna
+
+DOCUMENTATION_BUFFER_DNA=$( cat <<'EOF'
+# =================================================================================================
+#                            Dockerized-NorLab project application (DNA)
+#                         A tool for managing Docker-based robotic projects
+#
+# Usage:
+#   $ dna COMMAND [OPTIONS]
+#
+# Commands:
+#   init        Initialize a new DNA project
+#   build       Build DNA Docker images
+#   up          Start and attach to a container (daemon mode)
+#   down        Stop containers
+#   attach      Attach to a running container
+#   exec        Execute command in a running container
+#   run         Run a command in a container
+#   project     Super project commands
+#   save        Save DNA Docker image to file for offline use
+#   load        Load DNA Docker image from file for offline use
+#   config      (In-progress) Show configuration
+#   version     Show DNA version
+#   help        Show this help message
+#
+# Run 'dna COMMAND --help' for more information on a command.
+#
+# =================================================================================================
+EOF
+)
+
+# ....Find path to script........................................................................
+# Note: can handle both sourcing cases
+#   i.e. from within a script or from an interactive terminal session
+# Check if running interactively
+if [[ $- == *i* ]]; then
+  # Case: running in an interactive session
+  _target_path=$(realpath .)
+else
+  # Case: running in an non-interactive session
+  _script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
+  _target_path="$(dirname "${_script_path}")"
+fi
+dna_core="$(dirname "${_target_path}")/lib/core"
+
+# ::::Load dependencies::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+source "${dna_core}/utils/import_dna_lib.bash" || exit 1
+
+# ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+
+# ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+function dna::entrypoint() {
+
+  # ....Set env variables (pre cli)................................................................
+  local the_command="$1"
+  shift || true
+
+  # ....cli........................................................................................
+  if [[ -z ${the_command}  ]]; then
+    dna::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNA:?err}"
+    exit 0
+  fi
+
+  case "${the_command}" in
+      init)
+          source "${DNA_LIB_PATH}/commands/init.bash" || exit 1
+          dna::init_command "$@"
+          exit $?
+          ;;
+      build)
+          source "${DNA_LIB_PATH}/commands/build.bash" || exit 1
+          dna::build_command "$@"
+          exit $?
+          ;;
+      save)
+          source "${DNA_LIB_PATH}/commands/save.bash" || exit 1
+          dna::save_command "$@"
+          exit $?
+          ;;
+      load)
+          source "${DNA_LIB_PATH}/commands/load.bash" || exit 1
+          dna::load_command "$@"
+          exit $?
+          ;;
+      exec)
+          source "${DNA_LIB_PATH}/commands/exec.bash" || exit 1
+          dna::exec_command "$@"
+          exit $?
+          ;;
+      attach)
+          source "${DNA_LIB_PATH}/commands/attach.bash" || exit 1
+          dna::attach_command "$@"
+          exit $?
+          ;;
+      up)
+          source "${DNA_LIB_PATH}/commands/up.bash" || exit 1
+          dna::up_command "$@"
+          exit $?
+          ;;
+      down)
+          source "${DNA_LIB_PATH}/commands/down.bash" || exit 1
+          dna::down_command "$@"
+          exit $?
+          ;;
+      run)
+          source "${DNA_LIB_PATH}/commands/run.bash" || exit 1
+          dna::run_command "$@"
+          exit $?
+          ;;
+      config)
+          source "${DNA_LIB_PATH}/commands/config.bash" || exit 1
+          dna::config_command "$@"
+          exit $?
+          ;;
+      version)
+          source "${DNA_LIB_PATH}/commands/version.bash" || exit 1
+          dna::version_command "$@"
+          exit $?
+          ;;
+      project)
+          sub_the_command="$1"
+          shift || true
+
+          source "${DNA_LIB_PATH}/commands/project.bash" || exit 1
+          if [[ -z ${sub_the_command}  ]]; then
+            dna::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT:?err}"
+            exit 0
+          fi
+
+          case "${sub_the_command}" in
+              validate)
+                  dna::project_validate_command "$@"
+                  exit $?
+                  ;;
+              sanity)
+                  dna::project_sanity_command "$@"
+                  exit $?
+                  ;;
+              dotenv)
+                  dna::project_dotenv_command "$@"
+                  exit $?
+                  ;;
+              help|--help|-h)
+                  dna::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT:?err}"
+                  exit 0
+                  ;;
+              *)
+                  dna::unknown_subcommand_msg "project" "${sub_the_command}"
+                  exit 1
+                  ;;
+          esac
+          ;;
+      help|--help|-h)
+          dna::show_entrypoint_help "${DOCUMENTATION_BUFFER_DNA:?err}"
+          exit 0
+          ;;
+      *)
+          dna::unknown_command_msg "${the_command}"
+          exit 1
+          ;;
+  esac
+}
+
+# ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dna::entrypoint "$@"

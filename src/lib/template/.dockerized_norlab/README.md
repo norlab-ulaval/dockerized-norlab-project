@@ -4,7 +4,7 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 ## Usage
 
 1. Setup/validate `.dockerized_norlab/configuration/` files: 
-   - Setup dotenv files: `.env`, `.env.dnp` and `.env.local`;
+   - Setup dotenv files: `.env`, `.env.dna` and `.env.local`;
    - Customize files in `project_requirements/`;
    - Customize files in `project_entrypoints/`. Add
       project-specific container runtime logic;
@@ -12,17 +12,17 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
    - Check `.dockerized_norlab/configuration/README.md` for more details.
 2. From your project `root`, execute the following
    ```shell
-   dnp help 
+   dna help 
    
    # Build your DN-project containers 
-   dnp build 
+   dna build 
    
    # Start your DN-project containers 
-   dnp up
+   dna up
    
    # Have fun
    # When your done, execute 
-   dnp down
+   dna down
    ```
 
 ## Requirements:

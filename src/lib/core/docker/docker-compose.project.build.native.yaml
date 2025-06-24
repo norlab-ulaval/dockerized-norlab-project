@@ -25,7 +25,7 @@ services:
       dockerfile: ".dockerized_norlab/configuration/Dockerfile"
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
-        context-dnp-lib-container-tools: ${DNP_ROOT:?err}/src/lib/core/docker/container-tools
+        context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
       args:
         BASE_IMAGE: ${DN_HUB:?err}/${DN_PROJECT_BASE_IMG:?err}
         BASE_IMAGE_TAG: ${DN_IMAGE_TAG:?err}
@@ -43,9 +43,9 @@ services:
         norlab.tools.norlab-shell-script-tools: "${N2ST_VERSION:?err}"
         norlab.tools.norlab-build-system: "${NBS_VERSION:?err}"
     env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dnp
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
-      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
@@ -99,16 +99,16 @@ services:
   project-ci-tests:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ${DNP_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.native
+      dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.native
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
-        context-dnp-lib-container-tools: ${DNP_ROOT:?err}/src/lib/core/docker/container-tools
+        context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
       pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-        DNP_PYTEST_CI_RUN: true
+        DNA_PYTEST_CI_RUN: true
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
     runtime: nvidia
@@ -124,10 +124,10 @@ services:
   project-slurm:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ${DNP_ROOT:?err}/src/lib/core/docker/Dockerfile.run-slurm
+      dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.run-slurm
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
-        context-dnp-lib-container-tools: ${DNP_ROOT:?err}/src/lib/core/docker/container-tools
+        context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
       pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core

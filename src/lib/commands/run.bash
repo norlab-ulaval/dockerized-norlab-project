@@ -6,7 +6,7 @@ DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 # Run commands in a uniquely identified containers
 #
 # Usage:
-#   $ dnp run [OPTIONS] SERVICE
+#   $ dna run [OPTIONS] SERVICE
 #
 # Options:
 #   --help, -h                   Show this help message
@@ -18,11 +18,11 @@ DOCUMENTATION_BUFFER_RUN=$( cat <<'EOF'
 # Service:
 #
 #   Interactive container:
-#     $ dnp run [OPTIONS] develop|deploy [--] [COMMAND [ARGS...]]
+#     $ dna run [OPTIONS] develop|deploy [--] [COMMAND [ARGS...]]
 #
 #   Non-interactive container:
-#     $ dnp run [OPTIONS] ci-tests [COMMAND [ARG...]]
-#     $ dnp run [OPTIONS] slurm <sjob-id> [--] <python-cmd-args>
+#     $ dna run [OPTIONS] ci-tests [COMMAND [ARG...]]
+#     $ dna run [OPTIONS] slurm <sjob-id> [--] <python-cmd-args>
 #
 # Note:
 #   Can be executed while compose service are up as the run container are assigne a new unique
@@ -37,7 +37,7 @@ DOCUMENTATION_BUFFER_RUN_DEVELOP_DEPLOY_CMD=$( cat <<'EOF'
 # Run a develop/deploy uniquely identified containers
 #
 # Usage:
-#   $ dnp run [OPTIONS] develop|deploy [--] [COMMAND [ARGS...]]
+#   $ dna run [OPTIONS] develop|deploy [--] [COMMAND [ARGS...]]
 #
 # Options for interactive services:
 #   -e, --env stringArray        Set container environment variables
@@ -53,12 +53,12 @@ EOF
 
 DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 # =================================================================================================
-# Run slurm job specilaized DNP container.
+# Run slurm job specilaized DNA container.
 # - Handle stoping the container in case the slurm command `scancel` is issued.
 # - Rebuild images automaticaly
 #
 # Usage:
-#   $ dnp run [OPTIONS] slurm <sjob-id> [--] <any-python-args>
+#   $ dna run [OPTIONS] slurm <sjob-id> [--] <any-python-args>
 #
 # Optional flag:
 #   --log-name=<name>                                 The log file name without postfix
@@ -75,7 +75,7 @@ DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 #   <any-python-args>      (required) The python command with flags
 #
 # Notes about slurm run:
-#   To launch job on slurm/mamba server, use 'dnp run slurm ...' command in a slurm launch script.
+#   To launch job on slurm/mamba server, use 'dna run slurm ...' command in a slurm launch script.
 #   See example 'slurm_job.*template.bash' and 'slurm_job.dryrun.bash' in 'slurm_jobs/' directory.
 #
 # =================================================================================================
@@ -87,10 +87,10 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD=$( cat <<'EOF'
 # Run continuous integration tests container.
 #
 # Usage:
-#   $ dnp build ci-tests
-#   $ dnp run ci_tests [COMMAND [ARG...]]
+#   $ dna build ci-tests
+#   $ dna run ci_tests [COMMAND [ARG...]]
 #
-# Note: Require executing `dnp build ci-tests` first.
+# Note: Require executing `dna build ci-tests` first.
 #
 # =================================================================================================
 EOF
@@ -98,15 +98,15 @@ EOF
 
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-test -n "$( declare -f n2st::norlab_splash )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f n2st::norlab_splash )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-function dnp::run_command() {
+function dna::run_command() {
     local service=""
     declare -i service_set=0
     declare -a remaining_args=()
@@ -118,19 +118,19 @@ function dnp::run_command() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
+                dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
                 exit 0
                 ;;
             --help-slurm)
-                dnp::command_help_menu "${DOCUMENTATION_RUN_SLURM_CMD:?err}"
+                dna::command_help_menu "${DOCUMENTATION_RUN_SLURM_CMD:?err}"
                 exit 0
                 ;;
             --help-ci-tests)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD:?err}"
+                dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD:?err}"
                 exit 0
                 ;;
             --help-develop|--help-deploy)
-                dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_DEVELOP_DEPLOY_CMD:?err}"
+                dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_DEVELOP_DEPLOY_CMD:?err}"
                 exit 0
                 ;;
             --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
@@ -178,28 +178,28 @@ function dnp::run_command() {
     done
 
     # ....Load dependencies (part 1)...............................................................
-    source "${DNP_LIB_PATH}/core/utils/load_super_project_config.bash" --no-execute || return 1
+    source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" --no-execute || return 1
 
     # ....Set service..............................................................................
     # Check if a service was specified
     if [[ ${service_set} -eq 0 ]]; then
         # If no service was specified, check for offline deployment
         local offline_service
-        if offline_service=$(dnp::check_offline_deploy_service_discovery 2>/dev/null); then
+        if offline_service=$(dna::check_offline_deploy_service_discovery 2>/dev/null); then
             service="${offline_service}"
         else
             n2st::print_msg_error "Service is either unknown or not specified."
-            dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
+            dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN:?err}"
             return 1
         fi
     elif [[ ${service_set} -ge 2 ]]; then
         # If service is set twice, it's an error
-        dnp::illegal_command_msg "run" "${original_command}" "Only one SERVICE can be specified.\n"
+        dna::illegal_command_msg "run" "${original_command}" "Only one SERVICE can be specified.\n"
         return 1
     fi
 
     # Splash type: small, negative or big
-    n2st::norlab_splash "${DNP_SPLASH_NAME_SMALL:?err}" "${DNP_GIT_REMOTE_URL}" "small"
+    n2st::norlab_splash "${DNA_SPLASH_NAME_SMALL:?err}" "${DNA_GIT_REMOTE_URL}" "small"
     n2st::print_formated_script_header "run procedure" "${line_format}" "${line_style}"
 
     if [[ -n ${offline_service} ]]; then
@@ -207,11 +207,11 @@ function dnp::run_command() {
     fi
 
     # ....Load dependencies (part 2)...............................................................
-    dnp::load_super_project_configurations
-    source "${DNP_LIB_PATH}/core/execute/run.ci_tests.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/run.any.bash" || return 1
-    source "${DNP_LIB_PATH}/core/execute/run.slurm.bash" || return 1
+    dna::load_super_project_configurations
+    source "${DNA_LIB_PATH}/core/execute/run.ci_tests.bash" || return 1
+    source "${DNA_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
+    source "${DNA_LIB_PATH}/core/execute/run.any.bash" || return 1
+    source "${DNA_LIB_PATH}/core/execute/run.slurm.bash" || return 1
 
 
     # ....Begin....................................................................................
@@ -219,20 +219,20 @@ function dnp::run_command() {
     if [[ "${service}" == "ci-tests" ]]; then
         n2st::print_msg "Running CI tests..."
         # (temporary hack) ToDo: NMO-692 feat: add a build ci-tests option to run.ci_tests.bash
-        dnp build ci-tests -- --no-cache || return 1
-        dnp::run_ci_tests "${remaining_args[@]}"
+        dna build ci-tests -- --no-cache || return 1
+        dna::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${service}" == "slurm" ]]; then
         n2st::print_msg "Running slurm containers..."
-        dnp::run_slurm "${remaining_args[@]}"
+        dna::run_slurm "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${service}" == "develop" ]]; then
         n2st::print_msg "Running develop containers..."
-        dnp::run_any --service project-develop "${remaining_args[@]}"
+        dna::run_any --service project-develop "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${service}" == "deploy" ]]; then
         n2st::print_msg "Running deploy containers..."
-        dnp::run_any --service project-deploy "${remaining_args[@]}"
+        dna::run_any --service project-deploy "${remaining_args[@]}"
         fct_exit_code=$?
     fi
 

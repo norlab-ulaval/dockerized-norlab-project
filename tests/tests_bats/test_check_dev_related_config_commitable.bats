@@ -52,8 +52,8 @@ setup_file() {
 #  \033[0m"  >&3
 #
 #  echo -e "
-#  \n...DNP related environment varaibles...........................................................
-#  \n$(printenv | grep -e DNP_)
+#  \n...DNA related environment varaibles...........................................................
+#  \n$(printenv | grep -e DNA_)
 #  \n...............................................................................................
 #  \n" >&3
 }
@@ -173,33 +173,33 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
 }
 
 # ....dotenv tests.................................................................................
-@test "check mock configs in .env.dnp | DN_GIT_BRANCH=dev › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dnp' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH2}"
-  assert_file_exist ".env.dnp"
-  assert_file_contains ".env.dnp" "^\#DN_GIT_BRANCH=dev"
+@test "check mock configs in .env.dna | DN_GIT_BRANCH=dev › expect pass" {
+  helper::setup_dotenv_related_tests '.env.dna' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH2}"
+  assert_file_exist ".env.dna"
+  assert_file_contains ".env.dna" "^\#DN_GIT_BRANCH=dev"
 
 }
 
-@test "check template configs in .env.dnp | DN_GIT_BRANCH=dev › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dnp' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH4}"
-  assert_file_exist ".env.dnp"
-  assert_file_contains ".env.dnp" "^\#DN_GIT_BRANCH=dev"
+@test "check template configs in .env.dna | DN_GIT_BRANCH=dev › expect pass" {
+  helper::setup_dotenv_related_tests '.env.dna' 'DN_GIT_BRANCH' 'dev' "${TESTED_FILE_PATH4}"
+  assert_file_exist ".env.dna"
+  assert_file_contains ".env.dna" "^\#DN_GIT_BRANCH=dev"
 
 }
 
-@test "check dev configs in .env.dockerized-norlab-project | DNP_DEBUG=false › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNP_DEBUG' 'false' "${TESTED_FILE_PATH3}"
+@test "check dev configs in .env.dockerized-norlab-project | DNA_DEBUG=false › expect pass" {
+  helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNA_DEBUG' 'false' "${TESTED_FILE_PATH3}"
   assert_file_exist ".env.dockerized-norlab-project"
-  assert_file_contains ".env.dockerized-norlab-project" "^DNP_DEBUG=false"
+  assert_file_contains ".env.dockerized-norlab-project" "^DNA_DEBUG=false"
 }
 
-@test "check dev configs in .env.dockerized-norlab-project | DNP_CLEAR_CONSOLE_ACTIVATED=false › expect pass" {
-  helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNP_CLEAR_CONSOLE_ACTIVATED' 'false' "${TESTED_FILE_PATH3}"
+@test "check dev configs in .env.dockerized-norlab-project | DNA_CLEAR_CONSOLE_ACTIVATED=false › expect pass" {
+  helper::setup_dotenv_related_tests '.env.dockerized-norlab-project' 'DNA_CLEAR_CONSOLE_ACTIVATED' 'false' "${TESTED_FILE_PATH3}"
   assert_file_exist ".env.dockerized-norlab-project"
-  assert_file_contains ".env.dockerized-norlab-project" "^DNP_CLEAR_CONSOLE_ACTIVATED=false"
+  assert_file_contains ".env.dockerized-norlab-project" "^DNA_CLEAR_CONSOLE_ACTIVATED=false"
 }
 
-# ....DNP app .dockerignore files tests............................................................
+# ....DNA app .dockerignore files tests............................................................
 
 @test "check dev configs in .dockerignore | !**/.dockerized_norlab/ › expect pass" {
   helper::setup_ignore_related_tests '.dockerignore' '!**/.dockerized_norlab/' "${TESTED_FILE_PATH3}"
@@ -237,7 +237,7 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
   assert_file_contains ".dockerignore" "^\!\/utilities\/tmp\/dockerized-norlab-project-mock\/"
 }
 
-# ....DNP app .gitignore files tests...............................................................
+# ....DNA app .gitignore files tests...............................................................
 
 @test "check dev configs in .gitignore | /utilities/tmp/dockerized-norlab-project-mock › expect pass" {
   helper::setup_ignore_related_tests '.gitignore' '/utilities/tmp/dockerized-norlab-project-mock' "${TESTED_FILE_PATH3}"

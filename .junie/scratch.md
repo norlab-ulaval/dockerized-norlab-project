@@ -1,7 +1,7 @@
 
 # Scratch
 
-Refactor `dnp::check_offline_deploy_service_discovery()` function out of `src/lib/core/utils/load_super_project_config.bash` and put it in a dedicated `offline.bash` utility script in `src/lib/core/utils`.
+Refactor `dna::check_offline_deploy_service_discovery()` function out of `src/lib/core/utils/load_super_project_config.bash` and put it in a dedicated `offline.bash` utility script in `src/lib/core/utils`.
 Update associated tests script accordingly.
 Follow guidelines at `.junie/guidelines.md`.
 Check if it introduce any breaking change in the code base by runnning both unit-tests and integration tests.
@@ -24,10 +24,10 @@ Execute all unit-tests and all integration tests before submiting.
 
 ---
 
-Improve `dnp` command `up`, `exec`, `attach` and `run` offline deploy service discovery.
+Improve `dna` command `up`, `exec`, `attach` and `run` offline deploy service discovery.
 Add a check for the presence of a `meta.txt` file.
 If so, open it and first, fetch `IMAGE_NAME` env var value and check if that docker image is loaded using docker command e.g., `docker image ls [--filter FILTER|--format STRING]`. 
-Next, fetch `SERVICE` env var value and execute `dnp COMMAND SERVICE`
+Next, fetch `SERVICE` env var value and execute `dna COMMAND SERVICE`
 Follow guidelines at `.junie/guidelines.md`.
 Check if it introduce any breaking change in the code base by runnning both unit-tests and integration tests.
 Propose source code change if relevant.
@@ -53,12 +53,12 @@ Propose source code change if relevant.
 
 Why don't you simply execute `source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/load_super_project_config.bash"` before runing the tests instead of copy the function code? 
 It woud be less error prone and easier to maintain.
-Refactor `test_load.bats` following `test_setup_host_for_running_this_super_project.bats` patern for sourcing dnp functions, runnning functions and writing test assertions.
+Refactor `test_load.bats` following `test_setup_host_for_running_this_super_project.bats` patern for sourcing dna functions, runnning functions and writing test assertions.
 
 ---
 
 Regarding the proposed unit-tests: 
-- In `test_load.bats`, dont't mock `dnp::cd_to_dnp_super_project_root()` as the integration of functions part of the `dnp::` namespace are critical.
+- In `test_load.bats`, dont't mock `dna::cd_to_dna_super_project_root()` as the integration of functions part of the `dna::` namespace are critical.
 - Make sure the following test cases are covered:
 Case 1: saved directory path not provided and cwd is at the saved directory root;  
 Case 2: saved directory path not provided and cwd is deeper in the saved directory structure;
@@ -66,15 +66,15 @@ Case 3: saved directory path provided and exist;
 Case 4: saved directory path provided and does not exist.
 Regarding the proposed integration-tests: 
 - Asses if new integration tests would be relevant, implement them if its the case. 
-- However, there's already an integration test called `test_save_load_pipeline.bash` that cover the full `dnp save` -> `dnp load` -> `dnp [up|run]` pipeline. Check if `test_save_load_pipeline.bash` would be better suited for covering integration test.
+- However, there's already an integration test called `test_save_load_pipeline.bash` that cover the full `dna save` -> `dna load` -> `dna [up|run]` pipeline. Check if `test_save_load_pipeline.bash` would be better suited for covering integration test.
 - If you find a new integration test script would still be relevant, either for separation of concern or to simplify test logic, then it should follow `guidelines.md` instructions and similar integration tests recipies.
 Update your proposed solutions according to those instruction and as always re-run all unit-tests and integration tests before submiting.
 
 ---
 
 Improve `src/lib/commands/load.bash` command loading logic.
-Make save directory path optional i.e., `dnp load [SAVE_DIR_PATH]`. 
-If not given, assume we are in `SAVE_DIR_PATH` and check for `meta.txt` existence in cwd or run `dnp::cd_to_dnp_super_project_root()`.
+Make save directory path optional i.e., `dna load [SAVE_DIR_PATH]`. 
+If not given, assume we are in `SAVE_DIR_PATH` and check for `meta.txt` existence in cwd or run `dna::cd_to_dna_super_project_root()`.
 For the case where `SAVE_DIR_PATH` positional argument is provided, fix `cd` to `SAVE_DIR_PATH` on exit functionality so that it persist on exit.
 Follow guidelines at `.junie/guidelines.md`.
 Update `test_load.bats` accordingly.
@@ -101,15 +101,15 @@ Implement bats tests for `install.bash`.
 Follow guidelines at `.junie/guidelines.md`.
 Inspire yourself with `tests/tests_bats/test_init.bats`.
 Create at least one test case per cli options.
-Don't mock _helper functions_ and don't mock `dnp::install_dockerized_norlab_project_on_host`, those are the functions that we need to test.
+Don't mock _helper functions_ and don't mock `dna::install_dockerized_norlab_project_on_host`, those are the functions that we need to test.
 Don't mock `n2st::seek_and_modify_string_in_file` function, use the real one.
 
-Start by testing all helper functions: `dnp::create_bin_dnp_to_entrypoint_symlink`, `dnp::update_bashrc_dnp_path`, `dnp::create_entrypoint_symlink_if_requested` and `dnp::add_dnp_entrypoint_path_to_bashrc_if_requested`.
-Then test integration of helper function in `dnp::install_dockerized_norlab_project_on_host`.
+Start by testing all helper functions: `dna::create_bin_dna_to_entrypoint_symlink`, `dna::update_bashrc_dna_path`, `dna::create_entrypoint_symlink_if_requested` and `dna::add_dna_entrypoint_path_to_bashrc_if_requested`.
+Then test integration of helper function in `dna::install_dockerized_norlab_project_on_host`.
 
 ---
 
-Refactor `src/lib/commands/build.bash` from a command signature `dnp build [OPTIONS|--<SERVICE>]` to a command signature `dnp build [OPTIONS] [SERVICE]` with `<SERVICE>` being `ci-tests`, `deploy`, `develop`, `slurm`.
+Refactor `src/lib/commands/build.bash` from a command signature `dna build [OPTIONS|--<SERVICE>]` to a command signature `dna build [OPTIONS] [SERVICE]` with `<SERVICE>` being `ci-tests`, `deploy`, `develop`, `slurm`.
 Follow guidelines at `.junie/guidelines.md`.
 Update `test_build.bats` accordingly.
 Create at least one test case per command argument and/or options.
@@ -119,21 +119,21 @@ Propose source code change if relevant.
 
 ---
 
-Review the repository source code and highlight implementation details that would prevent user from running `dnp` in offline mode but discard the files and directory in the _ignored list_ from your analysis as they are executed while online. 
-Files and directory _ignored list_: `install.bash`, `.env.dockerized-norlab-project`, `src/lib/core/docker/container-tools/project_entrypoints/project-ci-tests/`, `src/lib/core/docker/container-tools/project_entrypoints/project-slurm/`, `src/lib/core/docker/container-tools/dn_project_core.*.bash`, `src/lib/core/docker/docker-compose.project.build.*.yaml`, `src/lib/core/docker/docker-compose.project.run.ci-tests.yaml`, `src/lib/core/docker/docker-compose.project.run.slurm.yaml`, `setup_host_dnp_requirements.bash`, `src/lib/core/docker/Dockerfile.*`, `build.*.bash`, `project_validate.*.bash` or any build logic. 
-Consider in your analysis that environment variables from `src/lib/core/docker/.env.dnp-internal` can be set before sourcing it.
-Consider that the DNP repository will be cloned with NBS and N2ST submodule on the remote host before going offline.
+Review the repository source code and highlight implementation details that would prevent user from running `dna` in offline mode but discard the files and directory in the _ignored list_ from your analysis as they are executed while online. 
+Files and directory _ignored list_: `install.bash`, `.env.dockerized-norlab-project`, `src/lib/core/docker/container-tools/project_entrypoints/project-ci-tests/`, `src/lib/core/docker/container-tools/project_entrypoints/project-slurm/`, `src/lib/core/docker/container-tools/dn_project_core.*.bash`, `src/lib/core/docker/docker-compose.project.build.*.yaml`, `src/lib/core/docker/docker-compose.project.run.ci-tests.yaml`, `src/lib/core/docker/docker-compose.project.run.slurm.yaml`, `setup_host_dna_requirements.bash`, `src/lib/core/docker/Dockerfile.*`, `build.*.bash`, `project_validate.*.bash` or any build logic. 
+Consider in your analysis that environment variables from `src/lib/core/docker/.env.dna-internal` can be set before sourcing it.
+Consider that the DNA repository will be cloned with NBS and N2ST submodule on the remote host before going offline.
 Suggest possible refactoring that would mitigate the highlighted issues and/or assess if those are required implementation details.
 Follow guidelines at `.junie/guidelines.md`.
 
 
 ---
 
-Refactor `dnp::run_command()` function signatures, which curently follow signature `dnp run SERVICE [OPTIONS]`, to `dnp run [OPTIONS] SERVICE`.
+Refactor `dna::run_command()` function signatures, which curently follow signature `dna run SERVICE [OPTIONS]`, to `dna run [OPTIONS] SERVICE`.
 Inspire yourself with `src/lib/commands/up.bash`.
-Develop and deploy version should have signature `dnp run [OPTIONS] develop|deploy [-- COMMAND [ARGS...]]`.
-Ci-tests version should have signature `dnp run [OPTIONS] ci-tests`.
-Slurm version should have signature `dnp run [OPTIONS] slurm <sjob-id>`.
+Develop and deploy version should have signature `dna run [OPTIONS] develop|deploy [-- COMMAND [ARGS...]]`.
+Ci-tests version should have signature `dna run [OPTIONS] ci-tests`.
+Slurm version should have signature `dna run [OPTIONS] slurm <sjob-id>`.
 Update corresponding bats tests.
 Execute all unit-tests and all integration tests before submiting.
 Follow guidelines at `.junie/guidelines.md`.

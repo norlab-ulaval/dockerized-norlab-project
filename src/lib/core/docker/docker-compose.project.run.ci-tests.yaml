@@ -22,9 +22,9 @@ services:
       QT_X11_NO_MITSHM: 1
       XAUTHORITY: /tmp/.docker.xauth
     env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dnp
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
-      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
