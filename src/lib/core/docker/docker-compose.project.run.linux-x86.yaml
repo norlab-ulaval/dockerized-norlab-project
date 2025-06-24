@@ -57,9 +57,9 @@ services:
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
       - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
     env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dnp
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
-      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true

@@ -1,12 +1,12 @@
 #!/bin/bash
 # =================================================================================================
 # Setup host computer (i.e, workstation, embed computer, server) for using this
-# Dockerized-NorLab-Project super project.
+# Dockerized-NorLab Project super project.
 #
 # Usage:
 #   $ bash setup_host_for_running_this_super_project.bash
 #   or
-#   $ source setup_host_for_running_this_super_project.bash && dnp::setup_host_for_this_super_project
+#   $ source setup_host_for_running_this_super_project.bash && dna::setup_host_for_this_super_project
 #
 # Global:
 #  read SUPER_PROJECT_ROOT
@@ -21,7 +21,7 @@
 # - https://github.com/vaul-ulaval/f1tenth_controller/blob/272573b99855779428fccd122b5f84fc172e0767/setup_dockerized_norlab_for_this_repo.bash
 # - https://github.com/norlab-ulaval/dockerized-norlab/blob/8975e05e69ddc57cb858a3413ea7c98920f5422b/jetson_xavier_install.bash
 
-function dnp::setup_host_for_this_super_project() {
+function dna::setup_host_for_this_super_project() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -45,15 +45,15 @@ function dnp::setup_host_for_this_super_project() {
   local dn_project_alias_prefix_caps="$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')"
   (
     echo ""
-    echo "#>>>>DNP ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable"
-    echo "export _DNP_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab"
-    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cd='cd $SUPER_PROJECT_ROOT'"
-    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab'"
-    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cds='cd ${SUPER_PROJECT_ROOT}/src'"
-    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${SUPER_PROJECT_ROOT}/tests'"
-    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cda='cd ${SUPER_PROJECT_ROOT}/artifact'"
-    echo "alias dnp-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
-    echo "#<<<<DNP ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
+    echo "#>>>>DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable"
+    echo "export _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab"
+    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cd='cd $SUPER_PROJECT_ROOT'"
+    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab'"
+    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cds='cd ${SUPER_PROJECT_ROOT}/src'"
+    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${SUPER_PROJECT_ROOT}/tests'"
+    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cda='cd ${SUPER_PROJECT_ROOT}/artifact'"
+    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
+    echo "#<<<<DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
     echo ""
   ) >>~/.bashrc
 
@@ -70,15 +70,15 @@ function dnp::setup_host_for_this_super_project() {
   n2st::print_msg_done "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cd -> cd to ${SUPER_PROJECT_REPO_NAME} root
-      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to ${SUPER_PROJECT_REPO_NAME} .dockerized_norlab dir
-      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cds -> cd to ${SUPER_PROJECT_REPO_NAME} src dir
-      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to ${SUPER_PROJECT_REPO_NAME} tests dir
-      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cda -> cd to ${SUPER_PROJECT_REPO_NAME} artifact dir
-      - dnp-${DN_PROJECT_ALIAS_PREFIX}-cde -> cd to ${SUPER_PROJECT_REPO_NAME} external data dir
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cd -> cd to ${SUPER_PROJECT_REPO_NAME} root
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to ${SUPER_PROJECT_REPO_NAME} .dockerized_norlab dir
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cds -> cd to ${SUPER_PROJECT_REPO_NAME} src dir
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to ${SUPER_PROJECT_REPO_NAME} tests dir
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cda -> cd to ${SUPER_PROJECT_REPO_NAME} artifact dir
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cde -> cd to ${SUPER_PROJECT_REPO_NAME} external data dir
 
     New available environment variable added to ~/.bashrc for convenience:
-      - _DNP_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}
+      - _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}
 
   "
 
@@ -94,18 +94,18 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/import_dna_lib.bash" || exit 1
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
-  dnp::setup_host_for_this_super_project || exit 1
+  dna::setup_host_for_this_super_project || exit 1
   exit $?
 else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
-  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+  test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 fi

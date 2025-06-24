@@ -49,69 +49,69 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute/"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Create mock functions for dependencies
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
 #!/bin/bash
 # Mock load_super_project_config.bash
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/build.all.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/build.all.bash" << 'EOF'
 #!/bin/bash
 # Mock build.all.bash
-function dnp::build_services() {
-  echo "Mock dnp::build_services called with args: $*"
+function dna::build_services() {
+  echo "Mock dna::build_services called with args: $*"
   return 0
 }
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/build.all.multiarch.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/build.all.multiarch.bash" << 'EOF'
 #!/bin/bash
 # Mock build.all.multiarch.bash
-function dnp::build_services_multiarch() {
-  echo "Mock dnp::build_services_multiarch called with args: $*"
+function dna::build_services_multiarch() {
+  echo "Mock dna::build_services_multiarch called with args: $*"
   return 0
 }
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/project_validate.all.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/project_validate.all.bash" << 'EOF'
 #!/bin/bash
 # Mock project_validate.all.bash
-function dnp::project_validate_all() {
-  echo "Mock dnp::project_validate_all called with args: $*"
+function dna::project_validate_all() {
+  echo "Mock dna::project_validate_all called with args: $*"
   return 0
 }
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/project_validate.slurm.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/project_validate.slurm.bash" << 'EOF'
 #!/bin/bash
 # Mock project_validate.slurm.bash
-function dnp::project_validate_slurm() {
-  echo "Mock dnp::project_validate_slurm called with args: $*"
+function dna::project_validate_slurm() {
+  echo "Mock dna::project_validate_slurm called with args: $*"
   return 0
 }
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/super_project_dnp_sanity_check.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/super_project_dna_sanity_check.bash" << 'EOF'
 #!/bin/bash
-# Mock super_project_dnp_sanity_check.bash
-function dnp::super_project_dnp_sanity_check() {
-  echo "Mock dnp::super_project_dnp_sanity_check called with args: $*"
+# Mock super_project_dna_sanity_check.bash
+function dna::super_project_dna_sanity_check() {
+  echo "Mock dna::super_project_dna_sanity_check called with args: $*"
   return 0
 }
 EOF
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -121,20 +121,20 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL2="-"
 
 # Set up environment variables
-export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
-export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
-export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_LIB_EXEC_PATH="${MOCK_DNA_DIR}/src/lib/core/execute"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
 # ....Mock ui.bash functions.......................................................................
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
@@ -160,30 +160,30 @@ function n2st::draw_horizontal_line_across_the_terminal_window() {
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute"
 
   # Copy the project.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  cd "${MOCK_DNA_DIR}" || exit 1
 }
 
 # ....Teardown.....................................................................................
@@ -193,14 +193,14 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directory
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::project_validate_command with no arguments › expect default behavior" {
+@test "dna::project_validate_command with no arguments › expect default behavior" {
   # Test case: When project validate command is called without arguments, it should validate all configurations
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_validate_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command"
 
   # Should succeed
   assert_success
@@ -208,13 +208,13 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating configuration..."
-  assert_output --partial "Mock dnp::project_validate_all called with args:"
+  assert_output --partial "Mock dna::project_validate_all called with args:"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
 }
 
-@test "dnp::project_validate_command with --slurm › expect slurm validation" {
+@test "dna::project_validate_command with --slurm › expect slurm validation" {
   # Test case: When project validate command is called with --slurm, it should validate slurm configuration
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_validate_command --slurm"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --slurm"
 
   # Should succeed
   assert_success
@@ -222,13 +222,13 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating slurm configuration..."
-  assert_output --partial "Mock dnp::project_validate_slurm called with args:"
+  assert_output --partial "Mock dna::project_validate_slurm called with args:"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
 }
 
-@test "dnp::project_validate_command with --slurm and arguments › expect arguments passed to slurm validation" {
+@test "dna::project_validate_command with --slurm and arguments › expect arguments passed to slurm validation" {
   # Test case: When project validate command is called with --slurm and arguments, it should pass them to slurm validation
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_validate_command --slurm /path/to/slurm/jobs"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --slurm /path/to/slurm/jobs"
 
   # Should succeed
   assert_success
@@ -236,35 +236,35 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating slurm configuration..."
-  assert_output --partial "Mock dnp::project_validate_slurm called with args: /path/to/slurm/jobs"
+  assert_output --partial "Mock dna::project_validate_slurm called with args: /path/to/slurm/jobs"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
 }
 
-@test "dnp::project_validate_command with --help › expect help menu" {
+@test "dna::project_validate_command with --help › expect help menu" {
   # Test case: When project validate command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_validate_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::project_validate_command with -h › expect help menu" {
+@test "dna::project_validate_command with -h › expect help menu" {
   # Test case: When project validate command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_validate_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::project_sanity_command with no arguments › expect default behavior" {
+@test "dna::project_sanity_command with no arguments › expect default behavior" {
   # Test case: When project sanity command is called without arguments, it should validate super project setup
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_sanity_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_sanity_command"
 
   # Should succeed
   assert_success
@@ -272,13 +272,13 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project sanity procedure"
   assert_output --partial "Validating super project setup..."
-  assert_output --partial "Mock dnp::super_project_dnp_sanity_check called with args:"
+  assert_output --partial "Mock dna::super_project_dna_sanity_check called with args:"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project sanity procedure"
 }
 
-@test "dnp::project_sanity_command with arguments › expect arguments passed to sanity check" {
+@test "dna::project_sanity_command with arguments › expect arguments passed to sanity check" {
   # Test case: When project sanity command is called with arguments, it should pass them to sanity check
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_sanity_command --some-arg value"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_sanity_command --some-arg value"
 
   # Should succeed
   assert_success
@@ -286,35 +286,35 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project sanity procedure"
   assert_output --partial "Validating super project setup..."
-  assert_output --partial "Mock dnp::super_project_dnp_sanity_check called with args: --some-arg value"
+  assert_output --partial "Mock dna::super_project_dna_sanity_check called with args: --some-arg value"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project sanity procedure"
 }
 
-@test "dnp::project_sanity_command with --help › expect help menu" {
+@test "dna::project_sanity_command with --help › expect help menu" {
   # Test case: When project sanity command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_sanity_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_sanity_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::project_sanity_command with -h › expect help menu" {
+@test "dna::project_sanity_command with -h › expect help menu" {
   # Test case: When project sanity command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_sanity_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_sanity_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::project_dotenv_command with no arguments › expect default behavior" {
+@test "dna::project_dotenv_command with no arguments › expect default behavior" {
   # Test case: When project dotenv command is called without arguments, it should show consolidated and interpolated dotenv config files
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_dotenv_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_dotenv_command"
 
   # Should succeed
   assert_success
@@ -326,9 +326,9 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project dotenv procedure"
 }
 
-@test "dnp::project_dotenv_command with arguments › expect arguments ignored" {
+@test "dna::project_dotenv_command with arguments › expect arguments ignored" {
   # Test case: When project dotenv command is called with arguments, it should ignore them and show dotenv config files
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_dotenv_command --some-arg value"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_dotenv_command --some-arg value"
 
   # Should succeed
   assert_success
@@ -340,24 +340,24 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project dotenv procedure"
 }
 
-@test "dnp::project_dotenv_command with --help › expect help menu" {
+@test "dna::project_dotenv_command with --help › expect help menu" {
   # Test case: When project dotenv command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_dotenv_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_dotenv_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::project_dotenv_command with -h › expect help menu" {
+@test "dna::project_dotenv_command with -h › expect help menu" {
   # Test case: When project dotenv command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/project.bash && dnp::project_dotenv_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_dotenv_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }

@@ -41,7 +41,7 @@ fi
 
 # ====Tests file configuration=====================================================================
 
-TESTED_FILE="import_dnp_lib.bash"
+TESTED_FILE="import_dna_lib.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
 # executed once before starting the first test (valide for all test in that file)
@@ -64,8 +64,8 @@ setup_file() {
   #\033[0m"  >&3
   #
   #echo -e "
-  #\n...DNP related environment varaibles...........................................................
-  #\n$(printenv | grep -e DNP_)
+  #\n...DNA related environment varaibles...........................................................
+  #\n$(printenv | grep -e DNA_)
   #\n...............................................................................................
   #\n" >&3
 
@@ -91,10 +91,10 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-@test "dnp::import_lib_and_dependencies (explicitly source $TESTED_FILE) › expect pass" {
+@test "dna::import_lib_and_dependencies (explicitly source $TESTED_FILE) › expect pass" {
   assert_not_exist "${N2ST_PATH}"
   assert_not_exist "${NBS_PATH}"
-  assert_not_exist "${DNP_ROOT}"
+  assert_not_exist "${DNA_ROOT}"
 
   assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}"
 
@@ -102,9 +102,9 @@ teardown() {
 
   assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}" # Validate that it returned to the original dir
 
-#  printenv | grep -e DNP_ >&3
+#  printenv | grep -e DNA_ >&3
 
-  assert_not_empty "${DNP_ROOT}"
+  assert_not_empty "${DNA_ROOT}"
   assert_not_empty "${N2ST_PATH}"
   assert_not_empty "${NBS_PATH}"
 
@@ -117,14 +117,14 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success
-  assert_output --regexp "[DNP done]".*"librairies loaded"
+  assert_output --regexp "[DNA done]".*"librairies loaded"
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_failure
-  assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[DNA error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 

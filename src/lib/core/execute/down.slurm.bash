@@ -7,7 +7,7 @@
 #
 # =================================================================================================
 
-function dnp::down_slurm() {
+function dna::down_slurm() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -25,7 +25,7 @@ function dnp::down_slurm() {
   n2st::set_is_teamcity_run_environment_variable
 
   # ....Device specific config.......................................................................
-  compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   the_compose_file=docker-compose.project.run.slurm.yaml
 
   container_id=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
@@ -56,8 +56,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
@@ -65,12 +65,12 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   fi
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::down_slurm "$@"
+  dna::down_slurm "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"

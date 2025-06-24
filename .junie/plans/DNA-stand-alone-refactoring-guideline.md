@@ -1,4 +1,4 @@
-# Dockerized-NorLab-Project stand-alone refactoring guidelines
+# Dockerized-NorLab Project stand-alone refactoring guidelines
 
 Stand-alone version with a PATH-accessible bash script approach
 This approach maintains the current bash script structure but makes it accessible from anywhere via the system `PATH`.
@@ -6,13 +6,13 @@ This approach maintains the current bash script structure but makes it accessibl
 ### General Requirements:
 - Path management:
   - Case 1 › system wide:
-    - via symlink `/usr/local/bin/dnp` → `/path/to/dockerized-norlab-project/src/bin/dnp`;
-    - via `~/.bashrc` ← `PATH=${PATH}:${DNP_PATH}:${NBS_PATH}:${N2ST_PATH}`.
+    - via symlink `/usr/local/bin/dna` → `/path/to/dockerized-norlab-project/src/bin/dna`;
+    - via `~/.bashrc` ← `PATH=${PATH}:${DNA_PATH}:${NBS_PATH}:${N2ST_PATH}`.
   - Case 2 › manual load: 
-    - each super project can use optionally the env var `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
+    - each super project can use optionally the env var `DNA_PATH`, `NBS_PATH` and `N2ST_PATH` define in `.env.super-project-name`.
 - Dont repeat yourself. Use already implemented code such as:
   - `load_repo_main_dotenv.bash`
-  - `import_dnp_lib.bash`
+  - `import_dna_lib.bash`
   - `load_super_project_config.bash`
   - N2ST library
   - NBS library
@@ -52,16 +52,16 @@ Implement the following repository directory structure:
 - create the required new directory
 - move the existing directory or file to their new proposed location
 - rename files if necesseray 
-- DNP main dotenv file `.env.dockerized-norlab-project`
-  - `DNP_PATH`, `NBS_PATH` and `N2ST_PATH` as a fallback for handling local install case
-  - `DNP_CONFIG_SCHEME_VERSION` env variable set in each dnp project to validate compatibility
+- DNA main dotenv file `.env.dockerized-norlab-project`
+  - `DNA_PATH`, `NBS_PATH` and `N2ST_PATH` as a fallback for handling local install case
+  - `DNA_CONFIG_SCHEME_VERSION` env variable set in each dna project to validate compatibility
 
 ```
 dockerized-norlab-project/ # (stand-alone version)
 ├── src/
 │   ├── bin/
-│   │   ├── dnp # symlink to /usr/local/bin/dnp
-│   │   └── dnp-completion.bash <- ice boxed for now 
+│   │   ├── dna # symlink to /usr/local/bin/dna
+│   │   └── dna-completion.bash <- ice boxed for now 
 │   └── lib/ 
 │       ├── commands/
 │       │   ├── version.bash
@@ -74,7 +74,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │       │   └── ... (other command scripts)
 │       ├── core/
 │       │   ├── docker/
-│       │   │   ├── .env.dnp-internal
+│       │   │   ├── .env.dna-internal
 │       │   │   ├── Dockerfile.ci-tests.multiarch
 │       │   │   ├── Dockerfile.ci-tests.native
 │       │   │   ├── Dockerfile.run-slurm
@@ -109,17 +109,17 @@ dockerized-norlab-project/ # (stand-alone version)
 │       │   │   └── ... (other execute scripts)
 │       │   └── utils/
 │       │       ├── execute_compose.bash
-│       │       ├── import_dnp_lib.bash
+│       │       ├── import_dna_lib.bash
 │       │       ├── load_super_project_config.bash
 │       │       ├── setup_host_for_running_this_super_project.bash
-│       │       └── validate_super_project_dnp_setup.bash
+│       │       └── validate_super_project_dna_setup.bash
 │       └── template/
 │           ├── .dockerized_norlab/
 │           │   ├── .env.dockerized-norlab-project-mock
 │           │   ├── README.md
 │           │   ├── configuration/
 │           │   │   ├── .env
-│           │   │   ├── .env.dnp
+│           │   │   ├── .env.dna
 │           │   │   ├── .env.local
 │           │   │   ├── Dockerfile
 │           │   │   ├── README.md
@@ -146,7 +146,7 @@ dockerized-norlab-project/ # (stand-alone version)
 │   │   │   ├── README.md
 │   │   │   ├── configuration/
 │   │   │   │   ├── .env
-│   │   │   │   ├── .env.dnp
+│   │   │   │   ├── .env.dna
 │   │   │   │   ├── .env.local # Referenced by ignore files
 │   │   │   │   ├── Dockerfile
 │   │   │   │   ├── README.md
@@ -171,41 +171,41 @@ dockerized-norlab-project/ # (stand-alone version)
 ├── README.md
 ├── .dockerignore
 ├── .gitignore
-└── .env.dockerized-norlab-project ← declare DNP_ROOT, DNP_MOCK_SUPER_PROJECT_ROOT, N2ST and NBS path 
+└── .env.dockerized-norlab-project ← declare DNA_ROOT, DNA_MOCK_SUPER_PROJECT_ROOT, N2ST and NBS path 
 ```
 
 
 #### Step 2: Create a Main Entry Point Script
 
 ##### Requirements:
-- a main entrypoint: `dnp` with command (`build`, `up`, `down`, `run`, `init`, `validate`, `config`, `version`, `super`, `update`) linked to corresponding bash script
-- `dnp` need to executable 
-- `dnp` need to be in `PATH`
-- a project dnp config discovery mechanism so that we can do `cd path/to/repo/ && dnp build` instead of `cd path/to/repo/ && dnp build path/to/repo/path/to/config`
+- a main entrypoint: `dna` with command (`build`, `up`, `down`, `run`, `init`, `validate`, `config`, `version`, `super`, `update`) linked to corresponding bash script
+- `dna` need to executable 
+- `dna` need to be in `PATH`
+- a project dna config discovery mechanism so that we can do `cd path/to/repo/ && dna build` instead of `cd path/to/repo/ && dna build path/to/repo/path/to/config`
 
 #### Step 3: Create a init command Script
 
-The script will initialize the DNP user side resources.
-  1. validate that the user executed the command `dnp init` from the super project repository root, return an explicative error message otherwise
+The script will initialize the DNA user side resources.
+  1. validate that the user executed the command `dna init` from the super project repository root, return an explicative error message otherwise
   2. create the `.dockerized_norlab` directory in the user super project root
   3. copy the configuration template files
   4. create the `.env.user-super-project` file using N2ST script
   5. initialize any placeholder environment variable if needed
 
 ##### Requirements:
-- Command `dnp init` to initialize a project:
-  - create `.env.<super-project-name>` dotenv file with environment variable `DNP_CONFIG_SCHEME_VERSION` env variable set in each dnp project to validate compatibility
+- Command `dna init` to initialize a project:
+  - create `.env.<super-project-name>` dotenv file with environment variable `DNA_CONFIG_SCHEME_VERSION` env variable set in each dna project to validate compatibility
   - create the super project config directory and files:
     - `.dockerized_norlab` and all subdirectory
-    - all super project repository required directory as tested by `validate_super_project_dnp_setup.bash`
-  - need to pass `validate_super_project_dnp_setup.bash` tests
+    - all super project repository required directory as tested by `validate_super_project_dna_setup.bash`
+  - need to pass `validate_super_project_dna_setup.bash` tests
 
 ```
 user-super-project/
-├── .dockerized_norlab/ # DNP project user side specific configuration
+├── .dockerized_norlab/ # DNA project user side specific configuration
 │   ├── configuration/
 │   │   ├── .env
-│   │   ├── .env.dnp
+│   │   ├── .env.dna
 │   │   ├── .env.local # Referenced by ignore files
 │   │   ├── Dockerfile
 │   │   ├── README.md
@@ -237,40 +237,40 @@ user-super-project/
 - Each command script would implement highlevel user logic
 - Should be intuitive to use
 - Commands:
-  - - Command `dnp [build|up|down|run]` act as an abstraction layer that hide the complexity of the `core/execute/` scripts by selecting the proper specialize script among that directory base on user input, e.g., 
-    - command `dnp build` would execute the `core/execute/build.all.bash` script;
-    - command `dnp build --multiach` would execute the `core/execute/build.all.multiarch.bash` script.
-  - Command `dnp config <argument>` to tests compose config with interpolated value and to show it in console
+  - - Command `dna [build|up|down|run]` act as an abstraction layer that hide the complexity of the `core/execute/` scripts by selecting the proper specialize script among that directory base on user input, e.g., 
+    - command `dna build` would execute the `core/execute/build.all.bash` script;
+    - command `dna build --multiach` would execute the `core/execute/build.all.multiarch.bash` script.
+  - Command `dna config <argument>` to tests compose config with interpolated value and to show it in console
     - one of those argument `[dev [darwin|linux|jetson]|deploy|ci-tests|slurm|release]` to select which compose file and service to to test and show
-    - under the hood `dnp config` would execute `execute import_dnp_lib.bash` and `load_super_project_config.bash` and then `docker-compose --file docker-compose.project.*.*.yaml config` command
-  - Command `dnp validate` to execute dryrun and config tests
-  - Command `dnp super validate` to test super project directory setup by executing `validate_super_project_dnp_setup.bash`
-  - Command `dnp super show` to print consolidated and interpolated dotenv config files to console
-  - Command `dnp config` to tests compose config with interpolated value and to show it in console
+    - under the hood `dna config` would execute `execute import_dna_lib.bash` and `load_super_project_config.bash` and then `docker-compose --file docker-compose.project.*.*.yaml config` command
+  - Command `dna validate` to execute dryrun and config tests
+  - Command `dna super validate` to test super project directory setup by executing `validate_super_project_dna_setup.bash`
+  - Command `dna super show` to print consolidated and interpolated dotenv config files to console
+  - Command `dna config` to tests compose config with interpolated value and to show it in console
 
 #### Step 5: Implement `version` Command Scripts
 This script would simply read and print to console the current local repository version from the `version.txt` file created and updated by semantic-release github action.
 
 
-#### Step 6:  DNP installation Script
+#### Step 6:  DNA installation Script
 
 Create an installation script that will will steup the user host computer for using `dockerized-norlab-project` as a stand-alone application.
 
 ##### Requirements:
-- implement DNP path resolution install options:
+- implement DNA path resolution install options:
   - Option 1: system wide (default):  
-    - add a symlink from the `/path/to/cloned/dockerized-norlab-project/src/bin/dnp` to `/user/local/bin/dnp`
-    - make `dockerized-norlab-project/src/bin/dnp` excutable
+    - add a symlink from the `/path/to/cloned/dockerized-norlab-project/src/bin/dna` to `/user/local/bin/dna`
+    - make `dockerized-norlab-project/src/bin/dna` excutable
   - Option 2: flag `--skip-system-wide-symlink-install` to skip option 1
-  - Option 3: flag `--add-dnp-path-to-bashrc` to add DNP cloned repository path (`DNP_PATH`) to `~/.bashrc`
+  - Option 3: flag `--add-dna-path-to-bashrc` to add DNA cloned repository path (`DNA_PATH`) to `~/.bashrc`
 - implement an `--help` flag with proper documentation
 - a `--yes` flag to bypass user interactive installation
 - execute `setup_host_for_running_this_super_project.bash` to setup *dockerized-norlab-project* requirement on this host computer
-- execute `validate_super_project_dnp_setup.bash` to validate install at the end
+- execute `validate_super_project_dna_setup.bash` to validate install at the end
 
 
-#### (iceboxed for now) Step 7: Command `dnp update` 
-To check DNP config scheme version, update DNP cloned repo on host and if required execute a per-version update script to modify project DNP config 
+#### (iceboxed for now) Step 7: Command `dna update` 
+To check DNA config scheme version, update DNA cloned repo on host and if required execute a per-version update script to modify project DNA config 
 
 
 ### Usage Example
@@ -280,14 +280,14 @@ After installation, users would interact with the system like this:
 ```bash
 # Initialize a new project
 cd ~/pat/to/my/super-project
-dnp init my-project
+dna init my-project
 
 # Build Docker images
-dnp build --multiarch
+dna build --multiarch
 
 # Start and attach to a container
-dnp up --service develop
+dna up --service develop
 
 # Stop containers
-dnp down
+dna down
 ```

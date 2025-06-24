@@ -14,8 +14,7 @@
 <br>
 
 [//]: # ( ==== Title ================================================= ) 
-[//]: # (TODO: change the title)
-# _Dockerized-NorLab-Project (DNP)_
+# _Dockerized-NorLab project application (DNA)_
 
 [//]: # ( ==== Hyperlink ============================================= ) 
 <sup>
@@ -28,11 +27,10 @@
 <br>
 
 [//]: # ( ==== Description =========================================== ) 
-[//]: # (TODO: Change the description)
 **The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main).**
 
 It provide a containerized workflow tailor-made for robotic research. <br>
-DNP handle the building and instanciation of DN container with functionality for <br> 
+Dockerized-NorLab project application (DNA) handle the building and instanciation of DN container with functionality for <br> 
 development, deployment, testing, continuous integration and release publishing. 
 
 <br>
@@ -79,34 +77,34 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 
 ## Getting started
 
-### Install DNP
+### Install Dockerized-NorLab Project app `dna`
 
 ```shell
 # Clone repository on host computer
 git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab-project.git
 cd dockerized-norlab-project
 
-# Install DNP on host (Check install option with $ bash install.bash --help) 
+# Install DNA on host (Check install option with $ bash install.bash --help) 
 bash install.bash
 
 # Check available commands
-dnp 
+dna 
 ```
 
-![dnp_splash.png](visual/dnp_splash.png)
+![dna_splash.png](visual/dna_splash.png)
 
-### Make a repository ready to use with DNP
+### Make a repository ready to use with DNA
 
 ```shell
-# To DNP-initialize a project repository (must be git initialized)
+# To DNA-initialize a project repository (must be git initialized)
 cd <path/to/your/project/repository>
-dnp init
+dna init
 ```
 
 Which add a few directories to your project repository
 ```markup
 your-project-repository/
-  ├── .dockerized_norlab/     <- DNP configuration
+  ├── .dockerized_norlab/     <- DNA configuration
   ├── artifact/                       <- Runtime produced data (mounted)
   ├── external_data/                  <- Pre-existing data made available in your container (mounted)
   ├── src/                            <- Your repository source code (mounted/copied)
@@ -120,23 +118,23 @@ Note:
 - Any directory or file that already exist will be updated, not overriden.
 - Content of the artifact direcotry is persistent. It will remain available even if the container is stoped or removed. 
 
-### Create, run and stop DNP container
+### Create, run and stop DN container
 
-To spin a DNP container and open a terminal in it, run the following command from anywhere in the DNP-initialized repository
+To spin a DN container and open a terminal in it, run the following command from anywhere in the DNA initialized repository
 ```shell
-dnp build develop
-dnp up
+dna build develop
+dna up
 
 # When your done 
-dnp down
+dna down
 ```
 
-## For beta tester or just to dry-run DNP in an throwaway project
+## For beta tester or just to dry-run DNA in an throwaway project
 ```shell
 # CLone dockerized-norlab-project-mock-EMPTY
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
 cd dockerized-norlab-project-mock-EMPTY
-dnp init
+dna init
 ```
 
 

@@ -41,9 +41,9 @@ services:
       - /etc/nv_tegra_release:/etc/nv_tegra_release
       - /tmp/nv_jetson_model:/tmp/nv_jetson_model
     env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dnp
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
-      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true

@@ -32,7 +32,7 @@ FROM_PATH=$3
 
 # (CRITICAL) ToDo: unit-test
 
-function dnp::build_ros() {
+function dna::build_ros() {
 
   # ....Check pre-conditions.......................................................................
   {
@@ -86,13 +86,13 @@ function dnp::build_ros() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  echo -e "${dnp_error_prefix} This script must be sourced!
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  echo -e "${dna_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dnp::build_ros || exit 1
+  dna::build_ros || exit 1
 fi
 
 # ====Teardown=====================================================================================

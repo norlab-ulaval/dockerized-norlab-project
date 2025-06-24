@@ -2,8 +2,8 @@
 
 DOCUMENTATION_BUFFER_RUN_ANY=$( cat <<'EOF'
 # =================================================================================================
-# Run a command in a unique DNP container.
-# Create a new container with a unique ID, to prevent name collision with those created by dnp up.
+# Run a command in a unique DNA container.
+# Create a new container with a unique ID, to prevent name collision with those created by dna up.
 #
 # Usage:
 #   $ bash build.all.bash
@@ -30,7 +30,7 @@ EOF
 #   --no-rm                      Dont remove container on exits (default to --rm)
 
 
-function dnp::run_any() {
+function dna::run_any() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -56,7 +56,7 @@ function dnp::run_any() {
 #            shift
 #            ;;
           --help|-h)
-              dnp::command_help_menu "${DOCUMENTATION_BUFFER_RUN_ANY:?err}"
+              dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_ANY:?err}"
               exit 0
               ;;
           --detach|--dry-run|-T|--no-TTY) # Assume its a docker compose flag
@@ -77,7 +77,7 @@ function dnp::run_any() {
               break
               ;;
           *)
-              dnp::illegal_command_msg "run" "$*"
+              dna::illegal_command_msg "run" "$*"
               exit 1
               ;;
       esac
@@ -85,10 +85,10 @@ function dnp::run_any() {
 
   # ....Set env variables (post cli)...............................................................
   declare -a docker_run_cmd_and_args=("${remaining_args[@]:-"bash"}")
-  local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
 
   # ....post-cli setup.............................................................................
-  dnp::up_and_attach --no-up --no-attach --service "${the_service}" || return 1
+  dna::up_and_attach --no-up --no-attach --service "${the_service}" || return 1
 
   test -n "${_THE_COMPOSE_FILE:?err}" || n2st::print_msg_error_and_exit "Env var _THE_COMPOSE_FILE is empty!"
   test -n "${_THE_SERVICE:?err}" || n2st::print_msg_error_and_exit "Env var _THE_SERVICE is empty!"
@@ -98,7 +98,7 @@ function dnp::run_any() {
   # ....Begin......................................................................................
   DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${BASHPID:-$$}"
   echo
-  n2st::print_msg "Be advised that ${MSG_DIMMED_FORMAT}dnp run${MSG_END_FORMAT} extend the container_name attribute
+  n2st::print_msg "Be advised that ${MSG_DIMMED_FORMAT}dna run${MSG_END_FORMAT} extend the container_name attribute
   of the docker compose file, so that you can spin the same service
   multiple time and all spawned containers will have a unique name,
   i.e. ${MSG_DIMMED_FORMAT}${DN_CONTAINER_NAME}${MSG_END_FORMAT}"
@@ -115,7 +115,7 @@ function dnp::run_any() {
   docker_run_flag+=("${the_service}")
   docker_run_flag+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
   docker_run_flag+=("${docker_run_cmd_and_args[@]}")
-#  dnp::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "${docker_run_flag[@]}"
+#  dna::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "${docker_run_flag[@]}"
   n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} run ${docker_run_flag[*]}${MSG_END_FORMAT}"
   n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
   docker compose "-f" "${compose_path}/${compose_file}" run "${docker_run_flag[@]}"
@@ -135,8 +135,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
     source "${script_path_parent}/up_and_attach.bash" || exit 1
   fi
@@ -145,12 +145,12 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   fi
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::run_any "$@"
+  dna::run_any "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -158,9 +158,9 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f dnp::up_and_attach )" || { echo -e "${dnp_error_prefix} The dnp::up_and_attach is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dna::up_and_attach )" || { echo -e "${dna_error_prefix} The dna::up_and_attach is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
 fi

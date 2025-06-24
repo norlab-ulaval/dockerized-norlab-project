@@ -2,18 +2,18 @@
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
-export PATH="$PATH:${DNP_PATH:?err}"
-bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
-function dnp::test_teardown_callback() {
+export PATH="$PATH:${DNA_PATH:?err}"
+bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
+function dna::test_teardown_callback() {
   exit_code=$?
-  cd "${DNP_ROOT:?err}" || exit 1
+  cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
   exit ${exit_code:1}
 }
-trap dnp::test_teardown_callback EXIT
-# Note: command `dnp COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
+trap dna::test_teardown_callback EXIT
+# Note: command `dna COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
 
-cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # Mock docker command for dryrun testing
 function docker() {
@@ -44,19 +44,19 @@ temp_save_dir=$(mktemp -d)
 echo "Testing load command with temporary directory: ${temp_save_dir}"
 
 # Create mock save directory structure for testing
-mock_save_dir="${temp_save_dir}/dnp-save-develop-test-project-202312151430"
+mock_save_dir="${temp_save_dir}/dna-save-develop-test-project-202312151430"
 mkdir -p "${mock_save_dir}"
 
 # Create mock metadata file
 cat > "${mock_save_dir}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 #   From host:
 #     Name: MacBook-Pro-M3-Karen
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=1.0
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -80,7 +80,7 @@ EOF
 touch "${mock_save_dir}/test-image-develop.latest.tar"
 
 # Test load command (this should work with mocked docker commands)
-dnp load "${mock_save_dir}" || exit 1
+dna load "${mock_save_dir}" || exit 1
 
 # Clean up
 rm -rf "${temp_save_dir}"

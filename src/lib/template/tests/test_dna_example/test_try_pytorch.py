@@ -2,7 +2,7 @@
 
 import pytest
 
-from dnp_example.try_pytorch import verify_pytorch_install, verify_pytorch_cuda_install
+from dna_example.try_pytorch import verify_pytorch_install, verify_pytorch_cuda_install
 
 from torch import cuda
 

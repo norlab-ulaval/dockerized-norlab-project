@@ -3,7 +3,7 @@
 import omegaconf
 import hydra
 
-from dnp_example.try_pytorch import verify_pytorch_install, verify_pytorch_cuda_install
+from dna_example.try_pytorch import verify_pytorch_install, verify_pytorch_cuda_install
 import torch
 
 @hydra.main(config_path="configs", config_name="example_app", version_base=None)

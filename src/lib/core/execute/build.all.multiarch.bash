@@ -34,12 +34,12 @@ EOF
 # (Priority) ToDo: unit-test of flag option
 
 # ....Function.....................................................................................
-function dnp::build_services_multiarch() {
+function dna::build_services_multiarch() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a dnp_build_all_args=()
+  declare -a dna_build_all_args=()
   declare -a remaining_args=()
   local force_push_project_core=true
   local the_compose_file="docker-compose.project.build.multiarch.yaml"
@@ -66,7 +66,7 @@ function dnp::build_services_multiarch() {
     --service-names)
       # ToDo: refactor (ref task NMO-574)
       # shellcheck disable=SC2207
-      dnp_build_all_args+=("--service-names" "${2}")
+      dna_build_all_args+=("--service-names" "${2}")
       shift # Remove argument (--service-names)
       shift # Remove argument value
       ;;
@@ -94,15 +94,15 @@ function dnp::build_services_multiarch() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  dnp_build_all_args+=("--file" "${the_compose_file}")
+  dna_build_all_args+=("--file" "${the_compose_file}")
   if [[ ${force_push_project_core} == true ]]; then
-    dnp_build_all_args+=("--force-push-project-core")
+    dna_build_all_args+=("--force-push-project-core")
   fi
-  dnp_build_all_args+=("--multiarch")
-  dnp_build_all_args+=("${remaining_args[@]}")
+  dna_build_all_args+=("--multiarch")
+  dna_build_all_args+=("${remaining_args[@]}")
 
   # ====Begin========================================================================================
-  dnp::build_services "${dnp_build_all_args[@]}"
+  dna::build_services "${dna_build_all_args[@]}"
   build_exit_code=$?
 
   # ....Teardown...................................................................................
@@ -117,17 +117,17 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
   source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   source "${script_path_parent}/build.all.bash" || exit 1
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::build_services_multiarch "$@"
+  dna::build_services_multiarch "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -135,9 +135,9 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f dnp::build_services )" || { echo -e "${dnp_error_prefix} The DNP build native lib is not loaded!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f dna::build_services )" || { echo -e "${dna_error_prefix} The DNA build native lib is not loaded!" 1>&2 && exit 1; }
 fi

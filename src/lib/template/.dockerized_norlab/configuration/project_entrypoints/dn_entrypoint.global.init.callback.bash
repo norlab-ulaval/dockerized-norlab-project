@@ -13,7 +13,7 @@
 # =================================================================================================
 
 # ....DN-project internal logic....................................................................
-source /dnp-lib-container-tools/project_entrypoints/entrypoint_helper.global.init.bash
+source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.init.bash
 
 # ====DN-project user defined logic================================================================
 

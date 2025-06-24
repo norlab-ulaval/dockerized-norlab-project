@@ -2,22 +2,22 @@
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
-export PATH="$PATH:${DNP_PATH:?err}"
-bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
-function dnp::test_teardown_callback() {
+export PATH="$PATH:${DNA_PATH:?err}"
+bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
+function dna::test_teardown_callback() {
   exit_code=$?
-  cd "${DNP_ROOT:?err}" || exit 1
+  cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
   exit ${exit_code:1}
 }
-trap dnp::test_teardown_callback EXIT
-# Note: command `dnp COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
+trap dna::test_teardown_callback EXIT
+# Note: command `dna COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT
 
 PROJECT_PROMPT_NAME="${PROJECT_PROMPT_NAME}-TESTS"
 cd "${N2ST_PATH:?'Variable not set'}" || exit 1
 source "import_norlab_shell_script_tools_lib.bash" || exit 1
 
-cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # Mock docker command for testing
 function docker() {
@@ -67,11 +67,11 @@ n2st::print_msg "Test Case 1: Offline service discovery with deploy service\n"
 
 # Create mock meta.txt file for deploy service
 cat > "${temp_test_dir}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=1.0
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -91,15 +91,15 @@ TAR_FILENAME=test-image-deploy.latest.tar
 EOF
 
 # Copy meta.txt to the mock project directory
-cp "${temp_test_dir}/meta.txt" "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}/meta.txt"
+cp "${temp_test_dir}/meta.txt" "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}/meta.txt"
 
-# Test dnp up command without specifying service (should auto-detect deploy)
-echo "Testing 'dnp up' without service specification (should auto-detect deploy)"
-output=$(dnp up --dry-run 2>&1)
+# Test dna up command without specifying service (should auto-detect deploy)
+echo "Testing 'dna up' without service specification (should auto-detect deploy)"
+output=$(dna up --dry-run 2>&1)
 up_exit_code=$?
 
 if [[ ${up_exit_code} -ne 0 ]]; then
-    n2st::print_msg_error "✗ dnp up command failed with exit code: ${up_exit_code}"
+    n2st::print_msg_error "✗ dna up command failed with exit code: ${up_exit_code}"
     echo "${output}"
     exit 1
 fi
@@ -108,9 +108,9 @@ fi
 
 # Check if the output indicates deploy service was used
 if echo "${output}" | grep -q "Using offline deployment service: deploy"; then
-    n2st::print_msg_done "✓ dnp up correctly detected and used deploy service from meta.txt"
+    n2st::print_msg_done "✓ dna up correctly detected and used deploy service from meta.txt"
 else
-    n2st::print_msg_error "✗ dnp up did not detect deploy service from meta.txt"
+    n2st::print_msg_error "✗ dna up did not detect deploy service from meta.txt"
     echo "Expected to find: 'Using offline deployment service: deploy'"
     echo "Actual output:"
     echo "${output}"
@@ -124,11 +124,11 @@ n2st::print_msg "Test Case 2: Offline service discovery with develop service\n"
 
 # Create mock meta.txt file for develop service
 cat > "${temp_test_dir}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=1.0
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -148,11 +148,11 @@ TAR_FILENAME=test-image-develop.latest.tar
 EOF
 
 # Copy meta.txt to the mock project directory
-cp "${temp_test_dir}/meta.txt" "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}/meta.txt"
+cp "${temp_test_dir}/meta.txt" "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}/meta.txt"
 
-# Test dnp exec command without specifying service (should auto-detect develop)
-echo "Testing 'dnp exec' without service specification (should auto-detect develop)"
-output=$(dnp exec --dry-run -- echo "test" 2>&1)
+# Test dna exec command without specifying service (should auto-detect develop)
+echo "Testing 'dna exec' without service specification (should auto-detect develop)"
+output=$(dna exec --dry-run -- echo "test" 2>&1)
 exec_exit_code=$?
 
 # The exec command may fail because service is not running, but we should still see the detection message
@@ -160,9 +160,9 @@ exec_exit_code=$?
 
 # Check if the output indicates develop service was used (even if command failed)
 if echo "${output}" | grep -q "Using offline deployment service: develop"; then
-    n2st::print_msg_done "✓ dnp exec correctly detected and used develop service from meta.txt"
+    n2st::print_msg_done "✓ dna exec correctly detected and used develop service from meta.txt"
 else
-    n2st::print_msg_error "✗ dnp exec did not detect develop service from meta.txt"
+    n2st::print_msg_error "✗ dna exec did not detect develop service from meta.txt"
     echo "Expected to find: 'Using offline deployment service: develop'"
     echo "Actual output:"
     echo "${output}"
@@ -174,9 +174,9 @@ echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 3: Explicit service specification should override auto-detection\n"
 
-# Test dnp attach with explicit deploy service (should not show auto-detection message)
-echo "Testing 'dnp attach deploy' with explicit service specification"
-output=$(dnp attach deploy 2>&1)
+# Test dna attach with explicit deploy service (should not show auto-detection message)
+echo "Testing 'dna attach deploy' with explicit service specification"
+output=$(dna attach deploy 2>&1)
 attach_exit_code=$?
 
 # The attach command may fail because service is not running, but we should check the detection behavior
@@ -184,23 +184,23 @@ attach_exit_code=$?
 
 # Check that auto-detection message is NOT present when service is explicitly specified
 if echo "${output}" | grep -q "Using offline deployment service:"; then
-    n2st::print_msg_error "✗ dnp attach showed auto-detection message when service was explicitly specified"
+    n2st::print_msg_error "✗ dna attach showed auto-detection message when service was explicitly specified"
     echo "Should not find: 'Using offline deployment service:'"
     echo "Actual output:"
     echo "${output}"
     exit 1
 else
-    n2st::print_msg_done "✓ dnp attach correctly did not show auto-detection message when service was explicitly specified"
+    n2st::print_msg_done "✓ dna attach correctly did not show auto-detection message when service was explicitly specified"
 fi
 
-# ....Test Case 4: Test dnp run command with offline service discovery.............................
+# ....Test Case 4: Test dna run command with offline service discovery.............................
 echo ""
 n2st::draw_horizontal_line_across_the_terminal_window "/"
-n2st::print_msg "Test Case 4: dnp run command with offline service discovery\n"
+n2st::print_msg "Test Case 4: dna run command with offline service discovery\n"
 
-# Test dnp run without service specification (should auto-detect develop from current meta.txt)
-echo "Testing 'dnp run' without service specification (should auto-detect develop)"
-output=$(dnp run --dry-run -- echo "test" 2>&1)
+# Test dna run without service specification (should auto-detect develop from current meta.txt)
+echo "Testing 'dna run' without service specification (should auto-detect develop)"
+output=$(dna run --dry-run -- echo "test" 2>&1)
 run_exit_code=$?
 
 # The run command may fail, but we should still see the detection message
@@ -208,9 +208,9 @@ run_exit_code=$?
 
 # Check if the output indicates develop service was used (even if command failed)
 if echo "${output}" | grep -q "Using offline deployment service: develop"; then
-    n2st::print_msg_done "✓ dnp run correctly detected and used develop service from meta.txt"
+    n2st::print_msg_done "✓ dna run correctly detected and used develop service from meta.txt"
 else
-    n2st::print_msg_error "✗ dnp run did not detect develop service from meta.txt"
+    n2st::print_msg_error "✗ dna run did not detect develop service from meta.txt"
     echo "Expected to find: 'Using offline deployment service: develop'"
     echo "Actual output:"
     echo "${output}"
@@ -223,11 +223,11 @@ n2st::draw_horizontal_line_across_the_terminal_window "/"
 n2st::print_msg "Test Case 5: Behavior when meta.txt is missing\n"
 
 # Remove meta.txt from mock project directory
-rm -f "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}/meta.txt"
+rm -f "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}/meta.txt"
 
-# Test dnp up without meta.txt (should use default develop service)
-echo "Testing 'dnp up' without meta.txt (should use default develop service)"
-output=$(dnp up --dry-run 2>&1)
+# Test dna up without meta.txt (should use default develop service)
+echo "Testing 'dna up' without meta.txt (should use default develop service)"
+output=$(dna up --dry-run 2>&1)
 up_no_meta_exit_code=$?
 
 # The up command may fail, but we should check the detection behavior
@@ -235,26 +235,26 @@ up_no_meta_exit_code=$?
 
 # Check that auto-detection message is NOT present when meta.txt is missing
 if echo "${output}" | grep -q "Using offline deployment service:"; then
-    n2st::print_msg_error "✗ dnp up showed auto-detection message when meta.txt was missing"
+    n2st::print_msg_error "✗ dna up showed auto-detection message when meta.txt was missing"
     echo "Should not find: 'Using offline deployment service:'"
     echo "Actual output:"
     echo "${output}"
     exit 1
 else
-    n2st::print_msg_done "✓ dnp up correctly used default behavior when meta.txt was missing"
+    n2st::print_msg_done "✓ dna up correctly used default behavior when meta.txt was missing"
 fi
 
 # ====Teardown=====================================================================================
 echo ""
 n2st::print_msg_done "=== Summary ==="
-echo "✓ dnp up correctly detects and uses service from meta.txt when no service is specified"
-echo "✓ dnp exec correctly detects and uses service from meta.txt when no service is specified"
-echo "✓ dnp attach correctly ignores auto-detection when service is explicitly specified"
-echo "✓ dnp run correctly detects and uses service from meta.txt when no service is specified"
+echo "✓ dna up correctly detects and uses service from meta.txt when no service is specified"
+echo "✓ dna exec correctly detects and uses service from meta.txt when no service is specified"
+echo "✓ dna attach correctly ignores auto-detection when service is explicitly specified"
+echo "✓ dna run correctly detects and uses service from meta.txt when no service is specified"
 echo "✓ All commands correctly use default behavior when meta.txt is missing"
 echo "✓ Offline service discovery functionality test completed successfully"
 
 # Clean up
-cd "${DNP_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 rm -rf "${temp_test_dir}"
 echo "Cleaned up temporary directory: ${temp_test_dir}"

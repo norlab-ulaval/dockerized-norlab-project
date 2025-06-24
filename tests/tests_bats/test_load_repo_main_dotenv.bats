@@ -55,8 +55,8 @@ setup_file() {
 #  \033[0m"  >&3
 #
 #  echo -e "
-#  \n...DNP related environment varaibles...........................................................
-#  \n$(printenv | grep -e DNP_)
+#  \n...DNA related environment varaibles...........................................................
+#  \n$(printenv | grep -e DNA_)
 #  \n...............................................................................................
 #  \n" >&3
 
@@ -85,48 +85,48 @@ teardown() {
 @test "assess execute with \"source $TESTED_FILE\" › expect pass" {
   assert_not_exist "${PROJECT_PROMPT_NAME}"
   assert_not_exist "${PROJECT_PATH}"
-  assert_not_exist "${DNP_GIT_REMOTE_URL}"
-  assert_not_exist "${DNP_GIT_NAME}"
+  assert_not_exist "${DNA_GIT_REMOTE_URL}"
+  assert_not_exist "${DNA_GIT_NAME}"
   assert_not_exist "${N2ST_PATH}"
   assert_not_exist "${NBS_PATH}"
-  assert_not_exist "${DNP_ROOT}"
-  assert_not_exist "${DNP_CONFIG_SCHEME_VERSION}"
-  assert_not_exist "${DNP_PROMPT_NAME}"
-  assert_not_exist "${DNP_SPLASH_NAME_FULL}"
-  assert_not_exist "${DNP_SPLASH_NAME_SMALL}"
-  assert_not_exist "${DNP_PATH}"
-  assert_not_exist "${DNP_LIB_PATH}"
-  assert_not_exist "${DNP_LIB_EXEC_PATH}"
-  assert_not_exist "${DNP_MOCK_SUPER_PROJECT_ROOT}"
+  assert_not_exist "${DNA_ROOT}"
+  assert_not_exist "${DNA_CONFIG_SCHEME_VERSION}"
+  assert_not_exist "${DNA_PROMPT_NAME}"
+  assert_not_exist "${DNA_SPLASH_NAME_FULL}"
+  assert_not_exist "${DNA_SPLASH_NAME_SMALL}"
+  assert_not_exist "${DNA_PATH}"
+  assert_not_exist "${DNA_LIB_PATH}"
+  assert_not_exist "${DNA_LIB_EXEC_PATH}"
+  assert_not_exist "${DNA_MOCK_SUPER_PROJECT_ROOT}"
 
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
 
-#  printenv | grep -e DNP_ >&3
+#  printenv | grep -e DNA_ >&3
 
   assert_not_empty "${PROJECT_PROMPT_NAME}"
   assert_not_empty "${PROJECT_PATH}"
-  assert_not_empty "${DNP_GIT_REMOTE_URL}"
-  assert_not_empty "${DNP_GIT_NAME}"
+  assert_not_empty "${DNA_GIT_REMOTE_URL}"
+  assert_not_empty "${DNA_GIT_NAME}"
   assert_not_empty "${N2ST_PATH}"
   assert_not_empty "${NBS_PATH}"
-  assert_not_empty "${DNP_ROOT}"
-  assert_not_empty "${DNP_CONFIG_SCHEME_VERSION}"
-  assert_not_empty "${DNP_SPLASH_NAME_FULL}"
-  assert_not_empty "${DNP_SPLASH_NAME_SMALL}"
-  assert_not_empty "${DNP_PROMPT_NAME}"
-  assert_not_empty "${DNP_PATH}"
-  assert_not_empty "${DNP_LIB_PATH}"
-  assert_not_empty "${DNP_LIB_EXEC_PATH}"
-  assert_not_empty "${DNP_MOCK_SUPER_PROJECT_ROOT}"
+  assert_not_empty "${DNA_ROOT}"
+  assert_not_empty "${DNA_CONFIG_SCHEME_VERSION}"
+  assert_not_empty "${DNA_SPLASH_NAME_FULL}"
+  assert_not_empty "${DNA_SPLASH_NAME_SMALL}"
+  assert_not_empty "${DNA_PROMPT_NAME}"
+  assert_not_empty "${DNA_PATH}"
+  assert_not_empty "${DNA_LIB_PATH}"
+  assert_not_empty "${DNA_LIB_EXEC_PATH}"
+  assert_not_empty "${DNA_MOCK_SUPER_PROJECT_ROOT}"
 
   assert_equal "${PROJECT_PATH}" "${BATS_DOCKER_WORKDIR}"
-  assert_equal "${DNP_GIT_REMOTE_URL}" "https://github.com/norlab-ulaval/dockerized-norlab-project"
-  assert_equal "${DNP_GIT_NAME}" "dockerized-norlab-project"
+  assert_equal "${DNA_GIT_REMOTE_URL}" "https://github.com/norlab-ulaval/dockerized-norlab-project"
+  assert_equal "${DNA_GIT_NAME}" "dockerized-norlab-project"
   assert_equal "${N2ST_PATH}" "${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
   assert_equal "${NBS_PATH}" "${BATS_DOCKER_WORKDIR}/utilities/norlab-build-system"
-  assert_equal "${DNP_PATH}" "${BATS_DOCKER_WORKDIR}/src/bin"
-  assert_equal "${DNP_LIB_EXEC_PATH}" "${BATS_DOCKER_WORKDIR}/src/lib/core/execute"
-  assert_equal "${DNP_MOCK_SUPER_PROJECT_ROOT}" "${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
+  assert_equal "${DNA_PATH}" "${BATS_DOCKER_WORKDIR}/src/bin"
+  assert_equal "${DNA_LIB_EXEC_PATH}" "${BATS_DOCKER_WORKDIR}/src/lib/core/execute"
+  assert_equal "${DNA_MOCK_SUPER_PROJECT_ROOT}" "${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
 }
 
@@ -142,14 +142,14 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}" --debug
 
   assert_success
-  assert_output --regexp "[DNP]".*".env.dockerized-norlab-project loaded"
+  assert_output --regexp "[DNA]".*".env.dockerized-norlab-project loaded"
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE}"
 
   assert_failure
-  assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[DNA error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 

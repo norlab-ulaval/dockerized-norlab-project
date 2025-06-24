@@ -23,7 +23,7 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #   <any-python-args>      (required) The python command with flags
 #
 # Globals:
-#   read DNP_ROOT
+#   read DNA_ROOT
 #   read SUPER_PROJECT_ROOT
 #   write SJOB_ID
 #   write IS_SLURM_RUN
@@ -43,7 +43,7 @@ pushd "$(pwd)" >/dev/null || exit 1
 # Note: Keep the pushd/popd logic for now
 
 # .................................................................................................
-function dnp::show_help() {
+function dna::show_help() {
   # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
   echo -e "${MSG_DIMMED_FORMAT}"
   n2st::draw_horizontal_line_across_the_terminal_window "="
@@ -54,12 +54,12 @@ function dnp::show_help() {
   echo -e "${MSG_END_FORMAT}"
 }
 
-function dnp::run_slurm_teardown_callback() {
+function dna::run_slurm_teardown_callback() {
   exit_code=$?
   if [[ ${exit_code} -ne 0 ]]; then
     n2st::print_msg_error "Container exited with error ${exit_code}"
   fi
-  compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   the_compose_file=docker-compose.project.run.slurm.yaml
   running_container_ids=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
   if [[ -n ${running_container_ids} ]]; then
@@ -77,7 +77,7 @@ function dnp::run_slurm_teardown_callback() {
   return ${exit_code:1}
 }
 
-function dnp::run_slurm() {
+function dna::run_slurm() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -103,7 +103,7 @@ function dnp::run_slurm() {
   dry_run_slurm_job=false
 
   if [[ "${SJOB_ID}" == "--help"  ]] || [[ "${SJOB_ID}" == "-h"  ]]; then
-    dnp::show_help
+    dna::show_help
     exit
   fi
 
@@ -137,7 +137,7 @@ function dnp::run_slurm() {
         ;;
       -h | --help)
         clear
-        dnp::show_help
+        dna::show_help
         exit
         ;;
       --) # no more option
@@ -159,7 +159,7 @@ function dnp::run_slurm() {
   test -n "${python_arg[0]}" || n2st::print_msg_error_and_exit "Missing <any-python-arg> mandatory positional argument!"
 
   # ....Set env variables (post cli)...............................................................
-  dn_project_config_dir="${DNP_ROOT:?err}/src/lib/core/docker"
+  dn_project_config_dir="${DNA_ROOT:?err}/src/lib/core/docker"
   compose_file="docker-compose.project.run.slurm.yaml"
   compose_file_path=${dn_project_config_dir}/${compose_file}
 
@@ -178,7 +178,7 @@ function dnp::run_slurm() {
     # shellcheck disable=SC2034
     add_docker_flag=("--no-cache" "project-core")
     add_docker_flag=("--quiet")
-    dnp::excute_compose "${add_docker_flag[@]}" || exit 1
+    dna::excute_compose "${add_docker_flag[@]}" || exit 1
   fi
 
   if [[ ${force_rebuild_slurm_img} == true ]]; then
@@ -186,7 +186,7 @@ function dnp::run_slurm() {
     docker_build+=("--no-cache")
     docker_build+=("--quiet")
     add_docker_flag=("${docker_build[@]}" "${the_service}")
-    dnp::excute_compose "${add_docker_flag[@]}" || exit 1
+    dna::excute_compose "${add_docker_flag[@]}" || exit 1
   fi
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -216,7 +216,7 @@ function dnp::run_slurm() {
     container_id=$(
       docker compose "${compose_flags[@]}" "${docker_run[@]}"
     )
-    trap dnp::run_slurm_teardown_callback EXIT
+    trap dna::run_slurm_teardown_callback EXIT
     n2st::print_msg "container_id=${container_id}\n" # Require `--detach` flag
 
     if [[ -n "${log_path}" ]]; then
@@ -236,7 +236,7 @@ function dnp::run_slurm() {
   fi
 
   # ....Teardown...................................................................................
-  # The teardown logic of this script is handled by the trap function `dnp::run_slurm_teardown_callback`
+  # The teardown logic of this script is handled by the trap function `dna::run_slurm_teardown_callback`
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return $exit_code
 }
@@ -249,8 +249,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
@@ -258,12 +258,12 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   fi
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::run_slurm "$@"
+  dna::run_slurm "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -271,8 +271,8 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
 fi

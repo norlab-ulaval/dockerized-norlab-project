@@ -40,7 +40,7 @@ fi
 
 # ====Tests file configuration=====================================================================
 
-TESTED_FILE="setup_host_dnp_requirements.bash"
+TESTED_FILE="setup_host_dna_requirements.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
 # ....Setup........................................................................................
@@ -49,16 +49,16 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
-  mkdir -p "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/src/utility_scripts"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/src/utility_scripts"
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -67,13 +67,13 @@ export MSG_DIMMED_FORMAT=""
 export MSG_END_FORMAT=""
 
 # Set up environment variables
-export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
-export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
@@ -98,30 +98,30 @@ function n2st::print_msg_error() {
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
-  mkdir -p "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/src/utility_scripts"
-  mkdir -p "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/src/function_library"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/src/utility_scripts"
+  mkdir -p "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/src/function_library"
 
-  # Copy the setup_host_dnp_requirements.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  # Copy the setup_host_dna_requirements.bash file to the temporary directory
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Create a mock install_docker_tools.bash file
   # Note: We're not mocking the function itself, but creating a simplified version that doesn't actually install Docker
-  cat > "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/src/utility_scripts/install_docker_tools.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/src/utility_scripts/install_docker_tools.bash" << 'EOF'
 #!/bin/bash
 # Mock install_docker_tools.bash that doesn't actually install Docker
 
@@ -143,14 +143,14 @@ exit 0
 EOF
 
   # Create a mock .env.n2st file
-  cat > "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/.env.n2st" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/.env.n2st" << 'EOF'
 #!/bin/bash
 # Mock .env.n2st file
-export N2ST_PATH="${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools"
+export N2ST_PATH="${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools"
 EOF
 
   # Create mock function library files
-  cat > "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/src/function_library/prompt_utilities.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/src/function_library/prompt_utilities.bash" << 'EOF'
 #!/bin/bash
 # Mock prompt_utilities.bash
 
@@ -171,7 +171,7 @@ for func in $(compgen -A function | grep -e n2st::); do
 done
 EOF
 
-  cat > "${MOCK_DNP_DIR}/utilities/norlab-shell-script-tools/src/function_library/docker_utilities.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/utilities/norlab-shell-script-tools/src/function_library/docker_utilities.bash" << 'EOF'
 #!/bin/bash
 # Mock docker_utilities.bash
 
@@ -187,7 +187,7 @@ for func in $(compgen -A function | grep -e n2st::); do
 done
 EOF
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Mock docker command
   function docker() {
@@ -271,13 +271,13 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directories
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
 # Test cases for installing docker requirements
-@test "dnp::setup_host_dnp_requirements - Install docker requirements › expect success" {
+@test "dna::setup_host_dna_requirements - Install docker requirements › expect success" {
   # Test case: When the function is called, it should install docker requirements
   # This test verifies that the function calls install_docker_tools.bash and returns successfully
 
@@ -292,7 +292,7 @@ teardown_file() {
   }
   export -f bash
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements"
 
   # Should succeed
   assert_success
@@ -301,7 +301,7 @@ teardown_file() {
   assert_output --partial "Mock bash install_docker_tools.bash called"
 }
 
-@test "dnp::setup_host_dnp_requirements - Install docker requirements failure › expect failure" {
+@test "dna::setup_host_dna_requirements - Install docker requirements failure › expect failure" {
   # Test case: When install_docker_tools.bash fails, the function should return an error
   # This test verifies that the function handles failures from install_docker_tools.bash correctly
 
@@ -316,7 +316,7 @@ teardown_file() {
   }
   export -f bash
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements"
 
   # Should fail
   assert_failure
@@ -326,14 +326,14 @@ teardown_file() {
 }
 
 # Test cases for CUDA toolkit path
-@test "dnp::setup_host_dnp_requirements - CUDA toolkit path on macOS › expect skipped" {
+@test "dna::setup_host_dna_requirements - CUDA toolkit path on macOS › expect skipped" {
   # Test case: When running on macOS, CUDA setup should be skipped
   # This test verifies that the function correctly identifies macOS and skips CUDA configuration
 
   # Mock OS as Darwin (macOS)
   export MOCK_OS="Darwin"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements"
 
   # Should succeed
   assert_success
@@ -342,7 +342,7 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_warning called with args: CUDA is not supported yet on Apple M1 computer. Skipping cuda configuration."
 }
 
-@test "dnp::setup_host_dnp_requirements - CUDA toolkit path with nvcc already working › expect success" {
+@test "dna::setup_host_dna_requirements - CUDA toolkit path with nvcc already working › expect success" {
   # Test case: When nvcc is already working, no changes should be made to .bashrc
   # This test verifies that the function correctly identifies when nvcc is already working
 
@@ -353,7 +353,7 @@ teardown_file() {
   export MOCK_NVCC_COMMAND_EXISTS="true"
   export MOCK_NVCC_INSTALLED="true"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements"
 
   # Should succeed
   assert_success
@@ -365,7 +365,7 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_done called with args: nvcc installed properly"
 }
 
-@test "dnp::setup_host_dnp_requirements - CUDA toolkit path with nvcc not working › expect path fix" {
+@test "dna::setup_host_dna_requirements - CUDA toolkit path with nvcc not working › expect path fix" {
   # Test case: When nvcc is not working, the function should add CUDA paths to .bashrc
   # This test verifies that the function correctly adds CUDA paths to .bashrc when nvcc is not working
 
@@ -379,7 +379,7 @@ teardown_file() {
   # Create a mock .bashrc file
   touch "${HOME}/.bashrc"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements"
 
   # Should succeed
   assert_success
@@ -391,7 +391,7 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_done called with args: nvcc CUDA path hack completed."
 }
 
-@test "dnp::setup_host_dnp_requirements - CUDA toolkit path with nvcc fixed but still not working › expect error" {
+@test "dna::setup_host_dna_requirements - CUDA toolkit path with nvcc fixed but still not working › expect error" {
   # Test case: When nvcc is fixed but still not working, the function should show an error
   # This test verifies that the function correctly identifies when nvcc is still not working after fixing
 
@@ -402,7 +402,7 @@ teardown_file() {
   export MOCK_NVCC_COMMAND_EXISTS="true"
   export MOCK_NVCC_INSTALLED="false"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/core/utils/setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements"
 
   # Should succeed (the function itself doesn't fail, it just shows an error message)
   assert_success

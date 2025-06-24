@@ -6,10 +6,10 @@
 #   $ source load_repo_main_dotenv.bash
 #
 # =================================================================================================
-dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-dnp_done_prefix="\033[1;32m[DNP done]\033[0m"
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+dna_done_prefix="\033[1;32m[DNA done]\033[0m"
 
-function dnp::load_repository_environment_variables() {
+function dna::load_repository_environment_variables() {
 
   # ....Setup......................................................................................
   local debug_flag=false
@@ -32,7 +32,7 @@ function dnp::load_repository_environment_variables() {
   done
 
   # ....Find path to script........................................................................
-  if [[ -z ${DNP_ROOT} ]]; then
+  if [[ -z ${DNA_ROOT} ]]; then
     # Note: can handle both sourcing cases
     #   i.e. from within a script or from an interactive terminal session
     # Check if running interactively
@@ -60,13 +60,13 @@ function dnp::load_repository_environment_variables() {
       "  >&3
     fi
   else
-    target_path="${DNP_ROOT}"
+    target_path="${DNA_ROOT}"
   fi
 
 
   cd "${target_path:?err}" || return 1
   if [[ ! -f .env.dockerized-norlab-project ]]; then
-    echo -e "\n[\033[1;31mDN error\033[0m] Can't find Dockerized-NorLab-Project repository root!" 1>&2
+    echo -e "\n[\033[1;31mDN error\033[0m] Can't find Dockerized-NorLab Project repository root!" 1>&2
     return 1
   fi
 
@@ -76,9 +76,9 @@ function dnp::load_repository_environment_variables() {
   set +o allexport
 
   # ....Teardown...................................................................................
-  if [[ "${DNP_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
-    export DNP_DEBUG=true
-    echo -e "${dnp_error_prefix} .env.dockerized-norlab-project loaded"
+  if [[ "${DNA_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
+    export DNA_DEBUG=true
+    echo -e "${dna_error_prefix} .env.dockerized-norlab-project loaded"
     # Debug flags
     set -v # echo lines as they are read
     export BUILDKIT_PROGRESS=plain
@@ -91,9 +91,9 @@ function dnp::load_repository_environment_variables() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${dnp_done_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${dna_done_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dnp::load_repository_environment_variables "$@" || exit 1
+  dna::load_repository_environment_variables "$@" || exit 1
 fi

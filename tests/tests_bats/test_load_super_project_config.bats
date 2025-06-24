@@ -59,8 +59,8 @@ setup_file() {
 #  \033[0m"  >&3
 #
 #  echo -e "
-#  \n...DN/DNP/SUPER related environment varaibles..................................................
-#  \n$( printenv | grep -e DN_ -e DNP_ -e SUPER_ )
+#  \n...DN/DNA/SUPER related environment varaibles..................................................
+#  \n$( printenv | grep -e DN_ -e DNA_ -e SUPER_ )
 #  \n...............................................................................................
 #  \n" >&3
 
@@ -87,16 +87,16 @@ teardown() {
 # ====Test casses==================================================================================
 
 @test "explicitly source $TESTED_FILE › expect pass" {
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
-  assert_exist "${DNP_ROOT}"
-  assert_not_empty "${DNP_ROOT}"
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
+  assert_exist "${DNA_ROOT}"
+  assert_not_empty "${DNA_ROOT}"
 
   assert_not_exist "${SUPER_PROJECT_ROOT}"
   assert_not_exist "${SUPER_PROJECT_REPO_NAME}"
   assert_not_exist "${DN_PROJECT_GIT_NAME}"
   assert_not_exist "${DN_PROJECT_GIT_REMOTE_URL}"
   assert_not_exist "${DN_PROJECT_HUB}"
-  assert_not_exist "${DNP_URL}"
+  assert_not_exist "${DNA_URL}"
   assert_not_exist "${DN_PROJECT_USER}"
   assert_not_exist "${HYDRA_FULL_ERROR}"
   assert_not_exist "${MOCK_TEST_WAS_LOADED}"
@@ -106,8 +106,8 @@ teardown() {
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   echo -e "
-  \n...DN/DNP/SUPER related environment varaibles..................................................
-  \n$( printenv | grep -e DN_ -e DNP_ -e SUPER_ )
+  \n...DN/DNA/SUPER related environment varaibles..................................................
+  \n$( printenv | grep -e DN_ -e DNA_ -e SUPER_ )
   \n...............................................................................................
   \n"
 
@@ -120,7 +120,7 @@ teardown() {
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
   assert_equal "${DN_PROJECT_USER}" 'root'
-  assert_equal "${DNP_CONFIG_SCHEME_VERSION}" 1
+  assert_equal "${DNA_CONFIG_SCHEME_VERSION}" 1
   assert_equal "${MOCK_TEST_WAS_LOADED}" 1
   assert_equal "${HYDRA_FULL_ERROR}" 1
 
@@ -128,11 +128,11 @@ teardown() {
 }
 
 @test "assess execute with \"source $TESTED_FILE\" › expect pass" {
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success
-  assert_output --regexp "[DNP done]".*"dockerized-norlab-project-mock project configurations loaded"
+  assert_output --regexp "[DNA done]".*"dockerized-norlab-project-mock project configurations loaded"
 }
 
 
@@ -141,7 +141,7 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_failure
-  assert_output --regexp "[DNP error]".*"The N2ST lib is not loaded!"
+  assert_output --regexp "[DNA error]".*"The N2ST lib is not loaded!"
 }
 
 
@@ -149,14 +149,14 @@ teardown() {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_failure
-  assert_output --regexp "[DNP error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[DNA error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
-# ====Tests for dnp::check_offline_deploy_service_discovery function==============================
+# ====Tests for dna::check_offline_deploy_service_discovery function==============================
 
-@test "dnp::check_offline_deploy_service_discovery with valid meta.txt and loaded image › expect success" {
-  # Setup: Load DNP lib and source the tested file
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+@test "dna::check_offline_deploy_service_discovery with valid meta.txt and loaded image › expect success" {
+  # Setup: Load DNA lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # Create temporary directory for test
@@ -195,7 +195,7 @@ EOF
 
   # Change to test directory and run function
   cd "${test_dir}" || exit 1
-  run dnp::check_offline_deploy_service_discovery
+  run dna::check_offline_deploy_service_discovery
 
   assert_success
   assert_output "deploy"
@@ -204,9 +204,9 @@ EOF
   temp_del "${test_dir}"
 }
 
-@test "dnp::check_offline_deploy_service_discovery with valid meta.txt but image not loaded › expect failure" {
-  # Setup: Load DNP lib and source the tested file
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+@test "dna::check_offline_deploy_service_discovery with valid meta.txt but image not loaded › expect failure" {
+  # Setup: Load DNA lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # Create temporary directory for test
@@ -245,7 +245,7 @@ EOF
 
   # Change to test directory and run function
   cd "${test_dir}" || exit 1
-  run dnp::check_offline_deploy_service_discovery
+  run dna::check_offline_deploy_service_discovery
 
   assert_failure
   assert_output --regexp "Docker image 'test-image-deploy.latest' is not loaded"
@@ -254,9 +254,9 @@ EOF
   temp_del "${test_dir}"
 }
 
-@test "dnp::check_offline_deploy_service_discovery with missing meta.txt › expect failure" {
-  # Setup: Load DNP lib and source the tested file
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+@test "dna::check_offline_deploy_service_discovery with missing meta.txt › expect failure" {
+  # Setup: Load DNA lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # Create temporary directory for test (without meta.txt)
@@ -265,7 +265,7 @@ EOF
 
   # Change to test directory and run function
   cd "${test_dir}" || exit 1
-  run dnp::check_offline_deploy_service_discovery
+  run dna::check_offline_deploy_service_discovery
 
   assert_failure
   refute_output
@@ -274,9 +274,9 @@ EOF
   temp_del "${test_dir}"
 }
 
-@test "dnp::check_offline_deploy_service_discovery with invalid meta.txt (missing SERVICE) › expect failure" {
-  # Setup: Load DNP lib and source the tested file
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+@test "dna::check_offline_deploy_service_discovery with invalid meta.txt (missing SERVICE) › expect failure" {
+  # Setup: Load DNA lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # Create temporary directory for test
@@ -293,7 +293,7 @@ EOF
 
   # Change to test directory and run function
   cd "${test_dir}" || exit 1
-  run dnp::check_offline_deploy_service_discovery
+  run dna::check_offline_deploy_service_discovery
 
   assert_failure
   assert_output --regexp "Invalid meta.txt: missing SERVICE or IMAGE_NAME field"
@@ -302,9 +302,9 @@ EOF
   temp_del "${test_dir}"
 }
 
-@test "dnp::check_offline_deploy_service_discovery with invalid meta.txt (missing IMAGE_NAME) › expect failure" {
-  # Setup: Load DNP lib and source the tested file
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+@test "dna::check_offline_deploy_service_discovery with invalid meta.txt (missing IMAGE_NAME) › expect failure" {
+  # Setup: Load DNA lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # Create temporary directory for test
@@ -321,7 +321,7 @@ EOF
 
   # Change to test directory and run function
   cd "${test_dir}" || exit 1
-  run dnp::check_offline_deploy_service_discovery
+  run dna::check_offline_deploy_service_discovery
 
   assert_failure
   assert_output --regexp "Invalid meta.txt: missing SERVICE or IMAGE_NAME field"
@@ -330,9 +330,9 @@ EOF
   temp_del "${test_dir}"
 }
 
-@test "dnp::check_offline_deploy_service_discovery with develop service › expect success" {
-  # Setup: Load DNP lib and source the tested file
-  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dnp_lib.bash" || exit 1
+@test "dna::check_offline_deploy_service_discovery with develop service › expect success" {
+  # Setup: Load DNA lib and source the tested file
+  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   # Create temporary directory for test
@@ -371,7 +371,7 @@ EOF
 
   # Change to test directory and run function
   cd "${test_dir}" || exit 1
-  run dnp::check_offline_deploy_service_discovery
+  run dna::check_offline_deploy_service_discovery
 
   assert_success
   assert_output "develop"

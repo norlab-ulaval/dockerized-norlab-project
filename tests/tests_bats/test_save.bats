@@ -40,17 +40,17 @@ setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
   export MOCK_SAVE_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # Set message formatting variables
 export MSG_DIMMED_FORMAT=""
@@ -58,13 +58,13 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL1="-"
 
 # Set up environment variables
-export DNP_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
-export DNP_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
@@ -93,34 +93,34 @@ function n2st::print_formated_script_footer() {
   return 0
 }
 
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
-function dnp::illegal_command_msg() {
-  echo "Mock dnp::illegal_command_msg called with args: $*"
+function dna::illegal_command_msg() {
+  echo "Mock dna::illegal_command_msg called with args: $*"
   return 1
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
 
-echo "[DNP done] Mock import_dnp_lib.bash and its libraries loaded"
+echo "[DNA done] Mock import_dna_lib.bash and its libraries loaded"
 EOF
 
   # Create mock project structure for deploy tests
-  export MOCK_PROJECT_ROOT="${MOCK_DNP_DIR}/mock_project"
+  export MOCK_PROJECT_ROOT="${MOCK_DNA_DIR}/mock_project"
   mkdir -p "${MOCK_PROJECT_ROOT}/.dockerized_norlab/configuration"
   mkdir -p "${MOCK_PROJECT_ROOT}/.git"
   echo "mock config" > "${MOCK_PROJECT_ROOT}/.dockerized_norlab/configuration/.env"
   echo "mock git" > "${MOCK_PROJECT_ROOT}/.git/config"
 
   # Create mock load_super_project_config.bash (after MOCK_PROJECT_ROOT is defined)
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/load_super_project_config.bash" << EOF
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << EOF
 #!/bin/bash
 # Mock load_super_project_config.bash
 export SUPER_PROJECT_REPO_NAME="test-project"
@@ -130,7 +130,7 @@ export PROJECT_TAG="latest"
 export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/test/test-project.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNP_CONFIG_SCHEME_VERSION="1.0"
+export DNA_CONFIG_SCHEME_VERSION="1.0"
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
@@ -138,16 +138,16 @@ EOF
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
 
   # Copy the save.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  cd "${MOCK_DNA_DIR}" || exit 1
 
   # Mock docker command
   function docker() {
@@ -214,15 +214,15 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directories
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
   temp_del "${MOCK_SAVE_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::save_command with no arguments › expect error" {
+@test "dna::save_command with no arguments › expect error" {
   # Test case: When save command is called without arguments, it should show error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command"
 
   # Should fail
   assert_failure
@@ -231,9 +231,9 @@ teardown_file() {
   assert_output --partial "DIRPATH argument is required"
 }
 
-@test "dnp::save_command with only dirpath › expect error" {
+@test "dna::save_command with only dirpath › expect error" {
   # Test case: When save command is called with only dirpath, it should show error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command ${MOCK_SAVE_DIR}"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command ${MOCK_SAVE_DIR}"
 
   # Should fail
   assert_failure
@@ -242,9 +242,9 @@ teardown_file() {
   assert_output --partial "SERVICE argument is required"
 }
 
-@test "dnp::save_command with invalid service › expect error" {
+@test "dna::save_command with invalid service › expect error" {
   # Test case: When save command is called with invalid service, it should show error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command ${MOCK_SAVE_DIR} invalid"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command ${MOCK_SAVE_DIR} invalid"
 
   # Should fail
   assert_failure
@@ -253,9 +253,9 @@ teardown_file() {
   assert_output --partial "Invalid SERVICE: invalid"
 }
 
-@test "dnp::save_command with non-existent directory › expect error" {
+@test "dna::save_command with non-existent directory › expect error" {
   # Test case: When save command is called with non-existent directory, it should show error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command /non/existent/dir develop"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command /non/existent/dir develop"
 
   # Should fail
   assert_failure
@@ -264,9 +264,9 @@ teardown_file() {
   assert_output --partial "Directory does not exist"
 }
 
-@test "dnp::save_command with develop service › expect success" {
+@test "dna::save_command with develop service › expect success" {
   # Test case: When save command is called with develop service, it should succeed
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command ${MOCK_SAVE_DIR} develop"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command ${MOCK_SAVE_DIR} develop"
 
   # Should succeed
   assert_success
@@ -279,12 +279,12 @@ teardown_file() {
   assert_output --partial "Save completed successfully"
 }
 
-@test "dnp::save_command with deploy service › expect success with project copy" {
+@test "dna::save_command with deploy service › expect success with project copy" {
   # Test case: When save command is called with deploy service, it should succeed and copy project structure
   # Set SUPER_PROJECT_ROOT to our mock project
   export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command ${MOCK_SAVE_DIR} deploy"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command ${MOCK_SAVE_DIR} deploy"
 
   # Should succeed
   assert_success
@@ -298,22 +298,22 @@ teardown_file() {
   assert_output --partial "Save completed successfully"
 }
 
-@test "dnp::save_command help flag › expect help output" {
+@test "dna::save_command help flag › expect help output" {
   # Test case: When save command is called with help flag, it should show help
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::save_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::save_command --help"
 
   # Should succeed (exit 0 from help)
   assert_success
 
   # Should output help message
-  assert_output --partial "Mock dnp::command_help_menu"
+  assert_output --partial "Mock dna::command_help_menu"
 }
 
-@test "dnp::create_save_metadata function › expect metadata file creation" {
+@test "dna::create_save_metadata function › expect metadata file creation" {
   # Test case: Test the metadata creation function directly
   local test_meta_file="${MOCK_SAVE_DIR}/test_meta.txt"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::create_save_metadata ${test_meta_file} develop"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::create_save_metadata ${test_meta_file} develop"
 
   # Should succeed
   assert_success
@@ -322,7 +322,7 @@ teardown_file() {
   assert_file_exist "${test_meta_file}"
 }
 
-@test "dnp::copy_project_structure_for_deploy function › expect project structure copy" {
+@test "dna::copy_project_structure_for_deploy function › expect project structure copy" {
   # Test case: Test the project structure copy function directly
   # Set SUPER_PROJECT_ROOT to our mock project
   export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
@@ -331,7 +331,7 @@ teardown_file() {
   local test_save_dir="${MOCK_SAVE_DIR}/test_deploy"
   mkdir -p "${test_save_dir}"
 
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/save.bash && dnp::copy_project_structure_for_deploy ${test_save_dir}"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/save.bash && dna::copy_project_structure_for_deploy ${test_save_dir}"
 
   # Should succeed
   assert_success

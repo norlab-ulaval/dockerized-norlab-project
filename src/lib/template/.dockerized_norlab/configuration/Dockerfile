@@ -40,12 +40,12 @@ COPY .dockerized_norlab/configuration/project_requirements/python.requirements.t
 COPY .dockerized_norlab/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
 COPY .dockerized_norlab/configuration/project_entrypoints /project_entrypoints
 COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
-COPY --from=context-dnp-lib-container-tools . /dnp-lib-container-tools/
+COPY --from=context-dna-lib-container-tools . /dna-lib-container-tools/
 
 RUN <<EOF
     source /dn_project_core_init.bash || exit 1
-    source /dnp-lib-container-tools/dn_project_core.setup.bash || exit 1
-    source /dnp-lib-container-tools/dn_project_core.build.patch.bash || exit 1
+    source /dna-lib-container-tools/dn_project_core.setup.bash || exit 1
+    source /dna-lib-container-tools/dn_project_core.build.patch.bash || exit 1
 EOF
 
 
@@ -84,11 +84,11 @@ ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 
 RUN <<EOF
-    source /dnp-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
+    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
     # Cleanup buidl script
     rm -f /dn_project_core_init.bash
-    rm -f /dnp-lib-container-tools/dn_project_core.setup.bash
-    rm -f /dnp-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
+    rm -f /dna-lib-container-tools/dn_project_core.setup.bash
+    rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
 EOF
 CMD [ "bash" ]
 

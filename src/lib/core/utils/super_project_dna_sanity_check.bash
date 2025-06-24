@@ -4,18 +4,18 @@
 # location in the super-project
 #
 # Usage:
-#   $ bash super_project_dnp_sanity_check.bash
+#   $ bash super_project_dna_sanity_check.bash
 #   or
-#   $ source super_project_dnp_sanity_check.bash && dnp::super_project_dnp_sanity_check
+#   $ source super_project_dna_sanity_check.bash && dna::super_project_dna_sanity_check
 #
 # Global:
-#  read DNP_ROOT
+#  read DNA_ROOT
 #  read SUPER_PROJECT_ROOT
 #  read SUPER_PROJECT_REPO_NAME
 #
 # =================================================================================================
 
-function dnp::super_project_dnp_sanity_check() {
+function dna::super_project_dna_sanity_check() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -39,26 +39,26 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   fi
 
   # ....check super project directory structure....................................................
-  dnp::check_super_project_dir_structure
+  dna::check_super_project_dir_structure
 
   # ....check .dockerized_norlab directory structure.......................................
-  dnp::check_dockerized_project_configuration_dir_structure
-  dnp::check_project_configuration
-  dnp::check_project_entrypoints
+  dna::check_dockerized_project_configuration_dir_structure
+  dna::check_project_configuration
+  dna::check_project_entrypoints
 
   # ....check .gitignore files entries.............................................................
-  dnp::check_gitignore
+  dna::check_gitignore
 
   # ....check .dockerignore files entries..........................................................
-  dnp::check_dockerignore
+  dna::check_dockerignore
 
   #  ....Teardown...................................................................................
-  echo -e "${MSG_DONE_FORMAT}[DNP done]${MSG_END_FORMAT} Super project ${SUPER_PROJECT_REPO_NAME:?err} setup is OK"
+  echo -e "${MSG_DONE_FORMAT}[DNA done]${MSG_END_FORMAT} Super project ${SUPER_PROJECT_REPO_NAME:?err} setup is OK"
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
 
-function dnp::check_super_project_dir_structure() {
+function dna::check_super_project_dir_structure() {
   test -d ".dockerized_norlab" || n2st::print_msg_error_and_exit "'.dockerized_norlab' is not installed at super-project repository root as required!"
   test -d "src/" || n2st::print_msg_error_and_exit "The 'src' directory is not installed at super-project repository root as required!"
   test -d "tests/" || n2st::print_msg_error_and_exit "The 'tests' directory is not installed at super-project repository root as required!"
@@ -70,25 +70,25 @@ function dnp::check_super_project_dir_structure() {
   test -f ".dockerignore" || n2st::print_msg_error_and_exit "'.dockerignore' is not installed at super-project repository root as it should!"
 }
 
-function dnp::check_dockerized_project_configuration_dir_structure() {
+function dna::check_dockerized_project_configuration_dir_structure() {
   test_dir_path=".dockerized_norlab"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "configuration/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/configuration/' directory is not installed as required!"
   test -d "dn_container_env_variable/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/dn_container_env_variable/' directory is not installed as required!"
 }
 
-function dnp::check_project_configuration() {
+function dna::check_project_configuration() {
   test_dir_path=".dockerized_norlab/configuration"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "project_requirements/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project_requirements/' directory is not installed as required!"
   test -d "project_entrypoints/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project_entrypoints/' directory is not installed as required!"
-  test -f ".env.dnp" || n2st::print_msg_error_and_exit "The '${test_dir_path}/.env.dnp' file is not installed as required!"
+  test -f ".env.dna" || n2st::print_msg_error_and_exit "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || n2st::print_msg_error_and_exit "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || n2st::print_msg_error_and_exit "The '${test_dir_path}/.env.local' file is not installed as required!"
   test -f "Dockerfile" || n2st::print_msg_error_and_exit "The '${test_dir_path}/Dockerfile' file is not installed as required!"
 }
 
-function dnp::check_project_entrypoints() {
+function dna::check_project_entrypoints() {
   test_dir_path=".dockerized_norlab/configuration/project_entrypoints"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || exit 1
   test -d "project-ci-tests/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-ci-tests/' directory is not installed as required!"
@@ -97,7 +97,7 @@ function dnp::check_project_entrypoints() {
   test -d "project-develop/" || n2st::print_msg_error_and_exit "The '${test_dir_path}/project-develop/' directory is not installed as required!"
 }
 
-function dnp::check_gitignore() {
+function dna::check_gitignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
   # Check required entry: **/.dockerized_norlab/dn_container_env_variable/
@@ -118,7 +118,7 @@ function dnp::check_gitignore() {
   fi
 }
 
-function dnp::check_dockerignore() {
+function dna::check_dockerignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
   # Check required entry: !**/.dockerized_norlab/
@@ -150,13 +150,13 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/import_dna_lib.bash" || exit 1
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL:?err}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL:?err}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::super_project_dnp_sanity_check || exit 1
+  dna::super_project_dna_sanity_check || exit 1
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -164,10 +164,10 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
-  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+  test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 fi

@@ -24,7 +24,7 @@ DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 #   command & arguments    Any command to be executed inside the docker container (default: bash)
 #
 # Globals:
-#   read DNP_ROOT
+#   read DNA_ROOT
 #   read SUPER_PROJECT_ROOT
 #   read DN_CONTAINER_NAME
 #   read/write DISPLAY (optional)
@@ -48,7 +48,7 @@ function show_help() {
   echo -e "${MSG_END_FORMAT}"
 }
 
-function dnp::up_and_attach() {
+function dna::up_and_attach() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -120,7 +120,7 @@ function dnp::up_and_attach() {
 
   # ....Set env variables (post cli)...............................................................
   declare -a docker_exec_cmd_and_args=("${remaining_args[@]:-"bash"}")
-  local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file=""
   local display_device=""
   local up_exit_code
@@ -217,9 +217,9 @@ function dnp::up_and_attach() {
     export DN_DISPLAY=host.docker.internal:0
 
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
-    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet! Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNP_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
+    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet! Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else
-    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNP_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
+    n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
   #n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
@@ -323,8 +323,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
@@ -332,12 +332,12 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   fi
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::up_and_attach "$@"
+  dna::up_and_attach "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -345,9 +345,9 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
 fi
 

@@ -1,27 +1,27 @@
 #!/bin/bash
 # =================================================================================================
 # Setup host computer (i.e, workstation, embed computer, server) for using this
-# Dockerized-NorLab-Project.
+# Dockerized-NorLab Project.
 #
 # Usage:
-#   $ bash setup_host_dnp_requirements.bash
+#   $ bash setup_host_dna_requirements.bash
 #   or
-#   $ source setup_host_dnp_requirements.bash && dnp::setup_host_dnp_requirements
+#   $ source setup_host_dna_requirements.bash && dna::setup_host_dna_requirements
 #
 # Global:
-#  read DNP_ROOT
+#  read DNA_ROOT
 #  read PATH
 #  read LD_LIBRARY_PATH
 #
 # =================================================================================================
 
-function dnp::setup_host_dnp_requirements() {
+function dna::setup_host_dna_requirements() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
 
   # ....Install docker requirements................................................................
-  cd "${DNP_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
+  cd "${DNA_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
   bash install_docker_tools.bash || return 1
 
   cd "$tmp_cwd" || return 1
@@ -31,7 +31,7 @@ function dnp::setup_host_dnp_requirements() {
   elif [ -n "$BASH_VERSION" ]; then
     source "$HOME/.bashrc"
   else
-    n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNP."
+    n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNA."
   fi
 
 
@@ -46,13 +46,13 @@ function dnp::setup_host_dnp_requirements() {
 
       (
         echo ""
-        echo "# >>>> Dockerized-NorLab-Project CUDA (start)"
+        echo "# >>>> Dockerized-NorLab Project CUDA (start)"
         echo "# CUDA toolkit related"
         echo "# ref dusty_nv comment at"
         echo "#    https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068"
         echo "export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}"
         echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-        echo "# <<<< Dockerized-NorLab-Project CUDA (end)"
+        echo "# <<<< Dockerized-NorLab Project CUDA (end)"
         echo ""
       ) >> "$HOME/.bashrc"
 
@@ -85,7 +85,7 @@ function dnp::setup_host_dnp_requirements() {
   elif [ -n "$BASH_VERSION" ]; then
     source "$HOME/.bashrc"
   else
-    n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNP."
+    n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNA."
   fi
 
 
@@ -101,17 +101,17 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
-  dnp::setup_host_dnp_requirements || exit 1
+  source "${script_path_parent}/import_dna_lib.bash" || exit 1
+  dna::setup_host_dna_requirements || exit 1
   exit $?
 else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -d "${DNP_ROOT:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
-  test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
+  test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 fi

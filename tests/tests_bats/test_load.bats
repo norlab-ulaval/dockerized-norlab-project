@@ -46,8 +46,8 @@ setup_file() {
   export MOCK_SAVE_DIR=$(temp_make)
 
   # Create mock save directories for testing
-  export MOCK_DEPLOY_SAVE_DIR="${MOCK_SAVE_DIR}/dnp-save-deploy-test-project-202312151430"
-  export MOCK_DEVELOP_SAVE_DIR="${MOCK_SAVE_DIR}/dnp-save-develop-test-project-202312151430"
+  export MOCK_DEPLOY_SAVE_DIR="${MOCK_SAVE_DIR}/dna-save-deploy-test-project-202312151430"
+  export MOCK_DEVELOP_SAVE_DIR="${MOCK_SAVE_DIR}/dna-save-develop-test-project-202312151430"
 
   mkdir -p "${MOCK_DEPLOY_SAVE_DIR}"
   mkdir -p "${MOCK_DEVELOP_SAVE_DIR}"
@@ -55,14 +55,14 @@ setup_file() {
 
   # Create mock metadata files
   cat > "${MOCK_DEPLOY_SAVE_DIR}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 #   From host:
 #     Name: MacBook-Pro-M3-Karen
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=1.0
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -82,14 +82,14 @@ TAR_FILENAME=test-image-deploy.latest.tar
 EOF
 
   cat > "${MOCK_DEVELOP_SAVE_DIR}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 #   From host:
 #     Name: MacBook-Pro-M3-Karen
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=1.0
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -141,11 +141,11 @@ setup() {
   export -f docker
 
   # Create a mock alias for testing alias functionality
-  function dnp-test-cd() {
-    echo "Mock alias dnp-test-cd executed"
+  function dna-test-cd() {
+    echo "Mock alias dna-test-cd executed"
     return 0
   }
-  export -f dnp-test-cd
+  export -f dna-test-cd
 }
 
 # ....Teardown.....................................................................................
@@ -160,16 +160,16 @@ teardown_file() {
 
 # ====Test cases==================================================================================
 
-@test "dnp::load_command with no arguments and no meta.txt in cwd › expect error" {
+@test "dna::load_command with no arguments and no meta.txt in cwd › expect error" {
   # Test case: When load command is called without arguments and no meta.txt in current directory, it should show error
-  # Create a test directory without .dockerized_norlab to ensure dnp::cd_to_dnp_super_project_root fails
-  local test_dir="${MOCK_SAVE_DIR}/no_dnp_project"
+  # Create a test directory without .dockerized_norlab to ensure dna::cd_to_dna_super_project_root fails
+  local test_dir="${MOCK_SAVE_DIR}/no_dna_project"
   mkdir -p "${test_dir}"
 
   cd "${test_dir}"
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash"
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command
+  run dna::load_command
 
   # Should fail
   assert_failure
@@ -178,11 +178,11 @@ teardown_file() {
   assert_output --partial "directory not found"
 }
 
-@test "dnp::load_command with non-existent directory › expect error" {
+@test "dna::load_command with non-existent directory › expect error" {
   # Test case: When load command is called with non-existent directory, it should show error
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command /non/existent/dir
+  run dna::load_command /non/existent/dir
 
   # Should fail
   assert_failure
@@ -191,14 +191,14 @@ teardown_file() {
   assert_output --partial "Save directory does not exist"
 }
 
-@test "dnp::load_command with directory missing meta.txt › expect error" {
+@test "dna::load_command with directory missing meta.txt › expect error" {
   # Test case: When load command is called with directory missing meta.txt, it should show error
   local test_dir="${MOCK_SAVE_DIR}/no_meta"
   mkdir -p "${test_dir}"
 
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command "${test_dir}"
+  run dna::load_command "${test_dir}"
 
   # Should fail
   assert_failure
@@ -207,7 +207,7 @@ teardown_file() {
   assert_output --partial "meta.txt not found"
 }
 
-@test "dnp::load_command with directory missing tar file › expect error" {
+@test "dna::load_command with directory missing tar file › expect error" {
   # Test case: When load command is called with directory missing tar file, it should show error
   local test_dir="${MOCK_SAVE_DIR}/no_tar"
   mkdir -p "${test_dir}"
@@ -218,14 +218,14 @@ teardown_file() {
 #  echo "TAR_FILENAME=test-image-develop.latest.tar" >> "${test_dir}/meta.txt"
 
   cat > "${test_dir}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 #   From host:
 #     Name: MacBook-Pro-M3-Karen
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNP_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=1.0
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -246,9 +246,9 @@ EOF
 
   # Note: No tar file is created in this directory, so real find command will not find any *.tar files
 
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command "${test_dir}"
+  run dna::load_command "${test_dir}"
 
   # Should fail
   assert_failure
@@ -257,11 +257,11 @@ EOF
   assert_output --partial "not found"
 }
 
-@test "dnp::load_command with develop service › expect success" {
+@test "dna::load_command with develop service › expect success" {
   # Test case: When load command is called with develop service, it should succeed
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command "${MOCK_DEVELOP_SAVE_DIR}"
+  run dna::load_command "${MOCK_DEVELOP_SAVE_DIR}"
 
   # Should succeed
   assert_success
@@ -278,11 +278,11 @@ EOF
   refute_output --partial "Could not complete post-load actions for "
 }
 
-@test "dnp::load_command with deploy service › expect success with directory change" {
+@test "dna::load_command with deploy service › expect success with directory change" {
   # Test case: When load command is called with deploy service, it should succeed and change directory
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command "${MOCK_DEPLOY_SAVE_DIR}"
+  run dna::load_command "${MOCK_DEPLOY_SAVE_DIR}"
 
   # Should succeed
   assert_success
@@ -297,15 +297,15 @@ EOF
   assert_output --partial "Mock docker image load called"
   assert_output --partial "Load completed successfully"
   assert_output --partial "To change to the project directory, run:"
-  assert_output --partial "You can then run 'dnp up deploy' or 'dnp run deploy' commands"
+  assert_output --partial "You can then run 'dna up deploy' or 'dna run deploy' commands"
   refute_output --partial "Could not complete post-load actions for "
 }
 
-@test "dnp::load_command help flag › expect help output" {
+@test "dna::load_command help flag › expect help output" {
   # Test case: When load command is called with help flag, it should show help
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command --help
+  run dna::load_command --help
 
   # Should succeed (exit 0 from help)
   assert_success
@@ -314,11 +314,11 @@ EOF
   assert_output --partial "Load Docker image from file for offline use"
 }
 
-@test "dnp::handle_deploy_post_load function › expect directory change instructions" {
+@test "dna::handle_deploy_post_load function › expect directory change instructions" {
   # Test case: Test the deploy post-load function directly
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::handle_deploy_post_load "${MOCK_DEPLOY_SAVE_DIR}" test-project
+  run dna::handle_deploy_post_load "${MOCK_DEPLOY_SAVE_DIR}" test-project
 
   # Should succeed
   assert_success
@@ -326,42 +326,42 @@ EOF
   # Should output expected messages
   assert_output --partial "Load completed successfully"
   assert_output --partial "To change to the project directory, run:"
-  assert_output --partial "You can then run 'dnp up deploy' or 'dnp run deploy' commands"
+  assert_output --partial "You can then run 'dna up deploy' or 'dna run deploy' commands"
 }
 
-@test "dnp::handle_develop_post_load function with existing alias › expect alias execution" {
+@test "dna::handle_develop_post_load function with existing alias › expect alias execution" {
   # Test case: Test the develop post-load function with existing alias
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::handle_develop_post_load test
+  run dna::handle_develop_post_load test
 
   # Should succeed
   assert_success
 
   # Should output expected messages
-  assert_output --partial "Check aliases: dnp-test-cd"
-  assert_output --partial "Mock alias dnp-test-cd executed"
+  assert_output --partial "Check aliases: dna-test-cd"
+  assert_output --partial "Mock alias dna-test-cd executed"
 }
 
-@test "dnp::handle_develop_post_load function with non-existing alias › expect warning" {
+@test "dna::handle_develop_post_load function with non-existing alias › expect warning" {
   # Test case: Test the develop post-load function with non-existing alias
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::handle_develop_post_load nonexistent
+  run dna::handle_develop_post_load nonexistent
 
   # Should succeed (warnings don't fail)
   assert_success
 
   # Should output warning message
-  assert_output --partial "Alias not found: dnp-nonexistent-cd"
+  assert_output --partial "Alias not found: dna-nonexistent-cd"
   assert_output --partial "Please manually navigate"
 }
 
-@test "dnp::handle_develop_post_load function with empty alias › expect warning" {
+@test "dna::handle_develop_post_load function with empty alias › expect warning" {
   # Test case: Test the develop post-load function with empty alias
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::handle_develop_post_load ''
+  run dna::handle_develop_post_load ''
 
   # Should succeed (warnings don't fail)
   assert_success
@@ -371,14 +371,14 @@ EOF
   assert_output --partial "Please manually navigate"
 }
 
-@test "dnp::load_command with no arguments but meta.txt in current directory › expect success" {
+@test "dna::load_command with no arguments but meta.txt in current directory › expect success" {
   # Test case: When load command is called without arguments but meta.txt exists in current directory
   local test_dir="${MOCK_SAVE_DIR}/current_dir_test"
   mkdir -p "${test_dir}/test-project"
 
   # Create meta.txt in test directory
   cat > "${test_dir}/meta.txt" << 'EOF'
-# DNP Save Metadata
+# DNA Save Metadata
 SERVICE=deploy
 IMAGE_NAME=test-image-deploy.latest
 SUPER_PROJECT_REPO_NAME=test-project
@@ -392,9 +392,9 @@ EOF
   # Change to test directory and run load command without arguments
   # Note: This test doesn't need load_super_project_config.bash since it tests the case where meta.txt is in current directory
   cd "${test_dir}"
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash"
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash"
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::load_command
+  run dna::load_command
 
   # Should succeed
   assert_success
@@ -405,6 +405,6 @@ EOF
   assert_output --partial "Loading saved image"
 }
 
-# Note: The test case for "dnp::load_command with no arguments and meta.txt in super project root"
+# Note: The test case for "dna::load_command with no arguments and meta.txt in super project root"
 # is covered by the integration test test_save_load_pipeline.bash as it requires complex
-# DNP configuration setup that is better suited for integration testing rather than unit testing.
+# DNA configuration setup that is better suited for integration testing rather than unit testing.

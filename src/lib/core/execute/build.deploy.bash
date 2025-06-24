@@ -32,7 +32,7 @@ function show_help() {
   echo -e "${MSG_END_FORMAT}"
 }
 
-function dnp::build_project_deploy_service() {
+function dna::build_project_deploy_service() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
@@ -82,10 +82,10 @@ function dnp::build_project_deploy_service() {
       build_flag+=("--force-push-project-core")
     fi
     if [[ "${multiarch}" == true ]]; then
-      dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+      dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
       build_core_exit_code=$?
     else
-      dnp::build_services "${build_flag[@]}" "${remaining_args[@]}"
+      dna::build_services "${build_flag[@]}" "${remaining_args[@]}"
       build_core_exit_code=$?
     fi
   }
@@ -96,10 +96,10 @@ function dnp::build_project_deploy_service() {
     remaining_args+=("--push")
   fi
   if [[ "${multiarch}" == true ]]; then
-    dnp::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+    dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
     build_deploy_exit_code=$?
   else
-    dnp::build_services "${build_flag[@]}" "${remaining_args[@]}"
+    dna::build_services "${build_flag[@]}" "${remaining_args[@]}"
     build_deploy_exit_code=$?
   fi
 
@@ -115,23 +115,23 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # ....Source project shell-scripts dependencies..................................................
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies)  ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies)  ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
     source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   fi
   source "${script_path_parent}/build.all.bash" || exit 1
-  source "${DNP_LIB_EXEC_PATH}/build.all.multiarch.bash" || exit 1
+  source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || exit 1
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" "negative"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::build_project_deploy_service "$@"
+  dna::build_project_deploy_service "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -139,8 +139,8 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies)"  || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" 1>&2 && exit 1; }
-  test -n "$( declare -f n2st::print_msg)"  || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" 1>&2 && exit 1; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies)"  || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg)"  || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
 fi

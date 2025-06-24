@@ -10,17 +10,17 @@
 
 # ....Pre-condition................................................................................
 # Check if N2ST is loaded
-dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-test -d "${DNP_LIB_PATH:?err}" || { echo -e "${dnp_error_prefix} library load error!" 1>&2 && exit 1; }
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
-# ....Load DNP utils.............................................................................
+# ....Load DNA utils.............................................................................
 set -o allexport
-source "${DNP_LIB_PATH:?err}/core/utils/.env.cli_format_and_style" || exit 1
+source "${DNA_LIB_PATH:?err}/core/utils/.env.cli_format_and_style" || exit 1
 set +o allexport
 
 
-function dnp:help_header() {
+function dna:help_header() {
 #    echo -n -e "${MSG_DIMMED_FORMAT}"
 #    echo -e "▶︎"
     n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}"
@@ -29,7 +29,7 @@ function dnp:help_header() {
 #    echo -n -e "${MSG_END_FORMAT}"
 }
 
-function dnp::help_footer() {
+function dna::help_footer() {
 #    echo -n -e "${MSG_LINE_STYLE_LVL2:?err}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}"
 #    n2st::draw_horizontal_line_across_the_terminal_window "─" | sed 's/──────$/─❄︎───/'
@@ -38,48 +38,48 @@ function dnp::help_footer() {
     n2st::echo_centering_str "${MSG_LINE_CENTER_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}" "${MSG_LINE_CHAR_HELP:?err}"
 }
 
-function dnp::documentation_buffer_to_help_parser() {
+function dna::documentation_buffer_to_help_parser() {
     local documentation_buffer=$*
     echo -e "${documentation_buffer}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
 }
 
-function dnp::command_help_menu() {
+function dna::command_help_menu() {
     local documentation_buffer=$*
-    dnp:help_header
-    dnp::documentation_buffer_to_help_parser "${documentation_buffer}"
-    dnp::help_footer
+    dna:help_header
+    dna::documentation_buffer_to_help_parser "${documentation_buffer}"
+    dna::help_footer
     return 0
 }
 
 # ====Warning/error msg============================================================================
-function dnp::unknown_option_msg() {
+function dna::unknown_option_msg() {
     local the_name=$1
     local the_option=$2
     n2st::print_msg "Unknown option ${MSG_DIMMED_FORMAT}${the_option}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}\$ ${the_name} --help${MSG_END_FORMAT} for usage information"
     return 1
 }
 
-function dnp::unknown_command_msg() {
+function dna::unknown_command_msg() {
     local the_command=$1
-    n2st::print_msg "Unknown command ${MSG_DIMMED_FORMAT}dnp ${the_command}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}dnp --help${MSG_END_FORMAT} for usage information"
+    n2st::print_msg "Unknown command ${MSG_DIMMED_FORMAT}dna ${the_command}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}dna --help${MSG_END_FORMAT} for usage information"
     return 1
 }
 
-function dnp::unknown_subcommand_msg() {
+function dna::unknown_subcommand_msg() {
     local the_command=$1
     local sub_the_command=${2:-""}
-    n2st::print_msg "Unknown command ${MSG_DIMMED_FORMAT}dnp ${the_command} ${sub_the_command}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}dnp ${the_command} --help${MSG_END_FORMAT} for usage information"
+    n2st::print_msg "Unknown command ${MSG_DIMMED_FORMAT}dna ${the_command} ${sub_the_command}${MSG_END_FORMAT} ‼️\n\nRun ${MSG_DIMMED_FORMAT}dna ${the_command} --help${MSG_END_FORMAT} for usage information"
     return 1
 }
 
-function dnp::illegal_command_msg() {
+function dna::illegal_command_msg() {
     # Usage:
     #   local original_command="$*"
-    #   dnp::illegal_command_msg "build" "${original_command}" "Blabla blabla bla.\n"
+    #   dna::illegal_command_msg "build" "${original_command}" "Blabla blabla bla.\n"
     local the_command=$1
     local the_original_command=${2:-""}
     local message=${3:-""}
-    n2st::print_msg "Illegal command ${MSG_DIMMED_FORMAT}${the_command} ${the_original_command}${MSG_END_FORMAT} ‼️\n${message}\nRun ${MSG_DIMMED_FORMAT}dnp ${the_command} --help${MSG_END_FORMAT} for usage information"
+    n2st::print_msg "Illegal command ${MSG_DIMMED_FORMAT}${the_command} ${the_original_command}${MSG_END_FORMAT} ‼️\n${message}\nRun ${MSG_DIMMED_FORMAT}dna ${the_command} --help${MSG_END_FORMAT} for usage information"
     return 1
 }
 
@@ -90,25 +90,25 @@ function n2st::print_msg_error() {
 }
 
 # ====Entrypoint splash============================================================================
-function dnp::show_entrypoint_help() {
-    local documentation_buffer_dnp="${1:?err}"
+function dna::show_entrypoint_help() {
+    local documentation_buffer_dna="${1:?err}"
     # Splash type: small, negative or big
-    n2st::norlab_splash "${DNP_SPLASH_NAME_FULL:?err}" "${DNP_GIT_REMOTE_URL}" 'negative'
+    n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" 'negative'
     n2st::echo_centering_str 'A tool for managing Docker-based robotic projects' "\033[1;37m" " "
 
     # Note:
     #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
     #   - Delete both horizontal lines
     #   - Delet both header ligne
-    echo -e "${documentation_buffer_dnp}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab-Project (DNP)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dnp COMMAND --help' for more information on a command./d"
-    echo -e "Run ${MSG_DIMMED_FORMAT}dnp COMMAND --help${MSG_END_FORMAT} for more information on a command."
+    echo -e "${documentation_buffer_dna}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed '/Dockerized-NorLab project application (DNA)/d' | sed '/A tool for managing Docker-based robotic projects/d' | sed "/Run 'dna COMMAND --help' for more information on a command./d"
+    echo -e "Run ${MSG_DIMMED_FORMAT}dna COMMAND --help${MSG_END_FORMAT} for more information on a command."
 }
 
-function dnp::show_entrypoint_help_no_splash() {
-    local documentation_buffer_dnp="${1:?err}"
+function dna::show_entrypoint_help_no_splash() {
+    local documentation_buffer_dna="${1:?err}"
     # Note:
     #   - Strip shell comment bloc comment character `#` of both empty line and line with text,
     #   - Delete both horizontal lines
     #   - Reformat the header left align
-    echo -e "${documentation_buffer_dnp}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab-Project (DNP)/Dockerized-NorLab-Project (DNP)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
+    echo -e "${documentation_buffer_dna}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//' | sed 's/^[[:space:]]*Dockerized-NorLab project application (DNA)/Dockerized-NorLab project application (DNA)/' | sed 's/^[[:space:]]*A tool for managing Docker-based robotic projects/A tool for managing Docker-based robotic projects/'
 }
