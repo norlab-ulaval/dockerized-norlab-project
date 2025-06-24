@@ -1,7 +1,57 @@
 
 # Scratch
 
+(Iteration 4)
 
+Center the last diagram row of section _Why_ and _Use cases_
+
+
+---
+
+(Iteration 4)
+
+Add the diagram from `visual/DN_presentation_diagram` not in the main `README.md` corresponding section _Why_ and _Use cases_.
+Add those diagram, two diagram side by side using html tag, on row following the diagram already on those sections.
+The ssh copy instructions are still not in the `install.md` section `Advanced Installation Options`/`Network-Restricted Environments`/`Transfer to target machine and install` step.
+
+---
+
+(Iteration 3)
+
+Add the missing diagram to the _Why_ and _Use cases_ sections.
+Organize diagram, two diagram side by side using html tag.
+Add `visual/dna_splash.png` to `documentation/dna.md` as a page header.  
+
+---
+
+(Iteration 2)
+
+Its a good start, but you are not finish.
+Command documentation:
+- there is a lot of missing command pages; 
+- hyperlink where not all tested as some land nowhere.  
+Main `README.md`:
+- most diagram added to the main `README.md` are not placed in their corresponding sub-sections;
+- maybe those diagram could be agregated at the end of there corresponding section e.g., those related to related use cases could all be togheter at the end of the use-caes section. 
+Installation Guide:
+- macos x86 is NOT supported (and wont ever be);
+- linux x86 is NOT supported (for now). Will be implemented if requested. 
+- Move the sub-section `Platform-Specific Instructions/Linux (Ubuntu/Debian)/Install Docker Engine` to the troubleshooting in case of install related problem and mention that this step is executed automaticaly by `instal.bash`. 
+- Add the ssh copy related command to copy the DNA repository to the remote host at the step 2 of `Network-Restricted Environments` 
+Project Initialization & Configuration:
+- Mention that `.env.dna-internal` is not accessible by user.
+- Review the `Docker Configuration` section as its not align with `src/lib/template/.dockerized_norlab/configuration/Dockerfile`. Mention where user can add code i.e., the `user-project-custom-steps` stage, the `final` stage (for expert only). Mention that configuring the Dockerfile is optional. In most cases, using only `python.requirements.txt` and/or `shell.requirements.bash` is enough.
+- Introduce the dotenv files first, the  requirement configuratrion file second, the entrypoint in third and then the dockerfile configuration. 
+
+---
+
+(Iteration 1)
+
+Implement the plan at `.junie/plans/readme_improvement_plan.md`.
+Follow the plan instructions.
+Review the junie repository `guidelines.md` before starting.
+
+---
 ---
 
 Refactor `dna::check_offline_deploy_service_discovery()` function out of `src/lib/core/utils/load_super_project_config.bash` and put it in a dedicated `offline.bash` utility script in `src/lib/core/utils`.
