@@ -71,10 +71,10 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 ![dna_splash.png](visual/dna_splash.png)
 
 
-[//]: # (## What it does)
+## What it does
 
-<details open>
-  <summary style="font-weight: bolder;font-size: x-large;">What it does</summary>
+[//]: # (<details open>)
+[//]: # (  <summary style="font-weight: bolder;font-size: x-large;">What it does</summary>)
 
 - **Containerized robotic development environment**: Provides a complete containerized workflow for robotic research, development, deployment, testing, continuous integration, running slurm jobs, and source code release.
 - **Multi-platform support**: Runs seamlessly on `l4t/arm64` (Jetson), `darwin/arm64` (Mac OS X), and `linux/x86` without configuration changes.
@@ -83,13 +83,12 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 - **GPU acceleration**: Provides GPU support through [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) for both `l4t/arm64` and `linux/x86` platforms.
 - **Transparent configuration**: Makes project configuration easy while keeping [Docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) logic transparent and accessible.
 
-</details>
+[//]: # (</details>)
 
-[//]: # (## Why)
+## Why
 
-<details close>
-  <summary style="font-weight: bolder;font-size: x-large;">Why</summary>
-
+[//]: # (<details close>)
+[//]: # (  <summary style="font-weight: bolder;font-size: x-large;">Why</summary>)
 
 Dockerized-NorLab (DN) and the Dockerized-NorLab project application (DNA) solve critical challenges in robotic research and development by providing a standardized, reproducible, and scalable containerized environment.
 
@@ -128,12 +127,12 @@ Deploy your robotic applications quickly and reliably across different platforms
 **✅ Code Quality**  
 Maintain high code quality with integrated testing, continuous integration, and standardized development practices built into the containerized workflow.
 
-</details>
+[//]: # (</details>)
 
-[//]: # (## Use Cases)
+## Use Cases
 
-<details close>
-  <summary style="font-weight: bolder;font-size: x-large;">Use Cases</summary>
+[//]: # (<details close>)
+[//]: # (  <summary style="font-weight: bolder;font-size: x-large;">Use Cases</summary>)
 
 DNA and DN support a wide range of robotic development and deployment scenarios:
 
@@ -181,7 +180,7 @@ Work seamlessly across different operating systems and architectures:
 **🎮 GPU Acceleration**  
 Leverage GPU computing power for robotics applications through nvidia-docker integration, supporting both ARM64 and x86 platforms.
 
-</details>
+[//]: # (</details>)
 
 ---
 
