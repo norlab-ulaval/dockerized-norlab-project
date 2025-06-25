@@ -21,8 +21,13 @@ function dna::setup_host_dna_requirements() {
   tmp_cwd=$(pwd)
 
   # ....Install docker requirements................................................................
-  cd "${DNA_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
-  bash install_docker_tools.bash || return 1
+  if [[ $(uname -s) == "Darwin" ]]; then
+    # Docker engine, compose and buildx are included in Docker Desktop
+    :
+  else
+    cd "${DNA_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
+    bash install_docker_tools.bash || return 1
+  fi
 
   cd "$tmp_cwd" || return 1
 

@@ -97,147 +97,30 @@ DNA uses a hierarchical environment variable system with the following precedenc
 
 #### `.env` - Project Environment Variables
 
-Main project configuration file:
-
-```bash
-# Project identification
-SUPER_PROJECT_NAME=my-robot-project
-SUPER_PROJECT_USER=developer
-
-# ROS configuration
-ROS_DISTRO=humble
-ROS_DOMAIN_ID=42
-
-# Container configuration
-CONTAINER_NAME=my-robot-dev
-CONTAINER_HOSTNAME=robot-dev
-
-# Network configuration
-CONTAINER_SSH_PORT=2222
-CONTAINER_VNC_PORT=5901
-```
+Main project configuration file. This file is for project related environment variable (i.e., non-DNA/DN env var).
 
 #### `.env.dna` - DNA-Specific Variables
+This file is for DN/DNA specific setting.
+Variables `DN_PROJECT_GIT_REMOTE_URL`, `DN_CONTAINER_NAME` and `DN_PROJECT_ALIAS_PREFIX` are automaticaly configured on initialization.
+Check `.env.dna` comment for other available environment variable.
 
-DNA application settings:
-
-```bash
-# Build configuration
-DNA_BUILD_CONTEXT=.
-DNA_IMAGE_TAG=latest
-DNA_DOCKERFILE_PATH=.dockerized_norlab/configuration/Dockerfile
-
-# Service configuration
-DNA_SERVICE_DEVELOP=develop
-DNA_SERVICE_DEPLOY=deploy
-DNA_SERVICE_CI_TESTS=ci-tests
-
-# Registry configuration
-DNA_REGISTRY=docker.io
-DNA_NAMESPACE=myorganization
-```
 
 #### `.env.local` - Local Development Overrides
 
-Local-specific settings (not committed to Git):
+This file won't be committed to Git.
+Use it for local-specific settings.
+Example:
 
 ```bash
 # Local development ports
-CONTAINER_SSH_PORT=2223
-CONTAINER_VNC_PORT=5902
-
-# Local paths
-EXTERNAL_DATA_PATH=/home/user/datasets
-ARTIFACT_PATH=/home/user/artifacts
+DN_SSH_SERVER_PORT=2223
+DN_GDB_SERVER_PORT=7777
 
 # Development flags
 DEBUG_MODE=true
 VERBOSE_LOGGING=true
 ```
 
-### Environment Variable Reference
-
-#### Core Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `SUPER_PROJECT_NAME` | Project identifier | `my-robot-project` |
-| `SUPER_PROJECT_USER` | Container user | `developer` |
-| `ROS_DISTRO` | ROS distribution | `humble`, `iron`, `rolling` |
-| `CONTAINER_NAME` | Container name | `my-robot-dev` |
-
-#### Network Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `CONTAINER_SSH_PORT` | SSH access port | `2222` |
-| `CONTAINER_VNC_PORT` | VNC access port | `5901` |
-| `CONTAINER_JUPYTER_PORT` | Jupyter port | `8888` |
-
-#### Path Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ARTIFACT_PATH` | Host artifact path | `./artifact` |
-| `EXTERNAL_DATA_PATH` | Host data path | `./external_data` |
-| `SRC_PATH` | Host source path | `./src` |
-
-## Docker Configuration
-
-### Dockerfile Customization
-
-The generated `Dockerfile` can be customized for your specific needs:
-
-```dockerfile
-# Base image selection
-ARG BASE_IMAGE=norlabulaval/dn-project-core:humble-l4t
-
-FROM ${BASE_IMAGE} AS develop-stage
-
-# Install project-specific dependencies
-RUN apt-get update && apt-get install -y \
-    python3-opencv \
-    ros-${ROS_DISTRO}-navigation2 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python packages
-COPY project_requirements/requirements.txt /tmp/
-RUN pip3 install -r /tmp/requirements.txt
-
-# Copy project source
-COPY src/ /ros2_ws/src/${SUPER_PROJECT_NAME}/
-
-# Build ROS workspace
-RUN cd /ros2_ws && \
-    source /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build --packages-select ${SUPER_PROJECT_NAME}
-
-# Set up entrypoint
-COPY project_entrypoints/ /dockerized_norlab_entrypoints/
-RUN chmod +x /dockerized_norlab_entrypoints/*.bash
-
-ENTRYPOINT ["/dockerized_norlab_entrypoints/entrypoint.bash"]
-```
-
-### Multi-Stage Build Example
-
-```dockerfile
-# Development stage
-FROM norlabulaval/dn-project-core:humble AS develop-stage
-# ... development-specific setup
-
-# Deploy stage
-FROM develop-stage AS deploy-stage
-# Remove development tools
-RUN apt-get remove -y \
-    build-essential \
-    cmake \
-    && apt-get autoremove -y
-
-# Production optimizations
-RUN rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/*
-```
 
 ## Project Requirements
 
@@ -355,51 +238,86 @@ fi
 exec "$@"
 ```
 
-## Customization Examples
 
-### Adding Custom Dependencies
+## Docker Configuration
 
-1. **Edit requirements file:**
-   ```bash
-   echo "opencv-python>=4.5.0" >> .dockerized_norlab/configuration/project_requirements/requirements.txt
-   ```
+### Dockerfile Customization
 
-2. **Rebuild container:**
-   ```bash
-   dna build develop
-   ```
+The generated `.dockerized_norlab/configuration/Dockerfile` can be customized for your specific needs. 
+In most cases however, using only `python.requirements.txt` and/or `shell.requirements.bash` is enough.
 
-### Custom Environment Variables
+#### ⚠️ Do not add code to the first stage `init-and-setup` unless you know what your doing.
+```dockerfile
+# =================================================================================================
+#
+# Usage:
+#   - 👍 You can change code in the 'user-project-custom-steps' stage.
+#     See the line with the "↓ ↓ ↓ ..." character below.
+#   - ⚠️ Dont change code the first stage (init-and-setup) or in the last stage (final) unless you
+#     know what your doing.
+#
+# =================================================================================================
+ARG BASE_IMAGE
+ARG BASE_IMAGE_TAG
+FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS init-and-setup
 
-1. **Add to `.env`:**
-   ```bash
-   echo "CUSTOM_DATASET_PATH=/data/custom" >> .dockerized_norlab/configuration/.env
-   ```
-
-2. **Use in Dockerfile:**
-   ```dockerfile
-   ENV CUSTOM_DATASET_PATH=${CUSTOM_DATASET_PATH}
-   ```
-
-### Multi-Robot Configuration
-
-For projects with multiple robots:
-
-```bash
-# .env.robot1
-SUPER_PROJECT_NAME=multi-robot-project
-ROBOT_ID=robot1
-CONTAINER_NAME=robot1-dev
-CONTAINER_SSH_PORT=2222
-ROS_DOMAIN_ID=1
-
-# .env.robot2
-SUPER_PROJECT_NAME=multi-robot-project
-ROBOT_ID=robot2
-CONTAINER_NAME=robot2-dev
-CONTAINER_SSH_PORT=2223
-ROS_DOMAIN_ID=2
+# ...
 ```
+
+#### User can add code in the `user-project-custom-steps` stage.
+Check the following lines in `.dockerized_norlab/configuration/Dockerfile`
+```dockerfile
+# ...
+
+# ====User project custom steps====================================================================
+FROM init-and-setup AS user-project-custom-steps
+# USER NOTES: ADD YOUR CODE IN THIS STAGE
+# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+
+# Example
+RUN <<EOF
+    {
+        echo "..........................................." && \
+        echo "Sanity check" && \
+        python -c "import torch" && \
+        python -c "import torchvision" && \
+        python -c "import hydra" && \
+        python -c "from omegaconf import DictConfig, OmegaConf" && \
+        echo "..........................................." ;
+    } || exit 1
+EOF
+
+# ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
+# ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
+# USER NOTES: ADD YOUR CODE BEFORE THIS LINE
+
+# ...
+```
+#### Expert user can also add code to the `final` stage for handling special cases.
+Check the following lines in `.dockerized_norlab/configuration/Dockerfile`
+
+```dockerfile
+# ...
+
+# ====DN-project final=============================================================================
+FROM --platform=${TARGETPLATFORM} user-project-custom-steps AS final
+# ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+
+RUN <<EOF
+    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
+    # Cleanup buidl script
+    rm -f /dn_project_core_init.bash
+    rm -f /dna-lib-container-tools/dn_project_core.setup.bash
+    rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
+EOF
+CMD [ "bash" ]
+```
+
+---
 
 ## Best Practices
 
@@ -410,14 +328,6 @@ ROS_DOMAIN_ID=2
    # Don't commit API keys or passwords
    API_KEY=your-secret-key
    DATABASE_PASSWORD=secret
-   ```
-
-2. **Document environment variables:**
-   ```bash
-   # .env.example
-   SUPER_PROJECT_NAME=your-project-name
-   ROS_DISTRO=humble
-   # Add your custom variables here
    ```
 
 ### Docker Optimization
@@ -466,8 +376,8 @@ ROS_DOMAIN_ID=2
 
 **Solution**: Change ports in `.env.local`:
 ```bash
-CONTAINER_SSH_PORT=2223
-CONTAINER_VNC_PORT=5902
+DN_SSH_SERVER_PORT=2223
+DN_GDB_SERVER_PORT=7778
 ```
 
 #### Permission Issues

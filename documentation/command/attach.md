@@ -115,7 +115,7 @@ The `attach` command uses SSH to connect to containers:
 
 ### Default SSH Configuration
 
-- **Port**: Configured via `CONTAINER_SSH_PORT` (default: 2222)
+- **Port**: Configured via `DN_SSH_SERVER_PORT` (default: 2222)
 - **User**: Configured via `SUPER_PROJECT_USER`
 - **Host**: localhost (for local containers)
 
@@ -145,7 +145,7 @@ DNA handles SSH key management automatically:
 
 3. **Check port mapping**:
    ```bash
-   docker port CONTAINER_NAME
+   docker port DN_CONTAINER_NAME
    ```
 
 4. **Restart SSH service**:

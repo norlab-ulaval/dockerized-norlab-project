@@ -173,10 +173,10 @@ PyCharm Project Root/
 3. **Coordinate ports**:
    ```bash
    # Developer 1
-   CONTAINER_SSH_PORT=2222
+   DN_SSH_SERVER_PORT=2222
    
    # Developer 2
-   CONTAINER_SSH_PORT=2223
+   DN_SSH_SERVER_PORT=2223
    ```
 
 ## Debugging Setup
@@ -313,8 +313,8 @@ For projects targeting multiple architectures:
 **Solutions**:
 1. Change container ports in `.env.local`:
    ```bash
-   CONTAINER_SSH_PORT=2223
-   CONTAINER_VNC_PORT=5902
+   DN_SSH_SERVER_PORT=2223
+   DN_GDB_SERVER_PORT=7777
    ```
 
 2. Update IDE connection settings accordingly
