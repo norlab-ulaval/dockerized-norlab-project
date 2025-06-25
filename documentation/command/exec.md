@@ -174,7 +174,7 @@ The `exec` command automatically discovers the appropriate service:
 dna exec --detach -- python3 long_running_script.py
 
 # Check if process is still running
-docker exec CONTAINER_NAME ps aux | grep python3
+docker exec DN_CONTAINER_NAME ps aux | grep python3
 ```
 
 ### Process Management
@@ -184,7 +184,7 @@ docker exec CONTAINER_NAME ps aux | grep python3
 dna exec --detach -- ros2 launch my_package service.launch.py
 
 # Monitor logs
-docker logs -f CONTAINER_NAME
+docker logs -f DN_CONTAINER_NAME
 
 # Stop background process (if needed)
 dna exec -- pkill -f "ros2 launch"

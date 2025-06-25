@@ -236,7 +236,16 @@ function dna::install_dockerized_norlab_project_on_host() {
   fi
 
   cd "${dna_install_dir}"
-  print_msg "Remaining install instructions:
+  if [[ $(uname -s) == "Darwin" ]]; then
+    print_msg "Remaining install instructions:
+1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
+1. Make sure 'docker compose' is enable in 'Docker Compose' settings
+2. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
+    $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+    $ docker buildx ls
+${MSG_END_FORMAT}"
+  else
+    print_msg "Remaining install instructions:
 1. Apply Docker group change without login out: execute ${MSG_DIMMED_FORMAT}$ newgrp docker${MSG_END_FORMAT}
 2. Restart the docker daemon to apply changes: execute ${MSG_DIMMED_FORMAT}$ sudo systemctl restart docker${MSG_END_FORMAT}
 3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
@@ -247,6 +256,7 @@ ${MSG_END_FORMAT}"
 #     $ source load_repo_main_dotenv.bash
 #     $ cd utilities/norlab-build-system/install_scripts
 #     $ bash nbs_create_multiarch_docker_builder.bash
+  fi
 
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   return 0

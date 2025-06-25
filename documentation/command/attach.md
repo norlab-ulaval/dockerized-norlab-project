@@ -115,8 +115,8 @@ The `attach` command uses SSH to connect to containers:
 
 ### Default SSH Configuration
 
-- **Port**: Configured via `CONTAINER_SSH_PORT` (default: 2222)
-- **User**: Configured via `SUPER_PROJECT_USER`
+- **Port**: Configured via `DN_SSH_SERVER_PORT` (default: 2222)
+- **User**: Configured via `DN_PROJECT_USER`
 - **Host**: localhost (for local containers)
 
 ### SSH Key Management
@@ -145,7 +145,7 @@ DNA handles SSH key management automatically:
 
 3. **Check port mapping**:
    ```bash
-   docker port CONTAINER_NAME
+   docker port DN_CONTAINER_NAME
    ```
 
 4. **Restart SSH service**:
@@ -175,8 +175,8 @@ DNA handles SSH key management automatically:
 **Solutions**:
 1. **Check user configuration**:
    ```bash
-   # Verify SUPER_PROJECT_USER in .env
-   grep SUPER_PROJECT_USER .dockerized_norlab/configuration/.env
+   # Verify super project DN container user information 
+   dna project dotenv | grep -e DN_PROJECT_USER -e DN_PROJECT_UID -e DN_PROJECT_GID
    ```
 
 2. **Regenerate SSH keys**:

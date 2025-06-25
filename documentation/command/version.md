@@ -102,8 +102,8 @@ The version is read from:
 REQUIRED_VERSION="1.2.0"
 CURRENT_VERSION=$(dna version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 
-if [[ "$CURRENT_VERSION" < "$REQUIRED_VERSION" ]]; then
-    echo "Error: DNA version $CURRENT_VERSION is too old. Required: $REQUIRED_VERSION"
+if [[ ${CURRENT_VERSION} -lt ${REQUIRED_VERSION} ]]; then
+    echo "Error: DNA version ${CURRENT_VERSION} is too old. Required: ${REQUIRED_VERSION}"
     exit 1
 fi
 ```

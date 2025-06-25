@@ -246,7 +246,7 @@ dna run slurm ${SLURM_JOB_ID} -- python3 experiment.py \
 **Solutions**:
 1. **Check user mapping**: Verify user configuration
    ```bash
-   grep SUPER_PROJECT_USER .dockerized_norlab/configuration/.env
+   dna project dotenv | grep DN_PROJECT_USER
    ```
 
 2. **Use volume mounts carefully**: Ensure proper permissions
