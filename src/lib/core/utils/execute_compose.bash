@@ -1,5 +1,5 @@
 #!/bin/bash
-DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
+DOCUMENTATION_DNA_EXECUTE_COMPOSE=$(
   cat <<'EOF'
 # =================================================================================================
 # Convenient script for executin a compose command on a single images specified in a compose file.
@@ -8,12 +8,12 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #
 # Usage as a function:
 #   $ source execute_compose.bash
-#   $ dnp::excute_compose [<any-arguments>] [--] [<any-docker-flag>]
+#   $ dna::excute_compose [OPTIONS] [--] [<any-docker-flag>]
 #
 # Usage as a script:
-#   $ bash execute_compose.bash [<any-arguments>] [--] [<any-docker-flag>]
+#   $ bash execute_compose.bash [OPTIONS] [--] [<any-docker-flag>]
 #
-# Arguments:
+# Options:
 #   --override-build-cmd <docker_cmd>      To override the docker command
 #                                           (defaul: 'build')
 #   -f | --file "compose.yaml"             To override the docker compose file
@@ -21,6 +21,7 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #   --compose-path "/path/to/compose/dir"  To override the compose file directory
 #   --multiarch
 #   --buildx-builder-name "name"           Default to "local-builder-multiarch-virtual"
+#   --msg-line-level CHAR                  Set consol horizontal line character when used as a fct
 #   -h | --help
 #
 # Positional argument:
@@ -28,7 +29,7 @@ DOCUMENTATION_DNP_EXECUTE_COMPOSE=$(
 #
 # Global
 #   read SUPER_PROJECT_ROOT
-#   read DNP_ROOT
+#   read DNA_ROOT
 #
 # =================================================================================================
 EOF
@@ -37,7 +38,7 @@ EOF
 # (CRITICAL) ToDo: unit-test
 
 # ....Functions....................................................................................
-function dnp::excute_compose() {
+function dna::excute_compose() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
@@ -46,10 +47,12 @@ function dnp::excute_compose() {
   # ....Set env variables (pre cli)................................................................
   local remaining_args=()
   local docker_command_w_flags=()
-  local compose_path="${DNP_ROOT:?err}/src/lib/core/docker"
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
   local multiarch=false
   local local_buildx_builder_name="local-builder-multiarch-virtual"
+  local msg_line_level="${MSG_LINE_CHAR_BUILDER_LVL2}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # Note: The env var docker_cmd is required for using the script with 'push' or 'config' docker cmd
   local docker_cmd=build
@@ -61,7 +64,7 @@ function dnp::excute_compose() {
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "$0 --help"
     # Strip shell comment char `#` and both lines
-    echo -e "${DOCUMENTATION_DNP_EXECUTE_COMPOSE}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
+    echo -e "${DOCUMENTATION_DNA_EXECUTE_COMPOSE}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
     n2st::draw_horizontal_line_across_the_terminal_window "="
     echo -e "${MSG_END_FORMAT}"
   }
@@ -93,6 +96,11 @@ function dnp::excute_compose() {
       shift # Remove argument (--buildx-builder-name)
       shift # Remove argument value
       ;;
+    --msg-line-level)
+      msg_line_level="${2}"
+      shift # Remove argument (--msg-line-level)
+      shift # Remove argument value CHAR
+      ;;
     -h | --help)
       clear
       show_help
@@ -115,7 +123,7 @@ function dnp::excute_compose() {
   docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
 
   # ====Begin======================================================================================
-  n2st::print_formated_script_header "dnp::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
+  n2st::print_formated_script_header "dna::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN} ${TC_VERSION}"
@@ -175,25 +183,25 @@ function dnp::excute_compose() {
   fi
 
   # ....Teardown...................................................................................
-  n2st::print_formated_script_footer "dnp::excute_compose" "${MSG_LINE_CHAR_BUILDER_LVL2}"
-  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && exit 1; }
+  n2st::print_formated_script_footer "dna::excute_compose" "${msg_line_level}" "${line_style}"
+  cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" && exit 1; }
   return ${docker_exit_code}
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  source "${script_path_parent}/import_dnp_lib.bash" || exit 1
+  source "${script_path_parent}/import_dna_lib.bash" || exit 1
   source "${script_path_parent}/load_super_project_config.bash" || exit 1
 
   # ....Execute....................................................................................
-  n2st::norlab_splash "${DNP_GIT_NAME:?err} (${DNP_PROMPT_NAME:?err})" "${DNP_GIT_REMOTE_URL:?err}"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL:?err}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::excute_compose "$@"
+  dna::excute_compose "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"

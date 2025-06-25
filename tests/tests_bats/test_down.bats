@@ -49,42 +49,42 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute/"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Create mock functions for dependencies
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
 #!/bin/bash
 # Mock load_super_project_config.bash
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/down.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/down.bash" << 'EOF'
 #!/bin/bash
 # Mock down.bash
-function dnp::down_command() {
-  echo "Mock dnp::down_command called with args: $*"
+function dna::down_command() {
+  echo "Mock dna::down_command called with args: $*"
   return 0
 }
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/down.slurm.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/down.slurm.bash" << 'EOF'
 #!/bin/bash
 # Mock down.slurm.bash
-function dnp::down_slurm() {
-  echo "Mock dnp::down_slurm called with args: $*"
+function dna::down_slurm() {
+  echo "Mock dna::down_slurm called with args: $*"
   return 0
 }
 EOF
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -94,12 +94,14 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL2="-"
 
 # Set up environment variables
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
-export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_LIB_EXEC_PATH="${MOCK_DNA_DIR}/src/lib/core/execute"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
@@ -108,8 +110,8 @@ function n2st::print_msg() {
 }
 
 # ....Mock ui.bash functions.......................................................................
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
@@ -130,29 +132,30 @@ function n2st::print_msg_done() {
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute"
 
   # Copy the down.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  cd "${MOCK_DNA_DIR}" || exit 1
 }
 
 # ....Teardown.....................................................................................
@@ -162,78 +165,78 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directory
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::down_command with no arguments › expect default behavior" {
+@test "dna::down_command with no arguments › expect default behavior" {
   # Test case: When down command is called without arguments, it should stop containers with default options
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/down.bash && dnp::down_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/down.bash && dna::down_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: down procedure"
-  assert_output --partial "Mock dnp::down_command called with args:"
+  assert_output --partial "Mock dna::down_command called with args:"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: down procedure"
 }
 
-@test "dnp::down_command with --help › expect help menu" {
+@test "dna::down_command with --help › expect help menu" {
   # Test case: When down command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/down.bash && dnp::down_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/down.bash && dna::down_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::down_command with -h › expect help menu" {
+@test "dna::down_command with -h › expect help menu" {
   # Test case: When down command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/down.bash && dnp::down_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/down.bash && dna::down_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::down_command with --slurm › expect slurm down" {
+@test "dna::down_command with --slurm › expect slurm down" {
   # Test case: When down command is called with --slurm, it should stop slurm containers
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/down.bash && dnp::down_command --slurm"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/down.bash && dna::down_command --slurm"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
   assert_output --partial "Mock n2st::print_formated_script_header called with args: down procedure"
-  assert_output --partial "Mock dnp::down_slurm called with args:"
+  assert_output --partial "Mock dna::down_slurm called with args:"
   assert_output --partial "Mock n2st::print_msg_done called with args: slurm container down"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: down procedure"
 }
 
-@test "dnp::down_command with docker-compose flags › expect flags passed to down_command" {
+@test "dna::down_command with docker-compose flags › expect flags passed to down_command" {
   # Test case: When down command is called with docker-compose flags, it should pass them to down_command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/down.bash && dnp::down_command --volumes --remove-orphans"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/down.bash && dna::down_command --volumes --remove-orphans"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::down_command called with args: --volumes --remove-orphans"
+  assert_output --partial "Mock dna::down_command called with args: --volumes --remove-orphans"
 }
 
-@test "dnp::down_command with --slurm and docker-compose flags › expect flags passed to down_slurm" {
+@test "dna::down_command with --slurm and docker-compose flags › expect flags passed to down_slurm" {
   # Test case: When down command is called with --slurm and docker-compose flags, it should pass them to down_slurm
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/down.bash && dnp::down_command --slurm --volumes --remove-orphans"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/down.bash && dna::down_command --slurm --volumes --remove-orphans"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::down_slurm called with args: --volumes --remove-orphans"
+  assert_output --partial "Mock dna::down_slurm called with args: --volumes --remove-orphans"
 }

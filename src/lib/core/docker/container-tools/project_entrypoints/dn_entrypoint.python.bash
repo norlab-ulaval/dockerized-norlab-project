@@ -18,12 +18,11 @@
 # =================================================================================================
 set -e
 
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
 
 # ====Setup========================================================================================
 if [[ ! -d "${DN_PROJECT_PATH:?'Required DN environment variable is set and not empty'}/src" ]]; then
-  echo -e "\n${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+  echo -e "\n${dna_error_prefix} '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
   exit 1
 else
   cd "${DN_PROJECT_PATH}/src" || exit 1

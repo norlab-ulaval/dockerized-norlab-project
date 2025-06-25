@@ -15,7 +15,7 @@
 add_docker_flag=("--service-names" "project-core,project-develop")
 
 # ....Path resolution..............................................................................
-script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
 script_path_parent="$(dirname "${script_path}")"
 
 # ====Begin========================================================================================

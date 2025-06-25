@@ -11,26 +11,26 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.template.bash [<any-dnp-argument>]
+#   $ bash slurm_job.template.bash [<any-dna-argument>]
 #
 # =================================================================================================
 declare -x SJOB_ID
-declare -a dnp_run_slurm_flags=()
+declare -a dna_run_slurm_flags=()
 declare -a hydra_flags=()
 
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
-function dnp::job_setup_callback() {
-  # TODO: Add any instruction that should be executed before 'dnp run slurm' command
+function dna::job_setup_callback() {
+  # TODO: Add any instruction that should be executed before 'dna run slurm' command
   :
 }
 
 # ....Custom teardown (optional)...................................................................
-function dnp::job_teardown_callback() {
+function dna::job_teardown_callback() {
   local exit_code=$?
-  # TODO: Add any instruction that should be executed after 'dnp run slurm' exit.
+  # TODO: Add any instruction that should be executed after 'dna run slurm' exit.
 
-  # Note: Command 'dnp run slurm' already handle stoping the container in case the slurm command
+  # Note: Command 'dna run slurm' already handle stoping the container in case the slurm command
   #  `scancel` is issued.
   exit ${exit_code:1}
 }
@@ -56,20 +56,20 @@ hydra_flags+=("launcher/example_app.py")
 #hydra_flags+=("--config-name=")
 
 # ....Debug flags..................................................................................
-dnp_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
+dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
 
-#dnp_run_slurm_flags+=("--skip-core-force-rebuild")
-#dnp_run_slurm_flags+=("--dry-run")
+#dna_run_slurm_flags+=("--skip-core-force-rebuild")
+#dna_run_slurm_flags+=("--dry-run")
 #hydra_flags+=("--cfg" "all")
 
-# ====DNP internal=================================================================================
-dnp_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
-dnp_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
-dnp_run_slurm_flags+=("$@")
+# ====DNA internal=================================================================================
+dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
+dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
+dna_run_slurm_flags+=("$@")
 export SJOB_ID
-dnp::job_setup_callback
-trap dnp::job_teardown_callback EXIT
+dna::job_setup_callback
+trap dna::job_teardown_callback EXIT
 
 # ====Launch slurm job=============================================================================
-dnp run slurm "${SJOB_ID:?err}" "${dnp_run_slurm_flags[@]}" "${hydra_flags[@]}"
+dna run slurm "${SJOB_ID:?err}" "${dna_run_slurm_flags[@]}" "${hydra_flags[@]}"
 

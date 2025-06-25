@@ -77,20 +77,20 @@ teardown_file() {
 # ====Test casses==================================================================================
 # TODO: write tests cases
 
-@test "dnp::good_morning_norlab (environment variable set) › expect pass" {
+@test "dna::good_morning_norlab (environment variable set) › expect pass" {
   assert_empty $GREETING
   export GREETING='Goooooooood morning NorLab'
   assert_not_empty $GREETING
 
-  run "dnp::good_morning_norlab"
+  run "dna::good_morning_norlab"
   assert_success
   assert_output --partial " ... there's nothing like the smell of a snow storm in the morning!"
   unset GREETING
 }
 
-@test "dnp::good_morning_norlab (command executed in a subshell) › expect pass" {
+@test "dna::good_morning_norlab (command executed in a subshell) › expect pass" {
   assert_empty $GREETING
-  run bash -c "source ./$TESTED_FILE && GREETING='Goooooooood morning NorLab' && dnp::good_morning_norlab"
+  run bash -c "source ./$TESTED_FILE && GREETING='Goooooooood morning NorLab' && dna::good_morning_norlab"
   assert_empty $GREETING
   assert_success
   assert_output --partial "Goooooooood morning NorLab ... there's nothing like the smell of a snow storm in the morning!"

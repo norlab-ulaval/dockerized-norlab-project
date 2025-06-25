@@ -29,8 +29,8 @@ WORKDIR /tmp/numba_cache
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 
 WORKDIR ${DN_PROJECT_SERVICE_DIR}
-COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" --from=context-dnp-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.slurm.bash ./
-COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" .dockerized_norlab_project/configuration/project_entrypoints/project-slurm .
+COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" --from=context-dna-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.slurm.bash ./
+COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" .dockerized_norlab/configuration/project_entrypoints/project-slurm .
 
 RUN <<EOF
     chmod 777 /tmp/numba_cache

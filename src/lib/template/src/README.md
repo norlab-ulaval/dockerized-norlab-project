@@ -1,2 +1,2 @@
-# Dockerized-NorLab-Project required directory
+# Dockerized-NorLab Project required directory
 Add project source code here

@@ -58,8 +58,8 @@ setup_file() {
 #  \033[0m"  >&3
 #
 #  echo -e "
-#  \n...DNP related environment varaibles...........................................................
-#  \n$(printenv | grep -e DNP_)
+#  \n...DNA related environment varaibles...........................................................
+#  \n$(printenv | grep -e DNA_)
 #  \n...............................................................................................
 #  \n" >&3
 
@@ -85,66 +85,66 @@ teardown() {
 
 # ====Test casses==================================================================================
 
-@test "dnp::setup_host_for_this_super_project (test .bashrc expected append › expect pass" {
+@test "dna::setup_host_for_this_super_project (test .bashrc expected append › expect pass" {
   T_DN_PROJECT_ALIAS_PREFIX="umock"
   T_DN_PROJECT_ALIAS_PREFIX_CAP="UMOCK"
 #  cat ${HOME}/.bashrc
 
-  assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNP dockerized-norlab-project-mock aliases and env variable"
-  assert_file_not_contains "${HOME}/.bashrc" "#<<<<DNP dockerized-norlab-project-mock aliases and env variable end"
+  assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNA dockerized-norlab-project-mock aliases and env variable"
+  assert_file_not_contains "${HOME}/.bashrc" "#<<<<DNA dockerized-norlab-project-mock aliases and env variable end"
 
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 #  cat "${HOME}/.bashrc"
   assert_success
 
-  assert_file_contains "${HOME}/.bashrc" "^#>>>>DNP dockerized-norlab-project-mock aliases and env variable$"
-  assert_file_contains "${HOME}/.bashrc" "^export _DNP_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab_project$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cd='cd ${MOCK_PROJECT_PATH}'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab_project'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cds='cd ${MOCK_PROJECT_PATH}/src'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${MOCK_PROJECT_PATH}/tests'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cda='cd ${MOCK_PROJECT_PATH}/artifact'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cde='cd ${MOCK_PROJECT_PATH}/external_data'$"
-  assert_file_contains "${HOME}/.bashrc" "^#<<<<DNP dockerized-norlab-project-mock aliases and env variable end$"
+  assert_file_contains "${HOME}/.bashrc" "^#>>>>DNA dockerized-norlab-project-mock aliases and env variable$"
+  assert_file_contains "${HOME}/.bashrc" "^export _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd='cd ${MOCK_PROJECT_PATH}'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cds='cd ${MOCK_PROJECT_PATH}/src'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${MOCK_PROJECT_PATH}/tests'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cda='cd ${MOCK_PROJECT_PATH}/artifact'$"
+  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cde='cd ${MOCK_PROJECT_PATH}/external_data'$"
+  assert_file_contains "${HOME}/.bashrc" "^#<<<<DNA dockerized-norlab-project-mock aliases and env variable end$"
 
   assert_output --partial "dir is reachable. Ready to install alias"
 
   assert_output --partial "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cd -> cd to dockerized-norlab-project-mock root
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab_project dir
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cds -> cd to dockerized-norlab-project-mock src dir
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to dockerized-norlab-project-mock tests dir
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cda -> cd to dockerized-norlab-project-mock artifact dir
-      - dnp-${T_DN_PROJECT_ALIAS_PREFIX}-cde -> cd to dockerized-norlab-project-mock external data dir
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd -> cd to dockerized-norlab-project-mock root
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab dir
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cds -> cd to dockerized-norlab-project-mock src dir
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to dockerized-norlab-project-mock tests dir
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cda -> cd to dockerized-norlab-project-mock artifact dir
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cde -> cd to dockerized-norlab-project-mock external data dir
 
     New available environment variable added to ~/.bashrc for convenience:
-      - _DNP_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}
+      - _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}
 "
 }
 
-@test "dnp::setup_host_for_this_super_project › expect pass" {
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+@test "dna::setup_host_for_this_super_project › expect pass" {
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/load_super_project_config.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::setup_host_for_this_super_project
+  run dna::setup_host_for_this_super_project
   assert_success
   assert_output --partial 'dir is reachable. Ready to install alias'
   assert_output --partial 'Setup completed!'
   assert_not_empty "${DN_PROJECT_ALIAS_PREFIX}"
 }
 
-@test "dnp::setup_host_for_this_super_project | DNP lib not loaded › expect fail" {
-  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE} && dnp::setup_host_for_this_super_project"
+@test "dna::setup_host_for_this_super_project | DNA lib not loaded › expect fail" {
+  run bash -c "source ${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE} && dna::setup_host_for_this_super_project"
   assert_failure
-  assert_output --partial 'The DNP lib is not loaded'
+  assert_output --partial 'The DNA lib is not loaded'
 }
 
-@test "dnp::setup_host_for_this_super_project | super project not loaded › expect fail" {
-  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+@test "dna::setup_host_for_this_super_project | super project not loaded › expect fail" {
+  source "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
-  run dnp::setup_host_for_this_super_project
+  run dna::setup_host_for_this_super_project
   assert_failure
   assert_output --partial 'Super project configs are not loaded, run load_super_project_config.bash first'
 }

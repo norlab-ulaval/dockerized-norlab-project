@@ -50,20 +50,20 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Dockerized-NorLab-project internal. ...................................................
-      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
-      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/dn_container_env_variable/:/dn_container_env_variable/:rw
+      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
       - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
     env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/.env.dnp
+      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
-      - path: ${DNP_ROOT:?err}/src/lib/core/docker/.env.dnp-internal
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab_project/configuration/.env.local
+      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
         required: false
     tty: true
     stdin_open: true
@@ -100,4 +100,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab_project/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
+      # ....Add host volume you want to mount into the container...................................
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro

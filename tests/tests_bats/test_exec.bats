@@ -49,33 +49,33 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute/"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Create mock functions for dependencies
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
 #!/bin/bash
 # Mock load_super_project_config.bash
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/up_and_attach.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/up_and_attach.bash" << 'EOF'
 #!/bin/bash
 # Mock up_and_attach.bash
-function dnp::up_and_attach() {
-  echo "Mock dnp::up_and_attach called with args: $*"
+function dna::up_and_attach() {
+  echo "Mock dna::up_and_attach called with args: $*"
   return 0
 }
 EOF
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -85,24 +85,35 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL1="-"
 
 # Set up environment variables
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
-export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_LIB_EXEC_PATH="${MOCK_DNA_DIR}/src/lib/core/execute"
 export DN_CONTAINER_NAME="mock-container"
+export DNA_PROMPT_NAME="Dockerized-NorLab Project"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab Project"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab Project"
+export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
 # ....Mock ui.bash functions.......................................................................
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
-function dnp::illegal_command_msg() {
-  echo "Mock dnp::illegal_command_msg called with args: $*"
+function dna::illegal_command_msg() {
+  echo "Mock dna::illegal_command_msg called with args: $*"
+  return 1
+}
+
+function dna::unknown_subcommand_msg() {
+  echo "Mock dna::unknown_subcommand_msg called with args: $*"
   return 1
 }
 
@@ -118,29 +129,30 @@ function n2st::print_msg() {
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute"
 
   # Copy the exec.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  cd "${MOCK_DNA_DIR}" || exit 1
 }
 
 # ....Teardown.....................................................................................
@@ -150,174 +162,208 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directory
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::exec_command with no arguments › expect default behavior" {
-  # Test case: When exec command is called without arguments, it should execute the default command
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command"
+@test "dna::exec_command with no arguments › expect default behavior" {
+  # Test case: When exec command is called without arguments, it should execute with the default service (develop)
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up"
+  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
 
-@test "dnp::exec_command with --help › expect help menu" {
+@test "dna::exec_command with --help › expect help menu" {
   # Test case: When exec command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::exec_command with -h › expect help menu" {
+@test "dna::exec_command with -h › expect help menu" {
   # Test case: When exec command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::exec_command with --service option › expect service passed to up_and_attach" {
-  # Test case: When exec command is called with --service option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --service project-custom"
+@test "dna::exec_command with develop service › expect develop service passed to up_and_attach" {
+  # Test case: When exec command is called with develop service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command develop"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service project-custom"
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop"
 }
 
-@test "dnp::exec_command with --detach option › expect detach flag passed to up_and_attach" {
-  # Test case: When exec command is called with --detach option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --detach"
+@test "dna::exec_command with deploy service › expect deploy service passed to up_and_attach" {
+  # Test case: When exec command is called with deploy service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command deploy"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --detach"
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service deploy"
 }
 
-@test "dnp::exec_command with --dry-run option › expect dry-run and detach flags passed to up_and_attach" {
-  # Test case: When exec command is called with --dry-run option, it should pass both --dry-run and --detach to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --dry-run"
+@test "dna::exec_command with invalid service › expect service treated as command" {
+  # Test case: When exec command is called with an invalid service, it treats it as a command to execute
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command invalid-service"
 
-  # Should succeed
+  # Should succeed (exec doesn't validate services, treats them as commands)
   assert_success
 
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --dry-run --detach"
+  # Should output the expected message with invalid-service passed as command
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop invalid-service"
 }
 
-@test "dnp::exec_command with --no-TTY option › expect no-TTY flag passed to up_and_attach" {
-  # Test case: When exec command is called with --no-TTY option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --no-TTY"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --no-TTY"
-}
-
-@test "dnp::exec_command with -T option › expect -T flag passed to up_and_attach" {
-  # Test case: When exec command is called with -T option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command -T"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up -T"
-}
-
-@test "dnp::exec_command with --env option › expect env option passed to up_and_attach" {
-  # Test case: When exec command is called with --env option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --env VAR=value"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --env VAR=value"
-}
-
-@test "dnp::exec_command with -e option › expect -e option passed to up_and_attach" {
-  # Test case: When exec command is called with -e option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command -e VAR=value"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up -e VAR=value"
-}
-
-@test "dnp::exec_command with --workdir option › expect workdir option passed to up_and_attach" {
-  # Test case: When exec command is called with --workdir option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --workdir /path/to/dir"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --workdir /path/to/dir"
-}
-
-@test "dnp::exec_command with -w option › expect -w option passed to up_and_attach" {
-  # Test case: When exec command is called with -w option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command -w /path/to/dir"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up -w /path/to/dir"
-}
-
-@test "dnp::exec_command with -- and command › expect command passed to up_and_attach" {
-  # Test case: When exec command is called with -- followed by a command, it should pass the command to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command -- bash -c 'echo hello'"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up -- bash -c echo hello"
-}
-
-@test "dnp::exec_command with multiple options and command › expect all options and command passed to up_and_attach" {
-  # Test case: When exec command is called with multiple options and a command, it should pass all to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --service project-custom --workdir /path --detach -- bash -c 'echo hello'"
-
-  # Should succeed
-  assert_success
-
-  # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service project-custom --workdir /path --detach -- bash -c echo hello"
-}
-
-@test "dnp::exec_command with invalid option › expect error" {
-  # Test case: When exec command is called with an invalid option, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/exec.bash && dnp::exec_command --invalid-option"
+@test "dna::exec_command with multiple services › expect error" {
+  # Test case: When exec command is called with multiple services, it should show an error
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command develop deploy"
 
   # Should fail
   assert_failure
 
   # Should output the error message
-  assert_output --partial "Mock dnp::illegal_command_msg called with args: exec --invalid-option"
+  assert_output --partial "Mock dna::illegal_command_msg called with args: exec"
+  assert_output --partial "Only one SERVICE can be specified"
+}
+
+@test "dna::exec_command with --detach option › expect detach flag passed to up_and_attach" {
+  # Test case: When exec command is called with --detach option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --detach"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --detach"
+}
+
+@test "dna::exec_command with --dry-run option › expect dry-run and detach flags passed to up_and_attach" {
+  # Test case: When exec command is called with --dry-run option, it should pass both --dry-run and --detach to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --dry-run"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --dry-run --detach"
+}
+
+@test "dna::exec_command with --no-TTY option › expect no-TTY flag passed to up_and_attach" {
+  # Test case: When exec command is called with --no-TTY option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --no-TTY"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --no-TTY"
+}
+
+@test "dna::exec_command with -T option › expect -T flag passed to up_and_attach" {
+  # Test case: When exec command is called with -T option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command -T"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up -T"
+}
+
+@test "dna::exec_command with --env option › expect env option passed to up_and_attach" {
+  # Test case: When exec command is called with --env option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --env VAR=value"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --env VAR=value"
+}
+
+@test "dna::exec_command with -e option › expect -e option passed to up_and_attach" {
+  # Test case: When exec command is called with -e option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command -e VAR=value"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up -e VAR=value"
+}
+
+@test "dna::exec_command with --workdir option › expect workdir option passed to up_and_attach" {
+  # Test case: When exec command is called with --workdir option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --workdir /path/to/dir"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --workdir /path/to/dir"
+}
+
+@test "dna::exec_command with -w option › expect -w option passed to up_and_attach" {
+  # Test case: When exec command is called with -w option, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command -w /path/to/dir"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up -w /path/to/dir"
+}
+
+@test "dna::exec_command with -- and command › expect command passed to up_and_attach" {
+  # Test case: When exec command is called with -- followed by a command, it should pass the command to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command -- bash -c 'echo hello'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop -- bash -c echo hello"
+}
+
+@test "dna::exec_command with multiple options and command › expect all options and command passed to up_and_attach" {
+  # Test case: When exec command is called with multiple options and a command, it should pass all to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command deploy --workdir /path --detach -- bash -c 'echo hello'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --workdir /path --detach --service deploy -- bash -c echo hello"
+}
+
+@test "dna::exec_command with invalid option › expect option treated as command" {
+  # Test case: When exec command is called with an invalid option, it treats it as a command to execute
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/exec.bash && dna::exec_command --invalid-option"
+
+  # Should succeed (exec doesn't validate options, treats them as commands)
+  assert_success
+
+  # Should output the expected message with invalid-option passed as command
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop --invalid-option"
 }

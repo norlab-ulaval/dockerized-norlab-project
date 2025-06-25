@@ -49,15 +49,15 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -66,11 +66,13 @@ export MSG_DIMMED_FORMAT=""
 export MSG_END_FORMAT=""
 
 # Set up environment variables
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
@@ -79,34 +81,35 @@ function n2st::print_msg() {
 }
 
 # ....Mock ui.bash functions.......................................................................
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
 
   # Copy the version.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  cd "${MOCK_DNA_DIR}" || exit 1
 }
 
 # ....Teardown.....................................................................................
@@ -116,74 +119,74 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directory
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::version_command with no arguments and version.txt exists › expect version display" {
+@test "dna::version_command with no arguments and version.txt exists › expect version display" {
   # Create a mock version.txt file
-  mkdir -p "${MOCK_DNP_DIR}"
-  echo "1.0.0" > "${MOCK_DNP_DIR}/version.txt"
+  mkdir -p "${MOCK_DNA_DIR}"
+  echo "1.0.0" > "${MOCK_DNA_DIR}/version.txt"
 
   # Test case: When version command is called without arguments and version.txt exists, it should display the version
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/version.bash && dnp::version_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Dockerized-NorLab-Project version: 1.0.0"
+  assert_output --partial "Dockerized-NorLab Project version: 1.0.0"
 }
 
-@test "dnp::version_command with --help › expect help menu" {
+@test "dna::version_command with --help › expect help menu" {
   # Test case: When version command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/version.bash && dnp::version_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::version_command with -h › expect help menu" {
+@test "dna::version_command with -h › expect help menu" {
   # Test case: When version command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/version.bash && dnp::version_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::version_command with no arguments and version.txt does not exist › expect error" {
+@test "dna::version_command with no arguments and version.txt does not exist › expect error" {
   # Ensure version.txt does not exist
-  rm -f "${MOCK_DNP_DIR}/version.txt"
+  rm -f "${MOCK_DNA_DIR}/version.txt"
 
   # Test case: When version command is called without arguments and version.txt does not exist, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/version.bash && dnp::version_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command"
 
   # Should fail
   assert_failure
 
   # Should output the error message
   assert_output --partial "Error: version.txt not found."
-  assert_output --partial "Could not determine Dockerized-NorLab-Project version."
+  assert_output --partial "Could not determine Dockerized-NorLab Project version."
 }
 
-@test "dnp::version_command with unknown option › expect option ignored" {
+@test "dna::version_command with unknown option › expect option ignored" {
   # Create a mock version.txt file
-  mkdir -p "${MOCK_DNP_DIR}"
-  echo "1.0.0" > "${MOCK_DNP_DIR}/version.txt"
+  mkdir -p "${MOCK_DNA_DIR}"
+  echo "1.0.0" > "${MOCK_DNA_DIR}/version.txt"
 
   # Test case: When version command is called with an unknown option, it should ignore it and display the version
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/version.bash && dnp::version_command --unknown-option"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --unknown-option"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Dockerized-NorLab-Project version: 1.0.0"
+  assert_output --partial "Dockerized-NorLab Project version: 1.0.0"
 }

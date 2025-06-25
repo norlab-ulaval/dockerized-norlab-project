@@ -49,33 +49,33 @@ setup_file() {
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
   # Create temporary directory for tests
-  export MOCK_DNP_DIR=$(temp_make)
+  export MOCK_DNA_DIR=$(temp_make)
 
   # Create mock functions directory in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute/"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Create mock functions for dependencies
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
 #!/bin/bash
 # Mock load_super_project_config.bash
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
 
-  cat > "${MOCK_DNP_DIR}/src/lib/core/execute/up_and_attach.bash" << 'EOF'
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/up_and_attach.bash" << 'EOF'
 #!/bin/bash
 # Mock up_and_attach.bash
-function dnp::up_and_attach() {
-  echo "Mock dnp::up_and_attach called with args: $*"
+function dna::up_and_attach() {
+  echo "Mock dna::up_and_attach called with args: $*"
   return 0
 }
 EOF
 
-  # Create a mock import_dnp_lib.bash that sets up the environment
-  cat > "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" << 'EOF'
+  # Create a mock import_dna_lib.bash that sets up the environment
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
-# Mock import_dnp_lib.bash
+# Mock import_dna_lib.bash
 
 # ....Setup........................................................................................
 
@@ -85,24 +85,35 @@ export MSG_END_FORMAT=""
 export MSG_LINE_CHAR_BUILDER_LVL1="-"
 
 # Set up environment variables
-export DNP_ROOT="${MOCK_DNP_DIR}"
-export DNP_LIB_PATH="${MOCK_DNP_DIR}/src/lib"
-export DNP_LIB_EXEC_PATH="${MOCK_DNP_DIR}/src/lib/core/execute"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
+export DNA_ROOT="${MOCK_DNA_DIR}"
+export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_LIB_EXEC_PATH="${MOCK_DNA_DIR}/src/lib/core/execute"
 export DN_CONTAINER_NAME="mock-container"
+export DNA_PROMPT_NAME="Dockerized-NorLab Project"
+export DNA_SPLASH_NAME_FULL="Dockerized-NorLab Project"
+export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab Project"
+export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
-function dnp::import_lib_and_dependencies() {
+function dna::import_lib_and_dependencies() {
   return 0
 }
 
 # ....Mock ui.bash functions.......................................................................
-function dnp::command_help_menu() {
-  echo "Mock dnp::command_help_menu called with args: $*"
+function dna::command_help_menu() {
+  echo "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
-function dnp::illegal_command_msg() {
-  echo "Mock dnp::illegal_command_msg called with args: $*"
+function dna::illegal_command_msg() {
+  echo "Mock dna::illegal_command_msg called with args: $*"
+  return 1
+}
+
+function dna::unknown_subcommand_msg() {
+  echo "Mock dna::unknown_subcommand_msg called with args: $*"
   return 1
 }
 
@@ -118,29 +129,30 @@ function n2st::print_msg() {
 }
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dnp:: -e n2st::); do
-  export -f "$func"
+for func in $(compgen -A function | grep -e dna:: -e n2st::); do
+  # shellcheck disable=SC2163
+  export -f "${func}"
 done
 
 # ....Teardown.....................................................................................
-# Print a message to indicate that the mock import_dnp_lib.bash has been loaded
-echo "[DNP done] Mock import_dnp_lib.bash and its librairies loaded"
+# Print a message to indicate that the mock import_dna_lib.bash has been loaded
+echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 }
 
 setup() {
   # Create necessary directories in the temporary directory
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/commands"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/utils"
-  mkdir -p "${MOCK_DNP_DIR}/src/lib/core/execute"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute"
 
   # Copy the attach.bash file to the temporary directory
-  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNP_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
 
-  source "${MOCK_DNP_DIR}/src/lib/core/utils/import_dnp_lib.bash" || exit 1
+  source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
   # Change to the temporary directory
-  cd "${MOCK_DNP_DIR}" || exit 1
+  cd "${MOCK_DNA_DIR}" || exit 1
 }
 
 # ....Teardown.....................................................................................
@@ -150,64 +162,99 @@ teardown() {
 
 teardown_file() {
   # Clean up temporary directory
-  temp_del "${MOCK_DNP_DIR}"
+  temp_del "${MOCK_DNA_DIR}"
 }
 
 # ====Test cases==================================================================================
 
-@test "dnp::attach_command with no arguments › expect default behavior" {
-  # Test case: When attach command is called without arguments, it should attach to the default service
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command"
+@test "dna::attach_command with no arguments › expect default behavior" {
+  # Test case: When attach command is called without arguments, it should attach to the default service (develop)
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab-Project"
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up"
+  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
 
-@test "dnp::attach_command with --help › expect help menu" {
+@test "dna::attach_command with --help › expect help menu" {
   # Test case: When attach command is called with --help, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command --help"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command --help"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::attach_command with -h › expect help menu" {
+@test "dna::attach_command with -h › expect help menu" {
   # Test case: When attach command is called with -h, it should show the help menu
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command -h"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command -h"
 
   # Should succeed
   assert_success
 
   # Should output the help menu
-  assert_output --partial "Mock dnp::command_help_menu called with args:"
+  assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dnp::attach_command with --service option › expect service passed to up_and_attach" {
-  # Test case: When attach command is called with --service option, it should pass it to up_and_attach
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command --service project-custom"
+@test "dna::attach_command with develop service › expect develop service passed to up_and_attach" {
+  # Test case: When attach command is called with develop service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command develop"
 
   # Should succeed
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock dnp::up_and_attach called with args: --no-up --service project-custom"
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service develop"
 }
 
-@test "dnp::attach_command with invalid option › expect error" {
-  # Test case: When attach command is called with an invalid option, it should show an error
-  run bash -c "source ${MOCK_DNP_DIR}/src/lib/commands/attach.bash && dnp::attach_command --invalid-option"
+@test "dna::attach_command with deploy service › expect deploy service passed to up_and_attach" {
+  # Test case: When attach command is called with deploy service, it should pass it to up_and_attach
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command deploy"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock dna::up_and_attach called with args: --no-up --service deploy"
+}
+
+@test "dna::attach_command with invalid service › expect error" {
+  # Test case: When attach command is called with an invalid service, it should show an error
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command invalid-service"
 
   # Should fail
   assert_failure
 
   # Should output the error message
-  assert_output --partial "Mock dnp::illegal_command_msg called with args: attach --invalid-option"
+  assert_output --partial "Mock dna::illegal_command_msg called with args: attach"
+  assert_output --partial "Unknown SERVICE: invalid-service"
+}
+
+@test "dna::attach_command with multiple services › expect error" {
+  # Test case: When attach command is called with multiple services, it should show an error
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command develop deploy"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dna::illegal_command_msg called with args: attach"
+  assert_output --partial "Only one SERVICE can be specified"
+}
+
+@test "dna::attach_command with invalid option › expect error" {
+  # Test case: When attach command is called with an invalid option, it should show an error
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/attach.bash && dna::attach_command --invalid-option"
+
+  # Should fail
+  assert_failure
+
+  # Should output the error message
+  assert_output --partial "Mock dna::unknown_subcommand_msg called with args: attach --invalid-option"
 }

@@ -1,3 +1,3 @@
-# Dockerized-NorLab-Project required directory
+# Dockerized-NorLab Project required directory
 Project artifact should go here 
 e.g., experimental log, plot, rosbag, ... 

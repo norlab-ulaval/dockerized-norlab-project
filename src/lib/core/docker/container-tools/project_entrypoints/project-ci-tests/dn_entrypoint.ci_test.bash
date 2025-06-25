@@ -3,7 +3,7 @@
 # This is the Dockerfile.ci-tests.native entrypoint and the test script run by Dockerfile.ci-tests.multiarch
 #
 # Will execute every tests in
-# `.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests/test_jobs`
+# `.dockerized_norlab/configuration/project_entrypoints/project-ci-tests/test_jobs`
 # directory that follow the patern `run_ci_tests.*.bash`.
 #
 # Usage:
@@ -18,11 +18,13 @@
 #
 # =================================================================================================
 MSG_ERROR_FORMAT="\033[1;31m"
+MSG_DIMMED_FORMAT="\033[1;2m"
 MSG_END_FORMAT="\033[0m"
+dna_error_prefix="${MSG_ERROR_FORMAT}[DNA error]${MSG_END_FORMAT}"
 
 # ====Setup========================================================================================
 if [[ ! -d "${DN_PROJECT_PATH:?'Required DN environment variable is set and not empty'}/src" ]]; then
-  echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} '${DN_PROJECT_PATH}/src' directory unreachable! Current working directory is '$(pwd)'" 1>&2
+  echo -e "${dna_error_prefix} '${DN_PROJECT_PATH}/src' directory unreachable! Current working directory is '$(pwd)'" 1>&2
   exit 1
 else
   cd "${DN_PROJECT_PATH}/src" || exit 1
@@ -66,7 +68,7 @@ echo -e "DN container ${DN_CONTAINER_NAME:?err} test environment"
 echo -e "Pytest tests will follow"
 echo
 echo
-tree -L 2 "${DN_PROJECT_PATH}/.dockerized_norlab_project/configuration/project_entrypoints/project-ci-tests"
+tree -L 2 "${DN_PROJECT_PATH}/.dockerized_norlab/configuration/project_entrypoints/project-ci-tests"
 tree -L 3 "$DN_PROJECT_PATH"
 echo
 echo
@@ -75,8 +77,8 @@ n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_UTIL}"
 echo -e "${MSG_END_FORMAT}"
 
 # ====Execute tests================================================================================
-declare -a exit_codes
-test -d "${DN_PROJECT_SERVICE_DIR:?err}/test_jobs" || { echo -e "${MSG_ERROR_FORMAT}[DNP error]${MSG_END_FORMAT} ${DN_PROJECT_SERVICE_DIR:?err}/test_jobs is unreachable" && exit 1 ; }
+declare -a exit_codes=()
+test -d "${DN_PROJECT_SERVICE_DIR:?err}/test_jobs" || { echo -e "${dna_error_prefix} ${DN_PROJECT_SERVICE_DIR:?err}/test_jobs is unreachable" 1>&2 && exit 1; }
 for each_file_path in "${DN_PROJECT_SERVICE_DIR}"/test_jobs/run_ci_tests.*.bash ; do
   n2st::print_formated_script_header "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"
   bash "${each_file_path}"

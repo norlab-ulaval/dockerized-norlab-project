@@ -23,35 +23,31 @@
 #   '<image-distro>'                  ubuntu or alpine (default ubuntu)
 #
 # Globals:
-#   read DNP_ROOT
+#   read DNA_ROOT
 #   read N2ST_PATH    Default to "./utilities/norlab-shell-script-tools"
 #
 # =================================================================================================
 params=( "$@" )
 
-set -e            # exit on error
-set -o nounset    # exit on unbound variable
-set -o pipefail   # exit if errors within pipes
-
-if [[ -z $params ]]; then
+if [[ -z ${params[0]} ]]; then
   # Set to default bats tests directory if none specified
   params=("tests/tests_bats/")
 fi
 
 # ....Setup........................................................................................
 source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
-bash "${DNP_ROOT:?err}/tests/setup_mock.bash"
+bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
 
-function dnp::bats_tests_teardown_callback() {
+function dna::bats_tests_teardown_callback() {
   exit_code=$?
-  cd "${DNP_ROOT:?err}" || exit 1
+  cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
   exit ${exit_code:1}
 }
-trap dnp::bats_tests_teardown_callback EXIT
+trap dna::bats_tests_teardown_callback EXIT
 
 # ....Execute N2ST run_bats_tests_in_docker.bash.................................................
-cd "${DNP_ROOT:?err}" || exit 1
+cd "${DNA_ROOT:?err}" || exit 1
 
 bash "${N2ST_PATH:?err}/tests/bats_testing_tools/run_bats_tests_in_docker.bash" "${params[@]}"
 

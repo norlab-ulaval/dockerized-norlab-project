@@ -1,5 +1,6 @@
 #!/bin/bash
-DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
+DOCUMENTATION_BUILD_DEPLOY=$(
+                              cat << 'EOF'
 # =================================================================================================
 # Build deploy images specified in docker-compose.project.build.native.yaml
 #
@@ -17,7 +18,7 @@ DOCUMENTATION_BUILD_DEPLOY=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-# (Priority) ToDo: unit-test for flag option
+# (Priority) ToDo: unit-test of flag option
 
 # ToDo: move the help fct near the script/fct menu
 function show_help() {
@@ -31,14 +32,18 @@ function show_help() {
   echo -e "${MSG_END_FORMAT}"
 }
 
-
-function dnp::build_project_deploy_service() {
+function dna::build_project_deploy_service() {
   local tmp_cwd
   tmp_cwd=$(pwd)
 
   # ....Set env variables (pre cli)................................................................
-  declare -a remaining_args
   local push_deploy_image=false
+  local multiarch=false
+  local build_core_exit_code
+  local build_deploy_exit_code
+  declare -a build_flag=()
+  declare -a push_flag=()
+  declare -a remaining_args=()
 
   # ....cli........................................................................................
   while [ $# -gt 0 ]; do
@@ -46,7 +51,11 @@ function dnp::build_project_deploy_service() {
     case $1 in
       --push)
         push_deploy_image=true
-        shift # Remove argument (--push)
+        shift
+        ;;
+      --multiarch)
+        multiarch=true
+        shift
         ;;
       -h | --help)
         clear
@@ -62,62 +71,67 @@ function dnp::build_project_deploy_service() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  if [[ ${push_deploy_image} == true ]]; then
-    n2st::print_msg "Won't push the deploy image, use flag ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} to push it."
+  if [[ ${push_deploy_image} != true ]]; then
+    n2st::print_msg "Won't push the deploy image to hub, use flag ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} to push it."
   fi
 
   # ....Build stage..................................................................................
   {
-    build_docker_flag=("--service-names" "project-core,project-deploy")
+    build_flag+=("--service-names" "project-core,project-deploy")
     if [[ ${push_deploy_image} == true ]]; then
-      build_docker_flag+=("--force-push-project-core")
+      build_flag+=("--force-push-project-core")
     fi
-    dnp::build_services "${build_docker_flag[@]}" "${remaining_args[@]}"
-    build_exit_code=$?
+    if [[ "${multiarch}" == true ]]; then
+      dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+      build_core_exit_code=$?
+    else
+      dna::build_services "${build_flag[@]}" "${remaining_args[@]}"
+      build_core_exit_code=$?
+    fi
   }
 
   # ....Push deploy stage............................................................................
+  build_flag+=("--service-names" "project-deploy")
   if [[ ${push_deploy_image} == true ]]; then
-    {
-      push_docker_flag=("--push" "project-deploy")
-      # push_docker_flag=("--override-build-cmd" "push" "project-deploy")
-      dnp::excute_compose "${push_docker_flag[@]}"
-      push_exit_code=$?
-    }
+    remaining_args+=("--push")
+  fi
+  if [[ "${multiarch}" == true ]]; then
+    dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
+    build_deploy_exit_code=$?
   else
-    push_exit_code=0
+    dna::build_services "${build_flag[@]}" "${remaining_args[@]}"
+    build_deploy_exit_code=$?
   fi
 
   # ....Teardown...................................................................................
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
-  return $((build_exit_code + push_exit_code))
+  return $((build_core_exit_code + build_deploy_exit_code))
 }
 
-
-
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
   # ....Source project shell-scripts dependencies..................................................
-  script_path="$(realpath "${BASH_SOURCE[0]:-'.'}")"
+  script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
-  if [[ -z $( declare -f dnp::import_lib_and_dependencies ) ]]; then
-    source "${script_path_parent}/../utils/import_dnp_lib.bash" || exit 1
+  if [[ -z $( declare -f dna::import_lib_and_dependencies)  ]]; then
+    source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
     source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   fi
   source "${script_path_parent}/build.all.bash" || exit 1
+  source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || exit 1
 
   # ....Execute....................................................................................
-  if [[ "${DNP_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
+  if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then
     clear
   fi
-  n2st::norlab_splash "${DNP_GIT_NAME} (${DNP_PROMPT_NAME})" "${DNP_GIT_REMOTE_URL}"
+  n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  dnp::build_project_deploy_service "$@"
+  dna::build_project_deploy_service "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
@@ -125,8 +139,8 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dnp_error_prefix="\033[1;31m[DNP error]\033[0m"
-  test -n "$( declare -f dnp::import_lib_and_dependencies )" || { echo -e "${dnp_error_prefix} The DNP lib is not loaded!" ; exit 1 ; }
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "${dnp_error_prefix} The N2ST lib is not loaded!" ; exit 1 ; }
-  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dnp_error_prefix} The super project DNP configuration is not loaded!" ; exit 1 ; }
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  test -n "$( declare -f dna::import_lib_and_dependencies)"  || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg)"  || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }
 fi
