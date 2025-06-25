@@ -182,7 +182,7 @@ services:
       - ./artifact:/artifact:rw
     ports:
       - "2222:22"
-      - "5901:5901"
+      - "7777:7777"
 ```
 
 ## Troubleshooting

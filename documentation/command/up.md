@@ -204,7 +204,7 @@ DNA automatically discovers available services:
 1. Check if images are built: `dna build develop`
 2. Verify docker-compose configuration
 3. Check for port conflicts
-4. Review container logs: `docker logs CONTAINER_NAME`
+4. Review container logs: `docker logs DN_CONTAINER_NAME`
 
 ### Cannot Attach to Container
 
@@ -213,7 +213,7 @@ DNA automatically discovers available services:
 **Solutions**:
 1. Verify container is running: `docker ps`
 2. Check SSH service in container: `dna exec systemctl status ssh`
-3. Verify port mappings: `docker port CONTAINER_NAME`
+3. Verify port mappings: `docker port DN_CONTAINER_NAME`
 
 ### Permission Denied
 
@@ -222,10 +222,9 @@ DNA automatically discovers available services:
 **Solutions**:
 1. Check user configuration in `.env`:
    ```bash
-   SUPER_PROJECT_USER=$(id -un)
+   dna project dotenv | grep -e DN_PROJECT_USER -e DN_PROJECT_UID -e DN_PROJECT_GID
    ```
 2. Verify file permissions in mounted volumes
-3. Use appropriate user context: `dna exec --user root COMMAND`
 
 ### Port Conflicts
 
@@ -234,8 +233,8 @@ DNA automatically discovers available services:
 **Solutions**:
 1. Change ports in `.env.local`:
    ```bash
-   CONTAINER_SSH_PORT=2223
-   CONTAINER_VNC_PORT=5902
+   DN_SSH_SERVER_PORT=2223
+   DN_GDB_SERVER_PORT=7777
    ```
 2. Stop conflicting containers: `docker ps` and `docker stop`
 

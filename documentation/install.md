@@ -29,12 +29,12 @@ DNA can be installed using different methods depending on your system configurat
 
 ### Platform Support
 
-| Platform | Architecture | Status |
-|----------|-------------|---------|
-| Linux | ARM64 | ✅ Fully supported |
-| macOS | ARM64 (Apple Silicon) | ✅ Fully supported |
-| NVIDIA Jetson | ARM64 (L4T) | ✅ Fully supported |
-| Linux | x86_64 | ⚠️ Not supported (for now, will be implemented if requested) |
+| Platform       | Architecture | Status |
+|----------------|------------|---------|
+| NVIDIA Jetson (L4T) | ARM64 | ✅ Fully supported |
+| macOS          | ARM64 (Apple Silicon) | ✅ Fully supported |
+| Linux          | x86_64 | ✅ Fully supported |
+| Linux          | ARM64 | ⚠️ Not supported (for now, will be implemented if requested) |
 
 ### Optional Requirements
 
@@ -93,6 +93,7 @@ bash install.bash --add-dna-path-to-bashrc
 **Requirements:**
 - `~/.bashrc` file must exist
 - Bash shell environment
+- (zsh shell) `~/.bashrc` must be sourced by your `~/.zshrc`
 
 ### Method 3: Manual Path Management
 
@@ -126,7 +127,7 @@ bash install.bash --yes
 
 > **Note**: Docker Engine installation is handled automatically by `install.bash`. Manual installation is only needed for troubleshooting.
 
-1. **Install NVIDIA Docker (for GPU support):**
+1. **(Optional) Install NVIDIA Docker (for GPU support):**
    ```bash
    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -142,6 +143,7 @@ bash install.bash --yes
    cd dockerized-norlab-project
    bash install.bash
    ```
+3. Follow post-installation setup instructions
 
 ### macOS
 
@@ -156,45 +158,34 @@ bash install.bash --yes
    cd dockerized-norlab-project
    bash install.bash
    ```
+3. Follow post-installation setup instructions
 
 ### NVIDIA Jetson (L4T/ARM64)
+> **Note**: Docker Engine and nvidia-docker come pre-installed on Jetson
 
-1. **Install Docker:**
-   ```bash
-   # Install Docker using convenience script
-   curl -fsSL https://get.docker.com -o get-docker.sh
-   sudo sh get-docker.sh
-
-   # Add user to docker group
-   sudo usermod -aG docker $USER
-   newgrp docker
-   ```
-
-2. **Install Docker Compose:**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install docker-compose-plugin
-   ```
-
-3. **Install DNA:**
+1. **Install DNA:**
    ```bash
    git clone --recurse-submodules https://github.com/norlab-ulaval/dockerized-norlab-project.git
    cd dockerized-norlab-project
    bash install.bash
    ```
+2. Follow post-installation setup instructions
 
 ## Post-Installation Setup
 
-### User Permissions
 
-Add your user to the Docker group to run Docker without sudo:
+### User Permissions (L4T and Linux)
 
+Apply Docker group change without login out: execute 
 ```bash
-sudo usermod -aG docker $USER
 newgrp docker
 ```
+Restart the docker daemon to apply changes: execute 
+```bash
+sudo systemctl restart docker
+```
 
-### Environment Variables
+### Environment Variables (Optional)
 
 If using the bashrc installation method, reload your shell:
 
@@ -204,11 +195,10 @@ source ~/.bashrc
 
 ### Docker Buildx Setup (Optional)
 
-For multi-architecture builds:
-
+Create a multi-architecture docker builder. Execute the following comands:
 ```bash
-docker buildx create --name multiarch --driver docker-container --use
-docker buildx inspect --bootstrap
+docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+docker buildx ls
 ```
 
 ## Verification
@@ -282,6 +272,7 @@ docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 ```bash
 sudo usermod -aG docker $USER
 newgrp docker
+sudo systemctl restart docker
 ```
 
 #### Submodule Issues
@@ -373,7 +364,7 @@ rm -rf /path/to/dockerized-norlab-project
 
 ### Container-Based Installation
 
-For use within containers or CI environments:
+For use within containers or CI environments (docker in docker):
 
 ```dockerfile
 FROM ubuntu:22.04
