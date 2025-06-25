@@ -66,14 +66,14 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 
 [//]: # ( ==== Body ================================================== ) 
 
-## What it does:
+## What it does
 
-- Provide a containerized environment for robotic development, deployment, testing, continuous integration, running slurm jobs and source code release.
-- Design to support both local and remote workflow, i.e, personal workstation, remote embed computer, server.
-- Run on `l4t/arm64` (jetson), `darwin/arm64` (Mac OsX) and `linux/x86` whitout configuration change.
-- Support ROS2 out of the box.
-- Provide GPU support through nvidia-docker for both `l4t/arm64` and `linux/x86`.
-- Project configuration made easy whitout hidding _docker_ and _docker compose_ logic. 
+- **Containerized robotic development environment**: Provides a complete containerized workflow for robotic research, development, deployment, testing, continuous integration, running slurm jobs, and source code release.
+- **Multi-platform support**: Runs seamlessly on `l4t/arm64` (Jetson), `darwin/arm64` (Mac OS X), and `linux/x86` without configuration changes.
+- **Flexible deployment modes**: Supports both local and remote workflows for personal workstations, remote embedded computers, and servers.
+- **ROS2 ready**: Comes with ROS2 support out of the box for robotic applications.
+- **GPU acceleration**: Provides GPU support through nvidia-docker for both `l4t/arm64` and `linux/x86` platforms.
+- **Transparent configuration**: Makes project configuration easy while keeping [Docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) logic transparent and accessible.
 
 ## Getting started
 
@@ -129,12 +129,123 @@ dna up
 dna down
 ```
 
-## For beta tester or just to dry-run DNA in an throwaway project
+> **📖 For detailed configuration and command documentation**, see the [Documentation](#documentation) section below.
+
+## Why
+
+Dockerized-NorLab (DN) and the DNA application solve critical challenges in robotic research and development by providing a standardized, reproducible, and scalable containerized environment.
+
+### Key Benefits
+
+**🔄 Reproducibility**  
+Ensure consistent environments across different machines, operating systems, and team members. Your code runs the same way everywhere, eliminating "it works on my machine" problems.
+
+**🔒 Isolation**  
+Keep your development environment clean and isolated from your host system. Experiment freely without affecting your main system configuration.
+
+**👥 Project Collaboration**  
+Streamline team collaboration with standardized development environments. New team members can get up and running in minutes, not hours or days.
+
+**🚀 Fast Deployment**  
+Deploy your robotic applications quickly and reliably across different platforms - from development workstations to production servers and embedded systems.
+
+**✅ Code Quality**  
+Maintain high code quality with integrated testing, continuous integration, and standardized development practices built into the containerized workflow.
+
+<div align="center">
+<table>
+<tr>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_1.jpg" alt="Key properties reproducibility" width="400"></td>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_2.jpg" alt="Key properties isolation" width="400"></td>
+</tr>
+<tr>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_3.jpg" alt="Project collaboration" width="400"></td>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_4.jpg" alt="Fast deployment" width="400"></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><img src="visual/DN_presentation_diagram/dn_techincal_presentation_5.jpg" alt="Code quality" width="400"></td>
+</tr>
+</table>
+</div>
+
+## Use Cases
+
+DNA and DN support a wide range of robotic development and deployment scenarios:
+
+### Development, Deployment and Release Modes
+
+**🛠 Local and Remote Development (Develop Mode)**  
+Set up consistent development environments on local workstations and remote machines. DNA is installed on both local and remote hosts, enabling seamless development workflows across different locations.
+
+**🚀 Deployment (Deploy Mode)**  
+Deploy your robotic applications to target hosts with DNA installed. Streamlined deployment process ensures your applications run consistently in production environments.
+
+**📦 Release Mode**  
+Create and distribute source code release. Released containers can run independently without requiring DNA installation on the target system.
+
+### Specialized Workflows
+
+**🔄 Continuous Integration Testing**  
+Run automated CI tests in isolated, reproducible environments. Perfect for validating code changes and maintaining code quality across your robotic projects. DNA/DN is CI framework agnostic. CI test can even be run localy.
+
+**⚡ SLURM Job Execution**  
+Execute compute-intensive robotic algorithms and simulations on SLURM-managed clusters with consistent containerized environments.
+
+**🌐 Multi-Platform Support**  
+Work seamlessly across different operating systems and architectures:
+- `l4t/arm64` (NVIDIA Jetson platforms)
+- `darwin/arm64` (Mac OS X with Apple Silicon)
+- `linux/x86` (Standard Linux systems)
+
+**🎮 GPU Acceleration**  
+Leverage GPU computing power for robotics applications through nvidia-docker integration, supporting both ARM64 and x86 platforms.
+
+<div align="center">
+<table>
+<tr>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_7.jpg" alt="Local development use case" width="400"></td>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_8.jpg" alt="Remote development use case" width="400"></td>
+</tr>
+<tr>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_6.jpg" alt="Deployment use case" width="400"></td>
+<td><img src="visual/DN_presentation_diagram/dn_techincal_presentation_9.jpg" alt="DN Multi-Platform Support" width="400"></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><img src="visual/DN_presentation_diagram/dn_techincal_presentation_10.jpg" alt="CI CD use case" width="400"></td>
+</tr>
+</table>
+</div>
+
+## Documentation
+
+### 📚 Complete Documentation
+
+- **[Command Reference](documentation/dna.md)** - Complete guide to all `dna` commands
+  - [dna init](documentation/command/init.md) - Initialize a new DNA project
+  - [dna build](documentation/command/build.md) - Build DNA Docker images
+  - [dna up](documentation/command/up.md) - Start and attach to containers
+  - [dna down](documentation/command/down.md) - Stop containers
+  - [dna attach](documentation/command/attach.md) - Attach to running containers
+  - [dna exec](documentation/command/exec.md) - Execute commands in containers
+  - [dna run](documentation/command/run.md) - Run commands in containers
+  - [dna project](documentation/command/project.md) - Super project commands
+  - [dna save](documentation/command/save.md) - Save Docker images for offline use
+  - [dna load](documentation/command/load.md) - Load Docker images from files
+  - [dna config](documentation/command/config.md) - Show configuration
+  - [dna version](documentation/command/version.md) - Show DNA version
+
+### 🛠️ Setup & Configuration
+
+- **[Installation Guide](documentation/install.md)** - Detailed installation instructions for all supported platforms
+- **[Project Initialization & Configuration](documentation/project_initialization_and_configuration.md)** - Complete guide to setting up and configuring DNA projects
+- **[IDE Integration](documentation/ide_integration.md)** - Setup instructions for development environments and IDEs
+
+### 🧪 For Beta Testers
+
+To try DNA in a throwaway project:
 ```shell
-# CLone dockerized-norlab-project-mock-EMPTY
+# Clone dockerized-norlab-project-mock-EMPTY
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
 cd dockerized-norlab-project-mock-EMPTY
 dna init
 ```
-
-
