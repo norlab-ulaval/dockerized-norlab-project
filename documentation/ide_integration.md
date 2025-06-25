@@ -60,7 +60,7 @@ DNA supports integration with various IDEs and development environments, enablin
    - Choose "SSH Interpreter"
    - **Host**: `localhost` (local) or remote IP
    - **Port**: Container SSH port (default: `2222`)
-   - **Username**: Container user (from `SUPER_PROJECT_USER`)
+   - **Username**: Container user (from `DN_PROJECT_USER`)
 
 3. **Important settings**:
    - ⚠️ **Uncheck** "Execute code with root privileges"

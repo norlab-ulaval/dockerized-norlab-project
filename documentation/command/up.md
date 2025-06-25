@@ -222,10 +222,9 @@ DNA automatically discovers available services:
 **Solutions**:
 1. Check user configuration in `.env`:
    ```bash
-   SUPER_PROJECT_USER=$(id -un)
+   dna project dotenv | grep -e DN_PROJECT_USER -e DN_PROJECT_UID -e DN_PROJECT_GID
    ```
 2. Verify file permissions in mounted volumes
-3. Use appropriate user context: `dna exec --user root COMMAND`
 
 ### Port Conflicts
 

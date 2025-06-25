@@ -384,9 +384,13 @@ DN_GDB_SERVER_PORT=7778
 
 **Problem**: Files created in container have wrong ownership.
 
-**Solution**: Ensure `SUPER_PROJECT_USER` matches host user:
+**Solution**: Ensure `DN_PROJECT_USER` matches host user:
 ```bash
-SUPER_PROJECT_USER=$(id -un)
+# Host user
+id -un
+
+# DN project container user
+dna project dotenv | grep -e DN_PROJECT_USER -e DN_PROJECT_UID -e DN_PROJECT_GID
 ```
 
 #### Build Failures
