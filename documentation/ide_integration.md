@@ -29,34 +29,32 @@ DNA supports integration with various IDEs and development environments, enablin
 
 #### 1. Configure Remote Host Connection
 
-1. **Open PyCharm** and go to `File > Settings > Build, Execution, Deployment > Deployment`
+1. **Open PyCharm** and go to `Settings | Build, Execution, Deployment | Deployment`
 
 2. **Add new server** with the following settings:
    - **Type**: SFTP
-   - **Name**: DNA Remote Development
-   - **Host**: `localhost` (for local containers) or remote machine IP
-   - **Port**: `22` (for remote machines) or container SSH port
-   - **Username**: Your remote username or container user
-
-3. **Configure connection**:
-   - **Authentication**: Password or Key pair
+   - **SSH configuration**:
+     - **Name**: DNA Remote Development (or ant meaningfull name)
+     - **Host**: `localhost` (for local containers) or remote machine IP
+     - **Port**: `22` (for remote machines) or container SSH port
+     - **Username**: Your remote username or container user
+     - **Authentication**: Password or Key pair
    - **Root path**: Path to your project on remote/container
+   - **Enable rsync**: Check "Use rsync for upload/download"
+   - **Disable sudo**: Uncheck "sudo" option
 
-#### 2. Setup Rsync Synchronization
-
-1. **Enable rsync** in deployment settings:
-   - Check "Use rsync for upload/download"
-   - Uncheck "sudo" option
-
-2. **Configure rsync options**:
+3. **Configure rsync settings**:
    - Ensure `.git` directory is **not** in excluded paths
    - Add any project-specific exclusions
 
-3. **Test connection** and sync your project files
+4. **Configure mapping**:
+   - Go to the mapping tab
+   - Set the `Deployment path` pointing to the remote host directory to sync with the `Local path` directory
+5. **Test connection** and sync your project files
 
 #### 3. Configure Remote Python Interpreter
 
-1. **Go to** `File > Settings > Project > Python Interpreter`
+1. **Go to** `Settings | Project: dockerized-norlab-pro... | Python Interpreter`
 
 2. **Add new interpreter**:
    - Choose "SSH Interpreter"
@@ -70,17 +68,20 @@ DNA supports integration with various IDEs and development environments, enablin
    - **Interpreter path**: `/usr/bin/python3` or specific Python path
    - **Sync folders**: Set to `/ros2_ws/src/YOUR_PROJECT_NAME` or delete entry
 
-#### 4. Add ROS Python Paths
+#### 4. **Add ROS to Python Path** 
+Add ROS specific Python paths to interpreter
 
-Add ROS-specific Python paths to interpreter:
-
-1. **Go to interpreter settings** and click the gear icon
-2. **Show paths** and add:
+1. **Go to** `Settings | Project: dockerized-norlab-pro... | Python Interpreter` 
+2. Click on the `Python interpreter` field, scroll to the bottom and click `Show all`
+3. In the `Python interpreter` pop-up, click on the `sub-folder` icon
+4. In the `Interpreter Paths` pop-up, add the following path base on your target settings:
    ```
+   # Adjust paths based on your target ROS distribution 
    /opt/ros/humble/lib/python3.10/site-packages
+   
+   # Adjust paths based on your target Python version
    /ros2_ws/install/lib/python3.10/site-packages
    ```
-   (Adjust paths based on your ROS distribution and Python version)
 
 #### 5. Configure Run/Debug Settings
 
@@ -132,95 +133,6 @@ PyCharm Project Root/
 └── external_data/          ← Data files (excluded from sync)
 ```
 
-## Visual Studio Code Integration
-
-### Prerequisites
-
-- Visual Studio Code
-- Remote Development extension pack
-- Docker extension
-
-### Remote Container Development
-
-#### 1. Install Required Extensions
-
-```bash
-# Install VS Code extensions
-code --install-extension ms-vscode-remote.remote-containers
-code --install-extension ms-vscode-remote.remote-ssh
-code --install-extension ms-python.python
-code --install-extension ms-vscode.cpptools
-```
-
-#### 2. Configure Dev Container
-
-Create `.vscode/devcontainer.json`:
-
-```json
-{
-    "name": "DNA Development Container",
-    "dockerComposeFile": "../.dockerized_norlab/configuration/docker-compose.yml",
-    "service": "develop",
-    "workspaceFolder": "/ros2_ws/src/${localEnv:PROJECT_NAME}",
-    "shutdownAction": "stopCompose",
-    
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "ms-vscode.cpptools",
-                "ms-iot.vscode-ros",
-                "twxs.cmake",
-                "ms-python.flake8"
-            ],
-            "settings": {
-                "python.defaultInterpreterPath": "/usr/bin/python3",
-                "python.linting.enabled": true,
-                "python.linting.flake8Enabled": true,
-                "ros.distro": "humble"
-            }
-        }
-    },
-    
-    "forwardPorts": [2222, 5901, 8888],
-    "postCreateCommand": "source /opt/ros/humble/setup.bash",
-    
-    "remoteUser": "${localEnv:SUPER_PROJECT_USER}"
-}
-```
-
-#### 3. Launch Development Environment
-
-1. **Open project** in VS Code
-2. **Command Palette** (`Ctrl+Shift+P`)
-3. **Run**: "Remote-Containers: Reopen in Container"
-
-### SSH Remote Development
-
-For remote development on another machine:
-
-#### 1. Configure SSH Connection
-
-1. **Install Remote-SSH extension**
-2. **Add SSH host** in VS Code:
-   - Command Palette → "Remote-SSH: Add New SSH Host"
-   - Enter: `ssh user@remote-host`
-
-3. **Connect to remote host**:
-   - Command Palette → "Remote-SSH: Connect to Host"
-
-#### 2. Setup Remote Environment
-
-Once connected to remote host:
-
-1. **Clone your project** (if not already present)
-2. **Start DNA container**:
-   ```bash
-   dna build develop
-   dna up
-   ```
-
-3. **Open project folder** in VS Code
 
 ## Remote Development Workflows
 
@@ -232,8 +144,6 @@ Once connected to remote host:
    ```bash
    # Using rsync
    rsync -avz --exclude='.git' ./ user@remote:/path/to/project/
-   
-   # Using VS Code Remote-SSH with auto-sync
    ```
 
 2. **Execute commands remotely**:
@@ -283,30 +193,6 @@ Once connected to remote host:
 
 3. **Start debugging** with remote interpreter
 
-#### VS Code Debugging
-
-Create `.vscode/launch.json`:
-
-```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: ROS Node",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/your_package/your_script.py",
-            "console": "integratedTerminal",
-            "env": {
-                "ROS_DOMAIN_ID": "42",
-                "PYTHONPATH": "/opt/ros/humble/lib/python3.10/site-packages:/ros2_ws/install/lib/python3.10/site-packages"
-            },
-            "cwd": "/ros2_ws"
-        }
-    ]
-}
-```
-
 ### C++ Debugging
 
 #### Configure GDB for Container
@@ -318,33 +204,6 @@ Create `.vscode/launch.json`:
    ```
 
 3. **Configure IDE** to use remote GDB
-
-#### VS Code C++ Debugging
-
-Create `.vscode/launch.json` entry:
-
-```json
-{
-    "name": "C++: ROS Node",
-    "type": "cppdbg",
-    "request": "launch",
-    "program": "/ros2_ws/install/your_package/lib/your_package/your_node",
-    "args": [],
-    "stopAtEntry": false,
-    "cwd": "/ros2_ws",
-    "environment": [
-        {"name": "ROS_DOMAIN_ID", "value": "42"}
-    ],
-    "MIMode": "gdb",
-    "setupCommands": [
-        {
-            "description": "Enable pretty-printing for gdb",
-            "text": "-enable-pretty-printing",
-            "ignoreFailures": true
-        }
-    ]
-}
-```
 
 ## Testing Integration
 
@@ -359,54 +218,6 @@ Create `.vscode/launch.json` entry:
 2. **Set test paths**:
    - **Test source folders**: `tests/`
    - **Working directory**: Project root
-
-#### VS Code Setup
-
-Configure `.vscode/settings.json`:
-
-```json
-{
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-        "tests/"
-    ],
-    "python.testing.cwd": "/ros2_ws/src/${workspaceFolderBasename}"
-}
-```
-
-### ROS Testing
-
-#### Colcon Test Integration
-
-Create test tasks in `.vscode/tasks.json`:
-
-```json
-{
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "colcon: test",
-            "type": "shell",
-            "command": "colcon",
-            "args": ["test", "--packages-select", "${workspaceFolderBasename}"],
-            "group": "test",
-            "options": {
-                "cwd": "/ros2_ws"
-            }
-        },
-        {
-            "label": "colcon: test-result",
-            "type": "shell",
-            "command": "colcon",
-            "args": ["test-result", "--verbose"],
-            "group": "test",
-            "options": {
-                "cwd": "/ros2_ws"
-            }
-        }
-    ]
-}
-```
 
 ## Common Development Patterns
 
@@ -463,15 +274,6 @@ For projects targeting multiple architectures:
 1. Verify container is running: `dna up`
 2. Check SSH port: `docker ps` and look for port mapping
 3. Verify SSH service in container: `dna exec systemctl status ssh`
-
-#### VS Code: "Failed to connect to remote extension host"
-
-**Problem**: Remote extension host connection fails.
-
-**Solutions**:
-1. Restart VS Code
-2. Clear remote connection cache
-3. Check container logs: `docker logs CONTAINER_NAME`
 
 #### Debugging: "Breakpoints not hit"
 
