@@ -1,12 +1,16 @@
 
 # Scratch
 
+Read and implement the updated plan at `.junie/plans/documentation_updates_proposal.md`.
+Follow guidelines at `.junie/guidelines.md`.
+
+---
+
 Propose documentation update considering diff change in the current branch.
 Submit the proposed change first, them we will assess togheter with which ones we go forward.
 Follow guidelines at `.junie/guidelines.md`.
 
 ---
-# Scratch
 
 Update bats test at `tests/tests_bats/test_setup_host_dna_requirements.bats` considering change made to `src/lib/core/utils/setup_host_dna_requirements.bash`.
 Follow guidelines at `.junie/guidelines.md`.

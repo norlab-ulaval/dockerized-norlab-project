@@ -252,13 +252,12 @@ function dna::install_dockerized_norlab_project_on_host() {
   cd "${dna_install_dir}"
   
   if ! dna::is_online; then
-    n2st::print_msg_warning "You are currently offline, software requirement install step was skiped.\nBe advise that 'docker engine', 'docker compose', 'git' and 'tree' are all hard requirement. 'docker buildx' plugin is optional but required for multi-architecture build)"
+    n2st::print_msg_warning "You are currently offline, software requirement install step was skiped.\nBe advise that 'docker engine', 'docker compose', 'docker buildx', 'git' and 'tree' are all hard requirement."
   fi
   if [[ $(uname -s) == "Darwin" ]]; then
     print_msg "Remaining install instructions:
 1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
-2. Make sure 'docker compose' is enable in 'Docker Compose' settings
-3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
+2. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
     $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
     $ docker buildx ls
 ${MSG_END_FORMAT}

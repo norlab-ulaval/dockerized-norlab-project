@@ -20,27 +20,36 @@ DNA can be installed using different methods depending on your system configurat
 
 ## System Requirements
 
-### Core Requirements
+### Core Requirements 
 
+- **Internet connection**: Required for initial setup and image downloads (offline installation supported with limitations)
 - **Git**: Version control system
+- ***tree***: List directory content in a tree-like format in terminal
+
+#### Operating system specific: L4T and Ubuntu 
+
 - **Docker Engine**: Version 20.10 or later with BuildKit support
 - **Docker Compose**: Plugin version (v2) or standalone
-- **Internet connection**: Required for initial setup and image downloads
+- **Docker Buildx**: For multi-architecture builds
+
+#### Operating system specific: macOs 
+
+- **Docker Desktop**: Comme with docker engine, docker compose and docker buildx pre-installed
+- **macOS Package Manager**: Homebrew or MacPorts (automatically installed if missing on macOS)
+
+### Optional Requirements
+
+- **NVIDIA Docker**: For GPU acceleration support
 
 ### Platform Support
 
 | Platform       | Architecture | Status |
 |----------------|------------|---------|
-| NVIDIA Jetson (L4T) | ARM64 | ✅ Fully supported |
-| macOS          | ARM64 (Apple Silicon) | ✅ Fully supported |
+| NVIDIA Jetson (L4T) | arm64 | ✅ Fully supported |
+| macOS          | arm64 (Apple Silicon) | ✅ Fully supported |
 | Linux          | x86_64 | ✅ Fully supported |
-| Linux          | ARM64 | ⚠️ Not supported (for now, will be implemented if requested) |
+| Linux          | arm64 | ⚠️ Not supported (for now, will be implemented if requested) |
 
-### Optional Requirements
-
-- **NVIDIA Docker**: For GPU acceleration support
-- **Docker Buildx**: For multi-architecture builds
-- **SSH**: For remote development workflows
 
 ## Quick Installation
 
@@ -121,6 +130,44 @@ bash install.bash --yes
 - Automated provisioning
 - Docker container builds
 
+## Offline Installation
+
+DNA supports installation in environments without internet access, with some limitations.
+
+### Offline Installation Process
+
+When running `install.bash` without internet connectivity:
+
+1. **Automatic Detection**: The installer detects offline status and adapts accordingly
+2. **Software Requirements**: Installation of Docker, Git, and other tools is skipped with warnings
+3. **Path Configuration**: DNA path setup and symlink creation proceed normally
+4. **User Notification**: Clear warnings about skipped steps and manual requirements
+
+### Manual Requirements for Offline Installation
+
+When installing offline, ensure these requirements are manually satisfied:
+
+- **Docker Engine**: Must be pre-installed
+- **Docker Compose**: Must be pre-installed  
+- **Git**: Must be pre-installed
+- **Tree**: Optional but recommended for directory visualization
+- **Docker Buildx**: Required for multi-architecture builds
+
+### Offline Installation Verification
+
+```bash
+# Verify required tools are available
+docker --version
+docker compose version
+docker buildx version
+git --version
+
+# Test DNA installation
+dna version
+```
+
+**See also [Offline Installation Guide](offline_installation.md) for manual install instructions**
+
 ## Platform-Specific Instructions
 
 ### Linux (Ubuntu/Debian)
@@ -158,6 +205,13 @@ bash install.bash --yes
    cd dockerized-norlab-project
    bash install.bash
    ```
+
+   **Note**: The installer will automatically:
+   - Detect if Homebrew or MacPorts is installed
+   - Offer to install Homebrew if neither is present
+   - Install required packages (`git`, `tree`) using the detected package manager
+   - Skip software installation if offline (with appropriate warnings)
+
 3. Follow post-installation setup instructions
 
 ### NVIDIA Jetson (L4T/ARM64)
@@ -212,6 +266,7 @@ dna --help
 # Check Docker is working
 docker --version
 docker compose version
+docker buildx version
 
 # Test DNA with a sample project
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
@@ -332,6 +387,54 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
+#### Offline Installation Issues
+
+**Problem**: Installation fails or shows warnings about missing software.
+
+**Solution**: 
+1. **Verify offline detection**:
+   ```bash
+   # Test connectivity on a reliable dns adresse (google), should fail if truly offline
+   ping -c 1 8.8.8.8
+   ```
+
+2. **Manual software installation**: Install required tools manually:
+   - **Linux**: Use system package manager (`apt`, `yum`, etc.)
+   - **macOS**: Install Docker Desktop and use Homebrew/MacPorts for other tools
+   - **Jetson**: Most tools come pre-installed
+
+3. **Re-run installation**: After manual setup:
+   ```bash
+   bash install.bash --skip-system-wide-symlink-install
+   ```
+
+#### macOS Package Manager Issues
+
+**Problem**: Neither Homebrew nor MacPorts is installed, and automatic installation fails.
+
+**Solutions**:
+- **Use non-interactive installation**:
+   ```bash
+   bash install.bash --yes  # Automatically installs Homebrew if missing
+   ```
+- **Install package manager manually**:
+    - For **Homebrew**:
+       ```bash
+       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+       ```
+    - For **MacPorts**: Download from [MacPorts website](https://ports.macports.org)
+
+**Problem**: Package installation fails with Homebrew or MacPorts.
+
+**Solution**: Update package manager and retry:
+```bash
+# For Homebrew
+brew update && brew doctor
+
+# For MacPorts  
+sudo port selfupdate
+```
+
 ## Uninstallation
 
 ### Remove System-Wide Installation
@@ -401,6 +504,7 @@ For environments without internet access:
 ## See Also
 
 - [Getting Started Guide](../README.md#getting-started)
+- [Offline Installation Guide](offline_installation.md)
 - [Project Initialization & Configuration](project_initialization_and_configuration.md)
 - [Command Reference](dna.md)
 - [Docker Installation Documentation](https://docs.docker.com/engine/install/)
