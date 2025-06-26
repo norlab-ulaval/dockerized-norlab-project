@@ -153,10 +153,46 @@ EOF
 #!/bin/bash
 # Mock setup_host_dna_requirements.bash
 
-echo "Mock setup_host_dna_requirements.bash executed"
-exit 0
-EOF
+function dna::check_install_darwin_package_manager() {
+  echo "Mock dna::check_install_darwin_package_manager called with args: $*"
+  return 0
 }
+
+function dna::install_dna_software_requirements() {
+  echo "Mock dna::install_dna_software_requirements called with args: $*"
+  return 0
+}
+
+function dna::setup_cuda_requirements() {
+  echo "Mock dna::setup_cuda_requirements called with args: $*"
+  return 0
+}
+
+function dna::setup_host_dna_requirements() {
+  echo "Mock dna::setup_host_dna_requirements called with args: $*"
+  return 0
+}
+EOF
+
+# Create a mock setup_host_dna_requirements.bash
+  cat > "${TEMP_DNA_DIR}/src/lib/core/utils/online.bash" << 'EOF'
+#!/bin/bash
+# Mock online.bash
+
+function dna::is_online() {
+  echo "Mock dna::is_online called with args: $*"
+  if [[ "${MOCK_IS_OFFLINE:-false}" == false ]]; then
+    # Is online
+    return 0
+  else
+    # Is offline
+    return 1
+  fi
+}
+EOF
+
+}
+
 
 setup() {
   cd "${TEMP_DNA_DIR}" || exit 1
@@ -438,4 +474,175 @@ EOF
   # Should not output the bashrc update message
   refute_output --partial "Mock n2st::print_msg called with args: Adding dna entrypoint path to ~/.bashrc"
   refute_output --partial "Mock n2st::print_msg called with args: Updating dna entrypoint path in ~/.bashrc"
+}
+
+# ====Offline Test Cases===========================================================================
+
+
+@test "dna::install_dockerized_norlab_project_on_host offline › expect offline warning and skip software installation" {
+  # Test case: When install.bash is called while offline, it should show warning and skip software installation
+  # What it tests: Offline behavior with warning message
+  # Expected outcome: Should pass but skip online-only operations
+  # Mocking: MOCK_IS_OFFLINE=true to simulate offline state
+
+  export MOCK_IS_OFFLINE=true
+
+  run bash -c "source ${TEMP_DNA_DIR}/install.bash && dna::install_dockerized_norlab_project_on_host"
+
+  # Should succeed
+  assert_success
+
+  # Should show offline warning
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+
+  # Should not call online-specific functions
+  refute_output --partial "Mock dna::check_install_darwin_package_manager called with args:"
+  refute_output --partial "Mock dna::install_dna_software_requirements called with args:"
+
+  # Should still call offline-compatible functions
+  assert_output --partial "Mock dna::setup_cuda_requirements called with args:"
+}
+
+
+@test "dna::install_dockerized_norlab_project_on_host offline with --yes › expect non-interactive offline installation" {
+  # Test case: When install.bash is called with --yes while offline, it should perform non-interactive installation with offline limitations
+  # What it tests: Combination of offline state and --yes option
+  # Expected outcome: Should pass but skip online-only operations
+  # Mocking: MOCK_IS_OFFLINE=true to simulate offline state
+
+  export MOCK_IS_OFFLINE=true
+
+  run bash -c "source ${TEMP_DNA_DIR}/install.bash && dna::install_dockerized_norlab_project_on_host --yes"
+
+  # Should succeed
+  assert_success
+
+  # Should show offline warning
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+
+  # Should not call online-specific functions
+  refute_output --partial "Mock dna::check_install_darwin_package_manager called with args:"
+  refute_output --partial "Mock dna::install_dna_software_requirements called with args:"
+
+  # Should create symlink
+  assert_file_executable "${TEMP_DNA_DIR}/src/bin/dna"
+  assert_symlink_to "${TEMP_DNA_DIR}/src/bin/dna" "/usr/local/bin/dna"
+}
+
+# ====Option Combination Test Cases===============================================================
+
+@test "dna::install_dockerized_norlab_project_on_host with --yes --add-dna-path-to-bashrc › expect non-interactive bashrc installation" {
+  # Test case: When install.bash is called with both --yes and --add-dna-path-to-bashrc, it should perform non-interactive bashrc installation
+  # What it tests: Combination of --yes and --add-dna-path-to-bashrc options
+  # Expected outcome: Should pass and update bashrc without prompts, no symlink creation
+  # Mocking: Default online state
+
+  run bash -c "source ${TEMP_DNA_DIR}/install.bash && dna::install_dockerized_norlab_project_on_host --yes --add-dna-path-to-bashrc"
+
+  # Should succeed
+  assert_success
+
+  # Should not create a symlink (--add-dna-path-to-bashrc disables system-wide symlink)
+  assert_file_executable "${TEMP_DNA_DIR}/src/bin/dna"
+  assert_not_symlink_to "${TEMP_DNA_DIR}/src/bin/dna" "/usr/local/bin/dna"
+
+  # Should update ~/.bashrc
+  assert_file_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
+  assert_output --partial "Mock n2st::print_msg called with args: Adding dna entrypoint path to ~/.bashrc"
+
+  # Should show appropriate completion message
+  assert_output --partial "Mock n2st::print_msg called with args: After restarting your shell or sourcing ~/.bashrc"
+}
+
+@test "dna::install_dockerized_norlab_project_on_host with --yes --skip-system-wide-symlink-install › expect non-interactive no-symlink installation" {
+  # Test case: When install.bash is called with both --yes and --skip-system-wide-symlink-install, it should perform non-interactive installation without symlink
+  # What it tests: Combination of --yes and --skip-system-wide-symlink-install options
+  # Expected outcome: Should pass without creating symlink or updating bashrc
+  # Mocking: Default online state
+
+  run bash -c "source ${TEMP_DNA_DIR}/install.bash && dna::install_dockerized_norlab_project_on_host --yes --skip-system-wide-symlink-install"
+
+  # Should succeed
+  assert_success
+
+  # Should not create a symlink
+  assert_file_executable "${TEMP_DNA_DIR}/src/bin/dna"
+  assert_not_symlink_to "${TEMP_DNA_DIR}/src/bin/dna" "/usr/local/bin/dna"
+
+  # Should not update ~/.bashrc
+  assert_file_not_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
+  refute_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
+  refute_output --partial "Mock n2st::print_msg called with args: Adding dna entrypoint path to ~/.bashrc"
+
+  # Should show appropriate completion message
+  assert_output --partial "Mock n2st::print_msg called with args: You can use"
+}
+
+@test "dna::install_dockerized_norlab_project_on_host offline with --add-dna-path-to-bashrc › expect offline bashrc installation" {
+  # Test case: When install.bash is called with --add-dna-path-to-bashrc while offline, it should update bashrc but skip online operations
+  # What it tests: Combination of offline state and --add-dna-path-to-bashrc option
+  # Expected outcome: Should pass, update bashrc, but skip online-only operations
+  # Mocking: MOCK_IS_OFFLINE=true to simulate offline state
+
+  export MOCK_IS_OFFLINE=true
+
+  run bash -c "source ${TEMP_DNA_DIR}/install.bash && dna::install_dockerized_norlab_project_on_host --add-dna-path-to-bashrc"
+
+  # Should succeed
+  assert_success
+
+  # Should show offline warning
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+
+  # Should not create a symlink
+  assert_file_executable "${TEMP_DNA_DIR}/src/bin/dna"
+  assert_not_symlink_to "${TEMP_DNA_DIR}/src/bin/dna" "/usr/local/bin/dna"
+
+  # Should update ~/.bashrc
+  assert_file_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
+  assert_output --partial "Mock n2st::print_msg called with args: Adding dna entrypoint path to ~/.bashrc"
+
+  # Should not call online-specific functions
+  refute_output --partial "Mock dna::check_install_darwin_package_manager called with args:"
+  refute_output --partial "Mock dna::install_dna_software_requirements called with args:"
+}
+
+# ====dna::is_online Function Test Cases==========================================================
+
+@test "dna::is_online when online › expect return 0" {
+  # Test case: When dna::is_online is called while online, it should return 0 (success)
+  # What it tests: Online detection function behavior when online
+  # Expected outcome: Should pass (return 0)
+  # Mocking: MOCK_IS_OFFLINE=false to simulate online state
+
+  export MOCK_IS_OFFLINE=false
+
+  source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"
+  source "${TEMP_DNA_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
+  source "${TEMP_DNA_DIR}/src/lib/core/utils/online.bash"
+
+  run dna::is_online
+
+  # Should succeed (return 0 for online)
+  assert_success
+  assert_output --partial "Mock dna::is_online called with args:"
+}
+
+@test "dna::is_online when offline › expect return 1" {
+  # Test case: When dna::is_online is called while offline, it should return 1 (failure)
+  # What it tests: Online detection function behavior when offline
+  # Expected outcome: Should fail (return 1)
+  # Mocking: MOCK_IS_OFFLINE=true to simulate offline state
+
+  export MOCK_IS_OFFLINE=true
+
+  source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"
+  source "${TEMP_DNA_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
+  source "${TEMP_DNA_DIR}/src/lib/core/utils/online.bash"
+
+  run dna::is_online
+
+  # Should fail (return 1 for offline)
+  assert_failure
+  assert_output --partial "Mock dna::is_online called with args:"
 }

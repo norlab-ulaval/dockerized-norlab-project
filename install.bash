@@ -4,7 +4,13 @@
 DOCUMENTATION_BUFFER_INSTALL=$(
   cat << 'EOF'
 # =================================================================================================
-# Install Dockerized-NorLab Project
+# Install Dockerized-NorLab Project on host.
+#
+# Perform the following steps:
+#  1. Install software requirements if online (L4T, Ubuntu and MacOsX)
+#  2. Setup cuda requirement (L4T and Ubuntu)
+#  3. Set path resolution (All operating system)
+#  4. Print remaing setup instruction to be executed by the user (you)
 #
 # Usage:
 #   $ bash ./install.bash [OPTIONS]
@@ -64,7 +70,7 @@ function dna::update_bashrc_dna_bin_path() {
 # Helper function: Create symlink in /usr/local/bin if requested
 #
 # Usage:
-#   $ dna::create_entrypoint_symlink_if_requested "$option_system_wide_symlink" "$option_yes" "$dna_entrypoint"
+#   $ dna::create_entrypoint_symlink_if_requested "$option_system_wide_symlink" [yes|false] "$dna_entrypoint"
 #
 # =================================================================================================
 function dna::create_entrypoint_symlink_if_requested() {
@@ -100,7 +106,7 @@ function dna::create_entrypoint_symlink_if_requested() {
 # Helper function: Add dna entrypoint path to ~/.bashrc if requested
 #
 # Usage:
-#   $ dna::add_dna_entrypoint_path_to_bashrc_if_requested "$option_add_dna_path_to_bashrc" "$option_yes" "$dna_bin_dir"
+#   $ dna::add_dna_entrypoint_path_to_bashrc_if_requested "$option_add_dna_path_to_bashrc" [yes|false] "$dna_bin_dir"
 #
 # Global:
 #  read HOME
@@ -165,6 +171,8 @@ function dna::install_dockerized_norlab_project_on_host() {
   source "${dna_install_dir}/load_repo_main_dotenv.bash"
   source "${dna_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
   source "${dna_install_dir}/src/lib/core/utils/ui.bash"
+  source "${dna_install_dir}/src/lib/core/utils/online.bash"
+  source "${dna_install_dir}/src/lib/core/utils/setup_host_dna_requirements.bash"
 
   # ....Set env variables (pre cli))...............................................................
   local option_system_wide_symlink=true
@@ -198,6 +206,13 @@ function dna::install_dockerized_norlab_project_on_host() {
     esac
   done
 
+  # ....Pre-condition..............................................................................
+  if dna::is_online; then
+    dna::check_install_darwin_package_manager "${option_yes}" || return 1
+  else
+    n2st::print_msg_warning "Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+  fi
+
   # ====Begin======================================================================================
   # Splash type: small, negative or big
   n2st::norlab_splash "${DNA_SPLASH_NAME_SMALL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
@@ -209,18 +224,17 @@ function dna::install_dockerized_norlab_project_on_host() {
 
   # ....Setup host for this super project..........................................................
   n2st::print_msg "Setting up host for Dockerized-NorLab Project..."
-  bash "${dna_install_dir}/src/lib/core/utils/setup_host_dna_requirements.bash" || return 1
+
+  if dna::is_online; then
+    dna::install_dna_software_requirements || return 1
+  fi
+  dna::setup_cuda_requirements || return 1
 
   # ....Create symlink in /usr/local/bin if requested..............................................
   dna::create_entrypoint_symlink_if_requested "$option_system_wide_symlink" "$option_yes" "$dna_entrypoint" || return 1
 
   # ....Add dna entrypoint path to ~/.bashrc if requested..........................................
   dna::add_dna_entrypoint_path_to_bashrc_if_requested "$option_add_dna_path_to_bashrc" "$option_yes" "$dna_bin_dir" || return 1
-
-  # ....Install other tools........................................................................
-  sudo apt-get update &&
-    sudo apt-get install --assume-yes \
-      tree
 
   # ====Teardown===================================================================================
   n2st::print_msg_done "Dockerized-NorLab Project has been installed successfully!"
@@ -236,14 +250,20 @@ function dna::install_dockerized_norlab_project_on_host() {
   fi
 
   cd "${dna_install_dir}"
+  
+  if ! dna::is_online; then
+    n2st::print_msg_warning "You are currently offline, software requirement install step was skiped.\nBe advise that 'docker engine', 'docker compose', 'git' and 'tree' are all hard requirement. 'docker buildx' plugin is optional but required for multi-architecture build)"
+  fi
   if [[ $(uname -s) == "Darwin" ]]; then
     print_msg "Remaining install instructions:
 1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
-1. Make sure 'docker compose' is enable in 'Docker Compose' settings
-2. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
+2. Make sure 'docker compose' is enable in 'Docker Compose' settings
+3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
     $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
     $ docker buildx ls
-${MSG_END_FORMAT}"
+${MSG_END_FORMAT}
+Stay awesome 🦾
+"
   else
     print_msg "Remaining install instructions:
 1. Apply Docker group change without login out: execute ${MSG_DIMMED_FORMAT}$ newgrp docker${MSG_END_FORMAT}
@@ -251,11 +271,9 @@ ${MSG_END_FORMAT}"
 3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
     $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
     $ docker buildx ls
-${MSG_END_FORMAT}"
-#     $ cd ${dna_install_dir}
-#     $ source load_repo_main_dotenv.bash
-#     $ cd utilities/norlab-build-system/install_scripts
-#     $ bash nbs_create_multiarch_docker_builder.bash
+${MSG_END_FORMAT}
+Stay awesome 🦾
+"
   fi
 
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"

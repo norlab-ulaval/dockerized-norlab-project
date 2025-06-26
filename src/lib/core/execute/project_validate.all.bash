@@ -45,6 +45,7 @@ function dna::project_validate_all() {
     config_flag+=("--override-build-cmd" "config")
     config_flag+=("--file" "${each_compose}")
     config_flag+=("--" "--dry-run")
+    unset BUILDX_BUILDER
     if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
       dna::excute_compose "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
@@ -80,6 +81,7 @@ function dna::project_validate_all() {
     declare -a build_flag=()
     build_flag+=("--file" "${each_compose}")
     build_flag+=("--" "--dry-run")
+    unset BUILDX_BUILDER
     if [[ "${each_compose}" =~ .*".multiarch.yaml" ]]; then
       dna::build_services_multiarch --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
     else
@@ -88,6 +90,7 @@ function dna::project_validate_all() {
     build_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
   done
+  unset BUILDX_BUILDER
 
   n2st::print_msg "Completed build in dry-run mode tests"
 

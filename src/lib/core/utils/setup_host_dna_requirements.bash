@@ -7,6 +7,11 @@
 #   $ bash setup_host_dna_requirements.bash
 #   or
 #   $ source setup_host_dna_requirements.bash && dna::setup_host_dna_requirements
+#   or
+#   $ source setup_host_dna_requirements.bash \
+#         && dna::check_install_darwin_package_manager [yes] \
+#         && dna::install_dna_software_requirements \
+#         && dna::setup_cuda_requirements
 #
 # Global:
 #  read DNA_ROOT
@@ -15,7 +20,62 @@
 #
 # =================================================================================================
 
-function dna::setup_host_dna_requirements() {
+
+# =================================================================================================
+# Check if Brew or MacPort is present on host. Optionally install Brew or exit.
+# Skip on non-MacOsX operating system
+#
+# Pre-condition:
+# - Assume host is online
+#
+# Usage:
+#   $ dna::check_install_darwin_package_manager [yes]
+#
+# Argument:
+#   [yes]     Assume going forward with installing Brew if not installed
+#
+# =================================================================================================
+function dna::check_install_darwin_package_manager() {
+  local option_yes="${1:-false}"
+
+  if [[ $(uname) == "Darwin" ]]; then
+    if command -v brew >/dev/null 2>&1; then
+        n2st::print_msg "Using Homebrew for package management"
+    elif command -v port >/dev/null 2>&1; then
+        n2st::print_msg "Using MacPorts for package management"
+    elif [[ "${option_yes}" == yes ]]; then
+      # Installing Homebreww
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    else
+      n2st::print_msg_warning "Neither Homebrew nor MacPorts is installed. Would you like to instal Homebreww now?"
+      read -r -n 1 -p "Install Homebrew? [y/N] " option_update
+      if [[ "${option_update}" == "y" || "${option_update}" == "Y" ]]; then
+        # Installing Homebreww
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      else
+        n2st::print_msg_error "Please install Homebrew or MacPorts to continue.
+  https://brew.sh
+  https://ports.macports.org"
+        exit 1
+      fi
+    fi
+  fi
+
+  return 0
+}
+
+# =================================================================================================
+# Install DNA software requirement. Support Linux based and MacOsX operating system.
+#
+# Pre-condition:
+# - Assume host is online
+# - Assume Brew or MacPort are installed on Darwin host
+#
+# Usage:
+#   $ dna::install_dna_software_requirements
+#
+# =================================================================================================
+function dna::install_dna_software_requirements() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
@@ -23,22 +83,64 @@ function dna::setup_host_dna_requirements() {
   # ....Install docker requirements................................................................
   if [[ $(uname -s) == "Darwin" ]]; then
     # Docker engine, compose and buildx are included in Docker Desktop
-    :
+    if command -v docker >/dev/null 2>&1; then
+      n2st::print_msg "'Docker Desktop' is installed."
+    else
+      n2st::print_msg_warning "'Docker Desktop' is not installed."
+    fi
   else
-    cd "${DNA_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
-    bash install_docker_tools.bash || return 1
+      cd "${DNA_ROOT}/utilities/norlab-shell-script-tools/src/utility_scripts" || return 1
+      bash install_docker_tools.bash || return 1
   fi
-
-  cd "$tmp_cwd" || return 1
 
   if [ -n "$ZSH_VERSION" ]; then
     source "$HOME/.zshrc"
   elif [ -n "$BASH_VERSION" ]; then
     source "$HOME/.bashrc"
   else
-    n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNA."
+    n2st::print_msg_warning "Unknown shell! Check with the maintainer to add its support to DNA."
   fi
 
+  cd "$tmp_cwd" || return 1
+
+  # ....Install other tools........................................................................
+  if [[ $(uname) == "Darwin" ]]; then
+    if command -v brew >/dev/null 2>&1; then
+        n2st::print_msg "Using Homebrew for package management"
+        brew install git || return 1
+        brew install tree || return 1
+    elif command -v port >/dev/null 2>&1; then
+        n2st::print_msg "Using MacPorts for package management"
+        sudo port install git || exit 1
+        sudo port install tree || exit 1
+    else
+        n2st::print_msg_error "Neither Homebrew nor MacPorts is installed" && return 1
+    fi
+  else
+    sudo apt-get update &&
+      sudo apt-get install --assume-yes \
+        git \
+        tree
+  fi
+
+
+  #  ....Teardown..................................................................................
+  cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" 1>&2 && return 1; }
+  return 0
+}
+
+# =================================================================================================
+# Setup cuda related requirement.
+# Will issue a warning and skip on MacOsX.
+#
+# Usage:
+#   $ dna::setup_cuda_requirements
+#
+# =================================================================================================
+function dna::setup_cuda_requirements() {
+  # ....Setup......................................................................................
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
   # ...CUDA toolkit path...........................................................................
   # ref dusty_nv comment at https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068
@@ -61,7 +163,15 @@ function dna::setup_host_dna_requirements() {
         echo ""
       ) >> "$HOME/.bashrc"
 
-      source "$HOME/.bashrc"
+      if [ -n "$ZSH_VERSION" ]; then
+        n2st::print_msg_warning "You are currently in a zsh shell. We made modification to the .bashrc.\nWe recommand you add 'source \$HOME/.bashrc' to your '.zshrc' file or copy those lines to it."
+        source "$HOME/.zshrc"
+      elif [ -n "$BASH_VERSION" ]; then
+        source "$HOME/.bashrc"
+      else
+        n2st::print_msg_warning "Unknown shell! Check with the maintainer to add its support to DNA."
+      fi
+
       n2st::print_msg_done "nvcc CUDA path hack completed. The following lines where added to ~/.bashrc
       ${MSG_DIMMED_FORMAT}
       # CUDA toolkit related
@@ -84,18 +194,23 @@ function dna::setup_host_dna_requirements() {
     fi
   fi
 
-  if [ -n "$ZSH_VERSION" ]; then
-    n2st::print_msg_warning "You are currently in a zsh shell. We made modification to the .bashrc.\nWe recommand you add 'source \$HOME/.bashrc' to your '.zshrc' file or copy those lines to it."
-    source "$HOME/.zshrc"
-  elif [ -n "$BASH_VERSION" ]; then
-    source "$HOME/.bashrc"
-  else
-    n2st::print_msg_error "Unknown shell! Check with the maintainer to add its support to DNA."
-  fi
-
-
-  #  ....Teardown...................................................................................
+  #  ....Teardown..................................................................................
   cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" 1>&2 && return 1; }
+  return 0
+}
+
+# =================================================================================================
+# Convenience function which perform all DNA requirement setup procedure
+#
+# Usage:
+#   $ dna::setup_host_dna_requirements
+#
+# =================================================================================================
+function dna::setup_host_dna_requirements() {
+  local option_yes="${1:-false}"
+  dna::check_install_darwin_package_manager "${option_yes}" || return 1
+  dna::install_dna_software_requirements || return 1
+  dna::setup_cuda_requirements || return 1
   return 0
 }
 
@@ -107,7 +222,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"
   script_path_parent="$(dirname "${script_path}")"
   source "${script_path_parent}/import_dna_lib.bash" || exit 1
-  dna::setup_host_dna_requirements || exit 1
+  dna::setup_host_dna_requirements "$@" || exit 1
   exit $?
 else
   # This script is being sourced, ie: __name__="__source__"

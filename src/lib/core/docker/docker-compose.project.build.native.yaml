@@ -135,6 +135,7 @@ services:
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-slurm:${PROJECT_TAG:?err}
+    runtime: nvidia
     depends_on:
       - project-core
 
