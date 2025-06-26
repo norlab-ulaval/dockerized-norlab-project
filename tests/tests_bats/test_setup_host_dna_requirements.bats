@@ -257,7 +257,7 @@ EOF
     if [[ "$1" == "-s" ]]; then
       echo "${MOCK_OS:-Linux}"
     else
-      builtin uname "$@"
+      command uname "$@"
     fi
   }
   export -f uname
@@ -409,4 +409,45 @@ teardown_file() {
 
   # Should show error about nvcc not installed properly
   assert_output --partial "Mock n2st::print_msg_warning called with args: Check your nvcc installation. It's stil NOT installed properly!"
+}
+
+# Test cases for new option_yes parameter functionality
+
+@test "dna::setup_host_dna_requirements - accepts option_yes parameter › expect parameter passed correctly" {
+  # Test case: When dna::setup_host_dna_requirements is called with "yes" argument, it should accept it without error
+  # This test verifies that the new option_yes parameter is correctly accepted by the main function
+  # Note: This test focuses on parameter acceptance rather than complex Darwin-specific logic
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::setup_host_dna_requirements yes"
+
+  # Should succeed (the function should accept the parameter without error)
+  assert_success
+
+  # Should show expected output from the function execution (on Linux, it runs install_docker_tools.bash)
+  assert_output --partial "Mock n2st::print_msg called with args: Install Docker tools"
+}
+
+@test "dna::check_install_darwin_package_manager - accepts option_yes parameter › expect parameter handled correctly" {
+  # Test case: When dna::check_install_darwin_package_manager is called with "yes" argument, it should accept it
+  # This test verifies that the function correctly accepts the new option_yes parameter
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::check_install_darwin_package_manager yes"
+
+  # Should succeed (the function should accept the parameter without error)
+  assert_success
+}
+
+@test "dna::check_install_darwin_package_manager - non-macOS system › expect success without action" {
+  # Test case: When running on non-macOS system, function should succeed without any action
+  # This test verifies that the function correctly skips package manager checks on non-macOS systems
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_dna_requirements.bash && dna::check_install_darwin_package_manager"
+
+  # Should succeed
+  assert_success
+
+  # Should not show any macOS-specific messages (since we're running on Linux in the container)
+  refute_output --partial "Using Homebrew for package management"
+  refute_output --partial "Using MacPorts for package management"
+  refute_output --partial "Neither Homebrew nor MacPorts is installed"
 }

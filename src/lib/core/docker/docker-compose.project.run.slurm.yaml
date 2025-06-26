@@ -41,7 +41,7 @@ services:
         required: false
     tty: false
     stdin_open: false
-    privileged: false # (Priority) ToDo: assessment (true or false)
+    # privileged: false
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined

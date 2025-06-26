@@ -14,6 +14,12 @@
 #
 # Returns:
 #   0 if online, 1 if offline
+#
+# Example in code:
+#    if ! dna::is_online; then
+#      n2st::print_msg_error "Be advised, you are currently, offline."
+#    fi
+#
 # =================================================================================================
 function dna::is_online() {
   local reliable_dns_address=${1:-8.8.8.8}

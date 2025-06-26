@@ -197,10 +197,11 @@ git clone --recurse-submodule https://github.com/norlab-ulaval/dockerized-norlab
 cd dockerized-norlab-project
 
 # Install DNA on host (Check install option with $ bash install.bash --help) 
+# Note: Installation supports both online and offline scenarios
 bash install.bash
 
 # Check available commands
-dna 
+dna
 ```
 
 ### Make a repository ready to use with DNA
@@ -266,6 +267,7 @@ dna down
 ### ⚙️ Setup & Configuration
 
 - **[Installation Guide](documentation/install.md)** - Detailed installation instructions for all supported platforms
+- **[Offline Installation Guide](documentation/offline_installation.md)** - Complete guide for installing DNA in environments without internet connectivity
 - **[Project Initialization & Configuration](documentation/project_initialization_and_configuration.md)** - Complete guide to setting up and configuring DNA projects
 - **[IDE Integration](documentation/ide_integration.md)** - Setup instructions for development environments and IDEs
 

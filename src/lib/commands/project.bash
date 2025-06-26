@@ -9,7 +9,7 @@ DOCUMENTATION_BUFFER_PROJECT=$( cat <<'EOF'
 #   $ dna project [validate|sanity|dotenv] [OPTIONS]
 #
 # Commands:
-#   validate               Validate super project setup
+#   validate               Validate super project '.dockerized_norlab' configurations
 #   sanity                 Validate super project setup
 #   dotenv                 Show consolidated and interpolated dotenv config files
 #
@@ -22,7 +22,9 @@ EOF
 
 DOCUMENTATION_BUFFER_PROJECT_VALIDATE=$( cat <<'EOF'
 # =================================================================================================
-# Validate DNA project docker configurations: docker-compose, dotenv and shell variable substitution
+# Validate super project '.dockerized_norlab' configurations including docker-compose files, dotenv
+# files environment variables and shell variable substitutions.
+#
 # In short, iterate over each services of all docker-compose files (or just the slurm ones):
 #   1. first in config mode with variable interpolation;
 #   2. and after, execute build and/or run in dry-run mode.
@@ -44,7 +46,7 @@ EOF
 
 DOCUMENTATION_BUFFER_PROJECT_SANITY=$( cat <<'EOF'
 # =================================================================================================
-# Validate super project setup
+# Validate super project DNA required components and dependencies are installed at the expected
 #
 # Usage:
 #   $ dna project validate [OPTIONS]
