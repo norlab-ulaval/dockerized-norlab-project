@@ -36,12 +36,6 @@ Execute all unit-tests and all integration tests before submiting.
 
 ## Modify proposed tests solutions 
 
-You overcomplicated `TODO` new test cases. 
-Don't test flag that are not part of the cli definition even if they are mentioned in the doc.
-You only need a test case for TODO
-
----
-
 In `TODO.bats`, instead of mocking `find`, `grep`, `cut`, `cd`, `pwd`, `command` and `basename` command, use the real one and tests the result using bats assert functionalities as instructed in `guidelines.md`
 
 ---
@@ -49,6 +43,12 @@ In `TODO.bats`, instead of mocking `find`, `grep`, `cut`, `cd`, `pwd`, `command`
 Integration tests `TODO` and `TODO` are all failling. 
 Please investigate and make the required changes. 
 Always follow guidelines at `.junie/guidelines.md`.
+
+---
+
+You overcomplicated `TODO` new test cases. 
+Don't test flag that are not part of the cli definition even if they are mentioned in the doc.
+You only need a test case for TODO
 
 ---
 

@@ -176,17 +176,17 @@ function dna::run_slurm() {
   # ....Build image in the local store.............................................................
   if [[ ${force_rebuild_project_core} == true ]]; then
     # shellcheck disable=SC2034
-    add_docker_flag=("--no-cache" "project-core")
-    add_docker_flag=("--quiet")
-    dna::excute_compose "${add_docker_flag[@]}" || exit 1
+    declare -a docker_build=()
+    docker_build+=("--no-cache")
+    docker_build+=("project-core")
+    dna::excute_compose "${docker_build[@]}"  || exit 1
   fi
 
   if [[ ${force_rebuild_slurm_img} == true ]]; then
-    docker_build=()
+    declare -a docker_build=()
     docker_build+=("--no-cache")
-    docker_build+=("--quiet")
-    add_docker_flag=("${docker_build[@]}" "${the_service}")
-    dna::excute_compose "${add_docker_flag[@]}" || exit 1
+    docker_build+=("${the_service}")
+    dna::excute_compose "${docker_build[@]}" || exit 1
   fi
 
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
@@ -198,7 +198,8 @@ function dna::run_slurm() {
   # ....Run container on MAMBA/SLURM...............................................................
   compose_flags=("-f" "${compose_file_path}")
 
-  docker_run=("run" "--rm")
+  declare -a docker_run=()
+  docker_run+=("run" "--rm")
   docker_run+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
   #docker_run+=("--service-ports") # Publish compose service ports (Mute if collision with host)
 

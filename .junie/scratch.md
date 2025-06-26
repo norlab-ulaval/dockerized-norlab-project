@@ -1,10 +1,37 @@
 
 # Scratch
 
+Read and implement the updated plan at `.junie/plans/documentation_updates_proposal.md`.
+Follow guidelines at `.junie/guidelines.md`.
+
+---
+
+Propose documentation update considering diff change in the current branch.
+Submit the proposed change first, them we will assess togheter with which ones we go forward.
+Follow guidelines at `.junie/guidelines.md`.
+
+---
+
+Update bats test at `tests/tests_bats/test_setup_host_dna_requirements.bats` considering change made to `src/lib/core/utils/setup_host_dna_requirements.bash`.
+Follow guidelines at `.junie/guidelines.md`.
+Create at least one test case per new command argument and/or options.
+Test relevant option and arguments combinaison.
+Propose source code change if relevant. 
+
+---
+
+Update bats test at `tests/tests_bats/test_install.bats` considering change made to `install.bash`.
+Add the the online/offline cases using the `MOCK_IS_OFFLINE` environment variable.
+Follow guidelines at `.junie/guidelines.md`.
+Create at least one test case per new command argument and/or options.
+Test relevant option and arguments combinaison.
+You can mock their corresponding functions as the intended purposes of this test file is for unit-testing the CLI functionalities.
+
+---
+
 (Iteration 4)
 
 Center the last diagram row of section _Why_ and _Use cases_
-
 
 ---
 
@@ -139,10 +166,10 @@ Execute all unit-tests and all integration tests before submiting.
 
 ---
 
-Update a bats test at `tests/tests_bats/test_run.bats` considering change made to `src/lib/commands/run.bash`.
-Update a bats test at `tests/tests_bats/test_up.bats` considering change made to `src/lib/commands/up.bash`.
-Update a bats test at `tests/tests_bats/test_attach.bats` considering change made to `src/lib/commands/attach.bash`.
-Update a bats test at `tests/tests_bats/test_exec.bats` considering change made to `src/lib/commands/exec.bash`.
+Update bats test at `tests/tests_bats/test_run.bats` considering change made to `src/lib/commands/run.bash`.
+Update bats test at `tests/tests_bats/test_up.bats` considering change made to `src/lib/commands/up.bash`.
+Update bats test at `tests/tests_bats/test_attach.bats` considering change made to `src/lib/commands/attach.bash`.
+Update bats test at `tests/tests_bats/test_exec.bats` considering change made to `src/lib/commands/exec.bash`.
 Follow guidelines at `.junie/guidelines.md`.
 Create at least one test case per new command argument and/or options.
 Test relevant option and arguments combinaison.

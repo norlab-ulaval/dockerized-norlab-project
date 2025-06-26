@@ -149,9 +149,10 @@ dna build develop -- --no-cache --progress=plain
 **Problem**: `--multiarch` flag fails.  
 **Solution**: Set up Docker Buildx with multi-architecture support:
 ```bash
-docker buildx create --name multiarch --driver docker-container --use
-docker buildx inspect --bootstrap
+docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+docker buildx ls
 ```
+**Note**: `local-builder-multiarch-virtual` is the default multi-architecture builder name use by `dna`
 
 ### Push fails with authentication error
 **Problem**: Cannot push to Docker Hub.  
