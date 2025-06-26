@@ -170,8 +170,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   # Source minimum required library for install purposes
   source "${dna_install_dir}/load_repo_main_dotenv.bash"
   source "${dna_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
-  source "${dna_install_dir}/src/lib/core/utils/ui.bash"
-  source "${dna_install_dir}/src/lib/core/utils/online.bash"
+  source "${dna_install_dir}/src/lib/core/utils/import_dna_lib.bash"
   source "${dna_install_dir}/src/lib/core/utils/setup_host_dna_requirements.bash"
 
   # ....Set env variables (pre cli))...............................................................
