@@ -62,23 +62,31 @@ function dna::check_install_darwin_package_manager() {
 
     if [[ "${option_yes}" == yes ]] || [[ "${option_update}" == "y" || "${option_update}" == "Y" ]]; then
       # Post install step
-      if [[ -n "${ZSH_VERSION}" ]]; then
-        if [[ ! -f "$HOME/.zshrc" ]]; then
-          touch "$HOME/.zshrc"
-        fi
-        cat >> "$HOME/.zshrc" << EOF
-eval "$(/opt/homebrew/bin/brew shellenv)"
-EOF
-        source "$HOME/.zshrc"
-      elif [[ -n "$BASH_VERSION" ]]; then
+      if [[ "$( which bash )"  =~ .*"/bash" ]]; then
         if [[ ! -f "$HOME/.bashrc" ]]; then
           touch "$HOME/.bashrc"
         fi
         cat >> "$HOME/.bashrc" << EOF
+
 eval "$(/opt/homebrew/bin/brew shellenv)"
+
 EOF
         source "$HOME/.bashrc"
-      else
+      fi
+
+      if [[ "$( which zsh )" =~ .*"/zsh" ]]; then
+        if [[ ! -f "$HOME/.zshrc" ]]; then
+          touch "$HOME/.zshrc"
+        fi
+        cat >> "$HOME/.zshrc" << EOF
+
+source $HOME/.bashrc
+
+EOF
+        source "$HOME/.zshrc"
+      fi
+
+      if [[ ! "$( which zsh )" =~ .*"/zsh" ]] && [[ ! "$( which bash )" =~ .*"/bash" ]]; then
         n2st::print_msg_warning "Unknown shell ${SHELL}! Check with the maintainer to add its support to DNA."
         n2st::print_msg_warning "Brew post-installation step. You need to update your shell’s config file (example ~/.bashrc or ~/.zshrc) to include this:\n
    ${MSG_WARNING_FORMAT}eval \"$(/opt/homebrew/bin/brew shellenv)\"${MSG_END_FORMAT}\n"
