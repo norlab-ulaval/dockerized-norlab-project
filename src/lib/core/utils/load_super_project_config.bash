@@ -1,7 +1,7 @@
 #!/bin/bash
 DOCUMENTATION_LOAD_SUPER_PROJECT_CONFIG=$( cat <<'EOF'
 # =================================================================================================
-# Load Dockerized-NorLab and Dockerized-NorLab Project resources and dependencies. The default
+# Load Dockerized-NorLab and Dockerized-NorLab project application resources and dependencies. The default
 # behavior is to execute the 'dna::load_super_project_configurations()' function automaticaly.
 #
 # Usage:

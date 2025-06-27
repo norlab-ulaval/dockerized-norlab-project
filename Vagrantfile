@@ -148,20 +148,20 @@ Vagrant.configure("2") do |config|
 
   # Ressetting
   rm -f /usr/local/bin/dna
-  sed -i '/# >>>> Dockerized-NorLab Project (start)/,/# <<<< Dockerized-NorLab Project (end)/d' "${HOME}/.bashrc"
-  sed -i '/# >>>> Dockerized-NorLab Project CUDA (start)/,/# <<<< Dockerized-NorLab Project CUDA (end)/d' "${HOME}/.bashrc"
-  sed -i '/# >>>> Dockerized-NorLab Project DEV alias (start)/,/# <<<< Dockerized-NorLab Project DEV alias (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> dockerized-norlab-project (start)/,/# <<<< dockerized-norlab-project (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> dockerized-norlab-project CUDA (start)/,/# <<<< dockerized-norlab-project CUDA (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> dockerized-norlab-project DEV alias (start)/,/# <<<< dockerized-norlab-project DEV alias (end)/d' "${HOME}/.bashrc"
 
   echo -e "\nSet DEV aliases\n"
   {
       echo "" ;
-      echo "# >>>> Dockerized-NorLab Project DEV alias (start)" ;
+      echo "# >>>> dockerized-norlab-project DEV alias (start)" ;
       echo "alias dna-dna-cd='cd /opt/dockerized-norlab-project'" ;
 #       echo "alias dna-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" ;
       echo "alias dna-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" ;
       echo "alias dna-test-symlink='tree -L 1 -a /usr/local/bin/'" ;
       echo "alias dna-test-bashrc='tail -n 20 ~/.bashrc'" ;
-      echo "# <<<< Dockerized-NorLab Project DEV alias (end)" ;
+      echo "# <<<< dockerized-norlab-project DEV alias (end)" ;
       echo "" ;
   } >> /home/vagrant/.bashrc
 

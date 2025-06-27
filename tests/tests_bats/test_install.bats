@@ -202,7 +202,7 @@ setup() {
 teardown() {
   bats_print_run_env_variable_on_error
   rm -f /usr/local/bin/dna
-  sed -i '/# >>>> Dockerized-NorLab Project (start)/,/# <<<< Dockerized-NorLab Project (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> dockerized-norlab-project (start)/,/# <<<< dockerized-norlab-project (end)/d' "${HOME}/.bashrc"
   cd "${TEMP_DNA_DIR}" || exit 1
 }
 
@@ -260,9 +260,9 @@ teardown_file() {
   assert_file_not_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
   assert_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: You can now use 'dna' command from anywhere"
 
 }
@@ -282,8 +282,8 @@ teardown_file() {
   refute_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: You can use"
 }
 
@@ -304,8 +304,8 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg called with args: Adding dna entrypoint path to ~/.bashrc"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: After restarting your shell or sourcing ~/.bashrc"
 }
 
@@ -321,9 +321,9 @@ teardown_file() {
   assert_file_not_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
   assert_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: You can now use 'dna' command from anywhere"
 }
 
@@ -358,12 +358,12 @@ teardown_file() {
   assert_file_not_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
 
   # Create a ~/.bashrc file with existing DNA_PATH entries
-  cat > "${HOME}/.bashrc" << EOF
+  cat > "${HOME}/.bashrc" << 'EOF'
 # Existing .bashrc content
-# >>>> Dockerized-NorLab Project (start)
+# >>>> dockerized-norlab-project (start)
 export _DNA_PATH="/old/path"
-export PATH="\$PATH:\$_DNA_PATH"
-# <<<< Dockerized-NorLab Project (end)
+export PATH="$PATH:$_DNA_PATH"
+# <<<< dockerized-norlab-project (end)
 EOF
 
   source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"
@@ -424,6 +424,101 @@ EOF
 
   # Should not output the symlink message
   refute_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
+}
+
+@test "dna::create_entrypoint_symlink_if_requested when /usr/local/bin missing and user says yes › expect directory created and symlink" {
+  # Test case: When /usr/local/bin doesn't exist and user chooses 'y' to create it, directory should be created and symlink established
+  # What it tests: Directory creation prompt with user accepting
+  # Expected outcome: Should pass, create directory, add to PATH, and create symlink
+  # Mocking: None - testing real directory operations as per guidelines
+
+  local dna_entrypoint="${TEMP_DNA_DIR}/src/bin/dna"
+  local option_system_wide_symlink=true
+  local option_yes=false
+
+  # Ensure /usr/local/bin doesn't exist
+  sudo rm -rf "/usr/local/bin"
+  assert_dir_not_exists "/usr/local/bin"
+
+  source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"
+  source "${TEMP_DNA_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
+  source "${TEMP_DNA_DIR}/install.bash"
+
+  # Simulate user input 'y' for creating directory
+  run bash -c "source '${TEMP_DNA_DIR}/install.bash' && echo 'y' | dna::create_entrypoint_symlink_if_requested '${option_system_wide_symlink}' '${option_yes}' '${dna_entrypoint}'"
+
+  # Should succeed
+  assert_success
+  assert_dir_exists "/usr/local/bin"
+  assert_symlink_to "${dna_entrypoint}" "/usr/local/bin/dna"
+
+  # Should output warning about missing directory
+  assert_output --partial "Mock n2st::print_msg_warning called with args: /usr/local/bin directory does not exist."
+  # Should output symlink creation message
+  assert_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
+}
+
+@test "dna::create_entrypoint_symlink_if_requested when /usr/local/bin missing and user says no › expect error and exit" {
+  # Test case: When /usr/local/bin doesn't exist and user chooses 'N' to not create it, should exit with error
+  # What it tests: Directory creation prompt with user declining
+  # Expected outcome: Should fail with error message about creating directory manually
+  # Mocking: None - testing real directory operations as per guidelines
+
+  local dna_entrypoint="${TEMP_DNA_DIR}/src/bin/dna"
+  local option_system_wide_symlink=true
+  local option_yes=false
+
+  # Ensure /usr/local/bin doesn't exist
+  sudo rm -rf "/usr/local/bin"
+  assert_dir_not_exists "/usr/local/bin"
+
+  source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"
+  source "${TEMP_DNA_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
+  source "${TEMP_DNA_DIR}/install.bash"
+
+  # Simulate user input 'N' for not creating directory
+  run bash -c "source '${TEMP_DNA_DIR}/install.bash' && echo 'N' | dna::create_entrypoint_symlink_if_requested '${option_system_wide_symlink}' '${option_yes}' '${dna_entrypoint}'"
+
+  # Should fail
+  assert_failure
+  assert_dir_not_exists "/usr/local/bin"
+  assert_not_symlink_to "${dna_entrypoint}" "/usr/local/bin/dna"
+
+  # Should output warning about missing directory
+  assert_output --partial "Mock n2st::print_msg_warning called with args: /usr/local/bin directory does not exist."
+  # Should output error message about creating directory manually
+  assert_output --partial "Mock n2st::print_msg_error_and_exit called with args: Please create /usr/local/bin directory"
+}
+
+@test "dna::create_entrypoint_symlink_if_requested when /usr/local/bin missing with --yes option › expect directory created and symlink" {
+  # Test case: When /usr/local/bin doesn't exist and --yes option is used, directory should be created automatically
+  # What it tests: Non-interactive directory creation with --yes option
+  # Expected outcome: Should pass, create directory, add to PATH, and create symlink without prompting
+  # Mocking: None - testing real directory operations as per guidelines
+
+  local dna_entrypoint="${TEMP_DNA_DIR}/src/bin/dna"
+  local option_system_wide_symlink=true
+  local option_yes=true
+
+  # Ensure /usr/local/bin doesn't exist
+  sudo rm -rf "/usr/local/bin"
+  assert_dir_not_exists "/usr/local/bin"
+
+  source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"
+  source "${TEMP_DNA_DIR}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
+  source "${TEMP_DNA_DIR}/install.bash"
+
+  run dna::create_entrypoint_symlink_if_requested "${option_system_wide_symlink}" "${option_yes}" "${dna_entrypoint}"
+
+  # Should succeed
+  assert_success
+  assert_dir_exists "/usr/local/bin"
+  assert_symlink_to "${dna_entrypoint}" "/usr/local/bin/dna"
+
+  # Should output warning about missing directory
+  assert_output --partial "Mock n2st::print_msg_warning called with args: /usr/local/bin directory does not exist."
+  # Should output symlink creation message
+  assert_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
 }
 
 @test "dna::add_dna_entrypoint_path_to_bashrc_if_requested with option_add_dna_path_to_bashrc=true › expect bashrc updated" {

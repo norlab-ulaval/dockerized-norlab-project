@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================================================
-# Setup host computer (i.e, workstation, embed computer, server) for using this
-# Dockerized-NorLab Project super project.
+# Setup host computer (i.e, workstation, embed computer, server) for using this super project
+# with Dockerized-NorLab project application (DNA).
 #
 # Usage:
 #   $ bash setup_host_for_running_this_super_project.bash

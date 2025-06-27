@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report analyzes the Dockerized-NorLab Project (DNA) repository to identify implementation details that would prevent users from running `dna` in offline mode. After careful review and correction of initial misconceptions, the analysis shows that DNA can operate in offline mode with minimal or no modifications required.
+This report analyzes the Dockerized-NorLab project application (DNA) repository to identify implementation details that would prevent users from running `dna` in offline mode. After careful review and correction of initial misconceptions, the analysis shows that DNA can operate in offline mode with minimal or no modifications required.
 
 ## Key Findings
 

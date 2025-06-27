@@ -1,6 +1,6 @@
 # dna version
 
-Show Dockerized-NorLab Project version information.
+Show Dockerized-NorLab project application version information.
 
 ## Synopsis
 
@@ -10,68 +10,49 @@ dna version [OPTIONS]
 
 ## Description
 
-The `dna version` command displays the current version of the Dockerized-NorLab Project (DNA) application. This is useful for troubleshooting, compatibility checking, and ensuring you're running the expected version.
+The `dna version` command displays the current version of Dockerized-NorLab project application. This is useful for troubleshooting, compatibility checking, and ensuring you're running the expected version.
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
+| `--short`, `-s` | Show version number only |
+| `--all`, `-a` | Show detailed version information |
 | `--help`, `-h` | Show help message and exit |
 
-## Examples
+## Output Examples
 
-### Basic Version Display
-
-```bash
-# Show DNA version
-dna version
-```
-
-### Output Example
+### Default Version Display
 
 ```bash
 $ dna version
-Dockerized-NorLab Project version: 1.2.3
+Dockerized-NorLab project application version 1.2.3
 ```
 
-## Use Cases
-
-### Version Verification
+### Short Version Display
+Show only version number
 
 ```bash
-# Check current DNA version
-dna version
-
-# Verify version in scripts
-DNA_VERSION=$(dna version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-echo "Running DNA version: $DNA_VERSION"
+$ dna version --short
+1.2.3
 ```
 
-### Compatibility Checking
+### Detailed Version Display
+Show comprehensive version information
 
 ```bash
-# Check version before running commands
-dna version
-dna build develop  # Ensure compatibility
-```
-
-### Troubleshooting
-
-```bash
-# Include version in bug reports
-echo "DNA Version: $(dna version)"
-echo "Docker Version: $(docker --version)"
-echo "System: $(uname -a)"
-```
-
-### CI/CD Integration
-
-```bash
-# Log version in CI pipeline
-echo "=== Environment Information ==="
-dna version
-docker --version
-docker-compose --version
+dna version --all
+$ dna version --all
+Dockerized-NorLab project application:
+  Version: 1.2.3
+  Config scheme version: 1
+  Submodule version:
+    norlab-shell-script-tools: 2.0.0
+    norlab-build-system: 3.0.0
+  Local repository:
+    Current branch: main
+    Current commit: abc123def456
+  Host architecture and OS: linux/amd64
 ```
 
 ## Version Information
@@ -87,10 +68,55 @@ DNA follows semantic versioning (SemVer):
 
 ### Version Source
 
-The version is read from:
-- **File**: `${DNA_ROOT}/version.txt`
-- **Location**: DNA installation directory
-- **Format**: Plain text file containing version string
+The version information is obtained from:
+- **Environment Variables**: DNA_VERSION, DNA_CONFIG_SCHEME_VERSION, N2ST_VERSION, NBS_VERSION
+- **Git Repository**: Current branch and commit information
+- **System**: Host architecture and OS information
+
+
+## Use Cases
+
+### Version Verification
+
+```bash
+# Get just the version number for scripts
+$ echo "Running DNA version: $(dna version --short)"
+Running DNA version: 1.2.3
+```
+
+### Compatibility Checking
+
+```bash
+# Check version before running commands
+$ dna version --all | grep -e "Config scheme version"
+Config scheme version: 1
+$ cat .dockerized_norlab/.env.dockerized-norlab-project-mock | grep DNA_CONFIG_SCHEME_VERSION
+DNA_CONFIG_SCHEME_VERSION=1
+```
+
+### CI/CD Integration
+
+```bash
+# Log version in CI pipeline
+echo "=== Environment Information ==="
+dna version
+docker --version
+docker-compose --version
+```
+
+### Troubleshooting
+
+```bash
+# Include comprehensive version information in bug reports
+cat > "mock_bug_report.log" << EOF
+=== DNA Version Information ===
+$(dna version --all)
+
+=== Docker Information ===
+Docker Version: $(docker --version)
+Docker Compose Version: $(docker-compose --version)
+EOF
+```
 
 ## Integration with Other Tools
 
@@ -100,12 +126,16 @@ The version is read from:
 #!/bin/bash
 # Check DNA version compatibility
 REQUIRED_VERSION="1.2.0"
-CURRENT_VERSION=$(dna version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+CURRENT_VERSION=$(dna version --short)
 
-if [[ ${CURRENT_VERSION} -lt ${REQUIRED_VERSION} ]]; then
+if [[ ${CURRENT_VERSION} < ${REQUIRED_VERSION} ]]; then
     echo "Error: DNA version ${CURRENT_VERSION} is too old. Required: ${REQUIRED_VERSION}"
     exit 1
 fi
+
+# Get detailed information for logging
+echo "=== DNA Environment ==="
+dna version --all
 ```
 
 ### Docker Image Tagging
@@ -151,19 +181,6 @@ echo "Generated with DNA version: $(dna version)" >> README.md
 
 ### Permission Issues
 
-**Problem**: Cannot read version file.
-
-**Solutions**:
-1. **Check permissions**: Verify file permissions
-   ```bash
-   ls -la ${DNA_ROOT}/version.txt
-   ```
-
-2. **Fix permissions**: Correct file permissions if needed
-   ```bash
-   chmod 644 ${DNA_ROOT}/version.txt
-   ```
-
 ### Incorrect Version Display
 
 **Problem**: Version shows unexpected value.
@@ -178,6 +195,8 @@ echo "Generated with DNA version: $(dna version)" >> README.md
 2. **Check version file**: Manually inspect version file
    ```bash
    cat ${DNA_ROOT}/version.txt
+   # compare with 
+   dna version --short
    ```
 
 ## Version History and Compatibility

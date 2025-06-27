@@ -27,7 +27,7 @@ The expected sections order should be the following:
 - _Description_
 - _What it does_
 - _Getting started_
-  - _Install Dockerized-NorLab Project app `dna`_
+  - _Install Dockerized-NorLab-Project app `dna`_
   - _Make a repository ready to use with DNA_
   - _Create, run and stop DN container_
 - _Why_

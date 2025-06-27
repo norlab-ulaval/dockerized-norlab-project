@@ -74,6 +74,8 @@ export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
 export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNA_ROOT="${MOCK_DNA_DIR}"
 export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_HUMAN_NAME="Dockerized-NorLab project application"
+export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project"
 
 export N2ST_PATH="${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
 source "${N2ST_PATH}/import_norlab_shell_script_tools_lib.bash"
@@ -386,7 +388,7 @@ teardown_file() {
   # Check README.md content
   run cat "${TEST_REPO_DIR}/README.md"
   assert_output --partial "# test-project"
-  assert_output --partial "This project is initialized with [Dockerized-NorLab Project]"
+  assert_output --partial "This project is initialized with [Dockerized-NorLab project application (DNA)](https:"
 }
 
 @test "dna::init_command tests for README.md creation when it exists › expect README.md not modified" {

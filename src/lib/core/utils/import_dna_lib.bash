@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Load Dockerized-NorLab and Dockerized-NorLab Project resources and dependencies
+# Load Dockerized-NorLab and Dockerized-NorLab project application resources and dependencies
 #
 # Usage:
 #   $ source import_dna_lib.bash

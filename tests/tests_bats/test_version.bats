@@ -70,6 +70,12 @@ export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
 export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNA_ROOT="${MOCK_DNA_DIR}"
 export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_HUMAN_NAME="Dockerized-NorLab project application"
+export DNA_VERSION="1.0.0"
+export DNA_CONFIG_SCHEME_VERSION="1"
+export N2ST_VERSION="2.0.0"
+export NBS_VERSION="3.0.0"
+export IMAGE_ARCH_AND_OS="linux/amd64"
 
 # ....Mock dependencies loading test functions.....................................................
 function dna::import_lib_and_dependencies() {
@@ -86,11 +92,49 @@ function dna::command_help_menu() {
   return 0
 }
 
+function dna::unknown_option_msg() {
+  echo "Mock dna::unknown_option_msg called with args: $*"
+  return 1
+}
+
+# ....Mock N2ST functions..........................................................................
+function n2st::print_msg_error_and_exit() {
+  echo "Mock n2st::print_msg_error_and_exit called with args: $*" >&2
+  exit 1
+}
+
+function n2st::set_which_architecture_and_os() {
+  # This function sets IMAGE_ARCH_AND_OS, which we already set above
+  return 0
+}
+
+# ....Mock git commands............................................................................
+function git() {
+  case "$1" in
+    "branch")
+      if [[ "$2" == "--show-current" ]]; then
+        echo "main"
+      fi
+      ;;
+    "rev-parse")
+      if [[ "$2" == "HEAD" ]]; then
+        echo "abc123def456"
+      fi
+      ;;
+    *)
+      command git "$@"
+      ;;
+  esac
+}
+
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
+
+# Export git mock function
+export -f git
 
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
@@ -124,19 +168,16 @@ teardown_file() {
 
 # ====Test cases==================================================================================
 
-@test "dna::version_command with no arguments and version.txt exists › expect version display" {
-  # Create a mock version.txt file
-  mkdir -p "${MOCK_DNA_DIR}"
-  echo "1.0.0" > "${MOCK_DNA_DIR}/version.txt"
-
-  # Test case: When version command is called without arguments and version.txt exists, it should display the version
+@test "dna::version_command with no arguments › expect default version display" {
+  # Test case: When version command is called without arguments, it should display the default version format
+  # Expected behavior: Shows "DNA_HUMAN_NAME version DNA_VERSION"
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command"
 
   # Should succeed
   assert_success
 
-  # Should output the expected message
-  assert_output --partial "Dockerized-NorLab Project version: 1.0.0"
+  # Should output the expected message in default format
+  assert_output --partial "${DNA_HUMAN_NAME} version ${DNA_VERSION}"
 }
 
 @test "dna::version_command with --help › expect help menu" {
@@ -161,32 +202,76 @@ teardown_file() {
   assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
-@test "dna::version_command with no arguments and version.txt does not exist › expect error" {
-  # Ensure version.txt does not exist
-  rm -f "${MOCK_DNA_DIR}/version.txt"
-
-  # Test case: When version command is called without arguments and version.txt does not exist, it should show an error
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command"
-
-  # Should fail
-  assert_failure
-
-  # Should output the error message
-  assert_output --partial "Error: version.txt not found."
-  assert_output --partial "Could not determine Dockerized-NorLab Project version."
-}
-
-@test "dna::version_command with unknown option › expect option ignored" {
-  # Create a mock version.txt file
-  mkdir -p "${MOCK_DNA_DIR}"
-  echo "1.0.0" > "${MOCK_DNA_DIR}/version.txt"
-
-  # Test case: When version command is called with an unknown option, it should ignore it and display the version
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --unknown-option"
+@test "dna::version_command with --short › expect short version display" {
+  # Test case: When version command is called with --short, it should display only the version number
+  # Expected behavior: Shows only "DNA_VERSION"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --short"
 
   # Should succeed
   assert_success
 
-  # Should output the expected message
-  assert_output --partial "Dockerized-NorLab Project version: 1.0.0"
+  # Should output only the version number
+  assert_output "${DNA_VERSION}"
+}
+
+@test "dna::version_command with -s › expect short version display" {
+  # Test case: When version command is called with -s, it should display only the version number
+  # Expected behavior: Shows only "DNA_VERSION"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command -s"
+
+  # Should succeed
+  assert_success
+
+  # Should output only the version number
+  assert_output "${DNA_VERSION}"
+}
+
+@test "dna::version_command with --all › expect detailed version display" {
+  # Test case: When version command is called with --all, it should display detailed version information
+  # Expected behavior: Shows comprehensive version info including submodules, git info, and architecture
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --all"
+
+  # Should succeed
+  assert_success
+
+  # Should output detailed version information
+  assert_output --partial "${DNA_HUMAN_NAME}:"
+  assert_output --partial "Version: ${DNA_VERSION}"
+  assert_output --partial "Config scheme version: ${DNA_CONFIG_SCHEME_VERSION}"
+  assert_output --partial "norlab-shell-script-tools: ${N2ST_VERSION}"
+  assert_output --partial "norlab-build-system: ${NBS_VERSION}"
+  assert_output --partial "Current branch: main"
+  assert_output --partial "Current commit: abc123def456"
+  assert_output --partial "Host architecture and OS: ${IMAGE_ARCH_AND_OS}"
+}
+
+@test "dna::version_command with -a › expect detailed version display" {
+  # Test case: When version command is called with -a, it should display detailed version information
+  # Expected behavior: Shows comprehensive version info including submodules, git info, and architecture
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command -a"
+
+  # Should succeed
+  assert_success
+
+  # Should output detailed version information
+  assert_output --partial "${DNA_HUMAN_NAME}:"
+  assert_output --partial "Version: ${DNA_VERSION}"
+  assert_output --partial "Config scheme version: ${DNA_CONFIG_SCHEME_VERSION}"
+  assert_output --partial "norlab-shell-script-tools: ${N2ST_VERSION}"
+  assert_output --partial "norlab-build-system: ${NBS_VERSION}"
+  assert_output --partial "Current branch: main"
+  assert_output --partial "Current commit: abc123def456"
+  assert_output --partial "Host architecture and OS: ${IMAGE_ARCH_AND_OS}"
+}
+
+@test "dna::version_command with unknown option › expect error" {
+  # Test case: When version command is called with an unknown option, it should show an error
+  # Expected behavior: Should call dna::unknown_option_msg and return failure
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --unknown-option"
+
+  # Should fail
+  assert_failure
+
+  # Should output the unknown option message
+  assert_output --partial "Mock dna::unknown_option_msg called with args: version --unknown-option"
 }
