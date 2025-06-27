@@ -78,8 +78,15 @@ function dna::create_entrypoint_symlink_if_requested() {
   local option_yes="$2"
   local dna_entrypoint="$3"
   if [[ "${option_system_wide_symlink:?err}" == true ]]; then
-    if [[ ! -d "/usr/local/bin" ]]; then
-      n2st::print_msg_error_and_exit "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist.\nPlease create it or use ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} option."
+    #if [[ ! -d "/usr/local/bin" ]]; then
+    #  n2st::print_msg_error_and_exit "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist.\nPlease create it by executing ${MSG_DIMMED_FORMAT}mkdir -p /usr/local/bin${MSG_END_FORMAT} or use ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} option."
+    #fi
+    sudo mkdir -p "/usr/local/bin"
+    # shellcheck disable=SC2143
+    if [[ -z "$( echo "${PATH}" | grep --quiet /usr/local/bin )"  ]]; then
+      cat >> "$HOME/.bashrc" << EOF
+PATH="${PATH}:/usr/local/bin"
+EOF
     fi
 
     if [[ -L "/usr/local/bin/dna" || -f "/usr/local/bin/dna" ]]; then
@@ -170,8 +177,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   # Source minimum required library for install purposes
   source "${dna_install_dir}/load_repo_main_dotenv.bash"
   source "${dna_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
-  source "${dna_install_dir}/src/lib/core/utils/ui.bash"
-  source "${dna_install_dir}/src/lib/core/utils/online.bash"
+  source "${dna_install_dir}/src/lib/core/utils/import_dna_lib.bash"
   source "${dna_install_dir}/src/lib/core/utils/setup_host_dna_requirements.bash"
 
   # ....Set env variables (pre cli))...............................................................
@@ -257,7 +263,8 @@ function dna::install_dockerized_norlab_project_on_host() {
   if [[ $(uname -s) == "Darwin" ]]; then
     print_msg "Remaining install instructions:
 1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
-2. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
+2. Open Docker Desktop, go to 'Settings' and check '☑️ Start Docker Desktop when you sign in to your computer' and restart the current terminal
+3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
     $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
     $ docker buildx ls
 ${MSG_END_FORMAT}
