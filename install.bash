@@ -9,8 +9,8 @@ DOCUMENTATION_BUFFER_INSTALL=$(
 # Perform the following steps:
 #  1. Install software requirements if online (L4T, Ubuntu and MacOsX)
 #  2. Setup cuda requirement (L4T and Ubuntu)
-#  3. Set path resolution (All operating system)
-#  4. Print remaing setup instruction to be executed by the user (you)
+#  3. Set path resolution (system wide, via bashrc or none)
+#  4. Print remaining setup instruction to be executed by the user (you)
 #
 # Usage:
 #   $ bash ./install.bash [OPTIONS]
@@ -78,15 +78,23 @@ function dna::create_entrypoint_symlink_if_requested() {
   local option_yes="$2"
   local dna_entrypoint="$3"
   if [[ "${option_system_wide_symlink:?err}" == true ]]; then
-    #if [[ ! -d "/usr/local/bin" ]]; then
-    #  n2st::print_msg_error_and_exit "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist.\nPlease create it by executing ${MSG_DIMMED_FORMAT}mkdir -p /usr/local/bin${MSG_END_FORMAT} or use ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} option."
-    #fi
-    sudo mkdir -p "/usr/local/bin"
-    # shellcheck disable=SC2143
-    if [[ -z "$( echo "${PATH}" | grep --quiet /usr/local/bin )"  ]]; then
-      cat >> "$HOME/.bashrc" << EOF
-PATH="${PATH}:/usr/local/bin"
-EOF
+    if [[ ! -d "/usr/local/bin" ]]; then
+      n2st::print_msg_warning "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist."
+      local create_and_add_to_path
+      if [[ "${option_yes:?err}" == true ]]; then
+        create_and_add_to_path="y"
+      else
+        read -r -n 1 -p "Create directory and add to PATH? [y/N] " create_and_add_to_path
+      fi
+      if [[ "${create_and_add_to_path}" == "y" || "${create_and_add_to_path}" == "Y" ]]; then
+        sudo mkdir -p "/usr/local/bin"
+        # shellcheck disable=SC2143
+        if [[ -z "$( echo "${PATH}" | grep --quiet /usr/local/bin )"  ]]; then
+          echo "export PATH=\"\$PATH:/usr/local/bin\"" >> "$HOME/.bashrc"
+        fi
+      else
+        n2st::print_msg_error_and_exit "Please create /usr/local/bin directory by executing ${MSG_DIMMED_FORMAT}mkdir -p /usr/local/bin${MSG_END_FORMAT} and re-run the install script or use the ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} install flag."
+      fi
     fi
 
     if [[ -L "/usr/local/bin/dna" || -f "/usr/local/bin/dna" ]]; then
@@ -256,7 +264,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   fi
 
   cd "${dna_install_dir}"
-  
+
   if ! dna::is_online; then
     n2st::print_msg_warning "You are currently offline, software requirement install step was skiped.\nBe advise that 'docker engine', 'docker compose', 'docker buildx', 'git' and 'tree' are all hard requirement."
   fi

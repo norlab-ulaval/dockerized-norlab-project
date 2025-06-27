@@ -83,8 +83,8 @@ bash install.bash
 - Standard Unix convention
 
 **Requirements:**
-- `/usr/local/bin` directory must exist
-- Sudo privileges for symlink creation
+- Sudo privileges for symlink creation and directory creation (if needed)
+- If `/usr/local/bin` doesn't exist, the installer will prompt to create it
 
 ### Method 2: User-Specific Installation
 
@@ -309,12 +309,18 @@ docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 **Problem**: Cannot create symlink in `/usr/local/bin`.
 
 **Solutions:**
-1. **Create directory** (if missing):
+1. **Re-run installer** (handles missing directory automatically):
    ```bash
-   sudo mkdir -p /usr/local/bin
+   bash install.bash
+   ```
+   The installer will prompt to create `/usr/local/bin` if it doesn't exist.
+
+2. **Use non-interactive installation**:
+   ```bash
+   bash install.bash --yes
    ```
 
-2. **Use alternative installation**:
+3. **Use alternative installation**:
    ```bash
    bash install.bash --add-dna-path-to-bashrc
    ```
