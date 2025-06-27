@@ -85,6 +85,7 @@ function dna::create_entrypoint_symlink_if_requested() {
         create_and_add_to_path="y"
       else
         read -r -n 1 -p "Create directory and add to PATH? [y/N] " create_and_add_to_path
+        echo
       fi
       if [[ "${create_and_add_to_path}" == "y" || "${create_and_add_to_path}" == "Y" ]]; then
         sudo mkdir -p "/usr/local/bin"
@@ -105,6 +106,7 @@ function dna::create_entrypoint_symlink_if_requested() {
         if [[ "${option_overwrite}" != "y" && "${option_overwrite}" != "Y" ]]; then
           n2st::print_msg "Skipping symlink creation."
         else
+          echo
           dna::create_bin_dna_to_entrypoint_symlink "${dna_entrypoint:?err}" || return 1
         fi
       else
