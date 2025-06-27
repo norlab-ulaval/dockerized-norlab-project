@@ -263,7 +263,8 @@ function dna::install_dockerized_norlab_project_on_host() {
   if [[ $(uname -s) == "Darwin" ]]; then
     print_msg "Remaining install instructions:
 1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
-2. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
+2. Open Docker Desktop, go to 'Settings' and check '☑️ Start Docker Desktop when you sign in to your computer' and restart the current terminal
+3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
     $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
     $ docker buildx ls
 ${MSG_END_FORMAT}
