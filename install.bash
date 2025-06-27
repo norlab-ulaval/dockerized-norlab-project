@@ -4,7 +4,7 @@
 DOCUMENTATION_BUFFER_INSTALL=$(
   cat << 'EOF'
 # =================================================================================================
-# Install Dockerized-NorLab Project on host.
+# Install Dockerized-NorLab project application (DNA) on host.
 #
 # Perform the following steps:
 #  1. Install software requirements if online (L4T, Ubuntu and MacOsX)
@@ -149,10 +149,10 @@ function dna::add_dna_entrypoint_path_to_bashrc_if_requested() {
         n2st::print_msg "Adding dna entrypoint path to ~/.bashrc"
         {
           echo "" ;
-          echo "# >>>> Dockerized-NorLab Project (start)" ;
+          echo "# >>>> dockerized-norlab-project (start)" ;
           echo "export _DNA_PATH=\"${dna_bin_dir}\"" ;
           echo "export PATH=\"\$PATH:\$_DNA_PATH\"" ;
-          echo "# <<<< Dockerized-NorLab Project (end)" ;
+          echo "# <<<< dockerized-norlab-project (end)" ;
           echo "" ;
         } >> "${HOME}/.bashrc"
       fi
@@ -237,7 +237,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   chmod +x "${dna_entrypoint}"
 
   # ....Setup host for this super project..........................................................
-  n2st::print_msg "Setting up host for Dockerized-NorLab Project..."
+  n2st::print_msg "Setting up host..."
 
   if dna::is_online; then
     dna::install_dna_software_requirements || return 1
@@ -251,7 +251,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   dna::add_dna_entrypoint_path_to_bashrc_if_requested "$option_add_dna_path_to_bashrc" "$option_yes" "$dna_bin_dir" || return 1
 
   # ====Teardown===================================================================================
-  n2st::print_msg_done "Dockerized-NorLab Project has been installed successfully!"
+  n2st::print_msg_done "${DNA_HUMAN_NAME} has been installed successfully!"
   if [[ "${option_system_wide_symlink}" == true ]]; then
     n2st::print_msg "You can now use 'dna' command from anywhere."
     echo -e "\nRun 'dna help' for usage information."

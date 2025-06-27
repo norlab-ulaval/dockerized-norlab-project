@@ -163,9 +163,9 @@ export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
 export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNA_ROOT="${MOCK_DNA_DIR}"
 export DNA_LIB_PATH="${DNA_ROOT}/src/lib"
-export DNA_PROMPT_NAME="Dockerized-NorLab Project"
-export DNA_SPLASH_NAME_FULL="Dockerized-NorLab Project"
-export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab Project"
+export DNA_PROMPT_NAME="dockerized-norlab-project"
+export DNA_SPLASH_NAME_FULL="dockerized-norlab-project"
+export DNA_SPLASH_NAME_SMALL="dockerized-norlab-project"
 export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................

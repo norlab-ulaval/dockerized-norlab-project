@@ -66,7 +66,7 @@ function dna::load_repository_environment_variables() {
 
   cd "${target_path:?err}" || return 1
   if [[ ! -f .env.dockerized-norlab-project ]]; then
-    echo -e "\n[\033[1;31mDN error\033[0m] Can't find Dockerized-NorLab Project repository root!" 1>&2
+    echo -e "\n[\033[1;31mDN error\033[0m] Can't find ${DNA_HUMAN_NAME} repository root!" 1>&2
     return 1
   fi
 

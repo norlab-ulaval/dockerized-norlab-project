@@ -202,7 +202,7 @@ setup() {
 teardown() {
   bats_print_run_env_variable_on_error
   rm -f /usr/local/bin/dna
-  sed -i '/# >>>> Dockerized-NorLab Project (start)/,/# <<<< Dockerized-NorLab Project (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> dockerized-norlab-project (start)/,/# <<<< dockerized-norlab-project (end)/d' "${HOME}/.bashrc"
   cd "${TEMP_DNA_DIR}" || exit 1
 }
 
@@ -260,9 +260,9 @@ teardown_file() {
   assert_file_not_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
   assert_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: You can now use 'dna' command from anywhere"
 
 }
@@ -282,8 +282,8 @@ teardown_file() {
   refute_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: You can use"
 }
 
@@ -304,8 +304,8 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg called with args: Adding dna entrypoint path to ~/.bashrc"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: After restarting your shell or sourcing ~/.bashrc"
 }
 
@@ -321,9 +321,9 @@ teardown_file() {
   assert_file_not_contains "${HOME}/.bashrc" "^export _DNA_PATH=.*$"
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Setting up host for Dockerized-NorLab Project"
+  assert_output --partial "Mock n2st::print_msg called with args: Setting up host..."
   assert_output --partial "Mock n2st::print_msg called with args: Creating symlink:"
-  assert_output --partial "Mock n2st::print_msg_done called with args: Dockerized-NorLab Project has been installed successfully"
+  assert_output --regexp "Mock n2st::print_msg_done called with args:".*"has been installed successfully"
   assert_output --partial "Mock n2st::print_msg called with args: You can now use 'dna' command from anywhere"
 }
 
@@ -360,10 +360,10 @@ teardown_file() {
   # Create a ~/.bashrc file with existing DNA_PATH entries
   cat > "${HOME}/.bashrc" << 'EOF'
 # Existing .bashrc content
-# >>>> Dockerized-NorLab Project (start)
+# >>>> dockerized-norlab-project (start)
 export _DNA_PATH="/old/path"
 export PATH="$PATH:$_DNA_PATH"
-# <<<< Dockerized-NorLab Project (end)
+# <<<< dockerized-norlab-project (end)
 EOF
 
   source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"

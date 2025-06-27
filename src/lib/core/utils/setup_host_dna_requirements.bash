@@ -1,7 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Setup host computer (i.e, workstation, embed computer, server) for using this
-# Dockerized-NorLab Project.
+# Setup Dockerized-NorLab project application requirement on host computer.
 #
 # Usage:
 #   $ bash setup_host_dna_requirements.bash
@@ -190,13 +189,13 @@ function dna::setup_cuda_requirements() {
 
       (
         echo ""
-        echo "# >>>> Dockerized-NorLab Project CUDA (start)"
+        echo "# >>>> dockerized-norlab-project CUDA (start)"
         echo "# CUDA toolkit related"
         echo "# ref dusty_nv comment at"
         echo "#    https://forums.developer.nvidia.com/t/cuda-nvcc-not-found/118068"
         echo "export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}"
         echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-        echo "# <<<< Dockerized-NorLab Project CUDA (end)"
+        echo "# <<<< dockerized-norlab-project CUDA (end)"
         echo ""
       ) >> "$HOME/.bashrc"
 

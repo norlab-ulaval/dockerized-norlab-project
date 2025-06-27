@@ -386,7 +386,7 @@ teardown_file() {
   # Check README.md content
   run cat "${TEST_REPO_DIR}/README.md"
   assert_output --partial "# test-project"
-  assert_output --partial "This project is initialized with [Dockerized-NorLab Project]"
+  assert_output --partial "This project is initialized with [Dockerized-NorLab project application (DNA)]"
 }
 
 @test "dna::init_command tests for README.md creation when it exists › expect README.md not modified" {

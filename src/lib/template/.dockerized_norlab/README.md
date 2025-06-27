@@ -1,4 +1,4 @@
-# Dockerized-NorLab Project
+# Dockerized-NorLab project application (DNA)
 Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 
 ## Usage

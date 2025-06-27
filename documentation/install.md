@@ -1,6 +1,6 @@
 # Installation Guide
 
-Complete installation instructions for Dockerized-NorLab Project application (DNA) on all supported platforms.
+Complete installation instructions for Dockerized-NorLab project application on all supported platforms.
 
 ## Table of Contents
 
@@ -457,10 +457,10 @@ rm -rf /path/to/dockerized-norlab-project
 
 ```bash
 # Edit ~/.bashrc and remove DNA-related lines:
-# # >>>> Dockerized-NorLab Project (start)
+# # >>>> dockerized-norlab-project (start)
 # export _DNA_PATH="/path/to/dna/bin"
 # export PATH="$PATH:$_DNA_PATH"
-# # <<<< Dockerized-NorLab Project (end)
+# # <<<< dockerized-norlab-project (end)
 
 # Reload shell
 source ~/.bashrc

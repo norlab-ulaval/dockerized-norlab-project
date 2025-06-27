@@ -90,9 +90,9 @@ export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
 export DNA_ROOT="${MOCK_DNA_DIR}"
 export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 export DNA_LIB_EXEC_PATH="${MOCK_DNA_DIR}/src/lib/core/execute"
-export DNA_PROMPT_NAME="Dockerized-NorLab Project"
-export DNA_SPLASH_NAME_FULL="Dockerized-NorLab Project"
-export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab Project"
+export DNA_PROMPT_NAME="dockerized-norlab-project"
+export DNA_SPLASH_NAME_FULL="dockerized-norlab-project"
+export DNA_SPLASH_NAME_SMALL="dockerized-norlab-project"
 export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project.git"
 
 # ....Mock dependencies loading test functions.....................................................
@@ -174,7 +174,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::norlab_splash called with args: Dockerized-NorLab Project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
+  assert_output --partial "Mock n2st::norlab_splash called with args: dockerized-norlab-project https://github.com/norlab-ulaval/dockerized-norlab-project.git small"
   assert_output --partial "Mock dna::up_and_attach called with args:"
   assert_output --partial "Mock n2st::print_msg called with args: Detached."
 }
