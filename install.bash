@@ -81,7 +81,7 @@ function dna::create_entrypoint_symlink_if_requested() {
     #if [[ ! -d "/usr/local/bin" ]]; then
     #  n2st::print_msg_error_and_exit "${MSG_DIMMED_FORMAT}/usr/local/bin${MSG_END_FORMAT} directory does not exist.\nPlease create it by executing ${MSG_DIMMED_FORMAT}mkdir -p /usr/local/bin${MSG_END_FORMAT} or use ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} option."
     #fi
-    mkdir -p "/usr/local/bin"
+    sudo mkdir -p "/usr/local/bin"
     # shellcheck disable=SC2143
     if [[ -z "$( echo "${PATH}" | grep --quiet /usr/local/bin )"  ]]; then
       cat >> "$HOME/.bashrc" << EOF
