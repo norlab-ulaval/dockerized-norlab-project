@@ -59,6 +59,39 @@ function dna::check_install_darwin_package_manager() {
         exit 1
       fi
     fi
+
+    if [[ "${option_yes}" == yes ]] || [[ "${option_update}" == "y" || "${option_update}" == "Y" ]]; then
+      # Post install step
+      if [[ "$( which bash )"  =~ .*"/bash" ]]; then
+        if [[ ! -f "$HOME/.bashrc" ]]; then
+          touch "$HOME/.bashrc"
+        fi
+        cat >> "$HOME/.bashrc" << EOF
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+EOF
+        source "$HOME/.bashrc"
+      fi
+
+      if [[ "$( which zsh )" =~ .*"/zsh" ]]; then
+        if [[ ! -f "$HOME/.zshrc" ]]; then
+          touch "$HOME/.zshrc"
+        fi
+        cat >> "$HOME/.zshrc" << EOF
+
+source $HOME/.bashrc
+
+EOF
+        source "$HOME/.zshrc"
+      fi
+
+      if [[ ! "$( which zsh )" =~ .*"/zsh" ]] && [[ ! "$( which bash )" =~ .*"/bash" ]]; then
+        n2st::print_msg_warning "Unknown shell ${SHELL}! Check with the maintainer to add its support to DNA."
+        n2st::print_msg_warning "Brew post-installation step. You need to update your shell’s config file (example ~/.bashrc or ~/.zshrc) to include this:\n
+   ${MSG_WARNING_FORMAT}eval \"$(/opt/homebrew/bin/brew shellenv)\"${MSG_END_FORMAT}\n"
+      fi
+    fi
   fi
 
   return 0
@@ -93,12 +126,12 @@ function dna::install_dna_software_requirements() {
       bash install_docker_tools.bash || return 1
   fi
 
-  if [ -n "$ZSH_VERSION" ]; then
+  if [[ -n "${ZSH_VERSION}" ]] && [[ -f "$HOME/.zshrc" ]]; then
     source "$HOME/.zshrc"
-  elif [ -n "$BASH_VERSION" ]; then
+  elif [[ -n "${BASH_VERSION}" ]] && [[ -f "$HOME/.bashrc" ]]; then
     source "$HOME/.bashrc"
   else
-    n2st::print_msg_warning "Unknown shell! Check with the maintainer to add its support to DNA."
+    n2st::print_msg_warning "Unknown shell ${SHELL} ! Check with the maintainer to add its support to DNA."
   fi
 
   cd "$tmp_cwd" || return 1
@@ -151,6 +184,10 @@ function dna::setup_cuda_requirements() {
       # nvcc command not working
       n2st::print_msg_warning "Fixing CUDA path for nvcc"
 
+      if [[ ! -f "$HOME/.bashrc" ]]; then
+        touch "$HOME/.bashrc"
+      fi
+
       (
         echo ""
         echo "# >>>> Dockerized-NorLab Project CUDA (start)"
@@ -163,14 +200,15 @@ function dna::setup_cuda_requirements() {
         echo ""
       ) >> "$HOME/.bashrc"
 
-      if [ -n "$ZSH_VERSION" ]; then
+      if [[ -n "${ZSH_VERSION}" ]] && [[ -f "$HOME/.zshrc" ]]; then
         n2st::print_msg_warning "You are currently in a zsh shell. We made modification to the .bashrc.\nWe recommand you add 'source \$HOME/.bashrc' to your '.zshrc' file or copy those lines to it."
         source "$HOME/.zshrc"
-      elif [ -n "$BASH_VERSION" ]; then
+      elif [[ -n "${BASH_VERSION}" ]] && [[ -f "$HOME/.bashrc" ]]; then
         source "$HOME/.bashrc"
       else
-        n2st::print_msg_warning "Unknown shell! Check with the maintainer to add its support to DNA."
+        n2st::print_msg_warning "Unknown shell ${SHELL} ! Check with the maintainer to add its support to DNA."
       fi
+
 
       n2st::print_msg_done "nvcc CUDA path hack completed. The following lines where added to ~/.bashrc
       ${MSG_DIMMED_FORMAT}
