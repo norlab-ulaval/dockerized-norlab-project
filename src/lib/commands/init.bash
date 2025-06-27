@@ -174,7 +174,7 @@ function dna::init_command() {
         cat > "README.md" << EOF
 # ${super_project_name}
 
-This project is initialized with [${DNA_HUMAN_NAME} (DNA)](https://github.com/norlab-ulaval/dockerized-norlab-project.git).
+This project is initialized with [${DNA_HUMAN_NAME:?err} (DNA)](${DNA_GIT_REMOTE_URL:?err}).
 See '.dockerized_norlab/README.md' for usage details.
 
 EOF
