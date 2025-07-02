@@ -139,8 +139,8 @@ function dna::install_dna_software_requirements() {
   if [[ $(uname) == "Darwin" ]]; then
     if command -v brew >/dev/null 2>&1; then
         n2st::print_msg "Using Homebrew for package management"
-        brew install git || return 1
-        brew install tree || return 1
+        brew update && brew install git || return 1
+        brew update && brew install tree || return 1
     elif command -v port >/dev/null 2>&1; then
         n2st::print_msg "Using MacPorts for package management"
         sudo port install git || exit 1

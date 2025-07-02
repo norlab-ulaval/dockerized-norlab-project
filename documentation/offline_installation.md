@@ -47,7 +47,7 @@ See https://docs.docker.com/desktop/mac/install/
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install tools
-brew install git tree
+brew update && brew install git tree
 ```
 
 #### NVIDIA Jetson (L4T)
