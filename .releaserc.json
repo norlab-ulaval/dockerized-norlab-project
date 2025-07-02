@@ -3,6 +3,10 @@
     {
       "name": "beta",
       "prerelease": true
+    },
+    {
+      "name": "alpha",
+      "prerelease": true
     }
   ],
   "debug": "true",

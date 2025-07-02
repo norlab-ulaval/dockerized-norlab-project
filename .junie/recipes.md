@@ -8,7 +8,7 @@ Execute all unit-tests and all integration tests before submiting.
 Add/refactor/improve TODO 
 Check if it introduce any breaking change in the code base by runnning both unit-tests and integration tests.
 Propose source code change if relevant. 
-Update Markdown documention accordingly. 
+Update Markdown documentation accordingly. 
 
 Inspire yourself with `TODO`.
 
@@ -21,7 +21,7 @@ Create at least one test case per command argument and/or options.
 Test relevant option and arguments combinaison.
 You can mock their corresponding functions as the intended purposes of this test file is for unit-testing the CLI functionalities.
 Propose source code change if relevant. 
-Update Markdown documention accordingly. 
+Update Markdown documentation accordingly. 
 Execute all unit-tests and all integration tests before submiting.
 
 ## Improve/refactor source code
@@ -34,7 +34,7 @@ Create at least one test case per new command argument and/or options, update cu
 Test relevant option and arguments combinaison.
 Check if it introduce any breaking change in the code base by runnning both unit-tests and integration tests.
 Propose source code change if relevant.
-Update Markdown documention accordingly. 
+Update Markdown documentation accordingly. 
 Execute all unit-tests and all integration tests before submiting.
 
 ## Modify proposed tests solutions 
@@ -43,7 +43,7 @@ In `TODO.bats`, instead of mocking `find`, `grep`, `cut`, `cd`, `pwd`, `command`
 
 ---
 
-Integration tests `TODO` and `TODO` are all failling. 
+Integration tests `TODO` and `TODO` are all failing. 
 Please investigate and make the required changes. 
 Always follow guidelines at `.junie/guidelines.md`.
 
