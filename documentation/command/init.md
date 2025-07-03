@@ -69,7 +69,7 @@ If you run `dna init` on an already initialized project, you'll be prompted:
 ```bash
 $ dna init
 [WARNING] This project is already DNA initialized since .dockerized_norlab directory already exists.
-If you continue, missing files will be created and existing ones will be updated.
+If you continue, existing file and directories with the same name will be safeguarded with the suffix '.old', not overriden."
 Do you want to continue [y/N]
 ```
 
