@@ -80,8 +80,8 @@ All instructions in sections _General Testing Instructions_ plus the following:
 
 ### Shell Script specific Mocking Instructions
 All instructions in sections _General Mocking Instruction_ plus the following:
-- You can mock shell core command an docker command.
 - You can mock `docker [OPTIONS|COMMAND]` commands and `git [OPTIONS|COMMAND]` commands.
+- Ask permission before mocking shell builtin commands.
 - Avoid mocking N2ST functions, at the exception of those in `${N2ST_PATH}/src/function_library/prompt_utilities.bash`. For example, instead of re-implementing `n2st::seek_and_modify_string_in_file`, just load the real one and test that the content of the file at `file_path` has been updated? You can find the real one in `${N2ST_PATH}/src/function_library/general_utilities.bash`.
 - Avoid mocking the `read` command. Instead use `echo 'y'` or `echo 'N'` for piping a keyboard input to the function who use the `read` command which in turn expect a single character, example: `run bash -c "echo 'y' | <the-tested-function>"`. Alternatively, use the `yes [n]` shell command which optionaly send [y|Y|yes] n time, example: `run bash -c "yes 2 | <the-tested-function>"`.
 - Use `timeouts 10 ` in integration tests that execute real scripts with mocked dependencies to prevent test hangs.

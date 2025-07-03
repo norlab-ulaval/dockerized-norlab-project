@@ -56,6 +56,14 @@ function dna::get_super_project_acronym() {
     return 0
 }
 
+function dna::dimmed_rsync() {
+    DIM=$(tput dim)
+    RESET=$(tput sgr0)
+    n2st::draw_horizontal_line_across_the_terminal_window "─" "${DIM}"
+    rsync "$@" | sed "s/.*/${DIM}&${RESET}/" || return 1
+}
+
+
 function dna::portable_copy() {
     # Copy function using rsync with backup functionality
     # Arguments: source destination
@@ -64,19 +72,53 @@ function dna::portable_copy() {
     local super_project_root="${3:-$(pwd)}"
 
     # Use rsync with backup functionality (no --update flag to preserve existing files)
-    if [[ -d "$source" ]]; then
+    local rsync_flags=()
+#    rsync_flags+=(--progress)
+    rsync_flags+=(--verbose)
+    rsync_flags+=(--backup --suffix='.old')
+
+    if [[ -d "${source}" ]]; then
         # For directories, ensure trailing slash for proper rsync behavior
-        rsync --backup --suffix='.old' --recursive "${source%/}/" "$destination" || return 1
+        dna::dimmed_rsync "${rsync_flags[@]}" --recursive "${source%/}/" "${destination}"
     else
         # For files
-        rsync --backup --suffix='.old' "$source" "$destination" || return 1
+        dna::dimmed_rsync "${rsync_flags[@]}" "${source}" "${destination}"
     fi
+    echo
 
     # Validate file ownership and permissions match the super project
-    dna::validate_file_ownership_and_permissions "$destination" "$super_project_root" || return 1
+    dna::validate_file_ownership_and_permissions "${destination}" "${super_project_root}" || return 1
 
     return 0
 }
+
+function dna::get_owner() {
+    # Cross platform implementation
+    if [[ "$(uname)" == "Darwin" ]]; then
+        stat -f '%Su' "$1"
+    else
+        stat -c '%U' "$1"
+    fi
+}
+
+function dna::get_group() {
+    # Cross platform implementation
+    if [[ "$(uname)" == "Darwin" ]]; then
+        stat -f '%Su' "$1"
+    else
+        stat -c '%U' "$1"
+    fi
+}
+
+function dna::get_permission() {
+    # Cross platform implementation
+    if [[ "$(uname)" == "Darwin" ]]; then
+        stat -f '%A' "$1"
+    else
+        stat -c '%a' "$1"
+    fi
+}
+
 
 function dna::validate_file_ownership_and_permissions() {
     # Validate that copied files/directories have ownership and permissions matching the super project
@@ -87,11 +129,9 @@ function dna::validate_file_ownership_and_permissions() {
     # Get super project ownership and permissions
     local super_project_owner
     local super_project_group
-    #local super_project_perms
 
-    super_project_owner=$(stat -c '%U' "$super_project_root" 2>/dev/null || stat -f '%Su' "$super_project_root" 2>/dev/null)
-    super_project_group=$(stat -c '%G' "$super_project_root" 2>/dev/null || stat -f '%Sg' "$super_project_root" 2>/dev/null)
-    #super_project_perms=$(stat -c '%a' "$super_project_root" 2>/dev/null || stat -f '%A' "$super_project_root" 2>/dev/null)
+    super_project_owner=$(dna::get_owner "${super_project_root}" 2>/dev/null)
+    super_project_group=$(dna::get_group "${super_project_root}" 2>/dev/null)
 
     # Recursively fix ownership and permissions for the target path
     if [[ -d "$target_path" ]]; then
@@ -113,8 +153,6 @@ function dna::validate_file_ownership_and_permissions() {
 function dna::init_command() {
     local super_project_root
     super_project_root=$(pwd)
-    local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
-    local line_style="${MSG_LINE_STYLE_LVL2}"
 
     # rsync is now a required dependency and should be available
 
@@ -140,40 +178,78 @@ function dna::init_command() {
     Current workin directory: $(pwd)"
     fi
 
-    # Check if .dockerized_norlab already exists
-    if [[ -d ".dockerized_norlab" ]]; then
-        n2st::print_msg_warning "This project is already DNA initialized since ${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory already exists.\nIf you continue, existing file and directories with the same name will be safeguarded with the suffix '.old', not overriden."
-        read -r -n 1 -p "Do you want to continue [y/N]" option_update
-        if [[ "${option_update}" == "y" || "${option_update}" == "Y" ]]; then
-          :
-        else
-          n2st::print_msg "See you"
-          return 0
-        fi
+    if [[ "${super_project_root}" == "${DNA_ROOT:?err}" ]]; then
+      n2st::print_msg_warning "Can't initialize the DNA repository (PWD=$(pwd)).\nAborting now!"
+      return 1
     fi
 
     # ====Begin====================================================================================
     # Splash type: small, negative or big
     n2st::norlab_splash "${DNA_SPLASH_NAME_SMALL:?err}" "${DNA_GIT_REMOTE_URL}" "small"
-    n2st::print_formated_script_header "init procedure" "${line_format}" "${line_style}"
+    n2st::print_formated_script_header "init procedure" "${MSG_LINE_CHAR_BUILDER_LVL2}" "${MSG_LINE_STYLE_LVL2}"
 
 
     local project_git_remote_url
     local super_project_name
     local super_project_user
+    local repo_top_dir_name
+    repo_top_dir_name="$( basename "${super_project_root}" )"
     project_git_remote_url="$( git remote get-url origin )" || return 1
     super_project_name="$( basename "${project_git_remote_url}" .git )"
     super_project_user="$(id -un)"
 
-    n2st::print_msg "Initializing DNA project: ${super_project_name} in ${super_project_root}"
+    # ★ Note: Keep 'sudo', its required for preserving user interaction flow
+    n2st::print_msg "Preparing ${super_project_name} DNA-initialization
+
+Target path:
+     ${super_project_root}
+
+Current repository structure:
+${MSG_DIMMED_FORMAT}
+$(sudo tree -L 1 -a --noreport --dirsfirst -F -I .git -I .idea -I .cadence "${super_project_root}" | sed "s;^${super_project_root%/};${repo_top_dir_name};" | sed 's/^/     /')
+${MSG_END_FORMAT}"
+
+    # Check if .dockerized_norlab already exists
+    if [[ -d ".dockerized_norlab" ]]; then
+        unset user_input
+        n2st::print_msg_warning "This project is already DNA initialized since ${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory already exists.\nIf you continue, existing file and directories with the same name will be safeguarded with the suffix '.old', not overriden."
+        read -r -n 1 -p "Do you want to continue [y/N]" user_input
+        if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
+          echo
+        else
+          n2st::print_msg "No problem, see you later"
+          return 0
+        fi
+    else
+        n2st::print_msg "Ready to proceed with DNA-initialization"
+        unset user_input
+        read -r -n 1 -p "Execute? [y/N]" user_input
+        if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
+          echo
+        else
+          n2st::print_msg "No problem, see you later"
+          return 0
+        fi
+    fi
+
+    echo
+    n2st::print_msg "Initializing ${super_project_name}..."
+    echo
+
+    mkdir -p "${super_project_root}/.dockerized_norlab" || return 1
 
     # Copy template files
-    dna::portable_copy "${DNA_LIB_PATH}/template/.dockerized_norlab/" . "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/.dockerized_norlab/" .dockerized_norlab "${super_project_root}" || return 1
 
-    cd "${super_project_root}/.dockerized_norlab/" || return 1
+    #tree -L 2 -a "$PWD"  >&3 # (CRITICAL) ToDo: on task end >> delete this line ←
+
+    cd "${super_project_root}/.dockerized_norlab" || return 1
 
     # Rename the super project DNA meta .env file
-    mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_root}/.dockerized_norlab/.env.${super_project_name}" || return 1
+    mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" ".env.${super_project_name}" || return 1
+
+    # Cleanup 'dn_container_env_variable/' content
+    rm -f "dn_container_env_variable/.env.dn_expose_PLACEHOLDER_DN_CONTAINER_NAME"
 
     # Replace placeholders in the .env.dna file
     cd "${super_project_root}/.dockerized_norlab/configuration/" || return 1
@@ -211,15 +287,15 @@ function dna::init_command() {
       mkdir -p tests/test_dna_example
     } || return 1
 
-    dna::portable_copy "${DNA_LIB_PATH}/template/artifact/README.md" artifact/ "$super_project_root" || return 1
-    dna::portable_copy "${DNA_LIB_PATH}/template/artifact/optuna_storage/README.md" artifact/optuna_storage/ "$super_project_root" || return 1
-    dna::portable_copy "${DNA_LIB_PATH}/template/external_data/README.md" external_data/ "$super_project_root" || return 1
-    dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher" src/ "$super_project_root" || return 1
-    dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example" src/ "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/artifact/README.md" artifact/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/artifact/optuna_storage/README.md" artifact/optuna_storage/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/external_data/README.md" external_data/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher/" src/launcher/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
     if [[ ! -f "src/README.md" ]]; then
-      dna::portable_copy "${DNA_LIB_PATH}/template/src/README.md" src/ "$super_project_root" || return 1
+      dna::portable_copy "${DNA_LIB_PATH}/template/src/README.md" src/ "${super_project_root}" || return 1
     fi
-    dna::portable_copy "${DNA_LIB_PATH}/template/tests" . "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/tests/" tests/ "${super_project_root}" || return 1
 
     # ....Create root README.md files if it does't exist...........................................
     cd "${super_project_root}" || return 1
@@ -236,11 +312,11 @@ EOF
     fi
 
     # ....Setup ignore files.......................................................................
-    cd "${super_project_root}" || exit 1
+    cd "${super_project_root}" || return 1
 
     if [[ ! -f ".gitignore" ]]; then
         # Case: file does not exist => copy template
-        dna::portable_copy "${DNA_LIB_PATH}/template/.gitignore" .gitignore "$super_project_root" || return 1
+        dna::portable_copy "${DNA_LIB_PATH}/template/.gitignore" .gitignore "${super_project_root}" || return 1
     else
         # Case: file exist => append required .gitignore entries
         cat >> ".gitignore" << EOF
@@ -262,7 +338,7 @@ EOF
 
     if [[ ! -f ".dockerignore" ]]; then
         # Case: file does not exist => copy template
-        dna::portable_copy "${DNA_LIB_PATH}/template/.dockerignore" .dockerignore "$super_project_root" || return 1
+        dna::portable_copy "${DNA_LIB_PATH}/template/.dockerignore" .dockerignore "${super_project_root}" || return 1
     else
         # Case: file exist => append required .gitignore entries
       cat >> ".dockerignore" << EOF
@@ -280,26 +356,40 @@ EOF
 EOF
     fi
 
+    n2st::draw_horizontal_line_across_the_terminal_window "─" "$(tput dim)"
+
+
     # ....Validate init procedure..................................................................
-    cd "${super_project_root}" || exit 1
+    cd "${super_project_root}" || return 1
     source "${DNA_LIB_PATH}/core/utils/super_project_dna_sanity_check.bash" || return 1
 
     # ....Setup host procedure.....................................................................
     source "${DNA_LIB_PATH}/core/utils/setup_host_for_running_this_super_project.bash" || return 1
 
     # ====Teardown=================================================================================
-    tree -l --dirsfirst -a -I visual -I .git -L 7 "$PWD"
+    cd "${super_project_root}" || return 1
+    echo
+    n2st::print_msg_done "DNA project initialized successfully.
 
-    n2st::print_msg "DNA project initialized successfully.
-You can now use ${MSG_DIMMED_FORMAT}dna${MSG_END_FORMAT} to manage your project.
+New repository structure
+${MSG_DIMMED_FORMAT}
+$(tree -L 1 -a --noreport --dirsfirst -F -I .git -I .idea -I .cadence "${super_project_root}" | sed "s;^${super_project_root%/};${repo_top_dir_name};" | sed 's/^/     /')
+${MSG_END_FORMAT}
+
+Content of new ${MSG_EMPH_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory
+${MSG_DIMMED_FORMAT}
+$(tree -L 2 -a --noreport --dirsfirst -F -I .git -I visual ".dockerized_norlab" | sed 's/^/     /')
+${MSG_END_FORMAT}
+
+You can now use ${MSG_EMPH_FORMAT}dna${MSG_END_FORMAT} to manage your project.
 To get started:
-  1. Execute ${MSG_DIMMED_FORMAT}dna help${MSG_END_FORMAT} to see available command
+  1. Execute ${MSG_EMPH_FORMAT}dna help${MSG_END_FORMAT} to see available command
   2. Read instruction in ${MSG_DIMMED_FORMAT}${super_project_name}/.dockerized_norlab/README.md${MSG_END_FORMAT}
   3. Check documentation at https://github.com/norlab-ulaval/dockerized-norlab-project
-  4. Stay awesome
-"
 
-    n2st::print_formated_script_footer "init procedure" "${line_format}" "${line_style}"
-    cd "$super_project_root" || return 1
+
+$(n2st::echo_centering_str "Stay awesome 🦾" ' ' ' ')"
+    n2st::print_formated_script_footer "init procedure" "${MSG_LINE_CHAR_BUILDER_LVL2}" "${MSG_LINE_STYLE_LVL2}"
+    cd "${super_project_root}" || return 1
     return 0
 }
