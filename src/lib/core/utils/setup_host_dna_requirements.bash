@@ -139,12 +139,17 @@ function dna::install_dna_software_requirements() {
   if [[ $(uname) == "Darwin" ]]; then
     if command -v brew >/dev/null 2>&1; then
         n2st::print_msg "Using Homebrew for package management"
-        brew update && brew install git || return 1
-        brew update && brew install tree || return 1
+        brew update \
+          && brew install git \
+          && brew install tree \
+          && brew install rsync \
+          || return 1
     elif command -v port >/dev/null 2>&1; then
         n2st::print_msg "Using MacPorts for package management"
-        sudo port install git || exit 1
-        sudo port install tree || exit 1
+        sudo port install git \
+          && sudo port install tree \
+          && sudo port install rsync \
+          || exit 1
     else
         n2st::print_msg_error "Neither Homebrew nor MacPorts is installed" && return 1
     fi
@@ -152,7 +157,9 @@ function dna::install_dna_software_requirements() {
     sudo apt-get update &&
       sudo apt-get install --assume-yes \
         git \
-        tree
+        tree \
+        rsync \
+      || return 1
   fi
 
 

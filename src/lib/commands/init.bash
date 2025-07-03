@@ -56,12 +56,67 @@ function dna::get_super_project_acronym() {
     return 0
 }
 
+function dna::portable_copy() {
+    # Copy function using rsync with backup functionality
+    # Arguments: source destination
+    local source="$1"
+    local destination="$2"
+    local super_project_root="${3:-$(pwd)}"
+
+    # Use rsync with backup functionality (no --update flag to preserve existing files)
+    if [[ -d "$source" ]]; then
+        # For directories, ensure trailing slash for proper rsync behavior
+        rsync --backup --suffix='.old' --recursive "${source%/}/" "$destination" || return 1
+    else
+        # For files
+        rsync --backup --suffix='.old' "$source" "$destination" || return 1
+    fi
+
+    # Validate file ownership and permissions match the super project
+    dna::validate_file_ownership_and_permissions "$destination" "$super_project_root" || return 1
+
+    return 0
+}
+
+function dna::validate_file_ownership_and_permissions() {
+    # Validate that copied files/directories have ownership and permissions matching the super project
+    # Arguments: target_path super_project_root
+    local target_path="$1"
+    local super_project_root="$2"
+
+    # Get super project ownership and permissions
+    local super_project_owner
+    local super_project_group
+    #local super_project_perms
+
+    super_project_owner=$(stat -c '%U' "$super_project_root" 2>/dev/null || stat -f '%Su' "$super_project_root" 2>/dev/null)
+    super_project_group=$(stat -c '%G' "$super_project_root" 2>/dev/null || stat -f '%Sg' "$super_project_root" 2>/dev/null)
+    #super_project_perms=$(stat -c '%a' "$super_project_root" 2>/dev/null || stat -f '%A' "$super_project_root" 2>/dev/null)
+
+    # Recursively fix ownership and permissions for the target path
+    if [[ -d "$target_path" ]]; then
+        # For directories, apply to all contents
+        find "$target_path" -type f -exec chown "${super_project_owner}:${super_project_group}" {} \; 2>/dev/null || true
+        find "$target_path" -type d -exec chown "${super_project_owner}:${super_project_group}" {} \; 2>/dev/null || true
+        find "$target_path" -type f -exec chmod 644 {} \; 2>/dev/null || true
+        find "$target_path" -type d -exec chmod 755 {} \; 2>/dev/null || true
+    else
+        # For files
+        chown "${super_project_owner}:${super_project_group}" "$target_path" 2>/dev/null || true
+        chmod 644 "$target_path" 2>/dev/null || true
+    fi
+
+    return 0
+}
+
 
 function dna::init_command() {
     local super_project_root
     super_project_root=$(pwd)
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
+
+    # rsync is now a required dependency and should be available
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -87,7 +142,7 @@ function dna::init_command() {
 
     # Check if .dockerized_norlab already exists
     if [[ -d ".dockerized_norlab" ]]; then
-        n2st::print_msg_warning "This project is already DNA initialized since ${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory already exists.\nIf you continue, missing file will be created and existing one will be updated."
+        n2st::print_msg_warning "This project is already DNA initialized since ${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory already exists.\nIf you continue, existing file and directories with the same name will be safeguarded with the suffix '.old', not overriden."
         read -r -n 1 -p "Do you want to continue [y/N]" option_update
         if [[ "${option_update}" == "y" || "${option_update}" == "Y" ]]; then
           :
@@ -113,12 +168,12 @@ function dna::init_command() {
     n2st::print_msg "Initializing DNA project: ${super_project_name} in ${super_project_root}"
 
     # Copy template files
-    sudo cp --update -r "${DNA_LIB_PATH}/template/.dockerized_norlab/" . || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/.dockerized_norlab/" . "$super_project_root" || return 1
 
     cd "${super_project_root}/.dockerized_norlab/" || return 1
 
     # Rename the super project DNA meta .env file
-    sudo mv --force "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_root}/.dockerized_norlab/.env.${super_project_name}" || return 1
+    mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_root}/.dockerized_norlab/.env.${super_project_name}" || return 1
 
     # Replace placeholders in the .env.dna file
     cd "${super_project_root}/.dockerized_norlab/configuration/" || return 1
@@ -149,28 +204,28 @@ function dna::init_command() {
     cd "${super_project_root}" || return 1
 
     {
-      sudo mkdir -p artifact/optuna_storage &&
-      sudo mkdir -p external_data &&
-      sudo mkdir -p src/launcher/configs &&
-      sudo mkdir -p src/dna_example &&
-      sudo mkdir -p tests/test_dna_example
+      mkdir -p artifact/optuna_storage &&
+      mkdir -p external_data &&
+      mkdir -p src/launcher/configs &&
+      mkdir -p src/dna_example &&
+      mkdir -p tests/test_dna_example
     } || return 1
 
-    sudo cp --update -r "${DNA_LIB_PATH}/template/artifact/README.md" artifact/ || return 1
-    sudo cp --update -r "${DNA_LIB_PATH}/template/artifact/optuna_storage/README.md" artifact/optuna_storage/ || return 1
-    sudo cp --update -r "${DNA_LIB_PATH}/template/external_data/README.md" external_data/ || return 1
-    sudo cp --update -r "${DNA_LIB_PATH}/template/src/launcher" src/ || return 1
-    sudo cp --update -r "${DNA_LIB_PATH}/template/src/dna_example" src/ || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/artifact/README.md" artifact/ "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/artifact/optuna_storage/README.md" artifact/optuna_storage/ "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/external_data/README.md" external_data/ "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher" src/ "$super_project_root" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example" src/ "$super_project_root" || return 1
     if [[ ! -f "src/README.md" ]]; then
-      sudo cp --update -r "${DNA_LIB_PATH}/template/src/README.md" src/ || return 1
+      dna::portable_copy "${DNA_LIB_PATH}/template/src/README.md" src/ "$super_project_root" || return 1
     fi
-    sudo cp --update -r "${DNA_LIB_PATH}/template/tests" . || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/tests" . "$super_project_root" || return 1
 
     # ....Create root README.md files if it does't exist...........................................
     cd "${super_project_root}" || return 1
 
     if [[ ! -f "README.md" ]]; then
-        sudo touch "README.md"  || return 1
+        touch "README.md"  || return 1
         cat > "README.md" << EOF
 # ${super_project_name}
 
@@ -185,7 +240,7 @@ EOF
 
     if [[ ! -f ".gitignore" ]]; then
         # Case: file does not exist => copy template
-        sudo cp "${DNA_LIB_PATH}/template/.gitignore" .gitignore || return 1
+        dna::portable_copy "${DNA_LIB_PATH}/template/.gitignore" .gitignore "$super_project_root" || return 1
     else
         # Case: file exist => append required .gitignore entries
         cat >> ".gitignore" << EOF
@@ -207,7 +262,7 @@ EOF
 
     if [[ ! -f ".dockerignore" ]]; then
         # Case: file does not exist => copy template
-        sudo cp "${DNA_LIB_PATH}/template/.dockerignore" .dockerignore  || return 1
+        dna::portable_copy "${DNA_LIB_PATH}/template/.dockerignore" .dockerignore "$super_project_root" || return 1
     else
         # Case: file exist => append required .gitignore entries
       cat >> ".dockerignore" << EOF

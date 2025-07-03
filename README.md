@@ -226,8 +226,8 @@ your-project-repository/
   └── README.md                       <- Created if it did not already exist
 ```
 Note: 
-- Any directory or file that already exist will be updated, not overriden.
-- Content of the artifact direcotry is persistent. It will remain available even if the container is stoped or removed. 
+- Existing file and directories with the same name will be safeguarded with the suffix `.old`, not overriden.
+- Content of the artifact directory is persistent. It will remain available even if the container is stopped or removed. 
 
 ### Create, run and stop DN container
 

@@ -43,11 +43,11 @@ DNA can be installed using different methods depending on your system configurat
 
 ### Platform Support
 
-| Platform       | Architecture | Status |
-|----------------|------------|---------|
-| NVIDIA Jetson (L4T) | arm64 | ✅ Fully supported |
-| macOS          | arm64 (Apple Silicon) | ✅ Fully supported |
-| Linux          | x86_64 | ✅ Fully supported |
+| Platform       | Architecture | Status                                         |
+|----------------|------------|------------------------------------------------|
+| NVIDIA Jetson (L4T) | arm64 | ✅ Fully supported                              |
+| macOS          | arm64 (Apple Silicon) | ✅ Fully supported                              |
+| Linux          | x86_64 | ✅ Fully supported                              |
 | Linux          | arm64 | ⚠️ Not supported (for now, will be implemented if requested) |
 
 
