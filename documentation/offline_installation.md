@@ -23,6 +23,7 @@ Before attempting offline installation, ensure these tools are available:
 | Docker Buildx  | Multi-architecture build | Included with Docker Desktop or separate install |
 | Git            | Version control | System package manager |
 | Tree           | Directory visualization | System package manager |
+| rsync          | Fast incremental file transfer | System package manager |
 
 ### Platform-Specific Prerequisites
 

@@ -77,7 +77,7 @@ EOF
 # USER NOTES: ADD YOUR CODE BEFORE THIS LINE
 
 # ====DN-project final=============================================================================
-FROM --platform=${TARGETPLATFORM} user-project-custom-steps AS final
+FROM user-project-custom-steps AS final
 # ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM

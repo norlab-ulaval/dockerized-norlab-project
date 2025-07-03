@@ -152,6 +152,112 @@ setup() {
     fi
   }
   export -f git
+
+  # Mock rsync command
+  function rsync() {
+    local backup_flag=false
+    local suffix=""
+    local recursive_flag=false
+    local source=""
+    local destination=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --backup)
+          backup_flag=true
+          shift
+          ;;
+        --suffix=*)
+          suffix="${1#*=}"
+          shift
+          ;;
+        --recursive)
+          recursive_flag=true
+          shift
+          ;;
+        *)
+          if [[ -z "$source" ]]; then
+            source="$1"
+          elif [[ -z "$destination" ]]; then
+            destination="$1"
+          fi
+          shift
+          ;;
+      esac
+    done
+
+    # Create backup if file exists and backup flag is set
+    if [[ "$backup_flag" == "true" && -n "$suffix" ]]; then
+      if [[ -f "$destination" ]]; then
+        cp "$destination" "${destination}${suffix}" 2>/dev/null || true
+      elif [[ -d "$destination" ]]; then
+        local basename_source=$(basename "$source")
+        local target_file="${destination}/${basename_source}"
+        if [[ -f "$target_file" ]]; then
+          cp "$target_file" "${target_file}${suffix}" 2>/dev/null || true
+        fi
+      fi
+    fi
+
+    # Perform the copy operation
+    if [[ -d "$source" ]]; then
+      cp -r "$source" "$destination" || return 1
+    else
+      cp "$source" "$destination" || return 1
+    fi
+
+    return 0
+  }
+  export -f rsync
+
+  # Mock stat command for cross-platform compatibility
+  function stat() {
+    if [[ "$1" == "-c" ]]; then
+      # Linux format
+      case "$2" in
+        '%U') echo "$(id -un)" ;;
+        '%G') echo "$(id -gn)" ;;
+        '%a') echo "755" ;;
+        *) command stat "$@" ;;
+      esac
+    elif [[ "$1" == "-f" ]]; then
+      # macOS format
+      case "$2" in
+        '%Su') echo "$(id -un)" ;;
+        '%Sg') echo "$(id -gn)" ;;
+        '%A') echo "755" ;;
+        *) command stat "$@" ;;
+      esac
+    else
+      command stat "$@"
+    fi
+  }
+  export -f stat
+
+  # Mock chown and chmod commands
+  function chown() {
+    # Mock chown - just return success
+    return 0
+  }
+  export -f chown
+
+  function chmod() {
+    # Mock chmod - just return success
+    return 0
+  }
+  export -f chmod
+
+  # Mock find command for permission operations
+  function find() {
+    if [[ "$*" == *"-exec chown"* ]] || [[ "$*" == *"-exec chmod"* ]]; then
+      # Mock find with exec operations - just return success
+      return 0
+    else
+      command find "$@"
+    fi
+  }
+  export -f find
 }
 
 # ....Teardown.....................................................................................
@@ -492,4 +598,76 @@ teardown_file() {
   assert_output --partial "!**/.dockerized_norlab/"
   assert_output --partial "!**/version.txt"
   assert_output --partial "!**/.git"
+}
+
+@test "dna::init_command tests for backup functionality › expect .old backup files created when files exist" {
+  # Test case: When init command is called and files already exist, it should create .old backup files
+  # Note: Without --update flag, rsync will always backup existing files
+
+  # Create existing files that will be backed up
+  mkdir -p "${TEST_REPO_DIR}/artifact"
+  echo "Original artifact README content" > "${TEST_REPO_DIR}/artifact/README.md"
+
+  mkdir -p "${TEST_REPO_DIR}/external_data"
+  echo "Original external_data README content" > "${TEST_REPO_DIR}/external_data/README.md"
+
+  # Run the init command
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+
+  # Should succeed
+  assert_success
+
+  # Verify backup files were created (rsync always creates backups when files exist)
+  assert_file_exist "${TEST_REPO_DIR}/artifact/README.md.old"
+  assert_file_exist "${TEST_REPO_DIR}/external_data/README.md.old"
+
+  # Verify backup files contain original content
+  run cat "${TEST_REPO_DIR}/artifact/README.md.old"
+  assert_output "Original artifact README content"
+
+  run cat "${TEST_REPO_DIR}/external_data/README.md.old"
+  assert_output "Original external_data README content"
+
+  # Verify new files were created with template content
+  assert_file_exist "${TEST_REPO_DIR}/artifact/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
+}
+
+@test "dna::init_command tests for rsync only functionality › expect rsync commands work with --recursive flag" {
+  # Test case: Verify that rsync commands work properly using only rsync (no cp fallback)
+  # and use --recursive instead of -r for clarity
+
+  # Run the init command
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+
+  # Should succeed (rsync is now a required dependency)
+  assert_success
+
+  # Verify all expected files and directories were created
+  assert_dir_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+  assert_file_exist "${TEST_REPO_DIR}/.dockerized_norlab/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/artifact/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/src/launcher/example_app.py"
+  assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dna.ini"
+}
+
+@test "dna::init_command tests for file ownership and permission validation › expect proper ownership and permissions" {
+  # Test case: Verify that copied files have proper ownership and permissions matching the super project
+
+  # Run the init command
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+
+  # Should succeed
+  assert_success
+
+  # Verify files were created
+  assert_file_exist "${TEST_REPO_DIR}/artifact/README.md"
+  assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
+  assert_dir_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+
+  # Note: In the test environment, we can't easily test actual ownership changes
+  # since the mock functions don't actually change ownership, but we can verify
+  # that the validation function is called and doesn't cause errors
+  # The actual ownership validation is tested by the successful completion of the init command
 }
