@@ -1,7 +1,7 @@
 # Note on the `utilities/tmp` directory
 
 - content of `utilities/tmp` are meant to be modified/deleted at runtime
-- `tmp/dockerized-norlab-project-mock` is a placeholder directory (might be excluded in IDE). 
+- `tmp/dockerized-norlab-project-mock` and `tmp/dockerized-norlab-project-mock-EMPTY` are placeholder directories (might be excluded in IDE). 
   It is needed to implement `project-deploy` cloning/copying/checkout functionalities in and out of 
   docker container.  
   For that reason, it is cloned as a full repository at runtime, not a submodule.  
