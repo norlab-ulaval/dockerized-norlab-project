@@ -3,7 +3,7 @@
 https://github.com/norlab-ulaval/dockerized-norlab-project.git
 
 
-## Getting started (fast)
+## Getting started ... fast
 Check [DNA documentation](https://github.com/norlab-ulaval/dockerized-norlab-project?tab=readme-ov-file#documentation) for details
 
 1. Setup/validate `.dockerized_norlab/configuration/` files: 

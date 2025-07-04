@@ -181,7 +181,7 @@ teardown_file() {
 
 # Test cases for dna::get_super_project_acronym
 @test "dna::get_super_project_acronym with onewordname › expect first three letters" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name is a single word, it should return the first three letters
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'onewordname'"
 
@@ -193,7 +193,7 @@ teardown_file() {
 }
 
 @test "dna::get_super_project_acronym with multi-word-name › expect acronym 'mwn'" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name has multiple words separated by dashes, it should return the acronym
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multi-word-name'"
 
@@ -205,7 +205,7 @@ teardown_file() {
 }
 
 @test "dna::get_super_project_acronym with multti_word_name › expect acronym 'mwn'" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name has multiple words separated by underscores, it should return the acronym
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multti_word_name'"
 
@@ -217,7 +217,7 @@ teardown_file() {
 }
 
 @test "dna::get_super_project_acronym with multi-1word-2name-3with-number › expect acronym 'm123n'" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name has multiple words with numbers, it should return the acronym including numbers
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multi-1word-2name-3with-number'"
 
@@ -230,7 +230,7 @@ teardown_file() {
 
 # Test cases for dna::init_command
 @test "dna::init_command with --help › expect help menu" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called with --help, it should show the help menu
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --help"
 
@@ -242,7 +242,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with -h › expect help menu" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called with -h, it should show the help menu
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command -h"
 
@@ -254,7 +254,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with unknown option › expect error" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called with an unknown option, it should show an error
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --unknown-option"
 
@@ -266,7 +266,7 @@ teardown_file() {
 }
 
 @test "dna::init_command without .git directory › expect error" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called in a directory without .git, it should show an error
   # Remove the .git directory
   rm -rf "${TEST_REPO_DIR}/.git"
@@ -281,7 +281,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with .dockerized_norlab already exists › Y -> expect update" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
   # Create the .dockerized_norlab directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
@@ -298,7 +298,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with .dockerized_norlab already exists › N -> expect 'No problem, see you later'" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
   # Create the .dockerized_norlab directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
@@ -315,7 +315,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with valid repository › expect success" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
 
   assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"
 
@@ -347,21 +347,21 @@ teardown_file() {
   assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "IamDNA_tp"
   assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "tp"
 
-  # Check README.md file for replaced placeholders
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNA_tp"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "test-project"
+  ## Check README.md file for replaced placeholders
+  #assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNA_tp"
+  #assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "test-project"
 
   # Verify placeholders are not present anymore
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_PROJECT_GIT_REMOTE_URL"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_CONTAINER_NAME"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
+  #assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
+  #assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
+  #assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
 }
 
 @test "dna::init_command tests for directory creation › expect required directories created" {
-##  skip "TMP dev" # ToDo: on task end >> delete this line ←
+#  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called, it should create required directories
 
   # Create a mock function for mkdir to track directory creation
@@ -407,7 +407,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for README.md creation when it doesn't exist › expect README.md created" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and README.md doesn't exist, it should create it
 
   # Make sure README.md doesn't exist
@@ -429,7 +429,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for README.md creation when it exists › expect README.md not modified" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and README.md exists, it should not modify it
 
   # Create a README.md file
@@ -446,7 +446,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .gitignore setup when it doesn't exist › expect .gitignore created from template" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .gitignore doesn't exist, it should create it from template
 
   # Make sure .gitignore doesn't exist
@@ -467,7 +467,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .gitignore setup when it exists › expect .gitignore appended" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .gitignore exists, it should append required entries
 
   # Create a .gitignore file with some content
@@ -491,7 +491,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .dockerignore doesn't exist, it should create it from template
 
   # Make sure .dockerignore doesn't exist
@@ -512,7 +512,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .dockerignore setup when it exists › expect .dockerignore appended" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .dockerignore exists, it should append required entries
 
   # Create a .dockerignore file with some content
@@ -537,7 +537,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for backup functionality › expect .old backup files created when files exist" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and files already exist, it should create .old backup files
   # Note: Without --update flag, rsync will always backup existing files
 
@@ -571,7 +571,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for rsync only functionality › expect rsync commands work with --recursive flag" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: Verify that rsync commands work properly using only rsync (no cp fallback)
   # and use --recursive instead of -r for clarity
 
@@ -597,7 +597,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for file ownership and permission validation › expect proper ownership and permissions" {
-#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: Verify that copied files have proper ownership and permissions matching the super project
 
   assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"

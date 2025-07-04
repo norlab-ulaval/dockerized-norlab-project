@@ -202,11 +202,35 @@ function dna::init_command() {
     n2st::print_msg "Preparing ${super_project_name} DNA-initialization
 
 Target path:
+${MSG_DIMMED_FORMAT}
      ${super_project_root}
-
+${MSG_END_FORMAT}
 Current repository structure:
 ${MSG_DIMMED_FORMAT}
 $(sudo tree -L 1 -a --noreport --dirsfirst -F -I .git -I .idea -I .cadence "${super_project_root}" | sed "s;^${super_project_root%/};${repo_top_dir_name};" | sed 's/^/     /')
+${MSG_END_FORMAT}
+DNA-initialisation will add the following:
+${MSG_DIMMED_FORMAT}
+     ${repo_top_dir_name}/
+     ├── .dockerized_norlab/                 ← DNA configuration directory
+     │   ├── configuration/                  ← Main configuration files
+     │   │   ├── project_entrypoints/        ← Container startup scripts
+     │   │   ├── project_requirements/       ← Dependency specifications
+     │   │   ├── Dockerfile                  ← Container build instructions
+     │   │   ├── .env                        ← Project environment variables
+     │   │   ├── .env.dna                    ← DNA-specific variables
+     │   │   ├── .env.local                  ← Local development overrides
+     │   │   └── README.md                   ← Configuration documentation
+     │   ├── dn_container_env_variable/      ← Container environment exports
+     │   ├── .env.${super_project_name}
+     │   └── README.md                       ← DNA configuration quick documentation
+     ├── artifact/                           ← Runtime produced data (mounted)
+     ├── external_data/                      ← Pre-existing data (mounted)
+     ├── src/                                ← Your source code (mounted/copied)
+     ├── tests/                              ← Your test code (mounted/copied)
+     ├── .dockerignore                       ← Docker build exclusions
+     ├── .gitignore                          ← Git exclusions
+     └── README.md                           ← Project documentation
 ${MSG_END_FORMAT}"
 
     # Check if .dockerized_norlab already exists
@@ -262,19 +286,19 @@ ${MSG_END_FORMAT}"
       n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX" "${super_project_acronym}" ".env.dna"
     } || return 1
 
-    # Replace placeholders in the DNA readme file
-    cd "${super_project_root}/.dockerized_norlab/" || return 1
-    {
-      n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${super_project_acronym}" "README.md" &&
-      n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_USER" "${super_project_user}" "README.md"
-    }  || return 1
-
-    # Note: There is three ocurence
-    {
-      n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md" &&
-      n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md" &&
-      n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md"
-    } || return 1
+    ## Replace placeholders in the DNA readme file
+    #cd "${super_project_root}/.dockerized_norlab/" || return 1
+    #{
+    #  n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${super_project_acronym}" "README.md" &&
+    #  n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_USER" "${super_project_user}" "README.md"
+    #}  || return 1
+    #
+    ## Note: There is three ocurence
+    #{
+    #  n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md" &&
+    #  n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md" &&
+    #  n2st::seek_and_modify_string_in_file "PLACEHOLDER_SUPER_PROJECT_NAME" "${super_project_name}" "README.md"
+    #} || return 1
 
     # ....Create root repository required directories..............................................
     cd "${super_project_root}" || return 1
@@ -384,8 +408,10 @@ ${MSG_END_FORMAT}
 You can now use ${MSG_EMPH_FORMAT}dna${MSG_END_FORMAT} to manage your project.
 To get started:
   1. Execute ${MSG_EMPH_FORMAT}dna help${MSG_END_FORMAT} to see available command
-  2. Read instruction in ${MSG_DIMMED_FORMAT}${super_project_name}/.dockerized_norlab/README.md${MSG_END_FORMAT}
-  3. Check documentation at https://github.com/norlab-ulaval/dockerized-norlab-project
+  2. Check 'Project Initialization & Configuration' section in 'documentation'
+     at https://github.com/norlab-ulaval/dockerized-norlab-project
+  3. If you are in a hurry, read section 'Getting started ... fast'
+     in ${MSG_DIMMED_FORMAT}${super_project_name}/.dockerized_norlab/README.md${MSG_END_FORMAT}
 
 
 $(n2st::echo_centering_str "Stay awesome 🦾" ' ' ' ')"
