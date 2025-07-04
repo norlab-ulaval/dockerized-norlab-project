@@ -6,9 +6,10 @@
 !**/external_data/README.md
 !**/artifact/README.md
 !**/artifact/optuna_storage/README.md
+**/.dockerized_norlab/dn_container_env_variable/
+!**/.dockerized_norlab/dn_container_env_variable/README.md
 
 # ....DNA common...................................................................................
-**/.dockerized_norlab/dn_container_env_variable/
 **/external_data/
 **/artifact/
 **/slurm_jobs_logs/*.log

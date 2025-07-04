@@ -1,7 +1,8 @@
 
 # ====Dockerized-NorLab(required)==================================================================
-**/.dockerized_norlab/dn_container_env_variable/
-**/.dockerized_norlab/configuration/.env.local
+/.dockerized_norlab/configuration/.env.local
+/.dockerized_norlab/dn_container_env_variable/
+!/.dockerized_norlab/dn_container_env_variable/README.md
 
 # ====Dockerized-NorLab(recommended)===============================================================
 **/external_data/
