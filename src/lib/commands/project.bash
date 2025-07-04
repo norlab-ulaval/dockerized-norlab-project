@@ -200,17 +200,17 @@ function dna::project_dotenv_command() {
     # Show consolidated and interpolated dotenv config files
     n2st::print_msg "Showing consolidated and interpolated dotenv config files...\n"
 
-    # Show DNA environment variables
+    # Show DNA-specific environment variables
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_DIMMED_FORMAT}DNA Environment Variables${MSG_END_FORMAT}"
+    echo -e "${MSG_DIMMED_FORMAT}DNA-specific Environment Variables${MSG_END_FORMAT}"
     echo
     env | grep "^DN_" | sort
     env | grep "^DNA_" | sort
 
-    # Show project environment variables
+    # Show project-specific environment variables
     echo ""
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_DIMMED_FORMAT}Project Environment Variables${MSG_END_FORMAT}"
+    echo -e "${MSG_DIMMED_FORMAT}Project-specific Environment Variables${MSG_END_FORMAT}"
     echo
     env | grep "^PROJECT_" | sort
     env | grep "^SUPER_" | sort

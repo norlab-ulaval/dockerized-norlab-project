@@ -199,6 +199,9 @@ function dna::init_command() {
     super_project_user="$(id -un)"
 
     # ★ Note: Keep 'sudo', its required for preserving user interaction flow
+    local pre_init_repo_tree
+    pre_init_repo_tree="$(sudo tree -L 1 -a --noreport --dirsfirst -F -I .git -I .idea -I .cadence "${super_project_root}" | sed "s;^${super_project_root%/};${repo_top_dir_name};" | sed 's/^/     /')"
+
     n2st::print_msg "Preparing ${super_project_name} DNA-initialization
 
 Target path:
@@ -207,9 +210,9 @@ ${MSG_DIMMED_FORMAT}
 ${MSG_END_FORMAT}
 Current repository structure:
 ${MSG_DIMMED_FORMAT}
-$(sudo tree -L 1 -a --noreport --dirsfirst -F -I .git -I .idea -I .cadence "${super_project_root}" | sed "s;^${super_project_root%/};${repo_top_dir_name};" | sed 's/^/     /')
+${pre_init_repo_tree}
 ${MSG_END_FORMAT}
-DNA-initialisation will add the following:
+DNA-initialisation will add/update the following:
 ${MSG_DIMMED_FORMAT}
      ${repo_top_dir_name}/
      ├── .dockerized_norlab/                 ← DNA configuration directory
@@ -217,9 +220,9 @@ ${MSG_DIMMED_FORMAT}
      │   │   ├── project_entrypoints/        ← Container startup scripts
      │   │   ├── project_requirements/       ← Dependency specifications
      │   │   ├── Dockerfile                  ← Container build instructions
-     │   │   ├── .env                        ← Project environment variables
-     │   │   ├── .env.dna                    ← DNA-specific variables
-     │   │   ├── .env.local                  ← Local development overrides
+     │   │   ├── .env.dna                    ← DNA-specific env variables
+     │   │   ├── .env                        ← Project-specific env variables
+     │   │   ├── .env.local                  ← Local env variables overrides
      │   │   └── README.md                   ← Configuration documentation
      │   ├── dn_container_env_variable/      ← Container environment exports
      │   ├── .env.${super_project_name}
@@ -228,6 +231,7 @@ ${MSG_DIMMED_FORMAT}
      ├── external_data/                      ← Pre-existing data (mounted)
      ├── src/                                ← Your source code (mounted/copied)
      ├── tests/                              ← Your test code (mounted/copied)
+     ...
      ├── .dockerignore                       ← Docker build exclusions
      ├── .gitignore                          ← Git exclusions
      └── README.md                           ← Project documentation

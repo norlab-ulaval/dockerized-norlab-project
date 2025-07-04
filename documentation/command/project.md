@@ -186,9 +186,9 @@ dna project sanity              # General sanity checks
 The `dotenv` subcommand shows how environment variables are resolved:
 
 1. `.env.dna` (super project) - DNA-specific settings
-2. `.env.dna-internal` (DNA repo) - Internal DNA settings  
-3. `.env` (super project) - General project settings
-4. `.env.local` (super project) - Local development overrides
+2. `.env` (super project) - General project settings
+3. `.env.local` (super project) - Local env variables overrides
+4. `.env.dna-internal` (DNA repo) - Internal DNA settings  
 
 ## Troubleshooting
 

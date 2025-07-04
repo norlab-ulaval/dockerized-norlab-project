@@ -59,9 +59,9 @@ your-project-repository/
 │   │   ├── project_entrypoints/        ← Container startup scripts
 │   │   ├── project_requirements/       ← Dependency specifications
 │   │   ├── Dockerfile                  ← Container build instructions
-│   │   ├── .env                        ← Project environment variables
-│   │   ├── .env.dna                    ← DNA-specific variables
-│   │   ├── .env.local                  ← Local development overrides
+│   │   ├── .env.dna                    ← DNA-specific env variables
+│   │   ├── .env                        ← Project-specific env variables
+│   │   ├── .env.local                  ← Local env variables overrides
 │   │   └── README.md                   ← Configuration documentation
 │   ├── dn_container_env_variable/      ← Container environment exports
 │   ├── .env.your-project-repository    ← Project DNA configuration meta
@@ -70,6 +70,7 @@ your-project-repository/
 ├── external_data/                      ← Pre-existing data (mounted)
 ├── src/                                ← Your source code (mounted/copied)
 ├── tests/                              ← Your test code (mounted/copied)
+...
 ├── .dockerignore                       ← Docker build exclusions
 ├── .gitignore                          ← Git exclusions
 └── README.md                           ← Project documentation
@@ -92,21 +93,21 @@ your-project-repository/
 DNA uses a hierarchical environment variable system with the following precedence:
 
 1. `.env.dna` (super project) - DNA-specific settings
-2. `.env.dna-internal` (DNA repo) - Internal DNA settings
-3. `.env` (super project) - General project settings
-4. `.env.local` (super project) - Local development overrides
+2. `.env` (super project) - General project settings
+3. `.env.local` (super project) - Local env variables overrides
+4. `.env.dna-internal` (DNA repo) - Internal DNA settings
 
-#### `.env` - Project Environment Variables
+#### `.env` - Project-specific Environment Variables
 
 Main project configuration file. This file is for project related environment variable (i.e., non-DNA/DN env var).
 
-#### `.env.dna` - DNA-Specific Variables
+#### `.env.dna` - DNA-specific environment variables
 This file is for DN/DNA specific setting.
 Variables `DN_PROJECT_GIT_REMOTE_URL`, `DN_CONTAINER_NAME` and `DN_PROJECT_ALIAS_PREFIX` are automaticaly configured on initialization.
 Check `.env.dna` comment for other available environment variable.
 
 
-#### `.env.local` - Local Development Overrides
+#### `.env.local` - Local environment variables overrides
 
 This file won't be committed to Git.
 Use it for local-specific settings.
