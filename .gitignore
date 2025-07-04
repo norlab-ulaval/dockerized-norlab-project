@@ -1,18 +1,18 @@
 
 # ====Dockerized-NorLab============================================================================
 
+# ....DNA common...................................................................................
+**/.dockerized_norlab/dn_container_env_variable/.env*
+**/external_data/
+**/artifact/
+**/slurm_jobs_logs/*.log
+
 # ....Dev required.................................................................................
 /utilities/tmp/dockerized-norlab-project-mock/
 !**/external_data/README.md
 !**/artifact/README.md
 !**/artifact/optuna_storage/README.md
-**/.dockerized_norlab/dn_container_env_variable/
 !**/.dockerized_norlab/dn_container_env_variable/README.md
-
-# ....DNA common...................................................................................
-**/external_data/
-**/artifact/
-**/slurm_jobs_logs/*.log
 
 # ====Common=======================================================================================
 
