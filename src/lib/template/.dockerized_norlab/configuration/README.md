@@ -1,7 +1,4 @@
 
-
-[//]: # ( ToDo: NMO-670 docs: write user side config readme ) 
-
 #### DNA dotenv file loading precedence:
  1. .env.dna (super project)
  2. .env.dna-internal (DNA repo)

@@ -47,6 +47,7 @@ function dna::check_install_darwin_package_manager() {
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     else
       n2st::print_msg_warning "Neither Homebrew nor MacPorts is installed. Would you like to instal Homebreww now?"
+      unset option_update
       read -r -n 1 -p "Install Homebrew? [y/N] " option_update
       if [[ "${option_update}" == "y" || "${option_update}" == "Y" ]]; then
         # Installing Homebreww
