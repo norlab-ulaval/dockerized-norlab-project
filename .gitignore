@@ -9,7 +9,6 @@
 
 # ....Dev required.................................................................................
 /utilities/tmp/dockerized-norlab-project-mock/
-/utilities/tmp/dockerized-norlab-project-mock-EMPTY/
 !**/external_data/README.md
 !**/artifact/README.md
 !**/artifact/optuna_storage/README.md

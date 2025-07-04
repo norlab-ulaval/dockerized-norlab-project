@@ -7,9 +7,8 @@
 - `tests/tests_bats/` contain N2ST bats framework files that are mainly used for unit-testing
 - `tests/tests_dryrun_and_tests_scripts/` contain integration test (see details below)
 - `utilities/` contain external libraries such as N2ST and NBS
-- `utilities/tmp/dockerized-norlab-project-mock*` are use for cloning a fresh copy of a mock "super project" from https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git on test execution.
+- `utilities/tmp/dockerized-norlab-project-mock` is use for cloning a fresh copy of a mock "super project" from https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git on test execution.
   `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNA. We refer to this as a "super project" or the "user side".
-  `dockerized-norlab-project-mock-EMPTY` is a mock of user repository with some pre-exiting files/dirs such as the `src` dir.
 
 ## General Instructions:
 
