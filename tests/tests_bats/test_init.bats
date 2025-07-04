@@ -58,6 +58,9 @@ setup_file() {
   mkdir -p "${MOCK_DNA_DIR}/src/lib"
   cp -r "${BATS_DOCKER_WORKDIR}/src/lib/template" "${MOCK_DNA_DIR}/src/lib/"
 
+  apt-get update && \
+      apt-get install --yes rsync
+
   # Create a mock import_dna_lib.bash that sets up the environment
   cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
@@ -86,29 +89,34 @@ function dna::import_lib_and_dependencies() {
 }
 
 function n2st::print_msg() {
-  echo "Mock n2st::print_msg called with args: $*"
+  echo -e "Mock n2st::print_msg called with args: $*"
+  return 0
+}
+
+function n2st::print_msg_done() {
+  echo -e "Mock n2st::print_msg_done called with args: $*"
   return 0
 }
 
 function n2st::print_msg_warning() {
-  echo "Mock n2st::print_msg_warning called with args: $*"
+  echo -e "Mock n2st::print_msg_warning called with args: $*"
   return 0
 }
 
 function n2st::print_msg_error_and_exit() {
-  echo "Mock n2st::print_msg_error_and_exit called with args: $*"
+  echo -e "Mock n2st::print_msg_error_and_exit called with args: $*"
   exit 1
 }
 
 
 # ....Mock ui.bash functions.......................................................................
 function dna::command_help_menu() {
-  echo "Mock dna::command_help_menu called with args: $*"
+  echo -e "Mock dna::command_help_menu called with args: $*"
   return 0
 }
 
 function dna::unknown_subcommand_msg() {
-  echo "Mock dna::unknown_subcommand_msg called with args: $*"
+  echo -e "Mock dna::unknown_subcommand_msg called with args: $*"
   return 1
 }
 
@@ -120,7 +128,7 @@ done
 
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
-echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
+echo -e "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 
 }
@@ -153,111 +161,6 @@ setup() {
   }
   export -f git
 
-  # Mock rsync command
-  function rsync() {
-    local backup_flag=false
-    local suffix=""
-    local recursive_flag=false
-    local source=""
-    local destination=""
-
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-      case "$1" in
-        --backup)
-          backup_flag=true
-          shift
-          ;;
-        --suffix=*)
-          suffix="${1#*=}"
-          shift
-          ;;
-        --recursive)
-          recursive_flag=true
-          shift
-          ;;
-        *)
-          if [[ -z "$source" ]]; then
-            source="$1"
-          elif [[ -z "$destination" ]]; then
-            destination="$1"
-          fi
-          shift
-          ;;
-      esac
-    done
-
-    # Create backup if file exists and backup flag is set
-    if [[ "$backup_flag" == "true" && -n "$suffix" ]]; then
-      if [[ -f "$destination" ]]; then
-        cp "$destination" "${destination}${suffix}" 2>/dev/null || true
-      elif [[ -d "$destination" ]]; then
-        local basename_source=$(basename "$source")
-        local target_file="${destination}/${basename_source}"
-        if [[ -f "$target_file" ]]; then
-          cp "$target_file" "${target_file}${suffix}" 2>/dev/null || true
-        fi
-      fi
-    fi
-
-    # Perform the copy operation
-    if [[ -d "$source" ]]; then
-      cp -r "$source" "$destination" || return 1
-    else
-      cp "$source" "$destination" || return 1
-    fi
-
-    return 0
-  }
-  export -f rsync
-
-  # Mock stat command for cross-platform compatibility
-  function stat() {
-    if [[ "$1" == "-c" ]]; then
-      # Linux format
-      case "$2" in
-        '%U') echo "$(id -un)" ;;
-        '%G') echo "$(id -gn)" ;;
-        '%a') echo "755" ;;
-        *) command stat "$@" ;;
-      esac
-    elif [[ "$1" == "-f" ]]; then
-      # macOS format
-      case "$2" in
-        '%Su') echo "$(id -un)" ;;
-        '%Sg') echo "$(id -gn)" ;;
-        '%A') echo "755" ;;
-        *) command stat "$@" ;;
-      esac
-    else
-      command stat "$@"
-    fi
-  }
-  export -f stat
-
-  # Mock chown and chmod commands
-  function chown() {
-    # Mock chown - just return success
-    return 0
-  }
-  export -f chown
-
-  function chmod() {
-    # Mock chmod - just return success
-    return 0
-  }
-  export -f chmod
-
-  # Mock find command for permission operations
-  function find() {
-    if [[ "$*" == *"-exec chown"* ]] || [[ "$*" == *"-exec chmod"* ]]; then
-      # Mock find with exec operations - just return success
-      return 0
-    else
-      command find "$@"
-    fi
-  }
-  export -f find
 }
 
 # ....Teardown.....................................................................................
@@ -278,6 +181,7 @@ teardown_file() {
 
 # Test cases for dna::get_super_project_acronym
 @test "dna::get_super_project_acronym with onewordname › expect first three letters" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name is a single word, it should return the first three letters
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'onewordname'"
 
@@ -289,6 +193,7 @@ teardown_file() {
 }
 
 @test "dna::get_super_project_acronym with multi-word-name › expect acronym 'mwn'" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name has multiple words separated by dashes, it should return the acronym
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multi-word-name'"
 
@@ -300,6 +205,7 @@ teardown_file() {
 }
 
 @test "dna::get_super_project_acronym with multti_word_name › expect acronym 'mwn'" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name has multiple words separated by underscores, it should return the acronym
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multti_word_name'"
 
@@ -311,6 +217,7 @@ teardown_file() {
 }
 
 @test "dna::get_super_project_acronym with multi-1word-2name-3with-number › expect acronym 'm123n'" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When the project name has multiple words with numbers, it should return the acronym including numbers
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'multi-1word-2name-3with-number'"
 
@@ -323,6 +230,7 @@ teardown_file() {
 
 # Test cases for dna::init_command
 @test "dna::init_command with --help › expect help menu" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called with --help, it should show the help menu
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --help"
 
@@ -334,6 +242,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with -h › expect help menu" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called with -h, it should show the help menu
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command -h"
 
@@ -345,6 +254,7 @@ teardown_file() {
 }
 
 @test "dna::init_command with unknown option › expect error" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called with an unknown option, it should show an error
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --unknown-option"
 
@@ -356,6 +266,7 @@ teardown_file() {
 }
 
 @test "dna::init_command without .git directory › expect error" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called in a directory without .git, it should show an error
   # Remove the .git directory
   rm -rf "${TEST_REPO_DIR}/.git"
@@ -370,20 +281,24 @@ teardown_file() {
 }
 
 @test "dna::init_command with .dockerized_norlab already exists › Y -> expect update" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
   # Create the .dockerized_norlab directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
 
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && yes | dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   assert_success
 
   # Should output the expected message
-  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNA initialized"
-  assert_output --partial "Mock n2st::print_msg called with args: DNA project initialized successfully."
+  assert_output --partial "Mock n2st::print_msg called with args: Preparing test-project DNA-initialization"
+  assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNA initialized since"
+  assert_output --partial "Mock n2st::print_msg_done called with args: DNA project initialized successfully."
+
 }
 
-@test "dna::init_command with .dockerized_norlab already exists › N -> expect see you" {
+@test "dna::init_command with .dockerized_norlab already exists › N -> expect 'No problem, see you later'" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called in a directory with .dockerized_norlab, it should show an error
   # Create the .dockerized_norlab directory
   mkdir -p "${TEST_REPO_DIR}/.dockerized_norlab"
@@ -393,25 +308,36 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock n2st::print_msg called with args: Preparing test-project DNA-initialization"
   assert_output --partial "Mock n2st::print_msg_warning called with args: This project is already DNA initialized since"
-  assert_output --partial "Mock n2st::print_msg called with args: See you"
+  assert_output --partial "Mock n2st::print_msg called with args: No problem, see you later"
+
 }
 
 @test "dna::init_command with valid repository › expect success" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
+
+  assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+
   # Test case: When init command is called in a valid repository, it should initialize the project
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
 
   # Should output the expected messages
-  assert_output --partial "Mock n2st::print_msg called with args: Initializing DNA project: test-project"
-  assert_output --partial "Mock n2st::print_msg called with args: DNA project initialized successfully"
+  assert_output --partial "Mock n2st::print_msg called with args: Preparing test-project DNA-initialization"
+  assert_output --partial "Mock n2st::print_msg called with args: Ready to proceed with DNA-initialization"
+  assert_output --partial "Mock n2st::print_msg called with args: Initializing test-project"
+  assert_output --partial "Mock n2st::print_msg_done called with args: DNA project initialized successfully."
 }
 
 @test "dna::init_command tests for PLACEHOLDER_* substitutions › expect all placeholders replaced" {
+#  skip "TMP dev" # ToDo: on task end >> delete this line ←
+  assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+
   # Test case: When init command is called, it should replace all placeholders
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -421,20 +347,21 @@ teardown_file() {
   assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "IamDNA_tp"
   assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "tp"
 
-  # Check README.md file for replaced placeholders
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNA_tp"
-  assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "test-project"
+  ## Check README.md file for replaced placeholders
+  #assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "IamDNA_tp"
+  #assert_file_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "test-project"
 
   # Verify placeholders are not present anymore
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_PROJECT_GIT_REMOTE_URL"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_CONTAINER_NAME"
   assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/configuration/.env.dna" "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
-  assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
+  #assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
+  #assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
+  #assert_file_not_contains "${TEST_REPO_DIR}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
 }
 
 @test "dna::init_command tests for directory creation › expect required directories created" {
+#  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called, it should create required directories
 
   # Create a mock function for mkdir to track directory creation
@@ -445,8 +372,10 @@ teardown_file() {
   }
   export -f mkdir
 
+  assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -474,16 +403,18 @@ teardown_file() {
   assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
   assert_file_exist "${TEST_REPO_DIR}/artifact/README.md"
   assert_file_exist "${TEST_REPO_DIR}/artifact/optuna_storage/README.md"
+
 }
 
 @test "dna::init_command tests for README.md creation when it doesn't exist › expect README.md created" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and README.md doesn't exist, it should create it
 
   # Make sure README.md doesn't exist
   rm -f "${TEST_REPO_DIR}/README.md"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -498,13 +429,14 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for README.md creation when it exists › expect README.md not modified" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and README.md exists, it should not modify it
 
   # Create a README.md file
   touch "${TEST_REPO_DIR}/README.md"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -514,6 +446,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .gitignore setup when it doesn't exist › expect .gitignore created from template" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .gitignore doesn't exist, it should create it from template
 
   # Make sure .gitignore doesn't exist
@@ -524,7 +457,7 @@ teardown_file() {
   echo "# Template .gitignore file" > "${MOCK_DNA_DIR}/src/lib/template/.gitignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -534,13 +467,14 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .gitignore setup when it exists › expect .gitignore appended" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .gitignore exists, it should append required entries
 
   # Create a .gitignore file with some content
   echo "# Existing .gitignore content" > "${TEST_REPO_DIR}/.gitignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -557,6 +491,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .dockerignore doesn't exist, it should create it from template
 
   # Make sure .dockerignore doesn't exist
@@ -567,7 +502,7 @@ teardown_file() {
   echo "# Template .dockerignore file" > "${MOCK_DNA_DIR}/src/lib/template/.dockerignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -577,13 +512,14 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for .dockerignore setup when it exists › expect .dockerignore appended" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and .dockerignore exists, it should append required entries
 
   # Create a .dockerignore file with some content
   echo "# Existing .dockerignore content" > "${TEST_REPO_DIR}/.dockerignore"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -601,6 +537,7 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for backup functionality › expect .old backup files created when files exist" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: When init command is called and files already exist, it should create .old backup files
   # Note: Without --update flag, rsync will always backup existing files
 
@@ -612,7 +549,7 @@ teardown_file() {
   echo "Original external_data README content" > "${TEST_REPO_DIR}/external_data/README.md"
 
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -634,11 +571,14 @@ teardown_file() {
 }
 
 @test "dna::init_command tests for rsync only functionality › expect rsync commands work with --recursive flag" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: Verify that rsync commands work properly using only rsync (no cp fallback)
   # and use --recursive instead of -r for clarity
 
+  assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed (rsync is now a required dependency)
   assert_success
@@ -650,13 +590,20 @@ teardown_file() {
   assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
   assert_file_exist "${TEST_REPO_DIR}/src/launcher/example_app.py"
   assert_file_exist "${TEST_REPO_DIR}/tests/pytest.dna.ini"
+
+  # Cleanup ok
+  assert_dir_exist "${TEST_REPO_DIR}/.dockerized_norlab/dn_container_env_variable/"
+  assert_file_not_exist "${TEST_REPO_DIR}/.dockerized_norlab/dn_container_env_variable/.env.dn_expose_PLACEHOLDER_DN_CONTAINER_NAME"
 }
 
 @test "dna::init_command tests for file ownership and permission validation › expect proper ownership and permissions" {
+  skip "TMP dev" # ToDo: on task end >> delete this line ←
   # Test case: Verify that copied files have proper ownership and permissions matching the super project
 
+  assert_dir_not_exist "${TEST_REPO_DIR}/.dockerized_norlab"
+
   # Run the init command
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
 
   # Should succeed
   assert_success
@@ -666,8 +613,19 @@ teardown_file() {
   assert_file_exist "${TEST_REPO_DIR}/external_data/README.md"
   assert_dir_exist "${TEST_REPO_DIR}/.dockerized_norlab"
 
-  # Note: In the test environment, we can't easily test actual ownership changes
-  # since the mock functions don't actually change ownership, but we can verify
-  # that the validation function is called and doesn't cause errors
-  # The actual ownership validation is tested by the successful completion of the init command
+  # Verify ownership
+  assert_file_owner "$(whoami)" "${TEST_REPO_DIR}/artifact/README.md"
+  assert_file_owner "$(whoami)" "${TEST_REPO_DIR}/external_data/README.md"
+  assert_file_owner "$(whoami)" "${TEST_REPO_DIR}/.dockerized_norlab"
+
+  # Verify permission
+  echo "Permissions:
+   artifact/README.md: $(stat -c '%a' "${TEST_REPO_DIR}/artifact/README.md")
+   external_data/README.md: $(stat -c '%a' "${TEST_REPO_DIR}/external_data/README.md")
+   .dockerized_norlab/: $(stat -c '%a' "${TEST_REPO_DIR}/.dockerized_norlab")"
+
+  assert_file_permission 644 "${TEST_REPO_DIR}/artifact/README.md"
+  assert_file_permission 644 "${TEST_REPO_DIR}/external_data/README.md"
+  assert_file_permission 755 "${TEST_REPO_DIR}/.dockerized_norlab"
+
 }

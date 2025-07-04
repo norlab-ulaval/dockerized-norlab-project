@@ -54,24 +54,25 @@ After running `dna init`, your project will have the following structure:
 
 ```
 your-project-repository/
-├── .dockerized_norlab/             ← DNA configuration directory
-│   ├── configuration/              ← Main configuration files
-│   │   ├── .env                    ← Project environment variables
-│   │   ├── .env.dna                ← DNA-specific variables
-│   │   ├── .env.local              ← Local development overrides
-│   │   ├── Dockerfile              ← Container build instructions
-│   │   ├── README.md               ← Configuration documentation
-│   │   ├── project_entrypoints/    ← Container startup scripts
-│   │   └── project_requirements/   ← Dependency specifications
-│   ├── dn_container_env_variable/  ← Container environment exports
-│   └── visual/                     ← Project-specific visuals
-├── artifact/                       ← Runtime produced data (mounted)
-├── external_data/                  ← Pre-existing data (mounted)
-├── src/                           ← Your source code (mounted/copied)
-├── tests/                         ← Your test code (mounted/copied)
-├── .dockerignore                  ← Docker build exclusions
-├── .gitignore                     ← Git exclusions
-└── README.md                      ← Project documentation
+├── .dockerized_norlab/                 ← DNA configuration directory
+│   ├── configuration/                  ← Main configuration files
+│   │   ├── project_entrypoints/        ← Container startup scripts
+│   │   ├── project_requirements/       ← Dependency specifications
+│   │   ├── Dockerfile                  ← Container build instructions
+│   │   ├── .env                        ← Project environment variables
+│   │   ├── .env.dna                    ← DNA-specific variables
+│   │   ├── .env.local                  ← Local development overrides
+│   │   └── README.md                   ← Configuration documentation
+│   ├── dn_container_env_variable/      ← Container environment exports
+│   ├── .env.your-project-repository    ← Project DNA configuration meta
+│   └── README.md                       ← DNA configuration quick documentation
+├── artifact/                           ← Runtime produced data (mounted)
+├── external_data/                      ← Pre-existing data (mounted)
+├── src/                                ← Your source code (mounted/copied)
+├── tests/                              ← Your test code (mounted/copied)
+├── .dockerignore                       ← Docker build exclusions
+├── .gitignore                          ← Git exclusions
+└── README.md                           ← Project documentation
 ```
 
 ### Directory Purposes
