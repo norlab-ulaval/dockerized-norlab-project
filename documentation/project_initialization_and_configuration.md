@@ -126,10 +126,19 @@ VERBOSE_LOGGING=true
 
 ## Project Requirements
 
-### Python Requirements
+There is three method for configuring container in DNA. In execution order:
+1. via `pip` using python requirement file `python.requirements.txt`
+2. using shell script file `shell.requirements.bash`
+3. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for details)
 
-Specify Python dependencies in `project_requirements/requirements.txt`:
+Each one of them serve different purposes. Use the ones best suited for your project needs. 
+You can use all tree in combinaison if necessary. 
 
+### Specifying Python Requirements
+
+Specify Python dependencies in `.dockerized_norlab/configuration/project_requirements/python.requirements.txt`:
+
+Example:
 ```txt
 # Core dependencies
 numpy>=1.21.0
@@ -146,100 +155,23 @@ pytest>=6.0.0
 black>=21.0.0
 flake8>=3.9.0
 ```
+Documentation
+ - Requirements File Format:  https://pip.pypa.io/en/stable/reference/requirements-file-format/
+ - Requirement Specifiers:  https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 
-### System Requirements
 
-Specify system packages in `project_requirements/apt_packages.txt`:
+### Shell Requirements
 
-```txt
-# System dependencies
-libeigen3-dev
-libpcl-dev
-libopencv-dev
+Specify shell dependencies in `.dockerized_norlab/configuration/project_requirements/shell.requirements.bash` as if it is a instalation script.  
 
-# ROS packages
-ros-humble-navigation2
-ros-humble-slam-toolbox
-ros-humble-robot-localization
-```
-
-### ROS Dependencies
-
-Specify ROS dependencies in `project_requirements/rosdep.yaml`:
-
-```yaml
-# ROS package dependencies
-dependencies:
-  - geometry_msgs
-  - sensor_msgs
-  - nav_msgs
-  - tf2
-  - tf2_ros
-  - rclcpp
-  - rclpy
-```
 
 ## Project Entrypoints
 
-### Main Entrypoint
-
-The main container entrypoint (`project_entrypoints/entrypoint.bash`):
-
-```bash
-#!/bin/bash
-# Main container entrypoint
-
-# Source ROS environment
-source /opt/ros/${ROS_DISTRO}/setup.bash
-
-# Source project workspace
-if [ -f "/ros2_ws/install/setup.bash" ]; then
-    source /ros2_ws/install/setup.bash
-fi
-
-# Set up environment
-export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
-export RMW_IMPLEMENTATION=rmw_cyclonedx_cpp
-
-# Start SSH daemon for remote access
-sudo service ssh start
-
-# Execute command or start interactive shell
-if [ $# -eq 0 ]; then
-    exec /bin/bash
-else
-    exec "$@"
-fi
-```
-
-### Development Entrypoint
-
-Development-specific setup (`project_entrypoints/develop_entrypoint.bash`):
-
-```bash
-#!/bin/bash
-# Development entrypoint with additional tools
-
-# Source main entrypoint
-source /dockerized_norlab_entrypoints/entrypoint.bash
-
-# Development environment setup
-export PYTHONPATH="/ros2_ws/src:$PYTHONPATH"
-export AMENT_PREFIX_PATH="/ros2_ws/install:$AMENT_PREFIX_PATH"
-
-# Start development services
-if [ "${START_JUPYTER:-false}" = "true" ]; then
-    jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root &
-fi
-
-if [ "${START_VNC:-false}" = "true" ]; then
-    vncserver :1 -geometry 1920x1080 -depth 24 &
-fi
-
-# Continue with main entrypoint
-exec "$@"
-```
-
+Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker container entrypoint. Each one of them serve different purposes:
+- `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm) 
+- `<mode>/dn_entrypoint.*.callback.bash` are specialized version executed after the global one and only in that mode
+- `*.init.callback.bash` are executed on container initialization only. It happen only once in a container life-cycle.
+- `*.attach.callback.bash` are executed on every time a shell is attach to a conatiner. It can happen many time in a container life-cycle.  
 
 ## Docker Configuration
 
