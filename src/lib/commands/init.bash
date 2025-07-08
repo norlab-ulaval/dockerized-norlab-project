@@ -29,9 +29,10 @@ test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load er
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 function dna::get_acronym() {
-    # Find the acronym of a dash or underscrore sepatared multi-word name.
+    # Find the acronym of a dash or underscore separated multi-word name.
     local super_project_name="$1"
-    echo "$super_project_name" | grep -o -P '(^|\-|\_)[a-zA-Z0-9]' | tr -d '-' | tr -d '_' | tr -d '\n' | tr '[:upper:]' '[:lower:]'
+    # Replace dashes and underscores with spaces, then extract first character of each word
+    echo "$super_project_name" | sed 's/[-_]/ /g' | awk '{for(i=1;i<=NF;i++) printf substr($i,1,1)}' | tr '[:upper:]' '[:lower:]'
     return 0
 }
 

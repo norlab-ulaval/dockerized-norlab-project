@@ -191,7 +191,86 @@ teardown_file() {
 
 # ====Test cases==================================================================================
 
-# Test cases for dna::get_super_project_acronym
+
+# ....Test cases for dna::get_acronym (the underlying function)....................................
+@test "dna::get_acronym with single word › expect first letter" {
+  # Test case: When the input is a single word, it should return the first letter
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym 'singleword'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the first letter
+  assert_output "s"
+}
+
+@test "dna::get_acronym with dash-separated words › expect acronym" {
+  # Test case: When the input has words separated by dashes, it should return the acronym
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym 'multi-word-name'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the acronym
+  assert_output "mwn"
+}
+
+@test "dna::get_acronym with underscore-separated words › expect acronym" {
+  # Test case: When the input has words separated by underscores, it should return the acronym
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym 'multi_word_name'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the acronym
+  assert_output "mwn"
+}
+
+@test "dna::get_acronym with mixed separators › expect acronym" {
+  # Test case: When the input has words separated by both dashes and underscores, it should return the acronym
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym 'multi-word_mixed-name'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the acronym
+  assert_output "mwmn"
+}
+
+@test "dna::get_acronym with numbers › expect acronym including numbers" {
+  # Test case: When the input has words with numbers, it should return the acronym including numbers
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym 'multi-1word-2name-3with-number'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the acronym
+  assert_output "m123n"
+}
+
+@test "dna::get_acronym with uppercase letters › expect lowercase acronym" {
+  # Test case: When the input has uppercase letters, it should return lowercase acronym
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym 'Multi-Word-Name'"
+
+  # Should succeed
+  assert_success
+
+  # Should output the lowercase acronym
+  assert_output "mwn"
+}
+
+@test "dna::get_acronym with empty string › expect empty output" {
+  # Test case: When the input is empty, it should return empty output
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_acronym ''"
+
+  # Should succeed
+  assert_success
+
+  # Should output empty string
+  assert_output ""
+}
+
+# ....Test cases for dna::get_super_project_acronym................................................
 @test "dna::get_super_project_acronym with onewordname › expect first three letters" {
   # Test case: When the project name is a single word, it should return the first three letters
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::get_super_project_acronym 'onewordname'"
@@ -236,7 +315,7 @@ teardown_file() {
   assert_output "m123n"
 }
 
-# Test cases for dna::init_command
+# ....Test cases for dna::init_command.............................................................
 @test "dna::init_command with --help › expect help menu" {
   # Test case: When init command is called with --help, it should show the help menu
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && dna::init_command --help"
