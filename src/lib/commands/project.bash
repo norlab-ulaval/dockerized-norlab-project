@@ -83,6 +83,7 @@ test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load er
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::project_validate_command() {
     local slurm=false
+    local include_multiarch=false
     local remaining_args=()
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
@@ -93,6 +94,10 @@ function dna::project_validate_command() {
         case "$1" in
             --slurm)
                 slurm=true
+                shift
+                ;;
+            --include-multiarch)
+                include_multiarch=true
                 shift
                 ;;
             --help|-h)
@@ -115,6 +120,11 @@ function dna::project_validate_command() {
     source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
 
     # ....Begin....................................................................................
+    # Add --include-multiarch to remaining_args if set
+    if [[ "${include_multiarch}" == true ]]; then
+        remaining_args=("--include-multiarch" "${remaining_args[@]}")
+    fi
+
     # Determine which validate script to execute
     if [[ "${slurm}" == true ]]; then
         n2st::print_msg "The message""Validating slurm configuration..."

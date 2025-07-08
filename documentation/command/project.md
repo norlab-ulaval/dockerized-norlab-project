@@ -41,6 +41,7 @@ dna project validate [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--slurm ["<slurm/job/dir/path>"]` | Validate only the SLURM configuration |
+| `--include-multiarch` | Include multi-architecture image validation |
 | `--help`, `-h` | Show help message |
 
 #### What it does
@@ -105,6 +106,19 @@ dna project validate --slurm
 
 # Validate SLURM configuration with custom directory
 dna project validate --slurm "/path/to/slurm/jobs"
+```
+
+### Multi-Architecture Validation
+
+```bash
+# Validate with multi-architecture image support
+dna project validate --include-multiarch
+
+# Combine with SLURM validation
+dna project validate --include-multiarch --slurm
+
+# SLURM validation with custom directory and multi-arch support
+dna project validate  --include-multiarch --slurm "/path/to/slurm/jobs"
 ```
 
 ### Configuration Inspection
