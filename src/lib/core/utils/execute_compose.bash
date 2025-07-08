@@ -141,11 +141,9 @@ function dna::excute_compose() {
       # be available in the local image store and that run executed via `up_and_attach.bash` doesn't
       # require pulling built img from dockerhub.
       if [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-        # Note: Set builder to default explicitly since new docker builder behavior produce error when setting
-        # BUILDX_BUILDER to desktop-linux. See issue NMO-742 for details.
-        #docker buildx use desktop-linux
-        export BUILDX_BUILDER=default
-        dna_override_buildx=true
+        # Note: Do nothing since the new macOs docker context/builder behavior produce error when
+        # setting BUILDX_BUILDER to desktop-linux/default. See issue NMO-742 for details.
+        :
       elif [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
         # ToDo: assess if its now the same behavior as with MacOsX (ref task NMO-742)
         export BUILDX_BUILDER=default
