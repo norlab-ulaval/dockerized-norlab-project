@@ -42,7 +42,8 @@ function dna::setup_host_for_this_super_project() {
   # - https://www.baeldung.com/linux/bash-alias-with-parameters
   # - https://unix.stackexchange.com/questions/3773/how-to-pass-parameters-to-an-alias
 
-  local dn_project_alias_prefix_caps="$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')"
+  local dn_project_alias_prefix_caps
+  dn_project_alias_prefix_caps="$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')"
   (
     echo ""
     echo "#>>>>DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable"
@@ -55,14 +56,12 @@ function dna::setup_host_for_this_super_project() {
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
     echo "#<<<<DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
     echo ""
-  ) >>~/.bashrc
+  ) | sudo tee -a "${HOME}/.bashrc"
 
   if [ -n "$ZSH_VERSION" ]; then
-    # ToDo: validate >> appending .bashrc to .zshrc should let to the user choice
-    #  echo "source ~/.bashrc" >> ~/.zshrc
-    source ~/.zshrc
+    source "${HOME}/.zshrc"
   elif [ -n "$BASH_VERSION" ]; then
-    source ~/.bashrc
+    source "${HOME}/.bashrc"
   else
     n2st::print_msg_error "Unknown shell! Check with the maintainer to add it to DS"
   fi
@@ -70,7 +69,7 @@ function dna::setup_host_for_this_super_project() {
   n2st::print_msg_done "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cd -> cd to ${SUPER_PROJECT_REPO_NAME} root
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cd  -> cd to ${SUPER_PROJECT_REPO_NAME} root
       - dna-${DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to ${SUPER_PROJECT_REPO_NAME} .dockerized_norlab dir
       - dna-${DN_PROJECT_ALIAS_PREFIX}-cds -> cd to ${SUPER_PROJECT_REPO_NAME} src dir
       - dna-${DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to ${SUPER_PROJECT_REPO_NAME} tests dir
@@ -78,9 +77,7 @@ function dna::setup_host_for_this_super_project() {
       - dna-${DN_PROJECT_ALIAS_PREFIX}-cde -> cd to ${SUPER_PROJECT_REPO_NAME} external data dir
 
     New available environment variable added to ~/.bashrc for convenience:
-      - _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}
-
-  "
+      - _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}"
 
   #  ....Teardown...................................................................................
   cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" 1>&2 && return 1; }

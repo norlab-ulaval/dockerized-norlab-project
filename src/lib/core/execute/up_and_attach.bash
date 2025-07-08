@@ -149,7 +149,7 @@ function dna::up_and_attach() {
 
 
   n2st::set_which_architecture_and_os
-  n2st::print_msg "Current image architecture and os: ${IMAGE_ARCH_AND_OS:?err}"
+  n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
 
     if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then

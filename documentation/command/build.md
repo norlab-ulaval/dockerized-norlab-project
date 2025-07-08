@@ -149,7 +149,7 @@ dna build develop -- --no-cache --progress=plain
 **Problem**: `--multiarch` flag fails.  
 **Solution**: Set up Docker Buildx with multi-architecture support:
 ```bash
-docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
 docker buildx ls
 ```
 **Note**: `local-builder-multiarch-virtual` is the default multi-architecture builder name use by `dna`

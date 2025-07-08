@@ -16,7 +16,8 @@ trap dna::test_teardown_callback EXIT
 # ====begin========================================================================================
 #set +e # dont exit right away on error
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
-bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.multiarch.bash "$@" -- --no-cache
+#bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.multiarch.bash "$@" -- --no-cache
+bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.multiarch.bash "$@"
 
 # ....Teardown.....................................................................................
 # Handle by the trap command

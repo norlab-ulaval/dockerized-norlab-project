@@ -34,11 +34,12 @@ DOCUMENTATION_BUFFER_PROJECT_VALIDATE=$( cat <<'EOF'
 #
 # Options:
 #   --slurm ["<slurm/job/dir/path>"]   Validate only the slurm configuration
+#   --include-multiarch                Include multi-architecture image validation
 #   --help, -h                         Show this help message
 #
 # Slurm flag positional argument:
-#   <slurm/job/dir/path>     (Optional) The path to the directory containing the slurm job scripts.
-#                            Default to "slurm_jobs/"
+#   <slurm/job/dir/path>               (Optional) The slurm job scripts directory path.
+#                                      Default to "slurm_jobs/"
 #
 # =================================================================================================
 EOF
@@ -46,10 +47,10 @@ EOF
 
 DOCUMENTATION_BUFFER_PROJECT_SANITY=$( cat <<'EOF'
 # =================================================================================================
-# Validate super project DNA required components and dependencies are installed at the expected
+# Validate super project DNA required components and dependencies are installed as expected.
 #
 # Usage:
-#   $ dna project validate [OPTIONS]
+#   $ dna project sanity [OPTIONS]
 #
 # Options:
 #   --help, -h             Show this help message

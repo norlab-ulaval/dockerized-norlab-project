@@ -151,7 +151,8 @@ function dna::load_super_project_configurations() {
       DN_GIT_BRANCH="dev"
     fi
     if [[ "${DN_GIT_BRANCH}" != "main" ]]; then
-      n2st::print_msg "Be advise, setting DN_GIT_BRANCH to ${DN_GIT_BRANCH}"
+      n2st::print_msg "DNA local repository is currently checkout on branch ${current_dna_branch}"
+      n2st::print_msg "Be advised, setting DN_GIT_BRANCH to ${DN_GIT_BRANCH}"
     fi
     export DN_GIT_BRANCH
   fi
@@ -164,7 +165,7 @@ function dna::load_super_project_configurations() {
     else
       DN_VERSION=bleeding
     fi
-    n2st::print_msg "Be advise, setting DN_VERSION to ${DN_VERSION}"
+    n2st::print_msg "Be advised, setting DN_VERSION to ${DN_VERSION}"
     export DN_VERSION
   fi
 

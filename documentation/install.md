@@ -251,7 +251,7 @@ source ~/.bashrc
 
 Create a multi-architecture docker builder. Execute the following comands:
 ```bash
-docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
 docker buildx ls
 ```
 

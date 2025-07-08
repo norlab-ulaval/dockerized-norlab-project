@@ -89,6 +89,7 @@ function dna::portable_copy() {
     # Validate file ownership and permissions match the super project
     dna::validate_file_ownership_and_permissions "${destination}" "${super_project_root}" || return 1
 
+    git add "${destination}"
     return 0
 }
 
@@ -215,26 +216,26 @@ ${MSG_END_FORMAT}
 DNA-initialisation will add/update the following:
 ${MSG_DIMMED_FORMAT}
      ${repo_top_dir_name}/
-     ├── .dockerized_norlab/                 ← DNA configuration directory
-     │   ├── configuration/                  ← Main configuration files
-     │   │   ├── project_entrypoints/        ← Container startup scripts
-     │   │   ├── project_requirements/       ← Dependency specifications
-     │   │   ├── Dockerfile                  ← Container build instructions
-     │   │   ├── .env.dna                    ← DNA-specific env variables
-     │   │   ├── .env                        ← Project-specific env variables
-     │   │   ├── .env.local                  ← Local env variables overrides
-     │   │   └── README.md                   ← Configuration documentation
-     │   ├── dn_container_env_variable/      ← Container environment exports
+     ├── .dockerized_norlab/                      ← DNA configuration directory
+     │   ├── configuration/                       ← Main configuration files
+     │   │   ├── project_entrypoints/             ← Container startup scripts
+     │   │   ├── project_requirements/            ← Dependency specifications
+     │   │   ├── Dockerfile                       ← Container build instructions
+     │   │   ├── .env.dna                         ← DNA-specific env variables
+     │   │   ├── .env                             ← Project-specific env variables
+     │   │   ├── .env.local                       ← Local env variables overrides
+     │   │   └── README.md                        ← Configuration documentation
+     │   ├── dn_container_env_variable/           ← Container environment exports
      │   ├── .env.${super_project_name}
-     │   └── README.md                       ← DNA configuration quick documentation
-     ├── artifact/                           ← Runtime produced data (mounted)
-     ├── external_data/                      ← Pre-existing data (mounted)
-     ├── src/                                ← Your source code (mounted/copied)
-     ├── tests/                              ← Your test code (mounted/copied)
+     │   └── README.md                            ← DNA configuration quick documentation
+     ├── artifact/                                ← Runtime produced data (mounted)
+     ├── external_data/                           ← Pre-existing data (mounted)
+     ├── src/                                     ← Your source code (mounted/copied)
+     ├── tests/                                   ← Your test code (mounted/copied)
      ...
-     ├── .dockerignore                       ← Docker build exclusions
-     ├── .gitignore                          ← Git exclusions
-     └── README.md                           ← Project documentation
+     ├── .dockerignore                            ← Docker build exclusions
+     ├── .gitignore                               ← Git exclusions
+     └── README.md                                ← Project documentation
 ${MSG_END_FORMAT}"
 
     # Check if .dockerized_norlab already exists
@@ -242,8 +243,9 @@ ${MSG_END_FORMAT}"
         unset user_input
         n2st::print_msg_warning "This project is already DNA initialized since ${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory already exists.\nIf you continue, existing file and directories with the same name will be safeguarded with the suffix '.old', not overriden."
         read -r -n 1 -p "Do you want to continue [y/N]" user_input
+        echo
         if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
-          echo
+          :
         else
           n2st::print_msg "No problem, see you later"
           return 0
@@ -252,8 +254,9 @@ ${MSG_END_FORMAT}"
         n2st::print_msg "Ready to proceed with DNA-initialization"
         unset user_input
         read -r -n 1 -p "Execute? [y/N]" user_input
+        echo
         if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
-          echo
+          :
         else
           n2st::print_msg "No problem, see you later"
           return 0
@@ -264,6 +267,7 @@ ${MSG_END_FORMAT}"
     n2st::print_msg "Initializing ${super_project_name}..."
     echo
 
+    # ....Create .dockerized_norlab................................................................
     mkdir -p "${super_project_root}/.dockerized_norlab" || return 1
 
     # Copy template files
@@ -276,9 +280,6 @@ ${MSG_END_FORMAT}"
     # Rename the super project DNA meta .env file
     mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" ".env.${super_project_name}" || return 1
 
-    # Cleanup 'dn_container_env_variable/' content
-    rm -f "dn_container_env_variable/.env.dn_expose_PLACEHOLDER_DN_CONTAINER_NAME"
-
     # Replace placeholders in the .env.dna file
     cd "${super_project_root}/.dockerized_norlab/configuration/" || return 1
     local super_project_acronym
@@ -290,7 +291,13 @@ ${MSG_END_FORMAT}"
       n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX" "${super_project_acronym}" ".env.dna"
     } || return 1
 
-    ## Replace placeholders in the DNA readme file
+    # Replace placeholders in the DNA readme file
+    cd "${super_project_root}/.dockerized_norlab/" || return 1
+    {
+      n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${super_project_acronym}" "dn_container_env_variable/README.md"
+    } || return 1
+
+    # Replace placeholders in the DNA readme file
     #cd "${super_project_root}/.dockerized_norlab/" || return 1
     #{
     #  n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${super_project_acronym}" "README.md" &&
@@ -312,7 +319,8 @@ ${MSG_END_FORMAT}"
       mkdir -p external_data &&
       mkdir -p src/launcher/configs &&
       mkdir -p src/dna_example &&
-      mkdir -p tests/test_dna_example
+      mkdir -p tests/test_dna_example &&
+      mkdir -p slurm_jobs
     } || return 1
 
     dna::portable_copy "${DNA_LIB_PATH}/template/artifact/README.md" artifact/ "${super_project_root}" || return 1
@@ -320,6 +328,9 @@ ${MSG_END_FORMAT}"
     dna::portable_copy "${DNA_LIB_PATH}/template/external_data/README.md" external_data/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher/" src/launcher/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
+
+    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/" slurm_jobs/ "${super_project_root}" || return 1
+
     if [[ ! -f "src/README.md" ]]; then
       dna::portable_copy "${DNA_LIB_PATH}/template/src/README.md" src/ "${super_project_root}" || return 1
     fi
@@ -337,6 +348,7 @@ This project is initialized with [${DNA_HUMAN_NAME:?err} (DNA)](${DNA_GIT_REMOTE
 See '.dockerized_norlab/README.md' for usage details.
 
 EOF
+      git add "README.md"
     fi
 
     # ....Setup ignore files.......................................................................
@@ -350,8 +362,9 @@ EOF
         cat >> ".gitignore" << EOF
 
 # ====Dockerized-NorLab(required)==================================================================
-**/.dockerized_norlab/dn_container_env_variable/
-**/.dockerized_norlab/configuration/.env.local
+/.dockerized_norlab/configuration/.env.local
+/.dockerized_norlab/dn_container_env_variable/.env*
+!/.dockerized_norlab/dn_container_env_variable/README.md
 
 # ====Dockerized-NorLab(recommended)===============================================================
 **/external_data/
@@ -361,8 +374,10 @@ EOF
 !**/artifact/optuna_storage/README.md
 **/slurm_jobs_logs/*.log
 
+
 EOF
     fi
+    git add ".gitignore"
 
     if [[ ! -f ".dockerignore" ]]; then
         # Case: file does not exist => copy template
@@ -383,16 +398,20 @@ EOF
 
 EOF
     fi
+    git add ".dockerignore"
 
     n2st::draw_horizontal_line_across_the_terminal_window "─" "$(tput dim)"
 
+    cd "${super_project_root}" || return 1
+    source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
 
     # ....Validate init procedure..................................................................
-    cd "${super_project_root}" || return 1
     source "${DNA_LIB_PATH}/core/utils/super_project_dna_sanity_check.bash" || return 1
+    dna::super_project_dna_sanity_check || return 1
 
     # ....Setup host procedure.....................................................................
     source "${DNA_LIB_PATH}/core/utils/setup_host_for_running_this_super_project.bash" || return 1
+    dna::setup_host_for_this_super_project || return 1
 
     # ====Teardown=================================================================================
     cd "${super_project_root}" || return 1

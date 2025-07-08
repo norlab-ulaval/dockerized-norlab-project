@@ -10,13 +10,13 @@ services:
   #         at section "utilizing-a-gpu-during-docker-build"
   #       i.e. $ vim /etc/docker/daemon.json
   #             {
-  #               "default-runtime": "nvidia",
   #               "runtimes": {
   #                 "nvidia": {
   #                   "path": "/usr/bin/nvidia-container-runtime",
   #                   "runtimeArgs": []
   #                 }
   #               }
+  #               "default-runtime": "nvidia",
   #             }
   #            $ systemctl restart docker
   #

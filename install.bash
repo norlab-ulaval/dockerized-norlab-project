@@ -91,7 +91,7 @@ function dna::create_entrypoint_symlink_if_requested() {
         sudo mkdir -p "/usr/local/bin"
         # shellcheck disable=SC2143
         if [[ -z "$( echo "${PATH}" | grep --quiet /usr/local/bin )"  ]]; then
-          echo "export PATH=\"\$PATH:/usr/local/bin\"" >> "$HOME/.bashrc"
+          echo "export PATH=\"\$PATH:/usr/local/bin\"" | sudo tee -a "$HOME/.bashrc"
         fi
       else
         n2st::print_msg_error_and_exit "Please create /usr/local/bin directory by executing ${MSG_DIMMED_FORMAT}mkdir -p /usr/local/bin${MSG_END_FORMAT} and re-run the install script or use the ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} install flag."
@@ -139,6 +139,7 @@ function dna::add_dna_entrypoint_path_to_bashrc_if_requested() {
         if [[ "${option_yes}" == false ]]; then
           n2st::print_msg_warning "dna entrypoint path already exists in ~/.bashrc."
           read -r -n 1 -p "Update? [y/N] " option_update
+          echo
           if [[ "${option_update}" != "y" && "${option_update}" != "Y" ]]; then
             n2st::print_msg "Skipping ~/.bashrc option_update."
           else
@@ -156,7 +157,7 @@ function dna::add_dna_entrypoint_path_to_bashrc_if_requested() {
           echo "export PATH=\"\$PATH:\$_DNA_PATH\"" ;
           echo "# <<<< dockerized-norlab-project (end)" ;
           echo "" ;
-        } >> "${HOME}/.bashrc"
+        } | sudo tee -a "${HOME}/.bashrc"
       fi
     else
       # shellcheck disable=SC2088
@@ -268,14 +269,14 @@ function dna::install_dockerized_norlab_project_on_host() {
   cd "${dna_install_dir}"
 
   if ! dna::is_online; then
-    n2st::print_msg_warning "You are currently offline, software requirement install step was skiped.\nBe advise that 'docker engine', 'docker compose', 'docker buildx', 'git' and 'tree' are all hard requirement."
+    n2st::print_msg_warning "You are currently offline, software requirement install step was skiped.\nBe advised that 'docker engine', 'docker compose', 'docker buildx', 'git' and 'tree' are all hard requirement."
   fi
   if [[ $(uname -s) == "Darwin" ]]; then
     print_msg "Remaining install instructions:
 1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
 2. Open Docker Desktop, go to 'Settings' and check '☑️ Start Docker Desktop when you sign in to your computer' and restart the current terminal
 3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
-    $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+    $ docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
     $ docker buildx ls
 ${MSG_END_FORMAT}
 Stay awesome 🦾
@@ -285,7 +286,7 @@ Stay awesome 🦾
 1. Apply Docker group change without login out: execute ${MSG_DIMMED_FORMAT}$ newgrp docker${MSG_END_FORMAT}
 2. Restart the docker daemon to apply changes: execute ${MSG_DIMMED_FORMAT}$ sudo systemctl restart docker${MSG_END_FORMAT}
 3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
-    $ docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+    $ docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
     $ docker buildx ls
 ${MSG_END_FORMAT}
 Stay awesome 🦾

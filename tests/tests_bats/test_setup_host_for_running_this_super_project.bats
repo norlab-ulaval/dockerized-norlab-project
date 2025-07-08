@@ -112,7 +112,7 @@ teardown() {
   assert_output --partial "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd -> cd to dockerized-norlab-project-mock root
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd  -> cd to dockerized-norlab-project-mock root
       - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab dir
       - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cds -> cd to dockerized-norlab-project-mock src dir
       - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to dockerized-norlab-project-mock tests dir
@@ -120,8 +120,7 @@ teardown() {
       - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cde -> cd to dockerized-norlab-project-mock external data dir
 
     New available environment variable added to ~/.bashrc for convenience:
-      - _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}
-"
+      - _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}"
 }
 
 @test "dna::setup_host_for_this_super_project › expect pass" {

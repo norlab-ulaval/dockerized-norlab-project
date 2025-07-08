@@ -15,5 +15,6 @@ trap dna::test_teardown_callback EXIT
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.multiarch.bash --no-force-push-project-core -- --dry-run
+unset buildx_builder
+bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.multiarch.bash -- --dry-run
 

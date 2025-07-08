@@ -6,6 +6,9 @@
 - `tests/` contain tests files
 - `tests/tests_bats/` contain N2ST bats framework files that are mainly used for unit-testing
 - `tests/tests_dryrun_and_tests_scripts/` contain integration test (see details below)
+- `tests/run_bats_core_test_in_n2st.bash` is a script that will execute all bats unit-tests.
+- `tests/run_all_dryrun_and_tests_script.bash` is a script that will execute all dry-run and integration tests. 
+- `tests/run_all_dryrun_and_tests_script_long_test.bash` is a script that will execute all dry-run and integration tests including long tests.
 - `utilities/` contain external libraries such as N2ST and NBS
 - `utilities/tmp/dockerized-norlab-project-mock` is use for cloning a fresh copy of a mock "super project" from https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git on test execution.
   `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNA. We refer to this as a "super project" or the "user side".
@@ -39,6 +42,7 @@
 - Inspect the tested script/functions for business logic related error or implementation error. Propose correction before going forward if any. 
 - Identify relevant test cases e.g., behavior validation, error handling, desired user feedback, ...   
 - If the tested script implements helper functions (i.e., support function meant to be used by the main function), test those functions first.
+- Skip tests marked as long or named with prefix/sufix 'long' unless explicitly aks to run them and mention that they where skip on purpose. 
 - Always execute all unit-tests and all integration tests before submitting and only submit when _done_.
 
 ## General Testing Instructions

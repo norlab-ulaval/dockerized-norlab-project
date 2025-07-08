@@ -64,25 +64,18 @@ function dna::check_install_darwin_package_manager() {
       # Post install step
       if [[ "$( which bash )"  =~ .*"/bash" ]]; then
         if [[ ! -f "$HOME/.bashrc" ]]; then
-          touch "$HOME/.bashrc"
+          sudo touch "$HOME/.bashrc"
         fi
-        cat >> "$HOME/.bashrc" << EOF
-
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-EOF
+        echo "eval \"$(/opt/homebrew/bin/brew shellenv)\"" | sudo tee -a "$HOME/.bashrc"
         source "$HOME/.bashrc"
       fi
 
       if [[ "$( which zsh )" =~ .*"/zsh" ]]; then
         if [[ ! -f "$HOME/.zshrc" ]]; then
-          touch "$HOME/.zshrc"
+          echo "source \$HOME/.bashrc" | sudo tee "$HOME/.zshrc"
+        elif ! grep --silent -E "source *bashrc" "${HOME}/.zshrc"; then
+          echo "source \$HOME/.bashrc" | sudo tee -a "$HOME/.zshrc"
         fi
-        cat >> "$HOME/.zshrc" << EOF
-
-source $HOME/.bashrc
-
-EOF
         source "$HOME/.zshrc"
       fi
 
@@ -192,7 +185,7 @@ function dna::setup_cuda_requirements() {
       n2st::print_msg_warning "Fixing CUDA path for nvcc"
 
       if [[ ! -f "$HOME/.bashrc" ]]; then
-        touch "$HOME/.bashrc"
+        sudo touch "$HOME/.bashrc"
       fi
 
       (
@@ -205,7 +198,7 @@ function dna::setup_cuda_requirements() {
         echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
         echo "# <<<< dockerized-norlab-project CUDA (end)"
         echo ""
-      ) >> "$HOME/.bashrc"
+      ) | sudo tee -a "$HOME/.bashrc"
 
       if [[ -n "${ZSH_VERSION}" ]] && [[ -f "$HOME/.zshrc" ]]; then
         n2st::print_msg_warning "You are currently in a zsh shell. We made modification to the .bashrc.\nWe recommand you add 'source \$HOME/.bashrc' to your '.zshrc' file or copy those lines to it."

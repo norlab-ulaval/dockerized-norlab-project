@@ -127,13 +127,10 @@ function dna::build_command() {
     local architecture="native"
     if [[ "${multiarch}" == true ]]; then
       architecture="multiarch"
-      if [[ "${force_push_project_core}" == false ]]; then
-        build_flag+=("--no-force-push-project-core")
-      fi
-    else
-      if [[ "${force_push_project_core}" == true ]]; then
-        build_flag+=("--force-push-project-core")
-      fi
+    fi
+
+    if [[ "${force_push_project_core}" == true ]]; then
+      build_flag+=("--force-push-project-core")
     fi
 
     if [[ "${service}" == "deploy" ]]; then
