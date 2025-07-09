@@ -85,6 +85,11 @@ setup() {
   export SUPER_PROJECT_ROOT="${MOCK_PROJECT_PATH}"
   export SUPER_PROJECT_REPO_NAME="dockerized-norlab-project-mock"
 
+  function dna::print_msg_error_and_return() {
+    echo -e "Mock dna::print_msg_error_and_return called with args: $*"
+    exit 1
+  }
+
 }
 
 # ====Teardown=====================================================================================
@@ -148,7 +153,7 @@ teardown_file() {
   mkdir -p "${TEST_TEMP_DIR}"
   cd "${TEST_TEMP_DIR}" || exit 1
 
-  run dna::check_super_project_dir_structure
+  run dna::check_super_project_dir_structure || exit 1
   assert_failure
   assert_output --partial "'.dockerized_norlab' is not installed at super-project repository root"
 }
@@ -242,7 +247,7 @@ teardown_file() {
 
   run dna::check_gitignore
   assert_failure
-  assert_output --partial "The line '**/.dockerized_norlab/dn_container_env_variable/' is not present in .gitignore"
+  assert_output --partial "The line '/.dockerized_norlab/dn_container_env_variable/.env*' is not present in .gitignore"
 }
 
 @test "dna::check_dockerignore › expect pass with valid dockerignore entries" {

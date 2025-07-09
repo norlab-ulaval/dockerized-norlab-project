@@ -20,7 +20,7 @@ function dna::down_command() {
   # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   n2st::set_which_architecture_and_os
-  n2st::print_msg "Current image architecture and os: ${IMAGE_ARCH_AND_OS:?err}"
+  n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
 
   n2st::set_is_teamcity_run_environment_variable
 

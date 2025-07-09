@@ -1,25 +1,68 @@
 #!/bin/bash
+
+DOCUMENTATION_PROJECT_VALIDATE_ALL=$( cat <<'EOF'
 # =================================================================================================
 # Convenient script for testing config and dry-run build slurm images specified
 # in docker-compose.project.build.native.yaml and docker-compose.project.build.multiarch.yaml
 #
 # Usage:
-#   $ bash project_validate.slurm.bash ["<slurm/job/dir/path>"]
+#   $ bash project_validate.slurm.bash [OPTIONS] ["<slurm/job/dir/path>"]
 #
 # Positional argument:
 #   <slurm/job/dir/path>     (Optional) The path to the directory containing the slurm job scripts.
-#                            Default to "slurm_jobs/"
+#                            Default to "slurm_jobs/" at project root.
+#
+# Options:
+#   --include-multiarch             Also dry-run and check config for multi-architecture images
+#   -h | --help
 #
 # Globals:
 #   read SUPER_PROJECT_ROOT
 #
 # =================================================================================================
+EOF
+)
+
+
+function dna::show_help() {
+  # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
+  echo -e "${MSG_DIMMED_FORMAT}"
+  n2st::draw_horizontal_line_across_the_terminal_window "="
+  echo -e "$0 --help\n"
+  # Strip shell comment char `#` and both lines
+  echo -e "${DOCUMENTATION_PROJECT_VALIDATE_ALL}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
+  n2st::draw_horizontal_line_across_the_terminal_window "="
+  echo -e "${MSG_END_FORMAT}"
+}
 
 
 function dna::project_validate_slurm() {
-  local slurm_script_job_path="${1:-"slurm_jobs"}"
-  local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
-  local line_style="${MSG_LINE_STYLE_LVL2}"
+
+  # ....Set env variables (pre cli)................................................................
+  declare -a remaining_args
+  local include_multiarch=false
+
+  # ....cli..........................................................................................
+  while [ $# -gt 0 ]; do
+
+    case $1 in
+      --include-multiarch)
+        include_multiarch=true
+        shift
+        ;;
+      -h | --help)
+        dna::show_help
+        exit
+        ;;
+      *) # Default case
+        remaining_args=("$@")
+        break
+        ;;
+    esac
+
+  done
+
+  local slurm_script_job_path="${remaining_args:-"slurm_jobs"}"
 
   # ....Validate user argument.......................................................................
   if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" ]]; then
@@ -27,10 +70,8 @@ function dna::project_validate_slurm() {
     return 1
   fi
 
-  # ....Setup......................................................................................
-  pushd "$(pwd)" >/dev/null || exit 1
-  # Note: Keep the pushd/popd logic for now
 
+  # ....Set env variables (post cli)...............................................................
   declare -a config_test_compose_file_list=()
   declare -a dryrun_compose_file_list=()
   declare -a config_test_exit_code=()
@@ -38,13 +79,22 @@ function dna::project_validate_slurm() {
   declare -a slurm_job_dryrun_exit_code=()
   declare -a slurm_job_file_name=()
   declare -a slurm_job_flags=()
+  local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
+  local line_style="${MSG_LINE_STYLE_LVL2}"
+
+
+  # ....Setup......................................................................................
+  pushd "$(pwd)" >/dev/null || exit 1
+  # Note: Keep the pushd/popd logic for now
 
   # ....Config test..................................................................................
   n2st::print_msg "Begin config test"
 
-  config_test_compose_file_list=(
-    "docker-compose.project.build.native.yaml"
-    "docker-compose.project.build.multiarch.yaml"
+  config_test_compose_file_list=( "docker-compose.project.build.native.yaml" )
+  if [[ ${include_multiarch} == true ]]; then
+    config_test_compose_file_list+=( "docker-compose.project.build.multiarch.yaml" )
+  fi
+  config_test_compose_file_list+=(
     "docker-compose.project.run.slurm.yaml"
   )
 
@@ -54,21 +104,26 @@ function dna::project_validate_slurm() {
   done
 
   n2st::print_msg "Begin docker compose config test"
+  unset BUILDX_BUILDER
   for each_compose in "${config_test_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
+    declare -a add_fct_flag=()
+    add_fct_flag+=("--override-build-cmd" "config")
+    add_fct_flag+=("--file" "${each_compose}")
     declare -a config_flag=()
-    config_flag+=("--override-build-cmd" "config")
-    config_flag+=("--file" "${each_compose}")
     config_flag+=("--" "--dry-run")
-    unset BUILDX_BUILDER
     if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
+      if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
+        add_fct_flag+=("--multiarch")
+      fi
       config_flag+=("project-slurm")
-      dna::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
-      dna::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     fi
     config_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
+    unset BUILDX_BUILDER
   done
 
   n2st::print_formated_script_footer "testing config" "${line_format}" "${line_style}"
@@ -76,10 +131,10 @@ function dna::project_validate_slurm() {
   # ....Dry-run build test...........................................................................
   n2st::print_formated_script_header "build in dry-run mode testing" "${line_format}" "${line_style}"
 
-  dryrun_compose_file_list=(
-    "docker-compose.project.build.native.yaml"
-    "docker-compose.project.build.multiarch.yaml"
-  )
+  dryrun_compose_file_list=( "docker-compose.project.build.native.yaml" )
+  if [[ ${include_multiarch} == true ]]; then
+    dryrun_compose_file_list+=( "docker-compose.project.build.multiarch.yaml" )
+  fi
 
   n2st::print_msg "Will dry-run build the following compose files:"
   for idx in "${!dryrun_compose_file_list[@]}"; do
@@ -91,19 +146,19 @@ function dna::project_validate_slurm() {
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a add_fct_flag=()
     add_fct_flag+=("--service-names" "project-slurm,project-slurm-no-gpu")
+    add_fct_flag+=("--file" "${each_compose}")
+    add_fct_flag+=(--msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}")
     declare -a build_flag=()
-    build_flag+=("--file" "${each_compose}")
     build_flag+=("--" "--dry-run")
-    unset BUILDX_BUILDER
     if [[ "${each_compose}" =~ .*".multiarch.yaml" ]]; then
-      dna::build_services_multiarch "${add_fct_flag[@]}" --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dna::build_services_multiarch "${add_fct_flag[@]}" "${build_flag[@]}"
     else
-      dna::build_services "${add_fct_flag[@]}" --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dna::build_services "${add_fct_flag[@]}" "${build_flag[@]}"
     fi
     build_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
+    unset BUILDX_BUILDER
   done
-  unset BUILDX_BUILDER
 
   n2st::print_msg "Completed build in dry-run mode tests"
 

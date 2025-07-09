@@ -64,25 +64,18 @@ function dna::check_install_darwin_package_manager() {
       # Post install step
       if [[ "$( which bash )"  =~ .*"/bash" ]]; then
         if [[ ! -f "$HOME/.bashrc" ]]; then
-          touch "$HOME/.bashrc"
+          sudo touch "$HOME/.bashrc"
         fi
-        cat >> "$HOME/.bashrc" << EOF
-
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-EOF
+        echo "eval \"$(/opt/homebrew/bin/brew shellenv)\"" | sudo tee -a "$HOME/.bashrc" > /dev/null
         source "$HOME/.bashrc"
       fi
 
       if [[ "$( which zsh )" =~ .*"/zsh" ]]; then
         if [[ ! -f "$HOME/.zshrc" ]]; then
-          touch "$HOME/.zshrc"
+          echo "source \$HOME/.bashrc" | sudo tee "$HOME/.zshrc"
+        elif ! grep --silent -E "source *bashrc" "${HOME}/.zshrc"; then
+          echo "source \$HOME/.bashrc" | sudo tee -a "$HOME/.zshrc" > /dev/null
         fi
-        cat >> "$HOME/.zshrc" << EOF
-
-source $HOME/.bashrc
-
-EOF
         source "$HOME/.zshrc"
       fi
 
@@ -137,32 +130,41 @@ function dna::install_dna_software_requirements() {
   cd "$tmp_cwd" || return 1
 
   # ....Install other tools........................................................................
+  local dimmed_style
+  local resset_style
+  dimmed_style=$(tput dim)
+  resset_style=$(tput sgr0)
+
+  n2st::print_msg "Installing packages..."
   if [[ $(uname) == "Darwin" ]]; then
     if command -v brew >/dev/null 2>&1; then
-        n2st::print_msg "Using Homebrew for package management"
-        brew update \
-          && brew install git \
-          && brew install tree \
-          && brew install rsync \
-          || return 1
+        n2st::print_msg "Using Homebrew for package management\n"
+        {
+          brew update --quiet \
+            && brew install --quiet git tree rsync \
+            && brew install --quiet --cask xquartz  \
+           || return 1 ;
+        } | sed "s/.*/${dimmed_style}&${resset_style}/"
     elif command -v port >/dev/null 2>&1; then
-        n2st::print_msg "Using MacPorts for package management"
-        sudo port install git \
-          && sudo port install tree \
-          && sudo port install rsync \
-          || exit 1
+        n2st::print_msg "Using MacPorts for package management\n"
+        {
+          sudo port install git \
+            && sudo port install tree \
+            && sudo port install rsync \
+            && sudo port -v install xorg-server \
+            || return 1 ;
+        } | sed "s/.*/${dimmed_style}&${resset_style}/"
     else
         n2st::print_msg_error "Neither Homebrew nor MacPorts is installed" && return 1
     fi
   else
-    sudo apt-get update &&
-      sudo apt-get install --assume-yes \
-        git \
-        tree \
-        rsync \
-      || return 1
+    echo
+    {
+      sudo apt-get update && sudo apt-get install --assume-yes git tree rsync || return 1 ;
+    } | sed "s/.*/${dimmed_style}&${resset_style}/" || return 1
   fi
-
+  echo
+  n2st::print_msg_done "Packages installed successfully!"
 
   #  ....Teardown..................................................................................
   cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" 1>&2 && return 1; }
@@ -192,7 +194,7 @@ function dna::setup_cuda_requirements() {
       n2st::print_msg_warning "Fixing CUDA path for nvcc"
 
       if [[ ! -f "$HOME/.bashrc" ]]; then
-        touch "$HOME/.bashrc"
+        sudo touch "$HOME/.bashrc"
       fi
 
       (
@@ -205,7 +207,7 @@ function dna::setup_cuda_requirements() {
         echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
         echo "# <<<< dockerized-norlab-project CUDA (end)"
         echo ""
-      ) >> "$HOME/.bashrc"
+      ) | sudo tee -a "$HOME/.bashrc" > /dev/null
 
       if [[ -n "${ZSH_VERSION}" ]] && [[ -f "$HOME/.zshrc" ]]; then
         n2st::print_msg_warning "You are currently in a zsh shell. We made modification to the .bashrc.\nWe recommand you add 'source \$HOME/.bashrc' to your '.zshrc' file or copy those lines to it."

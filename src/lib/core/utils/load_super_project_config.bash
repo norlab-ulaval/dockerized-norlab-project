@@ -107,7 +107,7 @@ function dna::load_super_project_configurations() {
   #       e.g., teamcity CI src code pull, user cloned in a different dir, project renamed.
 
   if [[ ! -f "${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/${super_project_meta_dna_dotenv:?err}" ]]; then
-    n2st::print_msg_error "can't find '.dockerized_norlab/.env.<SUPER_PROJECT_REPO_NAME>' in ${SUPER_PROJECT_ROOT}!" 1>&2
+    n2st::print_msg_error "can't find '.dockerized_norlab/${super_project_meta_dna_dotenv}' in ${SUPER_PROJECT_ROOT}!" 1>&2
     return 1
   fi
 
@@ -121,6 +121,7 @@ function dna::load_super_project_configurations() {
   # ....Load super project DNA meta config dotenv file.............................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
+  # shellcheck disable=SC1090
   source ".dockerized_norlab/${super_project_meta_dna_dotenv}" || return 1
   source ".dockerized_norlab/configuration/.env.dna" || return 1
   set +o allexport
@@ -150,7 +151,8 @@ function dna::load_super_project_configurations() {
       DN_GIT_BRANCH="dev"
     fi
     if [[ "${DN_GIT_BRANCH}" != "main" ]]; then
-      n2st::print_msg "Be advise, setting DN_GIT_BRANCH to ${DN_GIT_BRANCH}"
+      n2st::print_msg "DNA local repository is currently checkout on branch ${current_dna_branch}"
+      n2st::print_msg "Be advised, setting DN_GIT_BRANCH to ${DN_GIT_BRANCH}"
     fi
     export DN_GIT_BRANCH
   fi
@@ -163,7 +165,7 @@ function dna::load_super_project_configurations() {
     else
       DN_VERSION=bleeding
     fi
-    n2st::print_msg "Be advise, setting DN_VERSION to ${DN_VERSION}"
+    n2st::print_msg "Be advised, setting DN_VERSION to ${DN_VERSION}"
     export DN_VERSION
   fi
 

@@ -39,7 +39,9 @@ DNA can be installed using different methods depending on your system configurat
 
 ### Optional Requirements
 
-- **NVIDIA Docker**: For GPU acceleration support
+- **NVIDIA Docker**: Required for GPU acceleration support
+- **[Dockerhub account](https://docs.docker.com/accounts/create-account/**: Required for online build, sharing deploy image online, and publishing release image
+
 
 ### Platform Support
 
@@ -251,7 +253,7 @@ source ~/.bashrc
 
 Create a multi-architecture docker builder. Execute the following comands:
 ```bash
-docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
 docker buildx ls
 ```
 

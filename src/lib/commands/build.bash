@@ -12,9 +12,10 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   --multiarch                   Build services for multiple architectures (require a configured
 #                                  docker buildx multiarch builder)
 #   --online-build                Build image sequentialy by pushing/pulling intermediate images
-#                                  from Dockerhub
+#                                  from Dockerhub (requires Docker Hub authentication)
 #   --save DIRPATH                Save built image to directory (develop or deploy services only)
-#   --push                        Push image to dockerhub (deploy services only)
+#   --push                        Push image to Dockerhub (deploy services only,
+#                                  requires Docker Hub authentication)
 #   --help, -h                    Show this help message
 #
 #
@@ -41,6 +42,48 @@ test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!
 test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# =================================================================================================
+# Check if user is logged into Docker Hub
+#
+# Usage:
+#   $ dna::check_user_is_login_dockerhub
+#
+# Returns:
+#   0 if user is logged in to Docker Hub
+#   1 if user is not logged in to Docker Hub
+# =================================================================================================
+function dna::check_user_is_login_dockerhub() {
+    # Check if docker is available
+    if ! command -v docker &> /dev/null; then
+        n2st::print_msg_error "Docker is not installed or not available in PATH"
+        return 1
+    fi
+
+    # Try to get authentication info from docker config
+    # This checks if there are any stored credentials for Docker Hub
+    local docker_config_path="${HOME}/.docker/config.json"
+
+    if [[ -f "${docker_config_path}" ]]; then
+        # Check if there are auths for docker.io or index.docker.io (Docker Hub)
+        if grep -q '"https://index.docker.io/v1/"' "${docker_config_path}" 2>/dev/null || \
+           grep -q '"docker.io"' "${docker_config_path}" 2>/dev/null; then
+            return 0
+        fi
+    fi
+
+    # Alternative check: try to access Docker Hub API with stored credentials
+    # This will fail silently if not logged in
+    if docker system info 2>/dev/null | grep -q "Registry:" 2>/dev/null; then
+        # Try a simple operation that requires authentication
+        if docker search --limit 1 hello-world &>/dev/null; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 function dna::build_command() {
 
     if ! dna::is_online; then
@@ -127,13 +170,10 @@ function dna::build_command() {
     local architecture="native"
     if [[ "${multiarch}" == true ]]; then
       architecture="multiarch"
-      if [[ "${force_push_project_core}" == false ]]; then
-        build_flag+=("--no-force-push-project-core")
-      fi
-    else
-      if [[ "${force_push_project_core}" == true ]]; then
-        build_flag+=("--force-push-project-core")
-      fi
+    fi
+
+    if [[ "${force_push_project_core}" == true ]]; then
+      build_flag+=("--force-push-project-core")
     fi
 
     if [[ "${service}" == "deploy" ]]; then
@@ -187,6 +227,36 @@ function dna::build_command() {
     source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.deploy.bash" || return 1
+
+    # ....Docker Hub login check..................................................................
+    # Check if Docker Hub login is required and user is logged in
+    local dockerhub_login_required=false
+
+    # Check if --online-build flag is used (requires Docker Hub access for pushing/pulling)
+    local login_hub_check_flag
+    if [[ "${force_push_project_core}" == true ]]; then
+        dockerhub_login_required=true
+        login_hub_check_flag="--online-build"
+        n2st::print_msg "Online build mode detected (${login_hub_check_flag} flag)"
+    fi
+
+    # Check if deploy service with --push flag is used (requires Docker Hub access for pushing)
+    if [[ "${service}" == "deploy" && "${push_deploy}" == true ]]; then
+        dockerhub_login_required=true
+        login_hub_check_flag="deploy --push"
+        n2st::print_msg "Deploy push mode detected (${login_hub_check_flag} flag)"
+    fi
+
+    # Perform Docker Hub login check if required
+    if [[ "${dockerhub_login_required}" == true ]]; then
+        n2st::print_msg "Checking Docker Hub authentication..."
+        if ! dna::check_user_is_login_dockerhub; then
+            n2st::print_msg_error "Build flag ${MSG_DIMMED_FORMAT}${login_hub_check_flag}${MSG_END_FORMAT} require Docker Hub authentication but user is not logged in!"
+            echo -e "Please run ${MSG_DIMMED_FORMAT}docker login${MSG_END_FORMAT} to authenticate with Docker Hub before using this command."
+            return 1
+        fi
+        n2st::print_msg_done "Docker Hub authentication verified"
+    fi
 
     # ....Begin....................................................................................
     if [[ "${service}" == "deploy" ]]; then

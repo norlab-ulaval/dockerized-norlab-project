@@ -63,7 +63,7 @@ function dna::setup_dockerized_norlab_project() {
   #   - All files from 'configuration/project_entrypoints/' directory that follow the pattern
   #     'dn_entrypoint.*.callback.bash' are required by DN scripts 'dn_entrypoint.init.bash' and
   #     'dn_entrypoint.attach.bash'.
-  #   - Be advise that 'project-develop' container mount this directory as a volume to prevent
+  #   - Be advised that 'project-develop' container mount this directory as a volume to prevent
   #     image rebuilding each time its content is modified (See the 'services.volumes' key in
   #     'docker-compose.project.run.*.yaml').
   #   - However, 'project-deploy' and 'project-release' containers copy this directory and its

@@ -1,0 +1,29 @@
+#!/bin/bash
+# =================================================================================================
+# Mock docker command. Used as a workaround for MacOsX nested virtualization limitations.
+# Work in non-interactive shell.
+#
+# Usage;
+#   1. Make sure bin exist $ sudo mkdir -p /usr/local/bin/
+#   2. Create symlink $ sudo ln -sf /opt/dockerized-norlab-project/tests/vagrant_helper/docker /usr/local/bin/docker
+#   3. Make it executable $ sudo chmod +x /opt/dockerized-norlab-project/tests/vagrant_helper/docker
+#   4. Execute $ docker
+#
+# Mock docker commands
+# - image ls
+# - version
+# - any arbitrary docker command
+#
+# =================================================================================================
+
+# docker compose -f "${compose_path}/${the_compose_file}" config --services
+if [[ "$1" == "compose" && "$2" == "-f" && "$3" =~ 'docker-compose.project.build' && "$4" == config && "$5" == --services ]]; then
+  echo "project-core project-develop project-deploy project-ci-tests project-ci-tests-no-gpu project-slurm project-slurm-no-gpu"
+elif [[ "$1" == "image" && "$2" == "ls" ]]; then
+  echo "test-image-deploy.latest"
+elif [[ "$1" == "version" ]]; then
+  echo "Iam docker mock from tests/vagrant_helper/docker_mock.bash"
+else
+  echo "Mock docker called with args: $*"
+fi
+exit 0

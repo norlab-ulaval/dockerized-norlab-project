@@ -27,9 +27,9 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 | Option | Description |
 |--------|-------------|
 | `--multiarch` | Build services for multiple architectures (requires configured docker buildx multiarch builder) |
-| `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub |
+| `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub (requires Docker Hub authentication) |
 | `--save DIRPATH` | Save built image to specified directory (develop or deploy services only) |
-| `--push` | Push image to Docker Hub (deploy services only) |
+| `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication) |
 | `--help`, `-h` | Show help message and exit |
 | `-- <docker-args>` | Pass additional arguments directly to Docker build |
 
@@ -128,7 +128,10 @@ dna build develop -- --no-cache --progress=plain
 - **Internet connection**: Required for building (downloads base images and dependencies)
 - **Docker**: Docker Engine with BuildKit support
 - **Multi-arch builds**: Requires `docker buildx` with configured multi-architecture builder
-- **Push operations**: Requires Docker Hub authentication (`docker login`)
+- **Docker Hub authentication**: Required for `--online-build` and `--push` operations
+  - Run `docker login` to authenticate with Docker Hub before using these features
+  - Authentication is automatically verified before build operations begin
+  - Commands will fail with clear error messages if not authenticated
 
 ## Build Process
 
@@ -149,7 +152,7 @@ dna build develop -- --no-cache --progress=plain
 **Problem**: `--multiarch` flag fails.  
 **Solution**: Set up Docker Buildx with multi-architecture support:
 ```bash
-docker buildx create --name local-builder-multiarch-virtual --driver docker-container --platform linux/amd64,linux/arm64 --bootstrap --use
+docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
 docker buildx ls
 ```
 **Note**: `local-builder-multiarch-virtual` is the default multi-architecture builder name use by `dna`

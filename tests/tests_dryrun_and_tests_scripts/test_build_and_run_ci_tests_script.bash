@@ -14,6 +14,7 @@ trap dna::test_teardown_callback EXIT
 
 
 # ====begin========================================================================================
+unset buildx_builder
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 bash "${DNA_LIB_EXEC_PATH:?err}"/build.ci_tests.bash
 

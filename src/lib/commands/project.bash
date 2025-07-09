@@ -34,11 +34,12 @@ DOCUMENTATION_BUFFER_PROJECT_VALIDATE=$( cat <<'EOF'
 #
 # Options:
 #   --slurm ["<slurm/job/dir/path>"]   Validate only the slurm configuration
+#   --include-multiarch                Include multi-architecture image validation
 #   --help, -h                         Show this help message
 #
 # Slurm flag positional argument:
-#   <slurm/job/dir/path>     (Optional) The path to the directory containing the slurm job scripts.
-#                            Default to "slurm_jobs/"
+#   <slurm/job/dir/path>               (Optional) The slurm job scripts directory path.
+#                                      Default to "slurm_jobs/"
 #
 # =================================================================================================
 EOF
@@ -46,10 +47,10 @@ EOF
 
 DOCUMENTATION_BUFFER_PROJECT_SANITY=$( cat <<'EOF'
 # =================================================================================================
-# Validate super project DNA required components and dependencies are installed at the expected
+# Validate super project DNA required components and dependencies are installed as expected.
 #
 # Usage:
-#   $ dna project validate [OPTIONS]
+#   $ dna project sanity [OPTIONS]
 #
 # Options:
 #   --help, -h             Show this help message
@@ -82,6 +83,7 @@ test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load er
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::project_validate_command() {
     local slurm=false
+    local include_multiarch=false
     local remaining_args=()
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
@@ -92,6 +94,10 @@ function dna::project_validate_command() {
         case "$1" in
             --slurm)
                 slurm=true
+                shift
+                ;;
+            --include-multiarch)
+                include_multiarch=true
                 shift
                 ;;
             --help|-h)
@@ -114,6 +120,11 @@ function dna::project_validate_command() {
     source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
 
     # ....Begin....................................................................................
+    # Add --include-multiarch to remaining_args if set
+    if [[ "${include_multiarch}" == true ]]; then
+        remaining_args=("--include-multiarch" "${remaining_args[@]}")
+    fi
+
     # Determine which validate script to execute
     if [[ "${slurm}" == true ]]; then
         n2st::print_msg "The message""Validating slurm configuration..."
@@ -200,17 +211,17 @@ function dna::project_dotenv_command() {
     # Show consolidated and interpolated dotenv config files
     n2st::print_msg "Showing consolidated and interpolated dotenv config files...\n"
 
-    # Show DNA environment variables
+    # Show DNA-specific environment variables
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_DIMMED_FORMAT}DNA Environment Variables${MSG_END_FORMAT}"
+    echo -e "${MSG_DIMMED_FORMAT}DNA-specific Environment Variables${MSG_END_FORMAT}"
     echo
     env | grep "^DN_" | sort
     env | grep "^DNA_" | sort
 
-    # Show project environment variables
+    # Show project-specific environment variables
     echo ""
     n2st::draw_horizontal_line_across_the_terminal_window "="
-    echo -e "${MSG_DIMMED_FORMAT}Project Environment Variables${MSG_END_FORMAT}"
+    echo -e "${MSG_DIMMED_FORMAT}Project-specific Environment Variables${MSG_END_FORMAT}"
     echo
     env | grep "^PROJECT_" | sort
     env | grep "^SUPER_" | sort
