@@ -19,6 +19,7 @@ DOCUMENTATION_BUILD_ALL=$(
 #   --multiarch                           Build in multi-architecture mode
 #   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
 #                                          (instead of building images from the local image store).
+#                                         Require a docker hub account.
 #   --msg-line-level CHAR                 Set consol horizontal line character when used as a fct
 #   -h | --help
 #
@@ -27,6 +28,12 @@ DOCUMENTATION_BUILD_ALL=$(
 #
 # Global
 #   none
+#
+# Requirement:
+#   - Multiarch build require docker buildx be installed and a multi architecture builder be
+#     configured using docker-container buildx driver with 'linux/arm64' and 'linux/amd64'.
+#   - The buildx builder name
+#   - Using --force-push-project-core require a docker hub account
 #
 # =================================================================================================
 EOF
@@ -70,26 +77,26 @@ function dna::build_services() {
       # shellcheck disable=SC2207
       # Override services_names
       services_names=($(echo "${2}" | tr "," "\n"))
-      shift # Remove argument (--service-names)
-      shift # Remove argument value
+      shift
+      shift
       ;;
     --force-push-project-core)
       force_push_project_core=true
-      shift # Remove argument (--force-push-project-core)
+      shift
       ;;
     -f | --file)
       the_compose_file="${2}"
-      shift # Remove argument (-f | --file)
-      shift # Remove argument value
+      shift
+      shift
       ;;
     --msg-line-level)
       msg_line_level="${2}"
-      shift # Remove argument (--msg-line-level)
-      shift # Remove argument value
+      shift
+      shift
       ;;
     --multiarch)
       build_docker_flag+=("--multiarch")
-      shift # Remove argument (--multiarch)
+      shift
       ;;
     -h | --help)
       clear
@@ -136,12 +143,24 @@ function dna::build_services() {
     # ....On faillure, re-run build.all one service at the time....................................
     if [[ ${build_exit_code[0]} != 0 ]]; then
       n2st::print_msg_error "Build error, re-running ${MSG_DIMMED_FORMAT}dna::build_services${MSG_END_FORMAT} one service at the time"
+      for idx in "${!services_names[@]}"; do
+        if [[ "${services_names[idx]}" == "project-core" ]]; then
+          project_core_build_idx=$idx
+          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" project-core
+          project_core_build_exit_code=$?
+        fi
+      done
+
       # Reset exit code buffer
       build_exit_code=()
-      # Execute on all remaining service
+      # Execute docker cmd on all remaining service
       for each in "${services_names[@]}"; do
-        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
-        build_exit_code+=("$?")
+        if [[ "${each}" != "project-core" ]]; then
+          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+          build_exit_code+=("$?")
+        else
+          build_exit_code+=("$project_core_build_exit_code")
+        fi
       done
 
       # Show build faillure summary

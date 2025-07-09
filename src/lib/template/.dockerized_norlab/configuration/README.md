@@ -1,9 +1,10 @@
 
 #### DNA dotenv file loading precedence:
- 1. .env.dna (super project)
- 2. .env.dna-internal (DNA repo)
- 3. .env (super project)
- 4. .env.local (super project)
+
+1. .env.dna
+2. .env
+3. .env.local
+4. .env.dna-internal (DNA repo)
 
 #### References
 - [Docker-Compose environment variables precedence](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/)

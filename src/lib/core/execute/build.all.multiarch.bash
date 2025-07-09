@@ -4,21 +4,17 @@ DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
 # =================================================================================================
 # Build all images specified in docker-compose.project.build.multiarch.yaml
 # i.e. pull/push from/to dockerhub sequentialy.
-#
-# Requirement:
-#   - Multiarch build require docker buildx be installed and a multi architecture builder be
-#     configured using docker-container buildx driver with 'linux/arm64' and 'linux/amd64'.
-#   - The buildx builder name 
-#
 # Usage:
 #   $ bash build.all.multiarch.bash [<any-arguments>] [--] [<any-docker-flag>]
 #
 # Arguments:
-#   --service-names "<name1>,<name2>"    To override the list of build services.
-#                                        Must be a comma separated string of service name.
-#   --no-force-push-project-core         To build DN images dependencies using local image store
-#   -f | --file "compose.yaml"           To override the docker compose file
-#                                         (default: "docker-compose.project.build.multiarch.yaml")
+#   --service-names "<name1>,<name2>"     To override the list of build services.
+#                                         Must be a comma separated string of service name.
+#   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
+#                                          (instead of building images from the local image store).
+#                                         Require a docker hub account.
+#   -f | --file "compose.yaml"            To override the docker compose file
+#                                          (default: "docker-compose.project.build.multiarch.yaml")
 #   -h | --help
 #
 # Positional argument:
@@ -26,6 +22,12 @@ DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
 #
 # Global
 #   none
+#
+# Requirement:
+#   - Multiarch build require docker buildx be installed and a multi architecture builder be
+#     configured using docker-container buildx driver with 'linux/arm64' and 'linux/amd64'.
+#   - The buildx builder name 
+#   - Using --force-push-project-core require a docker hub account
 #
 # =================================================================================================
 EOF
@@ -41,7 +43,7 @@ function dna::build_services_multiarch() {
   # ....Set env variables (pre cli)................................................................
   declare -a dna_build_all_args=()
   declare -a remaining_args=()
-  local force_push_project_core=true
+  local force_push_project_core=false
   local the_compose_file="docker-compose.project.build.multiarch.yaml"
 
   # ....cli........................................................................................
@@ -59,21 +61,21 @@ function dna::build_services_multiarch() {
   while [ $# -gt 0 ]; do
 
     case $1 in
-    --no-force-push-project-core)
-      force_push_project_core=false
-      shift # Remove argument (--my-new-flag-name)
+    --force-push-project-core)
+      force_push_project_core=true
+      shift
       ;;
     --service-names)
       # ToDo: refactor (ref task NMO-574)
       # shellcheck disable=SC2207
       dna_build_all_args+=("--service-names" "${2}")
-      shift # Remove argument (--service-names)
-      shift # Remove argument value
+      shift
+      shift
       ;;
     -f | --file)
       the_compose_file="${2}"
-      shift # Remove argument (-f | --file)
-      shift # Remove argument value
+      shift
+      shift
       ;;
     -h | --help)
       clear

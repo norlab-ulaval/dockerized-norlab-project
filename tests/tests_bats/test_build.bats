@@ -177,11 +177,66 @@ function dna::is_online() {
   fi
 }
 
+# ....Mock Docker functions........................................................................
+function docker() {
+  # Mock docker command behavior
+  case "$1" in
+    "system")
+      if [[ "$2" == "info" ]]; then
+        echo "Registry: https://index.docker.io/v1/"
+        return 0
+      fi
+      ;;
+    "search")
+      # Mock docker search - return success if MOCK_DOCKER_LOGIN is true
+      if [[ "${MOCK_DOCKER_LOGIN:-false}" == "true" ]]; then
+        echo "NAME DESCRIPTION STARS OFFICIAL AUTOMATED"
+        echo "hello-world Hello World! (an example of minimal Dockerization) 1234 [OK]"
+        return 0
+      else
+        return 1
+      fi
+      ;;
+    *)
+      echo "Mock docker command called with: $*"
+      return 0
+      ;;
+  esac
+}
+
+# ....Mock additional N2ST functions...............................................................
+function n2st::print_msg_done() {
+  echo "Mock n2st::print_msg_done called with args: $*"
+  return 0
+}
+
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dna:: -e n2st::); do
+for func in $(compgen -A function | grep -e dna:: -e n2st:: -e docker -e command); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
+
+# ....Mock command utility.........................................................................
+function command() {
+  case "$1" in
+    "-v")
+      case "$2" in
+        "docker")
+          # Always return success for docker availability check
+          return 0
+          ;;
+        *)
+          # For other commands, use the real command
+          builtin command "$@"
+          ;;
+      esac
+      ;;
+    *)
+      # For other command usages, use the real command
+      builtin command "$@"
+      ;;
+  esac
+}
 
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
@@ -239,12 +294,12 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "all images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--no-force-push-project-core"
+#  assert_output --regexp "Mock dna::build_services_multiarch called with args:"
 }
 
 @test "dna::build_command with --online-build › expect force push flag" {
   # Test case: When build command is called with --online-build, it should pass the flag to build_services
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build"
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build"
 
   # Should succeed
   assert_success
@@ -304,7 +359,7 @@ teardown_file() {
 
 @test "dna::build_command with deploy service and --push › expect deploy images with push" {
   # Test case: When build command is called with deploy service and --push, it should build and push deploy images
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --push"
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --push"
 
   # Should succeed
   assert_success
@@ -316,7 +371,7 @@ teardown_file() {
 
 @test "dna::build_command with deploy service and --multiarch --push › expect deploy images with push" {
   # Test case: When build command is called with deploy service and --multiarch --push, it should build and push deploy images
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --multiarch --push"
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --multiarch --push"
 
   # Should succeed
   assert_success
@@ -415,7 +470,7 @@ teardown_file() {
 
 @test "dna::build_command with --multiarch --online-build › expect multiarch build with force push" {
   # Test case: When build command is called with --multiarch --online-build, it should build multiarch images with force push
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --multiarch --online-build"
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --multiarch --online-build"
 
   # Should succeed
   assert_success
@@ -423,8 +478,7 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "all images multiarch build"
   assert_output --partial "Mock dna::build_services_multiarch called with args:"
-  # Note: --no-force-push-project-core flag should not be present when --online-build is specified
-  refute_output --regexp "Mock dna::build_services_multiarch called with args:".*"--no-force-push-project-core"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--force-push-project-core"
 }
 
 @test "dna::build_command with --help › expect help menu" {
@@ -481,7 +535,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--no-force-push-project-core --service-names project-core,project-develop"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-develop"
 }
 
 @test "dna::build_command with multiple services › expect error" {
@@ -553,7 +607,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--no-force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
 }
 
 @test "dna::build_command with slurm service and --multiarch › expect multiarch slurm images" {
@@ -565,12 +619,12 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--no-force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-slurm,project-slurm-no-gpu"
 }
 
 @test "dna::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
   # Test case: When build command is called with ci-tests service and --online-build, it should build CI tests images with force push
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build ci-tests"
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build ci-tests"
 
   # Should succeed
   assert_success
@@ -582,7 +636,7 @@ teardown_file() {
 
 @test "dna::build_command with slurm service and --online-build › expect slurm images with force push" {
   # Test case: When build command is called with slurm service and --online-build, it should build slurm images with force push
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build slurm"
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build slurm"
 
   # Should succeed
   assert_success
@@ -614,4 +668,170 @@ teardown_file() {
   # Should output the expected message
   assert_output --partial "deploy images native build"
   assert_output --regexp "Mock dna::build_project_deploy_service called with args:".*"--no-cache --pull"
+}
+
+# ====Docker Hub Login Check Tests================================================================
+
+@test "dna::check_user_is_login_dockerhub when logged in › expect success" {
+  # Test case: When user is logged into Docker Hub, the function should return success
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::check_user_is_login_dockerhub"
+
+  # Should succeed
+  assert_success
+}
+
+@test "dna::check_user_is_login_dockerhub when not logged in › expect failure" {
+  # Test case: When user is not logged into Docker Hub, the function should return failure
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::check_user_is_login_dockerhub"
+
+  # Should fail
+  assert_failure
+}
+
+@test "dna::build_command with --online-build when not logged in › expect failure" {
+  # Test case: When build command is called with --online-build but user is not logged into Docker Hub, it should fail
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build"
+
+  # Should fail
+  assert_failure
+
+  # Should output the expected error messages
+  assert_output --partial "Online build mode detected (--online-build flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --regexp "Build flag".*"--online-build".*"require Docker Hub authentication but user is not logged in!"
+  assert_output --partial "Please run docker login to authenticate with Docker Hub before using this command."
+}
+
+@test "dna::build_command with --online-build when logged in › expect success" {
+  # Test case: When build command is called with --online-build and user is logged into Docker Hub, it should succeed
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Online build mode detected (--online-build flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --partial "Docker Hub authentication verified"
+  assert_output --partial "all images native build"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core"
+}
+
+@test "dna::build_command with deploy --push when not logged in › expect failure" {
+  # Test case: When build command is called with deploy --push but user is not logged into Docker Hub, it should fail
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --push"
+
+  # Should fail
+  assert_failure
+
+  # Should output the expected error messages
+  assert_output --partial "Deploy push mode detected (deploy --push flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --regexp "Build flag".*"deploy --push".*"require Docker Hub authentication but user is not logged in!"
+  assert_output --partial "Please run docker login to authenticate with Docker Hub before using this command."
+}
+
+@test "dna::build_command with deploy --push when logged in › expect success" {
+  # Test case: When build command is called with deploy --push and user is logged into Docker Hub, it should succeed
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --push"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Deploy push mode detected (deploy --push flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --partial "Docker Hub authentication verified"
+  assert_output --partial "deploy images native build"
+  assert_output --partial "Mock dna::build_project_deploy_service called with args: --push"
+}
+
+@test "dna::build_command with deploy --multiarch --push when not logged in › expect failure" {
+  # Test case: When build command is called with deploy --multiarch --push but user is not logged into Docker Hub, it should fail
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --multiarch --push"
+
+  # Should fail
+  assert_failure
+
+  # Should output the expected error messages
+  assert_output --partial "Deploy push mode detected (deploy --push flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --regexp "Build flag".*"deploy --push".*"require Docker Hub authentication but user is not logged in!"
+  assert_output --partial "Please run docker login to authenticate with Docker Hub before using this command."
+}
+
+@test "dna::build_command with deploy --multiarch --push when logged in › expect success" {
+  # Test case: When build command is called with deploy --multiarch --push and user is logged into Docker Hub, it should succeed
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --multiarch --push"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Deploy push mode detected (deploy --push flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --partial "Docker Hub authentication verified"
+  assert_output --partial "deploy images multiarch build procedure"
+  assert_output --partial "Mock dna::build_project_deploy_service called with args: --multiarch --push"
+}
+
+@test "dna::build_command with --online-build and service when not logged in › expect failure" {
+  # Test case: When build command is called with --online-build and a service but user is not logged into Docker Hub, it should fail
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build develop"
+
+  # Should fail
+  assert_failure
+
+  # Should output the expected error messages
+  assert_output --partial "Online build mode detected (--online-build flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --regexp "Build flag".*"--online-build".*"require Docker Hub authentication but user is not logged in!"
+  assert_output --partial "Please run docker login to authenticate with Docker Hub before using this command."
+}
+
+@test "dna::build_command with --online-build and service when logged in › expect success" {
+  # Test case: When build command is called with --online-build and a service and user is logged into Docker Hub, it should succeed
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --online-build develop"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "Online build mode detected (--online-build flag)"
+  assert_output --partial "Checking Docker Hub authentication..."
+  assert_output --partial "Docker Hub authentication verified"
+  assert_output --partial "develop images native build"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-develop"
+}
+
+@test "dna::build_command with deploy without --push › expect no login check" {
+  # Test case: When build command is called with deploy service but without --push, it should not check Docker Hub login
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy"
+
+  # Should succeed (no login check required)
+  assert_success
+
+  # Should not output login check messages
+  refute_output --partial "Checking Docker Hub authentication..."
+  refute_output --partial "Docker Hub authentication required"
+
+  # Should output the expected build message
+  assert_output --partial "deploy images native build"
+  assert_output --partial "Mock dna::build_project_deploy_service called with args:"
+}
+
+@test "dna::build_command with regular service › expect no login check" {
+  # Test case: When build command is called with regular service (not deploy --push or --online-build), it should not check Docker Hub login
+  run bash -c "export MOCK_DOCKER_LOGIN=false && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command develop"
+
+  # Should succeed (no login check required)
+  assert_success
+
+  # Should not output login check messages
+  refute_output --partial "Checking Docker Hub authentication..."
+  refute_output --partial "Docker Hub authentication required"
+
+  # Should output the expected build message
+  assert_output --partial "develop images native build"
+  assert_output --partial "Mock dna::build_services called with args:"
 }

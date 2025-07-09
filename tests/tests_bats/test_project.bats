@@ -262,6 +262,62 @@ teardown_file() {
   assert_output --partial "Mock dna::command_help_menu called with args:"
 }
 
+@test "dna::project_validate_command with --include-multiarch › expect multiarch flag passed to validation" {
+  # Test case: When project validate command is called with --include-multiarch, it should pass the flag to validation
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --include-multiarch"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
+  assert_output --partial "Validating configuration..."
+  assert_output --partial "Mock dna::project_validate_all called with args: --include-multiarch"
+  assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
+}
+
+@test "dna::project_validate_command with --slurm and --include-multiarch › expect both flags passed to slurm validation" {
+  # Test case: When project validate command is called with both --slurm and --include-multiarch, it should pass the multiarch flag to slurm validation
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --slurm --include-multiarch"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
+  assert_output --partial "Validating slurm configuration..."
+  assert_output --partial "Mock dna::project_validate_slurm called with args: --include-multiarch"
+  assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
+}
+
+@test "dna::project_validate_command with --include-multiarch and arguments › expect multiarch flag and arguments passed to validation" {
+  # Test case: When project validate command is called with --include-multiarch and additional arguments, it should pass both to validation
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --include-multiarch /path/to/config"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
+  assert_output --partial "Validating configuration..."
+  assert_output --partial "Mock dna::project_validate_all called with args: --include-multiarch /path/to/config"
+  assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
+}
+
+@test "dna::project_validate_command with --slurm, --include-multiarch and arguments › expect all passed to slurm validation" {
+  # Test case: When project validate command is called with --slurm, --include-multiarch and additional arguments, it should pass multiarch flag and arguments to slurm validation
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_validate_command --slurm --include-multiarch /path/to/slurm/jobs"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
+  assert_output --partial "Validating slurm configuration..."
+  assert_output --partial "Mock dna::project_validate_slurm called with args: --include-multiarch /path/to/slurm/jobs"
+  assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
+}
+
 @test "dna::project_sanity_command with no arguments › expect default behavior" {
   # Test case: When project sanity command is called without arguments, it should validate super project setup
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_sanity_command"

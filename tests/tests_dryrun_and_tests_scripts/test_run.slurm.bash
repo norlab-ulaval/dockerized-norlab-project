@@ -20,6 +20,7 @@ trap dna::test_teardown_callback EXIT
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
+unset buildx_builder
 
 # Script locals env var
 declare -a run_slurm_flags=()

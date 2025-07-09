@@ -15,7 +15,7 @@ trap dna::test_teardown_callback EXIT
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
-bash "${DNA_LIB_EXEC_PATH:?err}"/project_validate.slurm.bash "slurm_jobs"
+bash "${DNA_LIB_EXEC_PATH:?err}"/project_validate.slurm.bash --include-multiarch "slurm_jobs"
 
 ## ....Teardown.....................................................................................
 #rm -rf "${DNA_ROOT:?err}/dockerized-norlab-project-mock/artifact/mock_experiment_tmp/"

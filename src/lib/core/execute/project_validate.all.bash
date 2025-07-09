@@ -1,12 +1,30 @@
 #!/bin/bash
+DOCUMENTATION_PROJECT_VALIDATE_ALL=$( cat <<'EOF'
 # =================================================================================================
 # Convenient script for testing config and dry-run build all images specified
 # in docker-compose.project.build.native.yaml and docker-compose.project.build.multiarch.yaml
 #
 # Usage:
-#   $ bash project_validate.all.bash
+#   $ bash project_validate.all.bash [OPTIONS]
+#
+# Options:
+#   --include-multiarch             Also dry-run and check config for multi-architecture images
+#   -h | --help
 #
 # =================================================================================================
+EOF
+)
+
+function dna::show_help() {
+  # (NICE TO HAVE) ToDo: refactor as a n2st fct (ref NMO-583)
+  echo -e "${MSG_DIMMED_FORMAT}"
+  n2st::draw_horizontal_line_across_the_terminal_window "="
+  echo -e "$0 --help\n"
+  # Strip shell comment char `#` and both lines
+  echo -e "${DOCUMENTATION_PROJECT_VALIDATE_ALL}" | sed '/\# ====.*/d' | sed 's/^\# //' | sed 's/^\#//'
+  n2st::draw_horizontal_line_across_the_terminal_window "="
+  echo -e "${MSG_END_FORMAT}"
+}
 
 function dna::project_validate_all() {
   # ....Setup......................................................................................
@@ -15,17 +33,44 @@ function dna::project_validate_all() {
   local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
   local line_style="${MSG_LINE_STYLE_LVL2}"
 
+  # ....Set env variables (pre cli)................................................................
+  declare -a remaining_args
+  local include_multiarch=false
+
+  # ....cli..........................................................................................
+  while [ $# -gt 0 ]; do
+
+    case $1 in
+      --include-multiarch)
+        include_multiarch=true
+        shift
+        ;;
+      -h | --help)
+        dna::show_help
+        exit
+        ;;
+      *) # Default case
+        remaining_args=("$@")
+        break
+        ;;
+    esac
+
+  done
+
+  # ....Set env variables (post cli)...............................................................
   declare -a config_test_compose_file_list=()
   declare -a dryrun_compose_file_list=()
   declare -a config_test_exit_code=()
   declare -a build_test_exit_code=()
 
-  # ....Config test..................................................................................
+  # ....Config test................................................................................
   n2st::print_msg "Begin config test"
 
-  config_test_compose_file_list=(
-    "docker-compose.project.build.native.yaml"
-    "docker-compose.project.build.multiarch.yaml"
+  config_test_compose_file_list=( "docker-compose.project.build.native.yaml" )
+  if [[ ${include_multiarch} == true ]]; then
+    config_test_compose_file_list+=( "docker-compose.project.build.multiarch.yaml" )
+  fi
+  config_test_compose_file_list+=(
     "docker-compose.project.run.darwin.yaml"
     "docker-compose.project.run.jetson.yaml"
     "docker-compose.project.run.linux-x86.yaml"
@@ -39,25 +84,30 @@ function dna::project_validate_all() {
   done
 
   n2st::print_msg "Begin docker compose config test"
+  unset BUILDX_BUILDER
   for each_compose in "${config_test_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
+    declare -a add_fct_flag=()
+    add_fct_flag+=("--override-build-cmd" "config")
+    add_fct_flag+=("--file" "${each_compose}")
     declare -a config_flag=()
-    config_flag+=("--override-build-cmd" "config")
-    config_flag+=("--file" "${each_compose}")
     config_flag+=("--" "--dry-run")
-    unset BUILDX_BUILDER
-    if [[ "${each_compose}" =~ .*".build.".*".yaml" ]]; then
-      dna::excute_compose "${config_flag[@]}"
+    if [[ "${each_compose}" =~ .*".build.native.yaml" ]]; then
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
+    elif [[ "${each_compose}" =~ .*".build.multiarch.yaml" ]]; then
+      add_fct_flag+=("--multiarch")
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
-      dna::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.ci-tests.yaml" ]]; then
-      dna::excute_compose "${config_flag[@]}"
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.".*".yaml" ]]; then
-      dna::excute_compose "${config_flag[@]}" "project-develop"
-      dna::excute_compose "${config_flag[@]}" "project-deploy"
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}" "project-develop"
+      dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}" "project-deploy"
     fi
     config_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
+    unset BUILDX_BUILDER
   done
 
   n2st::print_formated_script_footer "testing config" "${line_format}" "${line_style}"
@@ -65,10 +115,10 @@ function dna::project_validate_all() {
   # ....Dry-run build test...........................................................................
   n2st::print_formated_script_header "build in dry-run mode testing" "${line_format}" "${line_style}"
 
-  dryrun_compose_file_list=(
-    "docker-compose.project.build.native.yaml"
-    "docker-compose.project.build.multiarch.yaml"
-  )
+  dryrun_compose_file_list=( "docker-compose.project.build.native.yaml" )
+  if [[ ${include_multiarch} == true ]]; then
+    dryrun_compose_file_list+=( "docker-compose.project.build.multiarch.yaml" )
+  fi
 
   n2st::print_msg "Will dry-run build the following compose files:"
   for idx in "${!dryrun_compose_file_list[@]}"; do
@@ -78,19 +128,22 @@ function dna::project_validate_all() {
   n2st::print_msg "Begin docker compose build --dry-run test"
   for each_compose in "${dryrun_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
+    declare -a add_fct_flag=()
+    add_fct_flag+=("--file" "${each_compose}")
+    add_fct_flag+=(--msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}")
     declare -a build_flag=()
-    build_flag+=("--file" "${each_compose}")
     build_flag+=("--" "--dry-run")
-    unset BUILDX_BUILDER
+
     if [[ "${each_compose}" =~ .*".multiarch.yaml" ]]; then
-      dna::build_services_multiarch --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dna::build_services_multiarch "${add_fct_flag[@]}" "${build_flag[@]}"
     else
-      dna::build_services --msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}" "${build_flag[@]}"
+      dna::build_services "${add_fct_flag[@]}" "${build_flag[@]}"
     fi
+
     build_test_exit_code+=("$?")
     n2st::print_formated_script_footer "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "/" "${line_style}"
+    unset BUILDX_BUILDER
   done
-  unset BUILDX_BUILDER
 
   n2st::print_msg "Completed build in dry-run mode tests"
 
@@ -156,10 +209,10 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     clear
   fi
   n2st::norlab_splash "${DNA_SPLASH_NAME_FULL:?err}" "${DNA_GIT_REMOTE_URL}" "negative"
-  n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_header "$(basename "$0")" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   dna::project_validate_all "$@"
   fct_exit_code=$?
-  n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+  n2st::print_formated_script_footer "$(basename "$0")" "${MSG_LINE_CHAR_BUILDER_LVL1}"
   exit "${fct_exit_code}"
 else
   # This script is being sourced, ie: __name__="__source__"
