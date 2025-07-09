@@ -91,7 +91,7 @@ function dna::create_entrypoint_symlink_if_requested() {
         sudo mkdir -p "/usr/local/bin"
         # shellcheck disable=SC2143
         if [[ -z "$( echo "${PATH}" | grep --quiet /usr/local/bin )"  ]]; then
-          echo "export PATH=\"\$PATH:/usr/local/bin\"" | sudo tee -a "$HOME/.bashrc"
+          echo "export PATH=\"\$PATH:/usr/local/bin\"" | sudo tee -a "$HOME/.bashrc" > /dev/null
         fi
       else
         n2st::print_msg_error_and_exit "Please create /usr/local/bin directory by executing ${MSG_DIMMED_FORMAT}mkdir -p /usr/local/bin${MSG_END_FORMAT} and re-run the install script or use the ${MSG_DIMMED_FORMAT}--skip-system-wide-symlink-install${MSG_END_FORMAT} install flag."
@@ -157,7 +157,7 @@ function dna::add_dna_entrypoint_path_to_bashrc_if_requested() {
           echo "export PATH=\"\$PATH:\$_DNA_PATH\"" ;
           echo "# <<<< dockerized-norlab-project (end)" ;
           echo "" ;
-        } | sudo tee -a "${HOME}/.bashrc"
+        } | sudo tee -a "${HOME}/.bashrc" > /dev/null
       fi
     else
       # shellcheck disable=SC2088
@@ -236,7 +236,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   n2st::print_formated_script_header "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1:?err}"
 
   # ....Pre-conditions.............................................................................
-  # Make the dna script is executable
+  # Make the dna script executable
   chmod +x "${dna_entrypoint}"
 
   # ....Setup host for this super project..........................................................
@@ -256,14 +256,11 @@ function dna::install_dockerized_norlab_project_on_host() {
   # ====Teardown===================================================================================
   n2st::print_msg_done "${DNA_HUMAN_NAME} has been installed successfully!"
   if [[ "${option_system_wide_symlink}" == true ]]; then
-    n2st::print_msg "You can now use 'dna' command from anywhere."
-    echo -e "\nRun 'dna help' for usage information."
+    n2st::print_msg "You can now use 'dna' command from anywhere. Run 'dna help' for usage information."
   elif [[ "${option_add_dna_path_to_bashrc}" == true ]]; then
-    n2st::print_msg "After restarting your shell or sourcing ~/.bashrc, the current user can use 'dna' command from anywhere."
-    echo -e "\nRun 'dna help' for usage information."
+    n2st::print_msg "After restarting your shell or sourcing ~/.bashrc, the current user can use 'dna' command from anywhere. Run 'dna help' for usage information."
   else
-    n2st::print_msg "You can use '${dna_entrypoint}' to run DNA commands."
-    echo -e "\nRun 'bash ${dna_entrypoint} help' for usage information."
+    n2st::print_msg "You can use '${dna_entrypoint}' to run DNA commands. Run 'bash ${dna_entrypoint} help' for usage information."
   fi
 
   cd "${dna_install_dir}"
@@ -273,24 +270,41 @@ function dna::install_dockerized_norlab_project_on_host() {
   fi
   if [[ $(uname -s) == "Darwin" ]]; then
     print_msg "Remaining install instructions:
-1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
-2. Open Docker Desktop, go to 'Settings' and check '☑️ Start Docker Desktop when you sign in to your computer' and restart the current terminal
-3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
-    $ docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
-    $ docker buildx ls
-${MSG_END_FORMAT}
-Stay awesome 🦾
-"
+
+  1. Install 'Docker desktop' if its not already done (https://docs.docker.com/desktop/mac/install/)
+  2. Open Docker Desktop, go to 'Settings' and check '☑️ Start Docker Desktop when you sign in to your computer'
+  3. Restart the current terminal
+  4. Create a multi-architecture docker builder. Execute the following commands:${MSG_DIMMED_FORMAT}
+      $ docker buildx create --name local-builder-multiarch-virtual \\
+          --driver=docker-container \\
+          --platform linux/amd64,linux/arm64 \\
+          --buildkitd-flags '--allow-insecure-entitlement network.host' \\
+          --bootstrap
+      $ docker buildx ls ${MSG_END_FORMAT}
+  5. (Optional) Create a Dockerhub account at https://docs.docker.com/accounts/create-account/
+     Required for online build, sharing deploy image online, and publishing release image
+
+
+$(n2st::echo_centering_str "Stay awesome 🦾" ' ' ' ')"
+
   else
     print_msg "Remaining install instructions:
-1. Apply Docker group change without login out: execute ${MSG_DIMMED_FORMAT}$ newgrp docker${MSG_END_FORMAT}
-2. Restart the docker daemon to apply changes: execute ${MSG_DIMMED_FORMAT}$ sudo systemctl restart docker${MSG_END_FORMAT}
-3. Create a multi-architecture docker builder. Execute the following comands:${MSG_DIMMED_FORMAT}
-    $ docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
-    $ docker buildx ls
-${MSG_END_FORMAT}
-Stay awesome 🦾
-"
+
+  1. Apply Docker group change without login out: execute ${MSG_DIMMED_FORMAT}$ newgrp docker${MSG_END_FORMAT}
+  2. Restart the docker daemon to apply changes: execute ${MSG_DIMMED_FORMAT}$ sudo systemctl restart docker${MSG_END_FORMAT}
+  3. Create a multi-architecture docker builder. Execute the following commands:${MSG_DIMMED_FORMAT}
+      $ docker buildx create --name local-builder-multiarch-virtual \\
+          --driver=docker-container \\
+          --platform linux/amd64,linux/arm64 \\
+          --buildkitd-flags '--allow-insecure-entitlement network.host' \\
+          --bootstrap
+      $ docker buildx ls ${MSG_END_FORMAT}
+  4. (Optional) Create a Dockerhub account at https://docs.docker.com/accounts/create-account/
+     Required for online build, sharing deploy image online, and publishing release image
+
+
+$(n2st::echo_centering_str "Stay awesome 🦾" ' ' ' ')"
+
   fi
 
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"

@@ -190,6 +190,8 @@ function dna::init_command() {
     n2st::norlab_splash "${DNA_SPLASH_NAME_SMALL:?err}" "${DNA_GIT_REMOTE_URL}" "small"
     n2st::print_formated_script_header "init procedure" "${MSG_LINE_CHAR_BUILDER_LVL2}" "${MSG_LINE_STYLE_LVL2}"
 
+    # This is required in our case since super project will often have git submodule
+    git config --local --add safe.directory "${super_project_root}"
 
     local project_git_remote_url
     local super_project_name
@@ -436,6 +438,8 @@ To get started:
      at https://github.com/norlab-ulaval/dockerized-norlab-project
   3. If you are in a hurry, read section 'Getting started ... fast'
      in ${MSG_DIMMED_FORMAT}${super_project_name}/.dockerized_norlab/README.md${MSG_END_FORMAT}
+  4. (Optional) Create a Dockerhub account at https://docs.docker.com/accounts/create-account/
+     Required for online build, sharing deploy image online, and publishing release image
 
 
 $(n2st::echo_centering_str "Stay awesome 🦾" ' ' ' ')"

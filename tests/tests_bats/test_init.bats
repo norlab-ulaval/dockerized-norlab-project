@@ -504,7 +504,7 @@ teardown_file() {
   assert_output --partial "Super project dockerized-norlab-project-mock-EMPTY setup is OK"
 
   # setup_host_for_running_this_super_project.bash -> dna::setup_host_for_this_super_project related
-  assert_output --partial "dir is reachable. Ready to install alias"
+  assert_output --partial "Adding project aliases to .bashrc..."
   assert_output --partial "Setup completed!
 
     New available alias added to ~/.bashrc:

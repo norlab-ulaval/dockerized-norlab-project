@@ -34,7 +34,6 @@ function dna::setup_host_for_this_super_project() {
     n2st::print_msg_error_and_exit "The '$(basename "${SUPER_PROJECT_ROOT}")' dir is unreachable!"
   else
     cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
-    n2st::print_msg_done "The '$(basename "${SUPER_PROJECT_ROOT}")' dir is reachable. Ready to install alias"
   fi
 
   # ...aliasing dev................................................................................
@@ -42,6 +41,7 @@ function dna::setup_host_for_this_super_project() {
   # - https://www.baeldung.com/linux/bash-alias-with-parameters
   # - https://unix.stackexchange.com/questions/3773/how-to-pass-parameters-to-an-alias
 
+  n2st::print_msg "Adding project aliases to .bashrc..."
   local dn_project_alias_prefix_caps
   dn_project_alias_prefix_caps="$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')"
   (
@@ -56,7 +56,7 @@ function dna::setup_host_for_this_super_project() {
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
     echo "#<<<<DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
     echo ""
-  ) | sudo tee -a "${HOME}/.bashrc"
+  ) | sudo tee -a "${HOME}/.bashrc" > /dev/null
 
   if [ -n "$ZSH_VERSION" ]; then
     source "${HOME}/.zshrc"

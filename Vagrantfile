@@ -174,9 +174,9 @@ Vagrant.configure("2") do |config|
             sudo touch "${NON_ROOT_HOME}/.zprofile"
         fi
 
-        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' | sudo tee -a ${NON_ROOT_HOME}/.bashrc
-        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' | sudo tee -a ${NON_ROOT_HOME}/.zprofile
-        echo "source ${NON_ROOT_HOME}/.bashrc" | sudo tee -a ${NON_ROOT_HOME}/.zshrc
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' | sudo tee -a ${NON_ROOT_HOME}/.bashrc > /dev/null
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' | sudo tee -a ${NON_ROOT_HOME}/.zprofile > /dev/null
+        echo "source ${NON_ROOT_HOME}/.bashrc" | sudo tee -a ${NON_ROOT_HOME}/.zshrc > /dev/null
 
         # Load homebrew path without sourcing
         eval "$(/opt/homebrew/bin/brew shellenv)" || { echo "Unable to load Homebreww path!"; exit 1 ; }
@@ -248,7 +248,7 @@ Vagrant.configure("2") do |config|
   cd /opt || exit 1
   rm -rf /opt/dockerized-norlab-project-mock-EMPTY
   git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
-  chown -R $(id -u vagrant):$(id -g vagrant) /opt/dockerized-norlab-project-mock-EMPTY
+  sudo chown -R $(id -u vagrant):$(id -g vagrant) /opt/dockerized-norlab-project-mock-EMPTY
 
   # Ressetting
   echo -e "\nRessetting .bashrc'\n"
@@ -269,7 +269,7 @@ Vagrant.configure("2") do |config|
       echo "alias dna-test-bashrc='tail -n 20 ~/.bashrc'" ;
       echo "# <<<< dockerized-norlab-project DEV alias (end)" ;
       echo "" ;
-  } | sudo tee -a ${NON_ROOT_HOME}/.bashrc
+  } | sudo tee -a ${NON_ROOT_HOME}/.bashrc > /dev/null
 
   echo -e "\nSet DEV default landing path to DNA mock super project\n"
   echo "cd /opt/dockerized-norlab-project" >> ${NON_ROOT_HOME}/.bashrc
@@ -282,12 +282,10 @@ Vagrant.configure("2") do |config|
       source "${NON_ROOT_HOME:?err}/.bashrc"
   elif [[ "$(uname)" == "Darwin" ]]; then
       #sudo bash "/opt/dockerized-norlab-project/tests/vagrant_helper/docker_mock.bash" "${NON_ROOT_HOME}/.bashrc" || exit 1
-      {
-          echo "" ;
-          echo "# Mock docker command as a workaround for MacOsX nested virtualization limitations." ;
-          echo "bash /opt/dockerized-norlab-project/tests/vagrant_helper/docker_mock.bash" ;
-          echo "" ;
-      } | sudo tee -a ${NON_ROOT_HOME}/.bashrc
+      echo -e "\nMock docker command as a workaround for MacOsX nested virtualization limitations.\n"
+      sudo mkdir -p /usr/local/bin/
+      sudo ln -sf /opt/dockerized-norlab-project/tests/vagrant_helper/docker /usr/local/bin/docker
+      sudo chmod +x /opt/dockerized-norlab-project/tests/vagrant_helper/docker
 
       echo -e "\nProvisioning done.\n"
       source "${NON_ROOT_HOME:?err}/.zshrc"
@@ -313,15 +311,6 @@ Vagrant.configure("2") do |config|
      trigger.on_error = :continue
   end
 
-  # Quick-hack for portability on MacOsX box, change ownership on rsync explicitly instead of using 'synced_folder rsync__chown=true'
-  config.trigger.after [:up, :reload] do |trigger|
-     trigger.only_on = "dockerized-norlab-project-vm"
-     trigger.name = "ownership change"
-     trigger.info = "change ownership on rsync explicitly instead of using 'synced_folder rsync__chown=true'"
-     trigger.run_remote = {privileged: true, inline: "chown -R $(id -u vagrant):$(id -g vagrant) /opt/dockerized-norlab-project && echo 'Ownership changed to vargant:vagrant'"}
-     trigger.on_error = :continue
-  end
-
   # Execute rsync from the host on 'vagrant snapshot' trigger
   config.trigger.after :snapshot_restore, type: :action do |trigger|
      trigger.only_on = "dockerized-norlab-project-vm"
@@ -330,6 +319,16 @@ Vagrant.configure("2") do |config|
      trigger.run = {inline: "bash -c 'vagrant rsync'"}
      trigger.on_error = :continue
   end
+
+  # Quick-hack for portability on MacOsX box, change ownership on rsync explicitly instead of using 'synced_folder rsync__chown=true'
+  config.trigger.after [:up, :reload, :snapshot_restore] do |trigger|
+     trigger.only_on = "dockerized-norlab-project-vm"
+     trigger.name = "ownership change"
+     trigger.info = "change ownership on rsync explicitly instead of using 'synced_folder rsync__chown=true'"
+     trigger.run_remote = {privileged: true, inline: "chown -R \$(id -u vagrant):\$(id -g vagrant) /opt/dockerized-norlab-project ; chmod +x /opt/dockerized-norlab-project/tests/vagrant_helper/docker ; echo 'Ownership changed to vargant:vagrant'"}
+     trigger.on_error = :continue
+  end
+
 
   config.trigger.after :up do |trigger|
     trigger.only_on = "dockerized-norlab-project-vm"
