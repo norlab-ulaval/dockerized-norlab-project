@@ -15,8 +15,12 @@ trap dna::test_teardown_callback EXIT
 
 # ====begin========================================================================================
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
-#bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash "$@" -- --no-cache
-bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash "$@"
+
+if [[ ${TEAMCITY_VERSION} ]] ; then
+  bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash "$@" -- --no-cache
+else
+  bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash "$@"
+fi
 
 # ....Teardown.....................................................................................
 # Handle by the trap command
