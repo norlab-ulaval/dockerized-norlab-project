@@ -115,12 +115,12 @@ function dna::check_gitignore() {
     dna::print_msg_error_and_return "The line '/.dockerized_norlab/configuration/.env.local' is not present in .gitignore as required!"
   fi
   # Check recommended entry: **/external_data/
-  if ! grep --silent -E "^\*\*\/external_data\/$" ".gitignore"; then
-    n2st::print_msg_warning "The line '**/external_data/' is not present in .gitignore as recommended!"
+  if ! grep --silent -E "^\*\*\/external_data\/\*\*\/\*$" ".gitignore"; then
+    n2st::print_msg_warning "The line '**/external_data/**/*' is not present in .gitignore as recommended!"
   fi
   # Check recommended entry: **/artifact/
-  if ! grep --silent -E "^\*\*\/artifact\/$" ".gitignore"; then
-    n2st::print_msg_warning "The line '**/artifact/' is not present in .gitignore as recommended!"
+  if ! grep --silent -E "^\*\*\/artifact\/\*\*\/\*$" ".gitignore"; then
+    n2st::print_msg_warning "The line '**/artifact/**/*' is not present in .gitignore as recommended!"
   fi
 }
 
