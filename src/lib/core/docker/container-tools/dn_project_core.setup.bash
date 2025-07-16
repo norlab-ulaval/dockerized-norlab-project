@@ -98,7 +98,7 @@ function dna::setup_dockerized_norlab_project() {
   # For Matplotlib default backend (QtAgg) when python script are launched from terminal
   mkdir -m 0700 -p "/tmp/runtime-root" && chown -R "${DN_PROJECT_USER}" "/tmp/runtime-root"
 
-  # ....Install requirement from file................................................................
+  # ....Install requirement from file..............................................................
 
   # Doc › pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
   pip3 install --verbose -r /python.requirements.txt || return 1
