@@ -5,9 +5,9 @@
 !/.dockerized_norlab/dn_container_env_variable/README.md
 
 # ====Dockerized-NorLab(recommended)===============================================================
-**/external_data/
+**/external_data/**/*
+**/artifact/**/*
 !**/external_data/README.md
-**/artifact/
 !**/artifact/README.md
 !**/artifact/optuna_storage/README.md
 

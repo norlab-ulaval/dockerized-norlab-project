@@ -276,12 +276,11 @@ ${MSG_END_FORMAT}"
     # Copy template files
     dna::portable_copy "${DNA_LIB_PATH}/template/.dockerized_norlab/" .dockerized_norlab "${super_project_root}" || return 1
 
-    #tree -L 2 -a "$PWD"  >&3 # (CRITICAL) ToDo: on task end >> delete this line ←
-
     cd "${super_project_root}/.dockerized_norlab" || return 1
 
     # Rename the super project DNA meta .env file
     mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" ".env.${super_project_name}" || return 1
+    git add ".env.${super_project_name}"
 
     # Replace placeholders in the .env.dna file
     cd "${super_project_root}/.dockerized_norlab/configuration/" || return 1
@@ -370,8 +369,8 @@ EOF
 !/.dockerized_norlab/dn_container_env_variable/README.md
 
 # ====Dockerized-NorLab(recommended)===============================================================
-**/external_data/
-**/artifact/
+**/external_data/**/*
+**/artifact/**/*
 !**/external_data/README.md
 !**/artifact/README.md
 !**/artifact/optuna_storage/README.md

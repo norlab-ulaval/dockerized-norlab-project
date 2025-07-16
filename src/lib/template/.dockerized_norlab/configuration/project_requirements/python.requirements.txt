@@ -1,9 +1,17 @@
 # =================================================================================================
+# DNA python requirements
+#
+# Notes:
+# - This file is used in .dockerized_norlab/configuration/Dockerfile via pip install
+# - It is executed after shell.requirements.bash
+#
 # Doc
 #  - Requirements File Format:  https://pip.pypa.io/en/stable/reference/requirements-file-format/
 #  - Requirement Specifiers:  https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 #
 # =================================================================================================
 
-# Example
+# ....Example......................................................................................
 pyclean
+#hydra-core >= 1.3
+# .................................................................................................
