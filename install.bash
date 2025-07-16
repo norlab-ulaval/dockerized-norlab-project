@@ -185,8 +185,14 @@ function dna::install_dockerized_norlab_project_on_host() {
   dna_bin_dir="${dna_install_dir}/src/bin"
   dna_entrypoint="${dna_bin_dir}/dna"
 
-  # Source minimum required library for install purposes
+  # Source minimum required library for install purposes (phase 1)
   source "${dna_install_dir}/load_repo_main_dotenv.bash"
+
+  # This is required in our case since DNA has multiple git submodule and it might be confusing to
+  # user how to proceed with install.
+  git config --global --add safe.directory "${dna_install_dir}"
+
+  # Source minimum required library for install purposes (phase 2)
   source "${dna_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
   source "${dna_install_dir}/src/lib/core/utils/import_dna_lib.bash"
   source "${dna_install_dir}/src/lib/core/utils/setup_host_dna_requirements.bash"
