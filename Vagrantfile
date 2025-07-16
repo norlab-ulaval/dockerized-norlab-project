@@ -203,7 +203,13 @@ Vagrant.configure("2") do |config|
 
   if [[ "$(uname)" == "Darwin" ]]; then
       NON_ROOT_HOME=/Users/vagrant
-      source ${NON_ROOT_HOME:?err}/.zshrc | exit 1
+
+      if [[ -f "${NON_ROOT_HOME:?err}/.zshrc" ]]; then
+          source "${NON_ROOT_HOME:?err}/.zshrc" || exit 1
+      else
+          echo -e "Unable to find ${NON_ROOT_HOME}/.zshrc indicating that the previous provisioning stage might have fail!" 1>&2
+          exit 1
+      fi
   elif [[ "$(uname)" == "Linux" ]]; then
       NON_ROOT_HOME=/home/vagrant
 

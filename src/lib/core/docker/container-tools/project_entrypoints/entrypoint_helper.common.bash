@@ -16,6 +16,8 @@ if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
 fi
 
 if [[ -n "${ROS_DISTRO}" ]]; then
+  source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bashrc_non_interactive.bash
+
   # Should be executed before sourcing ROS2
   if ! ros2 pkg list | grep -q "${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}"; then
       echo "Warning: ${RMW_IMPLEMENTATION} not found, falling back to default RMW"
