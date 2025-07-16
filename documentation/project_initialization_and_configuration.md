@@ -127,8 +127,8 @@ VERBOSE_LOGGING=true
 ## Project Requirements
 
 There is three method for configuring container in DNA. In execution order:
-1. via `pip` using python requirement file `python.requirements.txt`
-2. using shell script file `shell.requirements.bash`
+1. using shell script file `shell.requirements.bash`
+2. via `pip` using python requirement file `python.requirements.txt`
 3. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for details)
 
 Each one of them serve different purposes. Use the ones best suited for your project needs. 

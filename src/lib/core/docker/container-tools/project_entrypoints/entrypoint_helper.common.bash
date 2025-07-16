@@ -15,3 +15,10 @@ if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
   n2st::print_msg "Execute ${BASH_SOURCE[0]}"
 fi
 
+if [[ -n "${ROS_DISTRO}" ]]; then
+  # Should be executed before sourcing ROS2
+  if ! ros2 pkg list | grep -q "${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}"; then
+      echo "Warning: ${RMW_IMPLEMENTATION} not found, falling back to default RMW"
+      export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+  fi
+fi

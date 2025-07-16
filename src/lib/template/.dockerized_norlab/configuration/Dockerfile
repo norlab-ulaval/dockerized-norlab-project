@@ -36,8 +36,8 @@ ENV PATH="${DN_PROJECT_PATH}:${PATH}"
 ENV PYTHONPATH="${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data:${PYTHONPATH}"
 
 # ====Copy init and setup files====================================================================
-COPY .dockerized_norlab/configuration/project_requirements/python.requirements.txt /python.requirements.txt
 COPY .dockerized_norlab/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
+COPY .dockerized_norlab/configuration/project_requirements/python.requirements.txt /python.requirements.txt
 COPY .dockerized_norlab/configuration/project_entrypoints /project_entrypoints
 COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
 COPY --from=context-dna-lib-container-tools . /dna-lib-container-tools/

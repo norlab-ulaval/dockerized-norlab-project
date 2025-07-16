@@ -478,8 +478,8 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.hydra_template.bash"
   assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.template.bash"
 
-  assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.dna.ini"
-  assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.dna_no_xdist.ini"
+  assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
+  assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.no_xdist.ini"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/test_dna_example/test_python_interpreter_has_ros.py"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/test_dna_example/test_try_pytorch.py"
 
@@ -687,7 +687,7 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/external_data/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/example_app.py"
-  assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.dna.ini"
+  assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
 
   # Cleanup ok
   assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/dn_container_env_variable/"
