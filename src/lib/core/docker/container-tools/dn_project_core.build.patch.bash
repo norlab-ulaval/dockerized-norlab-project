@@ -17,16 +17,20 @@ pushd "$(pwd)" >/dev/null || exit 1
 function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
-  # (StandBy) ToDo: maybe transfer to Dockerized-NorLab project
-#  apt-get update && apt-get update --fix-missing && apt-get upgrade -y
-  apt-get install -y \
-    ros-"${ROS_DISTRO:?err}"-rmw-cyclonedds-cpp
-  apt-get autoremove -y && apt-get clean
+  # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
+  {
+    apt-get update && \
+    apt-get update --fix-missing && \
+    apt-get install -y "ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp" && \
+    apt-get autoremove -y && \
+    apt-get clean ;
+  }|| return 1
   echo "Cyclon DDS performance recommendations (ref https://github.com/ros2/rmw_cyclonedds?tab=readme-ov-file)"
-  echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf
+  # shellcheck disable=SC2028
+  echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf || return 1
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
-  # (StandBy) ToDo: maybe transfer to Dockerized-NorLab project
+  # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
   # Temporary hack (might be resolved now)
   # Ref issues
   #  - https://github.com/ipython/ipython/issues/14390
