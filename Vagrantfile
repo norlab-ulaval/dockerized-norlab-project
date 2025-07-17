@@ -16,11 +16,11 @@ ENV["LC_ALL"] = "en_US.UTF-8"
 
 # ====Set which virtual box========================================================================
 # ....Ubuntu box...................................................................................
-# BOX = ENV['VAGRANT_BOX'] || "bento/ubuntu-24.04"
+BOX = ENV['VAGRANT_BOX'] || "bento/ubuntu-24.04"
 # BOX = ENV['VAGRANT_BOX'] || "bento/ubuntu-22.04" # https://portal.cloud.hashicorp.com/vagrant/discover/bento/ubuntu-22.04
 
 # ....MacOsX box...................................................................................
-BOX = ENV['VAGRANT_BOX'] || "stromweld/macos-15" # https://portal.cloud.hashicorp.com/vagrant/discover/stromweld/macos-15
+# BOX = ENV['VAGRANT_BOX'] || "stromweld/macos-15" # https://portal.cloud.hashicorp.com/vagrant/discover/stromweld/macos-15
 # BOX = ENV['VAGRANT_BOX'] || "scwx/sequoia-arm" # https://portal.cloud.hashicorp.com/vagrant/discover/scwx/ventura-arm
 # BOX = ENV['VAGRANT_BOX'] || "scwx/sequoia" # amd64 version
 
@@ -89,7 +89,7 @@ Vagrant.configure("2") do |config|
     prl.linked_clone = true # (CRITICAL) ToDo: Switch to false for release (!)
 
     prl.customize "post-import", ["set", :id,
-       "--description", "Dockerized-Norlab-Project VM",
+      "--description", "Dockerized-Norlab-Project Virtual Machine",
        "--startup-view", "headless",
       ]
     # GUI cutomizations: --startup-view [window, fullscreen, headless, same] --3d-accelerate highest --high-resolution on
@@ -281,8 +281,16 @@ Vagrant.configure("2") do |config|
   echo "cd /opt/dockerized-norlab-project" >> ${NON_ROOT_HOME}/.bashrc
 
   if [[ "$(uname)" == "Linux" ]]; then
-      echo -e "\nInstall The Ubuntu Desktop Gui. Require VM rebooting\n"
-      apt-get install --assume-yes --no-install-recommends ubuntu-desktop || exit 1
+      # (Priority) ToDo: on task end >> UN-mute those line ↓
+      #echo -e "\nInstall The Ubuntu Desktop Gui. Require VM rebooting\n"
+      #apt-get install --assume-yes --no-install-recommends ubuntu-desktop || exit 1
+
+      echo "Add second user: vagrant2"
+      sudo useradd -m -s /bin/bash vagrant2 2>/dev/null
+      echo "vagrant2:vagrant2" | sudo chpasswd
+
+      # Note: ↓↓ Unmute next line to set dockerized-norlab-project ownership to root ↓↓
+      #sudo chown -R $(id -u root):$(id -g root) /opt/dockerized-norlab-project
 
       echo -e "\nProvisioning done.\n"
       source "${NON_ROOT_HOME:?err}/.bashrc"
@@ -302,7 +310,8 @@ Vagrant.configure("2") do |config|
     shell.inline = $INLINE_SCRIPT
     shell.privileged = true
     if BOX =~ /ubuntu/
-        shell.reboot = true
+        #shell.reboot = true
+        shell.reboot = false
     else
         shell.reboot = false
     end

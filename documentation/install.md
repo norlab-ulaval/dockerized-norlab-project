@@ -10,7 +10,6 @@ Complete installation instructions for Dockerized-NorLab project application on 
 - [Installation Methods](#installation-methods)
 - [Platform-Specific Instructions](#platform-specific-instructions)
 - [Post-Installation Setup](#post-installation-setup)
-- [Continuous Integration Continuous Delivery (CI/CD) Server Install](#continuous-integration-continuous-delivery-cicd-server-install)
 - [Verification](#verification)
 - [Troubleshooting](#troubleshooting)
 - [Uninstallation](#uninstallation)
@@ -258,17 +257,7 @@ docker buildx create --name local-builder-multiarch-virtual --driver=docker-cont
 docker buildx ls
 ```
 
-## Continuous Integration Continuous Delivery (CI/CD) Server Install
 
-For CI/CD server running multiple builder with distinct builder user ID on a single node, execute the following lines in each builder user id:
-
-```shell
-# Assuming DNA was cloned and installed in /opt
-git config --global --add safe.directory "/opt/dockerized-norlab-project" && \
-    git config --global --add safe.directory "/opt/dockerized-norlab-project/utilities/norlab-shell-script-tools" && \
-    git config --global --add safe.directory "/opt/dockerized-norlab-project/utilities/norlab-build-system" && \
-    git config --global --add safe.directory "/opt/dockerized-norlab-project/utilities/norlab-build-system/utilities/norlab-shell-script-tools"
-```
 
 ## Verification
 
@@ -359,6 +348,26 @@ sudo systemctl restart docker
 ```bash
 git submodule update --init --recursive
 ```
+
+**Problem**: Received error `fatal: detected dubious ownership`.
+```shell
+$ bash install.bash 
+fatal: detected dubious ownership in repository at '/opt/dockerized-norlab-project'
+To add an exception for this directory, call:
+
+        git config --global --add safe.directory /opt/dockerized-norlab-project
+```
+
+**Solution**: Add repository and submodule to git config safe directory:
+```shell
+# Assuming DNA was clonned in /opt
+DNA_INSTALL_PATH="/opt/dockerized-norlab-project"
+sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}" && \
+    sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-shell-script-tools" && \
+    sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-build-system" && \
+    sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-build-system/utilities/norlab-shell-script-tools"
+```
+
 
 ### Platform-Specific Issues
 
