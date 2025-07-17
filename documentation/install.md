@@ -10,6 +10,7 @@ Complete installation instructions for Dockerized-NorLab project application on 
 - [Installation Methods](#installation-methods)
 - [Platform-Specific Instructions](#platform-specific-instructions)
 - [Post-Installation Setup](#post-installation-setup)
+- [Continuous Integration Continuous Delivery (CI/CD) Server Install](#continuous-integration-continuous-delivery-cicd-server-install)
 - [Verification](#verification)
 - [Troubleshooting](#troubleshooting)
 - [Uninstallation](#uninstallation)
@@ -255,6 +256,18 @@ Create a multi-architecture docker builder. Execute the following comands:
 ```bash
 docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
 docker buildx ls
+```
+
+## Continuous Integration Continuous Delivery (CI/CD) Server Install
+
+For CI/CD server running multiple builder with distinct builder user ID on a single node, execute the following lines in each builder user id:
+
+```shell
+# Assuming DNA was cloned and installed in /opt
+git config --global --add safe.directory "/opt/dockerized-norlab-project" && \
+    git config --global --add safe.directory "/opt/dockerized-norlab-project/utilities/norlab-shell-script-tools" && \
+    git config --global --add safe.directory "/opt/dockerized-norlab-project/utilities/norlab-build-system" && \
+    git config --global --add safe.directory "/opt/dockerized-norlab-project/utilities/norlab-build-system/utilities/norlab-shell-script-tools"
 ```
 
 ## Verification
@@ -508,6 +521,7 @@ For environments without internet access:
    cd /path/to/destination/dockerized-norlab-project
    bash install.bash --skip-system-wide-symlink-install
    ```
+
 
 ## See Also
 
