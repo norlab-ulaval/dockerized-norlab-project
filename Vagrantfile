@@ -261,19 +261,23 @@ Vagrant.configure("2") do |config|
   rm -f /usr/local/bin/dna
   sed -i.bak '/# >>>> dockerized-norlab-project (start)/,/# <<<< dockerized-norlab-project (end)/d' ${NON_ROOT_HOME}/.bashrc
   sed -i.bak '/# >>>> dockerized-norlab-project CUDA (start)/,/# <<<< dockerized-norlab-project CUDA (end)/d' ${NON_ROOT_HOME}/.bashrc
-  sed -i.bak '/# >>>> dockerized-norlab-project DEV alias (start)/,/# <<<< dockerized-norlab-project DEV alias (end)/d' ${NON_ROOT_HOME}/.bashrc
+  sed -i.bak '/# >>>> dockerized-norlab-project DEV ressources (start)/,/# <<<< dockerized-norlab-project DEV ressources (end)/d' ${NON_ROOT_HOME}/.bashrc
 
   # Set VM dev aliases
   echo -e "\nSet DEV aliases\n"
   {
       echo "" ;
-      echo "# >>>> dockerized-norlab-project DEV alias (start)" ;
+      echo "# >>>> dockerized-norlab-project DEV ressources (start)" ;
       echo "alias dna-dna-cd='cd /opt/dockerized-norlab-project'" ;
       #echo "alias dna-mock-cd='cd /opt/dockerized-norlab-project/utilities/tmp/dockerized-norlab-project-mock'" ;
       echo "alias dna-mock-empty-cd='cd /opt/dockerized-norlab-project-mock-EMPTY'" ;
       echo "alias dna-test-symlink='tree -L 1 -a /usr/local/bin/'" ;
       echo "alias dna-test-bashrc='tail -n 20 ~/.bashrc'" ;
-      echo "# <<<< dockerized-norlab-project DEV alias (end)" ;
+      echo "alias dna-git-config-safe='git config --list --show-scope | grep safe'" ;
+      echo "alias dna-chown-dna-repo='sudo chown -R $(id -u root):$(id -g root) /opt/dockerized-norlab-project'" ;
+      echo "" ;
+      #echo "tree -aguL 1 /opt 2>/dev/null" ;
+      echo "# <<<< dockerized-norlab-project DEV ressources (end)" ;
       echo "" ;
   } | sudo tee -a ${NON_ROOT_HOME}/.bashrc > /dev/null
 
@@ -289,21 +293,22 @@ Vagrant.configure("2") do |config|
       sudo useradd -m -s /bin/bash vagrant2 2>/dev/null
       echo "vagrant2:vagrant2" | sudo chpasswd
 
-      # Note: ↓↓ Unmute next line to set dockerized-norlab-project ownership to root ↓↓
-      #sudo chown -R $(id -u root):$(id -g root) /opt/dockerized-norlab-project
-
       echo -e "\nProvisioning done.\n"
       source "${NON_ROOT_HOME:?err}/.bashrc"
   elif [[ "$(uname)" == "Darwin" ]]; then
-      #sudo bash "/opt/dockerized-norlab-project/tests/vagrant_helper/docker_mock.bash" "${NON_ROOT_HOME}/.bashrc" || exit 1
       echo -e "\nMock docker command as a workaround for MacOsX nested virtualization limitations.\n"
       sudo mkdir -p /usr/local/bin/
       sudo ln -sf /opt/dockerized-norlab-project/tests/vagrant_helper/docker /usr/local/bin/docker
       sudo chmod +x /opt/dockerized-norlab-project/tests/vagrant_helper/docker
 
+      echo "Add second user: vagrant2"
+      sudo sysadminctl -addUser vagrant2 -password vagrant2 -fullName "Vagrant User 2" -admin 2>/dev/null
+
       echo -e "\nProvisioning done.\n"
       source "${NON_ROOT_HOME:?err}/.zshrc"
   fi
+
+
   SCRIPT
 
   config.vm.provision :shell do |shell|
@@ -340,7 +345,10 @@ Vagrant.configure("2") do |config|
      trigger.only_on = "dockerized-norlab-project-vm"
      trigger.name = "ownership change"
      trigger.info = "change ownership on rsync explicitly instead of using 'synced_folder rsync__chown=true'"
-     trigger.run_remote = {privileged: true, inline: "chown -R \$(id -u vagrant):\$(id -g vagrant) /opt/dockerized-norlab-project ; chmod +x /opt/dockerized-norlab-project/tests/vagrant_helper/docker ; echo 'Ownership changed to vargant:vagrant'"}
+     trigger.run_remote = {privileged: true, inline: " chmod +x /opt/dockerized-norlab-project/tests/vagrant_helper/docker ; echo 'Ownership changed to vargant:vagrant' ; \
+     # Note: ↓↓ Mute next line to set dockerized-norlab-project ownership to root ↓↓
+     chown -R \$(id -u vagrant):\$(id -g vagrant) /opt/dockerized-norlab-project ; echo 'Set docker mock to executable' ;
+     echo"}
      trigger.on_error = :continue
   end
 

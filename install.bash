@@ -168,6 +168,14 @@ function dna::add_dna_entrypoint_path_to_bashrc_if_requested() {
   return 0
 }
 
+function dna::get_owner() {
+    # Cross platform implementation
+    if [[ "$(uname)" == "Darwin" ]]; then
+        stat -f '%Su' "$1"
+    else
+        stat -c '%U' "$1"
+    fi
+}
 
 # =================================================================================================
 # This is the main function: Install dockerized norlab project on host
@@ -186,12 +194,29 @@ function dna::install_dockerized_norlab_project_on_host() {
   dna_entrypoint="${dna_bin_dir}/dna"
 
   local owner
-  owner=$(stat -c '%U' "${dna_install_dir}")
-  if [[ "${owner}" == "root" ]]; then
-    echo "${dna_install_dir} is owned by root, you will need sudo priviledge to proceed with DNA installation."
+  owner=$(dna::get_owner "${dna_install_dir}" 2>/dev/null)
+
+  if [[ "${owner}" == "root" ]] && [[ $(uname -s) == "Darwin" ]]; then
+    echo "${dna_install_dir} is owned by root on macOs, installer will require sudo priviledge."
+    # Set git config safe dir system wide
+    {
+      if sudo git config --global --list | grep -q safe.directory="${dna_install_dir}/utilities/norlab-shell-script-tools" ; then
+        :
+      else
+        # Either the config file need to be created or the entry does not exist
+        sudo git config --global --add safe.directory "${dna_install_dir}" && \
+          sudo git config --global --add safe.directory "${dna_install_dir}/utilities/norlab-shell-script-tools" && \
+          sudo git config --global --add safe.directory "${dna_install_dir}/utilities/norlab-build-system" && \
+          sudo git config --global --add safe.directory "${dna_install_dir}/utilities/norlab-build-system/utilities/norlab-shell-script-tools" \
+          || return 1
+      fi
+    } 2>/dev/null
+  elif [[ "${owner}" == "root" ]]; then
+    echo "${dna_install_dir} is owned by root, installer will require sudo priviledge."
     # Set git config safe dir system wide
     {
       if ! sudo git config --system --list | grep -q safe.directory="${dna_install_dir}/utilities/norlab-shell-script-tools" ; then
+        # Either the config file need to be created or the entry does not exist
         sudo git config --system --add safe.directory "${dna_install_dir}" && \
           sudo git config --system --add safe.directory "${dna_install_dir}/utilities/norlab-shell-script-tools" && \
           sudo git config --system --add safe.directory "${dna_install_dir}/utilities/norlab-build-system" && \
@@ -204,7 +229,8 @@ function dna::install_dockerized_norlab_project_on_host() {
     # - This step is required on system with reduce priviliedge in order to use dna submodule
     # - Each path need to be set explicitly as safe
     {
-      if ! git config --local --list | grep -q safe.directory="${dna_install_dir}/utilities/norlab-shell-script-tools" 2>/dev/null ; then
+      if ! git config --local --list | grep -q safe.directory="${dna_install_dir}/utilities/norlab-shell-script-tools"; then
+        # Either the config file need to be created or the entry does not exist
         git config --local --add safe.directory "${dna_install_dir}" && \
           git config --local --add safe.directory "${dna_install_dir}/utilities/norlab-shell-script-tools" && \
           git config --local --add safe.directory "${dna_install_dir}/utilities/norlab-build-system" && \
@@ -271,7 +297,8 @@ function dna::install_dockerized_norlab_project_on_host() {
   if [[ "${option_system_wide_symlink}" == "true" ]] && [[ "${owner}" != "root" ]]; then
     # Set git config safe dir system wide
     {
-      if ! sudo git config --system --list | grep -q safe.directory="${dna_install_dir}/utilities/norlab-shell-script-tools" 2>/dev/null ; then
+      if ! sudo git config --system --list | grep -q safe.directory="${dna_install_dir}/utilities/norlab-shell-script-tools"; then
+        # Either the config file need to be created or the entry does not exist
         sudo git config --system --add safe.directory "${dna_install_dir}" && \
           sudo git config --system --add safe.directory "${dna_install_dir}/utilities/norlab-shell-script-tools" && \
           sudo git config --system --add safe.directory "${dna_install_dir}/utilities/norlab-build-system" && \
