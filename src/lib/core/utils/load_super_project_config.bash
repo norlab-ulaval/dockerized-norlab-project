@@ -95,6 +95,8 @@ function dna::load_super_project_configurations() {
 
   local super_project_git_remote_url
   super_project_git_remote_url=$( cd "${SUPER_PROJECT_ROOT:?err}" && git remote get-url origin )
+  # shellcheck disable=SC2001
+  super_project_git_remote_url="$(echo "${super_project_git_remote_url}" | sed 's/\.git$//')"
   SUPER_PROJECT_REPO_NAME="$( basename "${super_project_git_remote_url}" .git )"
   export SUPER_PROJECT_REPO_NAME
 
@@ -175,12 +177,14 @@ function dna::load_super_project_configurations() {
   source "${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal" || return 1
   set +o allexport
 
-  if [[ "${super_project_git_remote_url}" != "${DN_PROJECT_GIT_REMOTE_URL:?err}" ]]; then
-    n2st::print_msg_error "super project ${SUPER_PROJECT_REPO_NAME} DNA configuration in .dockerized_norlab/configuration.env.dna DN_PROJECT_GIT_REMOTE_URL=${DN_PROJECT_GIT_REMOTE_URL} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
+  local dn_project_git_remote_url
+  # shellcheck disable=SC2001
+  dn_project_git_remote_url="$(echo "${DN_PROJECT_GIT_REMOTE_URL:?err}" | sed 's/\.git$//')"
+
+  if [[ "${super_project_git_remote_url}" != "${dn_project_git_remote_url}" ]]; then
+    n2st::print_msg_error "super project ${SUPER_PROJECT_REPO_NAME} DNA configuration in .dockerized_norlab/configuration.env.dna DN_PROJECT_GIT_REMOTE_URL=${dn_project_git_remote_url} does not match the repository .git config url '${super_project_git_remote_url}'!" 1>&2
     return 1
   fi
-
-
 
   #  ....Teardown...................................................................................
   if [[ "${DNA_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
