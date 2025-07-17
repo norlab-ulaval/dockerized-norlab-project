@@ -190,7 +190,10 @@ function dna::install_dockerized_norlab_project_on_host() {
 
   # This is required in our case since DNA has multiple git submodule and it might be confusing to
   # user how to proceed with install.
-  sudo git config --global --add safe.directory "${dna_install_dir}"
+  git config --global --add safe.directory "${dna_install_dir}" && \
+    git config --global --add safe.directory "${dna_install_dir}/utilities/norlab-shell-script-tools" && \
+    git config --global --add safe.directory "${dna_install_dir}/utilities/norlab-build-system" && \
+    git config --global --add safe.directory "${dna_install_dir}/utilities/norlab-build-system/utilities/norlab-shell-script-tools"
 
   # Source minimum required library for install purposes (phase 2)
   source "${dna_install_dir}/utilities/norlab-shell-script-tools/import_norlab_shell_script_tools_lib.bash"
