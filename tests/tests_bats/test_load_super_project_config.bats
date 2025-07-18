@@ -103,6 +103,8 @@ teardown() {
 
   assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}"
 
+
+
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   echo -e "

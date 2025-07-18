@@ -257,6 +257,8 @@ docker buildx create --name local-builder-multiarch-virtual --driver=docker-cont
 docker buildx ls
 ```
 
+
+
 ## Verification
 
 ### Basic Verification
@@ -346,6 +348,54 @@ sudo systemctl restart docker
 ```bash
 git submodule update --init --recursive
 ```
+
+**Problem**: Received error `fatal: detected dubious ownership`.
+```shell
+$ bash install.bash 
+fatal: detected dubious ownership in repository at '/opt/dockerized-norlab-project'
+To add an exception for this directory, call:
+
+        git config --global --add safe.directory /opt/dockerized-norlab-project
+```
+
+**Solution 1 (system level)**: Add repository and submodule to git config safe directory:
+
+This error may happen when the system wide git config file `${prefix}/etc/gitconfig` prefix is set to an arbitrary
+location instead of root. 
+
+```shell
+DNA_INSTALL_PATH="/opt/dockerized-norlab-project"
+GIT_CONFIG_SCOPE="--system"
+sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}" && \
+    sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-shell-script-tools" && \
+    sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-build-system" && \
+    sudo git config --system --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-build-system/utilities/norlab-shell-script-tools"
+```
+Note:
+- Change `DNA_INSTALL_PATH` to your `dockerized-norlab-project` directory location;
+- Change `GIT_CONFIG_SCOPE` to:
+  - `--system` for sytem wide git config -> recommended for server installation;
+  - `--file PATH` for setting git config in a arbitrary system level git config file.
+
+**Solution 2 (arbitrary scope)**: Add repository and submodule to git config safe directory:
+
+
+```shell
+DNA_INSTALL_PATH="/opt/dockerized-norlab-project"
+GIT_CONFIG_SCOPE="--global" 
+git config "${GIT_CONFIG_SCOPE}" --add safe.directory "${DNA_INSTALL_PATH}" && \
+    git config "${GIT_CONFIG_SCOPE}" --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-shell-script-tools" && \
+    git config "${GIT_CONFIG_SCOPE}" --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-build-system" && \
+    git config "${GIT_CONFIG_SCOPE}" --add safe.directory "${DNA_INSTALL_PATH}/utilities/norlab-build-system/utilities/norlab-shell-script-tools"
+```
+Note:
+- Change `DNA_INSTALL_PATH` to your `dockerized-norlab-project` directory location;
+- Change `GIT_CONFIG_SCOPE` to:
+  - `--global` for setting git config globally -> recommended for macOs;
+  - `--local` for setting git config at repository level -> require priviledge if root own the DNA install directory.
+  - `--file PATH` for setting git config in a arbitrary git config file.
+
+
 
 ### Platform-Specific Issues
 
@@ -508,6 +558,7 @@ For environments without internet access:
    cd /path/to/destination/dockerized-norlab-project
    bash install.bash --skip-system-wide-symlink-install
    ```
+
 
 ## See Also
 
