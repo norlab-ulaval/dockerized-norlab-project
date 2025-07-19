@@ -195,8 +195,8 @@ Exiting now!
 
   # (Priority) ToDo: validate >> changes to next bloc ↓↓ does'nt break TeamCity build
   local docker_cmd_str="${MSG_DIMMED_FORMAT}docker compose --file ${compose_path}/${the_compose_file} ${docker_command_w_flags[*]}${MSG_END_FORMAT}"
-  n2st::teamcity_service_msg_blockOpened "Execute ${docker_cmd_str[*]}"
-  #n2st::print_msg "Execute ${docker_cmd_str}\n"
+  n2st::print_msg "Execute ${docker_cmd_str}\n"
+  n2st::teamcity_service_msg_blockOpened "$ docker compose --file ${compose_path}/${the_compose_file} ${docker_command_w_flags[*]}"
 
   # Refactor using "n2st::show_and_execute_docker" (See ref NMO-575)
   docker compose --file "${compose_path}/${the_compose_file}" "${docker_command_w_flags[@]}"

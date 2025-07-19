@@ -145,6 +145,7 @@ function dna::build_services() {
       n2st::print_msg_error "Build error, re-running ${MSG_DIMMED_FORMAT}dna::build_services${MSG_END_FORMAT} one service at the time"
       for idx in "${!services_names[@]}"; do
         if [[ "${services_names[idx]}" == "project-core" ]]; then
+          n2st::print_msg "Building project-core"
           project_core_build_idx=$idx
           dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" project-core
           project_core_build_exit_code=$?
@@ -156,6 +157,7 @@ function dna::build_services() {
       # Execute docker cmd on all remaining service
       for each in "${services_names[@]}"; do
         if [[ "${each}" != "project-core" ]]; then
+          n2st::print_msg "Building ${each}"
           dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
           build_exit_code+=("$?")
         else
@@ -187,6 +189,7 @@ function dna::build_services() {
     # Rebuild and push the core image prior to building any other images
     for idx in "${!services_names[@]}"; do
       if [[ "${services_names[idx]}" == "project-core" ]]; then
+        n2st::print_msg "Building project-core"
         project_core_build_idx=$idx
         # Note:
         #   - THIS WORK ON MacOs with buildx builder "docker-container:local-builder-multiarch-virtual"
@@ -205,6 +208,7 @@ function dna::build_services() {
     # Execute docker cmd on all remaining service
     for each in "${services_names[@]}"; do
       if [[ "${each}" != "project-core" ]]; then
+        n2st::print_msg "Building ${each}"
         dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
         build_exit_code+=("$?")
       else
