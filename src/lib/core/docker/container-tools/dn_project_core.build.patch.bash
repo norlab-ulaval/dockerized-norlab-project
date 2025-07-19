@@ -19,12 +19,16 @@ function dna::global_install_hack() {
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
   {
+    # Force fix any remaining broken packages
+    export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get update --fix-missing && \
     apt-get install -y "ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp" && \
+    dpkg --configure -a && \
+    apt-get install -f && \
     apt-get autoremove -y && \
     apt-get clean ;
-  }|| return 1
+  }|| n2st::print_msg_warning "Be advised, encountered ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install problem. Continue anyway."
   echo "Cyclon DDS performance recommendations (ref https://github.com/ros2/rmw_cyclonedds?tab=readme-ov-file)"
   # shellcheck disable=SC2028
   echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf || return 1
