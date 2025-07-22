@@ -30,7 +30,7 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 - dependencies:
     - [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) with
       `docker-buildx-plugin` and `docker-compose-plugin`
-    - [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) for GPU usage
+    - [nvidia-docker](https://github.com/NVIDIA/nvidia-container-toolkit) for GPU usage
 - The directory `.dockerized_norlab` need to be at the super-project repository root
 
 # Setup PyCharm IDE

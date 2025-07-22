@@ -47,7 +47,9 @@ function dna::build_ros() {
   source "/opt/ros/${ROS_DISTRO}/setup.bash"
   echo "sourcing ${DN_DEV_WORKSPACE}/install/setup.bash"
   source "${DN_DEV_WORKSPACE}/install/setup.bash"
-  apt-get update --fix-missing
+
+  #apt-get update --ignore-missing
+  apt-get update
 
   rosdep update --rosdistro "${ROS_DISTRO}"  || return 1
   rosdep fix-permissions
@@ -56,7 +58,6 @@ function dna::build_ros() {
           --ignore-packages-from-source \
           --from-path "${FROM_PATH}"  \
           --rosdistro "${ROS_DISTRO}"  \
-          -r \
           -q \
           -y \
          || return 1
@@ -64,7 +65,7 @@ function dna::build_ros() {
   colcon version-check
 
   local colcon_flags=()
-  if [[ ${TARGETPLATFORM:?err} != ${BUILDPLATFORM:?err} ]]; then
+  if [[ "${TARGETPLATFORM:?err}" != "${BUILDPLATFORM:?err}" ]]; then
       echo -e "Builder is running in architecture virtualisation"
       colcon_flags+=("--executor" "sequential")
   else

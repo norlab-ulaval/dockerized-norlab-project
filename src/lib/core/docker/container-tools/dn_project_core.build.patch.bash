@@ -18,11 +18,11 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
+    #apt-get update --ignore-missing && \
   {
     # Force fix any remaining broken packages
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get update --fix-missing && \
     apt-get install -y "ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp" && \
     dpkg --configure -a && \
     apt-get install -f && \
@@ -43,6 +43,7 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (STANDBY) ToDo: add the following Hydra requirements to Dockerized-NorLab
+  # (STANDBY) ToDo: assess where to put hydra in DN since its a partial requirement for DNA
 
   # ....pytest related.............................................................................
   # https://github.com/Teemu/pytest-sugar

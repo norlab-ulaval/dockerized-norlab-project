@@ -75,7 +75,7 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 - **Multi-platform support**: Runs seamlessly on `l4t/arm64` (Jetson), `darwin/arm64` (Mac OS X), and `linux/x86` without configuration changes.
 - **Flexible deployment modes**: Supports both local and remote workflows for personal workstations, remote embedded computers, and servers.
 - **Robotic Software System ([ROS2](https://github.com/ros2)) ready**: Ready to roll, out of the box.
-- **GPU acceleration**: Provides GPU support through [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) for both `l4t/arm64` and `linux/x86` platforms.
+- **GPU acceleration**: Provides GPU support through [nvidia-docker](https://github.com/NVIDIA/nvidia-container-toolkit) for both `l4t/arm64` and `linux/x86` platforms.
 - **Transparent configuration**: Makes project configuration easy while keeping [Docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) logic transparent and accessible.
 
 [//]: # (</details>)

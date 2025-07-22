@@ -121,7 +121,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dna::setup_dockerized_norlab_project || exit 1
+  dna::setup_dockerized_norlab_project || { echo -e "${dna_error_prefix} dn_project_core.setup.bash exited with error!" 1>&2 ; exit 1 ; }
 fi
 
 # ====Teardown=====================================================================================

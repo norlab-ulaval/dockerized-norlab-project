@@ -122,16 +122,18 @@ function dna::excute_compose() {
 
   # ....Set env variables (post cli)...............................................................
   docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
+  local dna_override_buildx=false
 
   # ====Begin======================================================================================
   n2st::print_formated_script_header "dna::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::set_which_architecture_and_os
-  n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
+  n2st::print_msg "Host os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
   n2st::print_msg "Multiarch build: ${multiarch}"
-  n2st::print_msg "Is TeamCity CI/CD run: ${IS_TEAMCITY_RUN} ${TC_VERSION}"
-  local dna_override_buildx=false
+  if [[ ${IS_TEAMCITY_RUN} == true ]]; then
+    n2st::print_msg "Is TeamCity CI/CD run: ${IS_TEAMCITY_RUN} ${TC_VERSION}"
+  fi
 
   if [[ -n ${override_buildx_builder_name} ]]; then
     export BUILDX_BUILDER="${override_buildx_builder_name}"
