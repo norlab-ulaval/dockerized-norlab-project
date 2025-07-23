@@ -35,8 +35,12 @@ COPY --chown="$(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER})" .dockeriz
 RUN <<EOF
     chmod 777 /tmp/numba_cache
 
-    echo "Configure Matplotlib to use a non-interactive backends for headless run"
-    echo "backend : Agg" >> /etc/matplotlibrc
+    if [[ -f "/etc/matplotlibrc" ]]; then
+        if grep -q 'backend : Agg' "/etc/matplotlibrc" 2>/dev/null; then
+            echo "Configure Matplotlib to use a non-interactive backends for TeamCity run"
+            echo "backend : Agg" >> /etc/matplotlibrc
+        fi
+    fi
 
     chmod +x ./dn_entrypoint.slurm.bash
 EOF
