@@ -30,7 +30,10 @@ TARGETPLATFORM=$1
 BUILDPLATFORM=$2
 FROM_PATH=$3
 
+dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+
 # (CRITICAL) ToDo: unit-test
+
 
 function dna::build_ros() {
 
@@ -47,6 +50,13 @@ function dna::build_ros() {
   source "/opt/ros/${ROS_DISTRO}/setup.bash"
   echo "sourcing ${DN_DEV_WORKSPACE}/install/setup.bash"
   source "${DN_DEV_WORKSPACE}/install/setup.bash"
+
+  if [[ -d "${DN_DEV_WORKSPACE}" ]]; then
+    cd "${DN_DEV_WORKSPACE}"
+  else
+    echo -e "${dna_error_prefix} Directory ${DN_DEV_WORKSPACE} is unrechable!" 1>&2
+    exit 1
+  fi
 
   #apt-get update --ignore-missing
   apt-get update
@@ -79,6 +89,7 @@ function dna::build_ros() {
         "--event-handlers" "console_direct+"
      )
   echo -e "colcon_flags=(${colcon_flags[*]})"
+
   colcon build "${colcon_flags[@]}" || return 1
 
   return 0
@@ -87,7 +98,6 @@ function dna::build_ros() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
   echo -e "${dna_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
