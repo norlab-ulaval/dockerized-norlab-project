@@ -25,6 +25,7 @@
 # =================================================================================================
 set -e
 pushd "$(pwd)" >/dev/null || exit 1
+# (CRITICAL) ToDo: unit-test
 
 TARGETPLATFORM=$1
 BUILDPLATFORM=$2
@@ -32,8 +33,7 @@ FROM_PATH=$3
 
 dna_error_prefix="\033[1;31m[DNA error]\033[0m"
 
-# (CRITICAL) ToDo: unit-test
-
+export DEBIAN_FRONTEND=noninteractive
 
 function dna::build_ros() {
 
@@ -43,13 +43,7 @@ function dna::build_ros() {
     test -n "${DN_DEV_WORKSPACE:?'Env variable need to be set and non-empty.'}" && \
     test -n "${TARGETPLATFORM:?'Env variable need to be set and non-empty.'}" && \
     test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" ;
-  } || exit
-
-  # ....Begin......................................................................................
-  echo "sourcing /opt/ros/${ROS_DISTRO}/setup.bash"
-  source "/opt/ros/${ROS_DISTRO}/setup.bash"
-  echo "sourcing ${DN_DEV_WORKSPACE}/install/setup.bash"
-  source "${DN_DEV_WORKSPACE}/install/setup.bash"
+  } || exit 1
 
   if [[ -d "${DN_DEV_WORKSPACE}" ]]; then
     cd "${DN_DEV_WORKSPACE}"
@@ -57,6 +51,13 @@ function dna::build_ros() {
     echo -e "${dna_error_prefix} Directory ${DN_DEV_WORKSPACE} is unrechable!" 1>&2
     exit 1
   fi
+
+  # ....Begin......................................................................................
+  echo "sourcing /opt/ros/${ROS_DISTRO}/setup.bash"
+  source "/opt/ros/${ROS_DISTRO}/setup.bash"
+  echo "sourcing ${DN_DEV_WORKSPACE}/install/setup.bash"
+  source "${DN_DEV_WORKSPACE}/install/setup.bash"
+
 
   #apt-get update --ignore-missing
   apt-get update
