@@ -158,6 +158,10 @@ function dna::excute_compose() {
       if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64*".* ]] || [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64*".* ]]; then
         n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "$0") execution."
         # Set builder for local execution
+        if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
+          n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create it..."
+          bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_return "Failed to create docker buildx builder ${default_buildx_builder_name}!"
+        fi
         export BUILDX_BUILDER="${default_buildx_builder_name}"
         dna_override_buildx=true
       fi
@@ -172,10 +176,8 @@ function dna::excute_compose() {
     fi
   fi
 
-  # ToDo: NMO-739 feat: add mechanism to warn user if buildx builder does not exist
-
   # Note: The 'docker buildx inspect --bootstrap name' is to force builder initialisation
-  if [[ $(docker buildx inspect --bootstrap "${BUILDX_BUILDER}" >/dev/null ) =~ "ERROR: no builder".*"found" ]]; then
+  if ! docker buildx inspect --bootstrap "${BUILDX_BUILDER}" &> /dev/null; then
     n2st::print_msg_error "Can't find the selected docker buildx builder ${MSG_DIMMED_FORMAT}${BUILDX_BUILDER}${MSG_END_FORMAT}.
 Please investigate available ones and set explicitly using the following commands
 

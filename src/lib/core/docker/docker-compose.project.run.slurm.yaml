@@ -49,10 +49,6 @@ services:
       - SYS_PTRACE
       - SYS_NICE
     network_mode: host    # allow the container to have full access to the host’s networking system
-    # ports:
-    #   - "2222:2222" # ssh pycharm-debugger
-    #   - "6006:6006" # tensorboard
-    #   - "8888:8888" # optuna-dashboard
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)

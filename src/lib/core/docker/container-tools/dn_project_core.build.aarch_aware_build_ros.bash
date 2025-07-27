@@ -31,11 +31,8 @@ TARGETPLATFORM=$1
 BUILDPLATFORM=$2
 FROM_PATH=$3
 
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-
-export DEBIAN_FRONTEND=noninteractive
-
 function dna::build_ros() {
+  n2st::print_msg "Execute architecture aware ROS2 build..."
 
   # ....Check pre-conditions.......................................................................
   {
@@ -43,13 +40,12 @@ function dna::build_ros() {
     test -n "${DN_DEV_WORKSPACE:?'Env variable need to be set and non-empty.'}" && \
     test -n "${TARGETPLATFORM:?'Env variable need to be set and non-empty.'}" && \
     test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" ;
-  } || exit 1
+  } || n2st::print_msg_error_and_return "Failed pre-condition check!"
 
   if [[ -d "${DN_DEV_WORKSPACE}" ]]; then
     cd "${DN_DEV_WORKSPACE}"
   else
-    echo -e "${dna_error_prefix} Directory ${DN_DEV_WORKSPACE} is unrechable!" 1>&2
-    exit 1
+    n2st::print_msg_error_and_return "Directory ${DN_DEV_WORKSPACE} is unrechable!"
   fi
 
   # ....Begin......................................................................................
@@ -58,11 +54,11 @@ function dna::build_ros() {
   echo "sourcing ${DN_DEV_WORKSPACE}/install/setup.bash"
   source "${DN_DEV_WORKSPACE}/install/setup.bash"
 
+  # (CRITICAL) ToDo: Validate >> next line ↓↓
+  apt-get update \
+    && apt-get upgrade --assume-yes
 
-  #apt-get update --ignore-missing
-  apt-get update
-
-  rosdep update --rosdistro "${ROS_DISTRO}"  || return 1
+  rosdep update --rosdistro "${ROS_DISTRO}" || n2st::print_msg_error_and_return "Failed rosdep update!"
   rosdep fix-permissions
 
   rosdep install \
@@ -71,7 +67,7 @@ function dna::build_ros() {
           --rosdistro "${ROS_DISTRO}"  \
           -q \
           -y \
-         || return 1
+       || n2st::print_msg_error_and_return "Failed rosdep install!"
 
   colcon version-check
 
@@ -91,7 +87,7 @@ function dna::build_ros() {
      )
   echo -e "colcon_flags=(${colcon_flags[*]})"
 
-  colcon build "${colcon_flags[@]}" || return 1
+  colcon build "${colcon_flags[@]}" || n2st::print_msg_error_and_return "Failed colcon build!"
 
   return 0
 }
@@ -99,12 +95,14 @@ function dna::build_ros() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
   echo -e "${dna_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dna::build_ros || exit 1
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[N2ST error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  dna::build_ros || n2st::print_msg_error_and_exit "dn_project_core.build.aarch_aware_build_ros.bash exited with error!"
 fi
 
 # ====Teardown=====================================================================================

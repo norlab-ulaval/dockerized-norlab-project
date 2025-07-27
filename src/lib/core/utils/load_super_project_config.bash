@@ -136,6 +136,11 @@ function dna::load_super_project_configurations() {
   set +o allexport
 
   # ....Set DN git branch and version dynamicaly based on DNA current branch.......................
+  if [[ -f "${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local" ]]; then
+    set -o allexport
+    source "${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local" || return 1
+    set +o allexport
+  fi
 
   # Set the Dockerized-NorLab repository branch for fetching container internal tools if not
   # overriden by super project user.

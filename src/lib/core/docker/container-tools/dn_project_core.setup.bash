@@ -19,7 +19,6 @@
 # =================================================================================================
 set -e
 pushd "$(pwd)" >/dev/null || exit 1
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
 
 # (CRITICAL) ToDo: unit-test
 
@@ -28,6 +27,10 @@ function dna::setup_dockerized_norlab_project() {
   # ....Check pre-conditions.......................................................................
   # Check environment variables
   {
+    test -n "${DEBIAN_FRONTEND:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${ROS_DISTRO:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${TARGETPLATFORM:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" ;
     test -n "${DN_PROJECT_ALIAS_PREFIX:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_PROJECT_USER:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_PROJECT_USER_HOME:?'Env variable need to be set and non-empty.'}" && \
@@ -36,16 +39,16 @@ function dna::setup_dockerized_norlab_project() {
     test -n "${DN_PROJECT_PATH:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_DEV_WORKSPACE:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'}" ;
-  } || return 1
+  } || n2st::print_msg_error_and_return "Failed pre-condition check!"
 
   # Check directories exist
   {
     test -d "${DN_PROJECT_USER_HOME}" && \
     test -d "${DN_PROJECT_PATH}" ;
-  } || return 1
+  } || n2st::print_msg_error_and_return "Failed directory check!"
 
   # ....User specific aliases......................................................................
-  echo "Add project specific aliases"
+  n2st::print_msg "Add project specific aliases..."
     (
       echo ""
       echo "# Project specific aliases (general)"
@@ -69,6 +72,7 @@ function dna::setup_dockerized_norlab_project() {
   #   - However, 'project-deploy' and 'project-release' containers copy this directory and its
   #     contents in the image at build time to ensure portability.
   #
+  n2st::print_msg "Entrypoint related setup..."
   cd /project_entrypoints || return 1
   {
     test -d project-ci-tests/ && \
@@ -84,7 +88,7 @@ function dna::setup_dockerized_norlab_project() {
     test -f project-develop/dn_entrypoint.init.callback.bash && \
     test -f dn_entrypoint.global.attach.callback.bash && \
     test -f dn_entrypoint.global.init.callback.bash ;
-  } || { echo -e "${dna_error_prefix} Missing super project configuration file or directory in .dockerized_norlab/configuration/" && return 1 ; }
+  } || n2st::print_msg_error_and_return "Missing super project configuration file or directory in .dockerized_norlab/configuration/"
 
   for each_file in ./dn_entrypoint.*.bash; do
     chmod +x "${each_file}"
@@ -99,15 +103,21 @@ function dna::setup_dockerized_norlab_project() {
   mkdir -m 0700 -p "/tmp/runtime-root" && chown -R "${DN_PROJECT_USER}" "/tmp/runtime-root"
 
   # ....Install requirement from file..............................................................
-  # Doc › pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
-  # Run shell requirement before python ones so that user have an option update python or pip
+  # Note: Run shell requirement before python ones so that user have an option update python or pip
 
-  source /shell.requirements.bash || return 1
-  pip3 install --verbose -r /python.requirements.txt || return 1
+  n2st::print_msg "Execute shell.requirements.bash script..."
+  source /shell.requirements.bash || n2st::print_msg_error_and_return "shell.requirements.bash exited with error!"
+
+  n2st::print_msg "Execute pip install from python.requirements.txt file..."
+  # Doc: pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
+  pip3 install --verbose -r /python.requirements.txt || n2st::print_msg_error_and_return "pip install from python.requirements.txt exited with error!"
 
   # ....Teardown...................................................................................
   rm -f /shell.requirements.bash
   rm -f /python.requirements.txt
+
+  rm -rf /var/lib/apt/lists/*
+  apt-get clean
 
   return 0
 }
@@ -116,12 +126,14 @@ function dna::setup_dockerized_norlab_project() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
+  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
   echo -e "${dna_error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dna::setup_dockerized_norlab_project || { echo -e "${dna_error_prefix} dn_project_core.setup.bash exited with error!" 1>&2 ; exit 1 ; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[N2ST error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  dna::setup_dockerized_norlab_project || n2st::print_msg_error_and_exit "dn_project_core.setup.bash exited with error!"
 fi
 
 # ====Teardown=====================================================================================

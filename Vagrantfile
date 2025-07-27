@@ -215,7 +215,7 @@ Vagrant.configure("2") do |config|
 
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
-      apt-get install --assume-yes \
+      apt-get install --assume-yes --no-install-recommends \
          locales \
          sudo \
          apt-utils \

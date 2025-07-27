@@ -15,20 +15,25 @@ set -e
 pushd "$(pwd)" >/dev/null || exit 1
 
 function dna::global_install_hack() {
+  n2st::print_msg "Execute global install patch..."
+
+  # ....Check pre-conditions.......................................................................
+  {
+    test -n "${ROS_DISTRO:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${DN_DEV_WORKSPACE:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${TARGETPLATFORM:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" ;
+  } || n2st::print_msg_error_and_return "Failed pre-condition check!"
+
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
-    #apt-get update --ignore-missing && \
   {
-    # Force fix any remaining broken packages
-    export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get install -y "ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp" && \
-    dpkg --configure -a && \
-    apt-get install -f && \
-    apt-get autoremove -y && \
-    apt-get clean ;
-  }|| n2st::print_msg_warning "Be advised, encountered ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install problem. Continue anyway."
+    apt-get install --assume-yes --no-install-recommends "ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp" ;
+  } || n2st::print_msg_error_and_return "Failed ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install!"
+
+  # || n2st::print_msg_warning "Be advised, encountered ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install problem. Continue anyway."
   echo "Cyclon DDS performance recommendations (ref https://github.com/ros2/rmw_cyclonedds?tab=readme-ov-file)"
   # shellcheck disable=SC2028
   echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf || return 1
@@ -107,6 +112,10 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
+  apt-get autoremove -y
+  rm -rf /var/lib/apt/lists/*
+  apt-get clean
+
   return 0
 }
 
@@ -120,7 +129,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  dna::global_install_hack || exit 1
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[N2ST error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  dna::global_install_hack || n2st::print_msg_error_and_exit "dn_project_core.build.patch.bash exited with error!"
 fi
 
 # ====Teardown=====================================================================================

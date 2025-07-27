@@ -275,9 +275,10 @@ function dna::up_and_attach() {
     docker compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
     up_exit_code=$?
 
-    n2st::print_msg "Updating ssh key [localhost]:2222"
-    bash -c "ssh-keygen -R [localhost]:2222 >/dev/null 2>/dev/null"
-    bash -c "ssh-keygen -R [127.0.0.1]:2222 >/dev/null 2>/dev/null"
+    local dn_ssh_server_port=${DN_SSH_SERVER_PORT:-2222}
+    n2st::print_msg "Updating ssh key [localhost]:${dn_ssh_server_port}"
+    bash -c "ssh-keygen -R [localhost]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
+    bash -c "ssh-keygen -R [127.0.0.1]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
 
     if [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]]; then
       # (NICE TO HAVE) ToDo: implement case fetch docker context IP address

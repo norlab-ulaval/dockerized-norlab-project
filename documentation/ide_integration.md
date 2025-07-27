@@ -59,7 +59,7 @@ DNA supports integration with various IDEs and development environments, enablin
 2. **Add new interpreter**:
    - Choose "SSH Interpreter"
    - **Host**: `localhost` (local) or remote IP
-   - **Port**: Container SSH port (default: `2222`)
+   - **Port**: Container SSH port (from DN_SSH_SERVER_PORT, default: `2222`)
    - **Username**: Container user (from `DN_PROJECT_USER`)
 
 3. **Important settings**:

@@ -24,14 +24,15 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
-| `--multiarch` | Build services for multiple architectures (requires configured docker buildx multiarch builder) |
+| Option | Description                                                                                                          |
+|--------|----------------------------------------------------------------------------------------------------------------------|
+| `--multiarch` | Build services for multiple architectures                                      |
+| `--rmab` | Create/re-create a docker buildx multiarch builder instance                                                          |
 | `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub (requires Docker Hub authentication) |
-| `--save DIRPATH` | Save built image to specified directory (develop or deploy services only) |
-| `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication) |
-| `--help`, `-h` | Show help message and exit |
-| `-- <docker-args>` | Pass additional arguments directly to Docker build |
+| `--save DIRPATH` | Save built image to specified directory (develop or deploy services only)                                            |
+| `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication)                                  |
+| `--help`, `-h` | Show help message and exit                                                                                           |
+| `-- <docker-args>` | Pass additional arguments directly to Docker build                                                                   |
 
 ## Default Behavior
 
@@ -51,7 +52,8 @@ dna build develop
 ### Multi-Architecture Build
 
 ```bash
-# Build for multiple architectures (requires buildx setup)
+# Build for multiple architectures
+dna build --multiarch develop
 dna build --multiarch develop
 ```
 
@@ -150,12 +152,23 @@ dna build develop -- --no-cache --progress=plain
 
 ### Multi-architecture build fails
 **Problem**: `--multiarch` flag fails.  
-**Solution**: Set up Docker Buildx with multi-architecture support:
+**Solution 1**: Execute `dna build` with `--multiarch --rmab` to re-create the docker buildx multiarch builder `local-builder-multiarch-virtual`. 
+
+**Solution 2**: Instanciate via script a Docker Buildx builder with multi-architecture support by executing
 ```bash
-docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --driver-opt="default-load=true" --platform linux/amd64,linux/arm64 --bootstrap --buildkitd-flags '--allow-insecure-entitlement network.host'
+bash src/lib/core/utils/buildx_builder.bash
+```
+
+**Solution 3**: Instanciate manualy a Docker Buildx builder with multi-architecture support:
+```bash
+docker buildx create --name local-builder-multiarch-virtual --driver=docker-container --platform linux/amd64,linux/arm64 --bootstrap
 docker buildx ls
 ```
-**Note**: `local-builder-multiarch-virtual` is the default multi-architecture builder name use by `dna`
+**Note**: `local-builder-multiarch-virtual` is the default multi-architecture builder name use by `dna`. To use a diferent one, just set `BUILDX_BUILDER` environment variable in the same shell you are executing `dna` commands:
+```bash
+export BUILDX_BUILDER=my-multiarch-builder 
+dna build --multiarch
+```
 
 ### Push fails with authentication error
 **Problem**: Cannot push to Docker Hub.  

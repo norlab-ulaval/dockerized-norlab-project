@@ -9,11 +9,13 @@
 # =================================================================================================
 ARG BASE_IMAGE
 ARG BASE_IMAGE_TAG
+ARG DEBIAN_FRONTEND=noninteractive
 FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS init-and-setup
+ARG DEBIAN_FRONTEND
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
 # ====Dockerized-NorLab-project internal configuration step========================================
-ARG DEBIAN_FRONTEND=noninteractive
-
 ARG DN_PROJECT_GIT_NAME
 ENV DN_PROJECT_GIT_NAME=${DN_PROJECT_GIT_NAME:?'Build argument needs to be set and non-empty.'}
 ARG DN_PROJECT_GIT_DOMAIN
@@ -55,21 +57,23 @@ ENV XDG_RUNTIME_DIR='/tmp/runtime-root'
 
 # ====User project custom steps====================================================================
 FROM init-and-setup AS user-project-custom-steps
+ARG DEBIAN_FRONTEND
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 # USER NOTES: ADD YOUR CODE IN THIS STAGE
 # ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 # ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
+WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+
 # Example
 RUN <<EOF
     {
-        echo "..........................................." && \
-        echo "Sanity check" && \
-        python -c "import torch" && \
-        python -c "import torchvision" && \
-        python -c "import hydra" && \
-        python -c "from omegaconf import DictConfig, OmegaConf" && \
+        echo "...Sanity check............................" && \
+        echo "python version: $(n2st::which_python3_version)" && \
+        python -c "import pytest" && \
         echo "..........................................." ;
-    } || exit 1
+    } || n2st::print_msg_error_and_exit "Failed sanity check!"
 EOF
 
 # ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
@@ -78,13 +82,15 @@ EOF
 
 # ====DN-project final=============================================================================
 FROM user-project-custom-steps AS final
-# ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
+ARG DEBIAN_FRONTEND
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+# ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
 
 RUN <<EOF
-    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || n2st::print_msg_error "Fail to build repository ros pkgs!"
+    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash "${TARGETPLATFORM}" "${BUILDPLATFORM}" "${DN_DEV_WORKSPACE:?err}/src" \
+      || n2st::print_msg_error_and_exit "Failed to build repository ros pkgs!"
 
     # Cleanup buidl script
     rm -f /dn_project_core_init.bash

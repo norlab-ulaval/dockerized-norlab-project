@@ -9,8 +9,8 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   $ dna build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
 #
 # Options:
-#   --multiarch                   Build services for multiple architectures (require a configured
-#                                  docker buildx multiarch builder)
+#   --multiarch                   Build services for multiple architectures
+#   --rmab                        Re-create a local docker buildx multiarch builder
 #   --online-build                Build image sequentialy by pushing/pulling intermediate images
 #                                  from Dockerhub (requires Docker Hub authentication)
 #   --save DIRPATH                Save built image to directory (develop or deploy services only)
@@ -93,6 +93,7 @@ function dna::build_command() {
 
     # ....Set env variables (pre cli)).............................................................
     local multiarch=false
+    local re_create_multiarch_builder=false
     local force_push_project_core=false
     local service=""
     local push_deploy=false
@@ -108,6 +109,10 @@ function dna::build_command() {
         case "$1" in
             --multiarch)
                 multiarch=true
+                shift
+                ;;
+            --rmab)
+                re_create_multiarch_builder=true
                 shift
                 ;;
             --online-build)
@@ -259,6 +264,15 @@ function dna::build_command() {
     fi
 
     # ....Begin....................................................................................
+    if [[ "${multiarch}" == true ]] && [[ "${re_create_multiarch_builder}" == true ]]; then
+        local builder_name='local-builder-multiarch-virtual'
+        bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${builder_name}" || {
+            n2st::print_msg_error "Failed to re-create docker buildx builder ${builder_name}!"
+            return 1
+        }
+        n2st::print_msg_done "New builder ${builder_name} created successfully."
+    fi
+
     if [[ "${service}" == "deploy" ]]; then
         dna::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
         fct_exit_code=$?
