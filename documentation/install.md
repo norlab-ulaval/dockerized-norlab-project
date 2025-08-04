@@ -39,7 +39,7 @@ DNA can be installed using different methods depending on your system configurat
 
 ### Optional Requirements
 
-- **NVIDIA Docker**: Required for GPU acceleration support
+- **NVIDIA Container Toolkit**: Required for GPU acceleration support
 - **[Dockerhub account](https://docs.docker.com/accounts/create-account/**: Required for online build, sharing deploy image online, and publishing release image
 
 
@@ -176,16 +176,29 @@ dna version
 
 > **Note**: Docker Engine installation is handled automatically by `install.bash`. Manual installation is only needed for troubleshooting.
 
-1. **(Optional) Install NVIDIA Docker (for GPU support):**
+1. **(Optional) Install NVIDIA Container Toolkit (for GPU support):**
+   References: [Installing the NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-the-nvidia-container-toolkit)
    ```bash
-   distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-   curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-   curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-   sudo apt-get update && sudo apt-get install -y nvidia-docker2
+   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+      && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+        sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+   
+   # Update repository now that you have a new key 
+   sudo apt-get update
+   
+   # Install NVIDIA Container Toolkit
+   sudo apt-get install --assume-yes \
+      nvidia-container-toolkit \
+      nvidia-container-toolkit-base \
+      libnvidia-container-tools \
+      libnvidia-container1
+   
+   # Configure container runtime
+   sudo nvidia-ctk runtime configure --runtime=docker
+   
    sudo systemctl restart docker
    ```
-
 2. **Install DNA:**
    ```bash
    git clone --recurse-submodules https://github.com/norlab-ulaval/dockerized-norlab-project.git
@@ -217,7 +230,14 @@ dna version
 3. Follow post-installation setup instructions
 
 ### NVIDIA Jetson (L4T/ARM64)
-> **Note**: Docker Engine and nvidia-docker come pre-installed on Jetson
+
+1. Validate NVIDIA Container Toolkit instalation (for GPU support):
+    > **Note**: Docker Engine and NVIDIA Container Toolkit come pre-installed on Jetson
+    References: [Installing the NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-the-nvidia-container-toolkit)
+    ```shell
+    # Validate install 
+    sudo nvidia-ctk --version
+    ```   
 
 1. **Install DNA:**
    ```bash
@@ -271,7 +291,7 @@ dna init
 ### GPU Support Verification (if applicable)
 
 ```bash
-# Test NVIDIA Docker
+# Test NVIDIA Container Toolkit
 docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 ```
 
@@ -395,7 +415,7 @@ Note:
 
 **Solution**: Start Docker Desktop application.
 
-#### Linux: NVIDIA Docker Issues
+#### Linux: NVIDIA Container Toolkit Issues
 
 **Problem**: GPU not accessible in containers.
 
@@ -499,10 +519,10 @@ rm -rf /path/to/dockerized-norlab-project
 
 ```bash
 # Edit ~/.bashrc and remove DNA-related lines:
-# # >>>> dockerized-norlab-project (start)
+# # >>>> dockerized-norlab-project app (start)
 # export _DNA_PATH="/path/to/dna/bin"
 # export PATH="$PATH:$_DNA_PATH"
-# # <<<< dockerized-norlab-project (end)
+# # <<<< dockerized-norlab-project app (end)
 
 # Reload shell
 source ~/.bashrc

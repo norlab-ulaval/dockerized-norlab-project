@@ -120,7 +120,7 @@ function dna::load_super_project_configurations() {
     return 1
   fi
 
-  # ....Load super project DNA meta config dotenv file.............................................
+  # ....Load super project DNA dotenv file.........................................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   # shellcheck disable=SC1090
@@ -128,17 +128,35 @@ function dna::load_super_project_configurations() {
   source ".dockerized_norlab/configuration/.env.dna" || return 1
   set +o allexport
 
-  # ....Load run time DNA dotenv file for docker-compose...........................................
+  # ....Load DNA dotenv file for docker-compose....................................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   source ".dockerized_norlab/configuration/.env" || return 1
-  source ".dockerized_norlab/configuration/.env.local" || return 1
   set +o allexport
 
-  # ....Set DN git branch and version dynamicaly based on DNA current branch.......................
-  if [[ -f "${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local" ]]; then
+  local super_project_dotenv_local=".dockerized_norlab/configuration/.env.local"
+  if [[ -f "${super_project_dotenv_local}" ]]; then
+    if [[ $(grep -c '^[[:space:]]*[A-Z_][A-Z0-9_]*=' "${super_project_dotenv_local}" 2>/dev/null) -gt 0 ]]; then
+        n2st::print_msg_warning "Be advised, sourcing super project ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${super_project_dotenv_local}${MSG_END_FORMAT}."
+    fi
+    # Note: super project dotenv local should be source after the super project main dotenv
+    # shellcheck disable=SC1090
     set -o allexport
-    source "${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local" || return 1
+    source "${super_project_dotenv_local}" || return 1
+    set +o allexport
+  fi
+
+  # ....Set DN git branch and version dynamicaly based on DNA current branch.......................
+  local dna_internal_local="${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local"
+  if [[ -f "${dna_internal_local}" ]]; then
+    # Note: Dotenv file '.env.dna-internal.local', if it exist, should be sourced
+    #       before '.env.dna-internal'.
+    if [[ $(grep -c '^[[:space:]]*[A-Z_][A-Z0-9_]*=' "${dna_internal_local}" 2>/dev/null) -gt 0 ]]; then
+        n2st::print_msg_warning "Be advised, sourcing dna internal ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${dna_internal_local}${MSG_END_FORMAT}."
+    fi
+    set -o allexport
+    # shellcheck disable=SC1090
+    source "${dna_internal_local}" || return 1
     set +o allexport
   fi
 

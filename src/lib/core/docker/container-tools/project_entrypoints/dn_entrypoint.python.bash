@@ -36,6 +36,29 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 # pycharm-debugger user path nightmare)
 pyclean "${DN_PROJECT_PATH}"
 
+# ....Load library.................................................................................
+
+if [[ $- == *i* ]]; then
+    if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
+      echo "Interactive shell. Sourcing DN lib is handled via .bashrc"
+    fi
+else
+    if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
+      echo "Non-interactive shell. Sourcing DN lib"
+    fi
+    source /dockerized-norlab/dockerized-norlab-images/container-tools/bash_run_config/.bashrc.dn_non_interactive
+fi
+
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${MSG_ERROR_FORMAT}[DNA error]${MSG_END_FORMAT} The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
+if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
+  n2st::print_msg "Execute $0"
+fi
+
+# ....source ROS2 environment variables............................................................
+#dn::source_ros2_underlay_only
+#dn::source_ros2_overlay_only
+dn::source_ros2
 
 # ====Execute python command=======================================================================
 python3 "$@" || exit 1

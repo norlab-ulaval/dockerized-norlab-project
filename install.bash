@@ -152,10 +152,10 @@ function dna::add_dna_entrypoint_path_to_bashrc_if_requested() {
         n2st::print_msg "Adding dna entrypoint path to ~/.bashrc"
         {
           echo "" ;
-          echo "# >>>> dockerized-norlab-project (start)" ;
+          echo "# >>>> dockerized-norlab-project app (start)" ;
           echo "export _DNA_PATH=\"${dna_bin_dir}\"" ;
           echo "export PATH=\"\$PATH:\$_DNA_PATH\"" ;
-          echo "# <<<< dockerized-norlab-project (end)" ;
+          echo "# <<<< dockerized-norlab-project app (end)" ;
           echo "" ;
         } | sudo tee -a "${HOME}/.bashrc" > /dev/null
       fi

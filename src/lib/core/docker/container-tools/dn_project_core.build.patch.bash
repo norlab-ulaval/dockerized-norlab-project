@@ -12,26 +12,33 @@
 #
 # =================================================================================================
 set -e
-pushd "$(pwd)" >/dev/null || exit 1
 
 function dna::global_install_hack() {
-  n2st::print_msg "Execute global install patch..."
+  # ....Setup....................................................................................
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
   # ....Check pre-conditions.......................................................................
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
   {
     test -n "${ROS_DISTRO:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_DEV_WORKSPACE:?'Env variable need to be set and non-empty.'}" && \
     test -n "${TARGETPLATFORM:?'Env variable need to be set and non-empty.'}" && \
-    test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" ;
-  } || n2st::print_msg_error_and_return "Failed pre-condition check!"
+    test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" && \
+    test -n "${DEBIAN_FRONTEND:?'Env variable need to be set and non-empty.'}" && \
+    [[ "${DEBIAN_FRONTEND}" == "noninteractive" ]];
+  } || n2st::print_msg_error_and_exit "Failed pre-condition check!"
 
+  # ....Begin......................................................................................
+  n2st::print_msg "Execute global install patch..."
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
   {
     apt-get update && \
     apt-get install --assume-yes --no-install-recommends "ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp" ;
-  } || n2st::print_msg_error_and_return "Failed ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install!"
+  } || n2st::print_msg_error_and_exit "Failed ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install!"
 
   # || n2st::print_msg_warning "Be advised, encountered ros-${ROS_DISTRO:?err}-rmw-cyclonedds-cpp install problem. Continue anyway."
   echo "Cyclon DDS performance recommendations (ref https://github.com/ros2/rmw_cyclonedds?tab=readme-ov-file)"
@@ -44,7 +51,7 @@ function dna::global_install_hack() {
   # Ref issues
   #  - https://github.com/ipython/ipython/issues/14390
   #  - https://github.com/ros2/launch/issues/765
-  pip3 install 'pytest==8.0'
+  #pip3 install 'pytest==8.0'
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (STANDBY) ToDo: add the following Hydra requirements to Dockerized-NorLab
@@ -79,7 +86,7 @@ function dna::global_install_hack() {
   # (StandBy) ToDo: add to Dockerized-NorLab
   # https://github.com/optuna/optuna-dashboard
   pip3 install 'optuna-dashboard'
-  pip3 install 'bottle == 0.12.*' # Fix the optuna-dashboard loading screen stall problem
+  #pip3 install 'bottle == 0.12.*' # Fix the optuna-dashboard loading screen stall problem
   # optional dependencies to make optuna-dashboard faster
   pip3 install 'optuna-fast-fanova'
   pip3 install 'gunicorn'
@@ -95,27 +102,12 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
-  # (Priority) ToDo: delete both when NMO-694 is resolve
-  n2st::seek_and_modify_string_in_file "alias tree='tree -a -L 1'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
-  n2st::seek_and_modify_string_in_file "alias tree2='tree -a -L 2'" "" /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
-
-  # ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  # (Priority) ToDo: delete on task NMO-702 completion >> those lines ↓↓
-  local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
-  n2st::seek_and_modify_string_in_file "docker-compose.project.run.<host-arch>.yaml" ".env.dna" "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "services:" "path: .dockerized_norlab/configuration/.env.dna" "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "  develop: # the service name" "Set environment variable DN_ACTIVATE_POWERLINE_PROMT to false" "$dn_info_path"
-  sed -i '/.*environment:/,/- DN_ACTIVATE_POWERLINE_PROMT=false/d' "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "dn_attach" "dna [up|exec]" "$dn_info_path"
-  n2st::seek_and_modify_string_in_file "<the-running-container-name>" "bash" "$dn_info_path"
-
-  # ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  apt-get autoremove -y
-  rm -rf /var/lib/apt/lists/*
+  # ....Teardown...................................................................................
+  apt-get autoremove --assume-yes
   apt-get clean
+  rm -rf /var/lib/apt/lists/*
 
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
 
@@ -129,9 +121,5 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[N2ST error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
   dna::global_install_hack || n2st::print_msg_error_and_exit "dn_project_core.build.patch.bash exited with error!"
 fi
-
-# ====Teardown=====================================================================================
-popd >/dev/null || exit 1

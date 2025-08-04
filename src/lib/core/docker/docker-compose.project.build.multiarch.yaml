@@ -2,34 +2,40 @@
 
 services:
 
+
+  # (CRITICAL) ToDo: on task end >> CLEAN-UP ↓↓
   project-core:
     extends:
       service: project-core
       file: docker-compose.project.build.native.yaml
     build:
       platforms:
-        - "linux/arm64"
         - "linux/amd64"
+        - "linux/arm64"
 
+  # (CRITICAL) ToDo: on task end >> CLEAN-UP ↓↓
   project-develop:
     extends:
       service: project-develop
       file: docker-compose.project.build.native.yaml
     build:
+      pull: true # Use the dockerhub registry
       platforms:
-        - "linux/arm64"
         - "linux/amd64"
+        - "linux/arm64"
     depends_on:
       - project-core
 
+  # (CRITICAL) ToDo: on task end >> CLEAN-UP ↓↓
   project-deploy:
     extends:
       service: project-deploy
       file: docker-compose.project.build.native.yaml
     build:
+      pull: true # Use the dockerhub registry
       platforms:
-        - "linux/arm64"
         - "linux/amd64"
+        - "linux/arm64"
     depends_on:
       - project-core
 

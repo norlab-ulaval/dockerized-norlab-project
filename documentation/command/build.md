@@ -14,13 +14,14 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 
 ## Services
 
-| Service | Description |
-|---------|-------------|
-| `develop` | Build development images for interactive development |
-| `deploy` | Build deployment images for production environments |
-| `ci-tests` | Build images optimized for continuous integration testing |
-| `slurm` | Build images for SLURM cluster job execution |
-| `release` | Build release images (🚧 In development) |
+| Service    | Description                                                   |
+|------------|---------------------------------------------------------------|
+| `develop`  | Build development images for interactive development          |
+| `deploy`   | Build deployment images for production environments           |
+| `ci-tests` | Build images optimized for continuous integration testing     |
+| `slurm`    | Build images for SLURM cluster job execution                  |
+| `core`        | Build the core image, the base image for all other DNA images |
+| `release`  | Build release images (🚧 In development)                      |
 
 ## Options
 
@@ -54,7 +55,9 @@ dna build develop
 ```bash
 # Build for multiple architectures
 dna build --multiarch develop
-dna build --multiarch develop
+
+# Build for multiple architectures with builder recreation
+dna build --multiarch --rmab develop
 ```
 
 ### Build and Save Images

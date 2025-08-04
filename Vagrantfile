@@ -259,7 +259,7 @@ Vagrant.configure("2") do |config|
   # Ressetting
   echo -e "\nRessetting .bashrc'\n"
   rm -f /usr/local/bin/dna
-  sed -i.bak '/# >>>> dockerized-norlab-project (start)/,/# <<<< dockerized-norlab-project (end)/d' ${NON_ROOT_HOME}/.bashrc
+  sed -i.bak '/# >>>> dockerized-norlab-project app (start)/,/# <<<< dockerized-norlab-project app (end)/d' ${NON_ROOT_HOME}/.bashrc
   sed -i.bak '/# >>>> dockerized-norlab-project CUDA (start)/,/# <<<< dockerized-norlab-project CUDA (end)/d' ${NON_ROOT_HOME}/.bashrc
   sed -i.bak '/# >>>> dockerized-norlab-project DEV ressources (start)/,/# <<<< dockerized-norlab-project DEV ressources (end)/d' ${NON_ROOT_HOME}/.bashrc
 

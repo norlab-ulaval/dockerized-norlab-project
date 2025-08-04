@@ -25,6 +25,7 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   ci-tests                      Build CI tests images only
 #   slurm                         Build slurm images only
 #   release                       Build release images only
+#   core                          Build core images only
 #
 # Notes:
 #   - build all services for host native architecture by default
@@ -140,7 +141,7 @@ function dna::build_command() {
                 remaining_args+=("$@")
                 break
                 ;;
-            develop|deploy|ci-tests|slurm|release)
+            core|develop|deploy|ci-tests|slurm|release)
                 # If service is already set, it's an error
                 if [[ -n "${service}" ]]; then
                     dna::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
@@ -175,6 +176,12 @@ function dna::build_command() {
     local architecture="native"
     if [[ "${multiarch}" == true ]]; then
       architecture="multiarch"
+      # ToDo: on task (NMO-767) end >> delete next bloc ↓↓
+      if [[ "${force_push_project_core}" == false  ]]; then
+        echo
+        n2st::print_msg_warning "Be advised, multi-architecture build requires using online build at the moment i.e., 'dna build --multiarch --online-build [SERVICE]' until support for 'docker local registry' is implemented. Its comming soon, stay posted."
+        echo
+      fi
     fi
 
     if [[ "${force_push_project_core}" == true ]]; then
@@ -201,6 +208,9 @@ function dna::build_command() {
       elif [[ "${service}" == "develop" ]]; then
           header_footer_name="develop images ${architecture} build procedure"
           build_flag+=("--service-names" "project-core,project-develop")
+      elif [[ "${service}" == "core" ]]; then
+          header_footer_name="core images ${architecture} build procedure"
+          build_flag+=("--service-names" "project-core")
       else
           header_footer_name="all images ${architecture} build procedure"
       fi

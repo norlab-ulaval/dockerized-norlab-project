@@ -22,7 +22,7 @@
 # ToDo: minimal unit-test
 
 function create_local_multiarch_docker_builder() {
-  local builder_name=${1:-'local-builder-multiarch-virtual'}
+  local builder_name=${1:-"local-builder-multiarch-virtual"}
   if docker buildx inspect --bootstrap "${builder_name}" &> /dev/null; then
     echo -e "\nPruning ${builder_name} cache..."
     docker buildx prune -f --builder "${builder_name}"
@@ -36,7 +36,8 @@ function create_local_multiarch_docker_builder() {
   buildx_extra_flags+=(--driver docker-container)
   buildx_extra_flags+=(--platform "linux/amd64,linux/arm64" )
   buildx_extra_flags+=(--bootstrap)
-#  buildx_extra_flags+=( --buildkitd-flags '--allow-insecure-entitlement network.host' )
+  buildx_extra_flags+=( --buildkitd-flags '--allow-insecure-entitlement network.host' )
+#  buildx_extra_flags+=( --buildkitd-flags '--allow-insecure-entitlement network.host --oci-worker-snapshotter=containerd --containerd-worker=true' )
 #  buildx_extra_flags+=( --driver-opt="default-load=true" )
 
   echo -e "\nInstanciate new ${builder_name} builder with the following configuration:\n

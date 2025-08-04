@@ -18,16 +18,78 @@
 #
 # =================================================================================================
 set -e
-pushd "$(pwd)" >/dev/null || exit 1
 
 # (CRITICAL) ToDo: unit-test
 
-function dna::setup_dockerized_norlab_project() {
+function dna::execute_shell_requirement_script() {
+  # Note: Run shell requirement before python ones so that user have an option to update python or pip
+
+  # ....Setup......................................................................................
+  local tmp_cwd
+  tmp_cwd=$(pwd)
 
   # ....Check pre-conditions.......................................................................
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
+  # ....Begin......................................................................................
+  n2st::print_msg "Execute shell.requirements.bash script..."
+  source /shell.requirements.bash
+  local exit_code=$?
+
+  # ....Teardown...................................................................................
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
+
+  apt-get autoremove --assume-yes
+  apt-get clean
+  rm -rf /var/lib/apt/lists/*
+
+  rm -f /shell.requirements.bash
+
+  if [[ ${exit_code} -eq 0 ]]; then
+    n2st::print_msg_done "shell.requirements.bash completed successfully."
+    return 0
+  else
+    n2st::print_msg_error "shell.requirements.bash exited with error!"
+    return 1
+  fi
+}
+
+function dna::install_python_requirement() {
+  # Doc: pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
+  # Note: Run shell requirement before python ones so that user have an option to update python or pip
+
+  # ....Check pre-conditions.......................................................................
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
+  # ....Begin......................................................................................
+  n2st::print_msg "Execute pip install from python.requirements.txt file..."
+  pip3 install --verbose -r /python.requirements.txt
+  local exit_code=$?
+
+  # ....Teardown...................................................................................
+  rm -f /python.requirements.txt
+
+  if [[ ${exit_code} -eq 0 ]]; then
+    n2st::print_msg_done "pip install from python.requirements.txt completed successfully."
+    return 0
+  else
+    n2st::print_msg_error "pip install from python.requirements.txt exited with error!"
+    return 1
+  fi
+}
+
+
+function dna::setup_dockerized_norlab_project() {
+
+  # ....Setup......................................................................................
+  local tmp_cwd
+  tmp_cwd=$(pwd)
+
+  # ....Check pre-conditions.......................................................................
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
   # Check environment variables
   {
-    test -n "${DEBIAN_FRONTEND:?'Env variable need to be set and non-empty.'}" && \
     test -n "${ROS_DISTRO:?'Env variable need to be set and non-empty.'}" && \
     test -n "${TARGETPLATFORM:?'Env variable need to be set and non-empty.'}" && \
     test -n "${BUILDPLATFORM:?'Env variable need to be set and non-empty.'}" ;
@@ -39,13 +101,15 @@ function dna::setup_dockerized_norlab_project() {
     test -n "${DN_PROJECT_PATH:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_DEV_WORKSPACE:?'Env variable need to be set and non-empty.'}" && \
     test -n "${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'}" ;
-  } || n2st::print_msg_error_and_return "Failed pre-condition check!"
+    test -n "${DEBIAN_FRONTEND:?'Env variable need to be set and non-empty.'}" && \
+    [[ "${DEBIAN_FRONTEND}" == "noninteractive" ]];
+  } || n2st::print_msg_error_and_exit "Failed pre-condition check!"
 
   # Check directories exist
   {
     test -d "${DN_PROJECT_USER_HOME}" && \
     test -d "${DN_PROJECT_PATH}" ;
-  } || n2st::print_msg_error_and_return "Failed directory check!"
+  } || n2st::print_msg_error_and_exit "Failed directory check!"
 
   # ....User specific aliases......................................................................
   n2st::print_msg "Add project specific aliases..."
@@ -88,7 +152,7 @@ function dna::setup_dockerized_norlab_project() {
     test -f project-develop/dn_entrypoint.init.callback.bash && \
     test -f dn_entrypoint.global.attach.callback.bash && \
     test -f dn_entrypoint.global.init.callback.bash ;
-  } || n2st::print_msg_error_and_return "Missing super project configuration file or directory in .dockerized_norlab/configuration/"
+  } || n2st::print_msg_error_and_exit "Missing super project configuration file or directory in .dockerized_norlab/configuration/"
 
   for each_file in ./dn_entrypoint.*.bash; do
     chmod +x "${each_file}"
@@ -102,23 +166,7 @@ function dna::setup_dockerized_norlab_project() {
   # For Matplotlib default backend (QtAgg) when python script are launched from terminal
   mkdir -m 0700 -p "/tmp/runtime-root" && chown -R "${DN_PROJECT_USER}" "/tmp/runtime-root"
 
-  # ....Install requirement from file..............................................................
-  # Note: Run shell requirement before python ones so that user have an option update python or pip
-
-  n2st::print_msg "Execute shell.requirements.bash script..."
-  source /shell.requirements.bash || n2st::print_msg_error_and_return "shell.requirements.bash exited with error!"
-
-  n2st::print_msg "Execute pip install from python.requirements.txt file..."
-  # Doc: pip install flag: https://pip.pypa.io/en/stable/cli/pip_install/#options
-  pip3 install --verbose -r /python.requirements.txt || n2st::print_msg_error_and_return "pip install from python.requirements.txt exited with error!"
-
-  # ....Teardown...................................................................................
-  rm -f /shell.requirements.bash
-  rm -f /python.requirements.txt
-
-  rm -rf /var/lib/apt/lists/*
-  apt-get clean
-
+  cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
 
@@ -127,14 +175,14 @@ function dna::setup_dockerized_norlab_project() {
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-  echo -e "${dna_error_prefix} This script must be sourced!
-        i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${dna_error_prefix} This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[N2ST error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
-  dna::setup_dockerized_norlab_project || n2st::print_msg_error_and_exit "dn_project_core.setup.bash exited with error!"
+  {
+    dna::setup_dockerized_norlab_project && \
+    dna::execute_shell_requirement_script && \
+    dna::install_python_requirement;
+  } || n2st::print_msg_error_and_exit "dn_project_core.setup.bash exited with error!"
 fi
 
-# ====Teardown=====================================================================================
-popd >/dev/null || exit 1

@@ -11,8 +11,5 @@
 #
 # =================================================================================================
 
-# ....DN-project internal logic....................................................................
-source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash
-
 # ====DN-project user defined logic================================================================
 # Add your code here

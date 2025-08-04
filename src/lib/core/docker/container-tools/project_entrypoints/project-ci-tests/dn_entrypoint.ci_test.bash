@@ -35,8 +35,23 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 # (NICE TO HAVE) ToDo: refactor PYTHONPATH logic as a fct. Either in DN container-tools or in DN-project
 
 # ....Load library.................................................................................
-source /import_dockerized_norlab_container_tools.bash || exit 1
-n2st::set_which_python3_version && test -n "${PYTHON3_VERSION}" || exit 1
+
+## (CRITICAL) ToDo: validate >> deleting DN lib import ↓ (ref task NMO-770)
+#source /import_dockerized_norlab_container_tools.bash || exit 1
+
+if [[ $- == *i* ]]; then
+    if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
+      echo "Interactive shell. Sourcing DN lib is handled via .bashrc"
+    fi
+else
+    if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
+      echo "Non-interactive shell. Sourcing DN lib"
+    fi
+    source /dockerized-norlab/dockerized-norlab-images/container-tools/bash_run_config/.bashrc.dn_non_interactive
+fi
+
+
+test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
   n2st::print_msg "Execute $0"

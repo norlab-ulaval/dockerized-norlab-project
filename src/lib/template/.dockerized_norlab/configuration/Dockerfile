@@ -9,9 +9,8 @@
 # =================================================================================================
 ARG BASE_IMAGE
 ARG BASE_IMAGE_TAG
-ARG DEBIAN_FRONTEND=noninteractive
 FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS init-and-setup
-ARG DEBIAN_FRONTEND
+
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
@@ -57,7 +56,7 @@ ENV XDG_RUNTIME_DIR='/tmp/runtime-root'
 
 # ====User project custom steps====================================================================
 FROM init-and-setup AS user-project-custom-steps
-ARG DEBIAN_FRONTEND
+
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 # USER NOTES: ADD YOUR CODE IN THIS STAGE
@@ -82,7 +81,7 @@ EOF
 
 # ====DN-project final=============================================================================
 FROM user-project-custom-steps AS final
-ARG DEBIAN_FRONTEND
+
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}

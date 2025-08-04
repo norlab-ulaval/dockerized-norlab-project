@@ -32,7 +32,7 @@ function dna::job_teardown_callback() {
 
   # Note: Command 'dna run slurm' already handle stoping the container in case the slurm command
   #  `scancel` is issued.
-  exit ${exit_code:1}
+  exit ${exit_code:-1}
 }
 
 # ....Set job name.................................................................................

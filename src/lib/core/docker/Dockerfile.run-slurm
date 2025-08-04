@@ -10,7 +10,7 @@ ENV DN_PROJECT_SERVICE=project-slurm
 ENV DN_PROJECT_SERVICE_DIR=/dockerized-norlab/project/${DN_PROJECT_SERVICE}
 
 
-SHELL ["/bin/bash", "-c"]
+SHELL ["/usr/local/bin/bash-dn-buildtime", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN <<EOF

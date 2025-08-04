@@ -15,8 +15,8 @@
   && apt-get install --assume-yes --no-install-recommends \
     vim \
     tree \
-  && rm -rf /var/lib/apt/lists/* \
-  && apt-get clean ;
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* ;
 } || n2st::print_msg_error_and_exit "Failed apt-get package install!"
 # .................................................................................................
 

@@ -160,7 +160,7 @@ function dna::excute_compose() {
         # Set builder for local execution
         if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
           n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create it..."
-          bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_return "Failed to create docker buildx builder ${default_buildx_builder_name}!"
+          bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_exit "Failed to create docker buildx builder ${default_buildx_builder_name}!"
         fi
         export BUILDX_BUILDER="${default_buildx_builder_name}"
         dna_override_buildx=true

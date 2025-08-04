@@ -22,7 +22,7 @@ ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 ENV DN_PROJECT_SERVICE=project-ci-tests
 ENV DN_PROJECT_SERVICE_DIR=/dockerized-norlab/project/${DN_PROJECT_SERVICE}
 
-SHELL ["/bin/bash", "-c"]
+SHELL ["/usr/local/bin/bash-dn-buildtime", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN <<EOF

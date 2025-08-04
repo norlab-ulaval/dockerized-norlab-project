@@ -65,6 +65,7 @@ function dna::up_and_attach() {
 
   # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
   # ToDo: assess if moving to DN `dn_entrypoint.attach.bash` and `dn_entrypoint.init.bash` for all services woud be better.
+#  interactive_login=("-e" "BASH_ENV=\"\"")
   interactive_login=("-e" "BASH_ENV")
 
   # ....cli........................................................................................
@@ -341,6 +342,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   dna::up_and_attach "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
+
   exit "${fct_exit_code}"
 else
   # This script is being sourced, ie: __name__="__source__"

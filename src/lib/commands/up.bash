@@ -3,7 +3,12 @@
 
 DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 # =================================================================================================
-# Start and 'attach to' or' execute cmd in' a DNA containers.
+# Start and attach to a DNA containers (or start and execute a cmd in DNA containers).
+#
+# Container are started in daemon mode which give the option to:
+#   - start and attach to the running container in interactive mode
+#   - start and execute a command in the running container (headlesly or not)
+#   - just start the container in the background
 #
 # Usage:
 #   $ dna up [OPTIONS] [SERVICE] [-- COMMAND [ARGS...]]
