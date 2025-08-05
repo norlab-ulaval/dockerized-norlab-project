@@ -18,11 +18,9 @@
 # =================================================================================================
 set -e
 
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-
 # ====Setup========================================================================================
 if [[ ! -d "${DN_PROJECT_PATH:?'Required DN environment variable is set and not empty'}/src" ]]; then
-  echo -e "\n${dna_error_prefix} '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+  echo -e "\n\033[1;31m[DN error]\033[0m '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
   exit 1
 else
   cd "${DN_PROJECT_PATH}/src" || exit 1
@@ -37,23 +35,22 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 pyclean "${DN_PROJECT_PATH}"
 
 # ....Load library.................................................................................
+if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
+  echo -e "\033[1;33m[DN trace]\033[0m Execute dn_entrypoint.python.bash"
+fi
 
 if [[ $- == *i* ]]; then
     if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
-      echo "Interactive shell. Sourcing DN lib is handled via .bashrc"
+      echo -e "\033[1;33m[DN trace]\033[0m Interactive shell. Sourcing DN lib is handled via .bashrc"
     fi
 else
     if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
-      echo "Non-interactive shell. Sourcing DN lib"
+      echo -e "\033[1;33m[DN trace]\033[0m Non-interactive shell. Sourcing DN lib"
     fi
     source /dockerized-norlab/dockerized-norlab-images/container-tools/bash_run_config/.bashrc.dn_non_interactive
 fi
 
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${MSG_ERROR_FORMAT}[DNA error]${MSG_END_FORMAT} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-
-if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  n2st::print_msg "Execute $0"
-fi
+test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
 # ....source ROS2 environment variables............................................................
 #dn::source_ros2_underlay_only

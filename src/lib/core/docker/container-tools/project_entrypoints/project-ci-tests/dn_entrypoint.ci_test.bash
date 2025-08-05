@@ -20,11 +20,12 @@
 MSG_ERROR_FORMAT="\033[1;31m"
 MSG_DIMMED_FORMAT="\033[1;2m"
 MSG_END_FORMAT="\033[0m"
-dna_error_prefix="${MSG_ERROR_FORMAT}[DNA error]${MSG_END_FORMAT}"
+error_prefix="${MSG_ERROR_FORMAT}[DN error]${MSG_END_FORMAT}"
+
 
 # ====Setup========================================================================================
 if [[ ! -d "${DN_PROJECT_PATH:?'Required DN environment variable is set and not empty'}/src" ]]; then
-  echo -e "${dna_error_prefix} '${DN_PROJECT_PATH}/src' directory unreachable! Current working directory is '$(pwd)'" 1>&2
+  echo -e "${error_prefix} '${DN_PROJECT_PATH}/src' directory unreachable! Current working directory is '$(pwd)'" 1>&2
   exit 1
 else
   cd "${DN_PROJECT_PATH}/src" || exit 1
@@ -35,27 +36,22 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 # (NICE TO HAVE) ToDo: refactor PYTHONPATH logic as a fct. Either in DN container-tools or in DN-project
 
 # ....Load library.................................................................................
-
-## (CRITICAL) ToDo: validate >> deleting DN lib import ↓ (ref task NMO-770)
-#source /import_dockerized_norlab_container_tools.bash || exit 1
+if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
+  echo -e "\033[1;33m[DN trace]\033[0m Execute dn_entrypoint.ci_test.bash"
+fi
 
 if [[ $- == *i* ]]; then
     if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
-      echo "Interactive shell. Sourcing DN lib is handled via .bashrc"
+      echo -e "\033[1;33m[DN trace]\033[0m Interactive shell. Sourcing DN lib is handled via .bashrc"
     fi
 else
     if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
-      echo "Non-interactive shell. Sourcing DN lib"
+      echo -e "\033[1;33m[DN trace]\033[0m Non-interactive shell. Sourcing DN lib"
     fi
     source /dockerized-norlab/dockerized-norlab-images/container-tools/bash_run_config/.bashrc.dn_non_interactive
 fi
 
-
-test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
-
-if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  n2st::print_msg "Execute $0"
-fi
+test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
 # ====DN-project user defined logic================================================================
 
@@ -93,7 +89,7 @@ echo -e "${MSG_END_FORMAT}"
 
 # ====Execute tests================================================================================
 declare -a exit_codes=()
-test -d "${DN_PROJECT_SERVICE_DIR:?err}/test_jobs" || { echo -e "${dna_error_prefix} ${DN_PROJECT_SERVICE_DIR:?err}/test_jobs is unreachable" 1>&2 && exit 1; }
+test -d "${DN_PROJECT_SERVICE_DIR:?err}/test_jobs" || { echo -e "${error_prefix} ${DN_PROJECT_SERVICE_DIR:?err}/test_jobs is unreachable" 1>&2 && exit 1; }
 for each_file_path in "${DN_PROJECT_SERVICE_DIR}"/test_jobs/run_ci_tests.*.bash ; do
   n2st::print_formated_script_header "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"
   bash "${each_file_path}"

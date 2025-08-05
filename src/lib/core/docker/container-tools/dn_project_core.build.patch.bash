@@ -19,7 +19,7 @@ function dna::global_install_hack() {
   tmp_cwd=$(pwd)
 
   # ....Check pre-conditions.......................................................................
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   {
     test -n "${ROS_DISTRO:?'Env variable need to be set and non-empty.'}" && \
@@ -115,8 +115,8 @@ function dna::global_install_hack() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-  echo -e "${dna_error_prefix} This script must be sourced!
+  error_prefix="\033[1;31m[DN error]\033[0m"
+  echo -e "${error_prefix} This script must be sourced!
         i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else

@@ -377,7 +377,7 @@ elif [[ -n "${BATS_TEST_FILENAME}" ]]; then
   :
 else
   # This script is being sourced, ie: __name__="__source__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   echo -e "${dna_error_prefix} This script must be run in shell i.e.: $ bash $(basename "$0")" 1>&2
   exit 1
 fi

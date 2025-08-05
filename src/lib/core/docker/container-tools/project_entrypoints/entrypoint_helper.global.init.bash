@@ -6,9 +6,10 @@
 #
 # =================================================================================================
 
+
 function dna::show_container_dn_related_tree() {
   n2st::draw_horizontal_line_across_the_terminal_window "."
-  echo "Dev tools to check in container available directories and files"
+  echo -e "\033[1;33m[DN trace]\033[0m Dev tools to check in container available directories and files"
   echo
   tree -L 2 -a /dna-lib-container-tools
   tree -L 2 -a -I .git /dockerized-norlab
@@ -27,14 +28,14 @@ function dna::show_container_dn_related_tree() {
 
 function dna::entrypoint_helper_global_init() {
   local show_tree=false
-
   local tmp_cwd
   tmp_cwd=$(pwd)
 
-  source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash || return 1
-
-  if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == 'true' ]] && [[ "${show_tree}" == true ]]; then
-    dna::show_container_dn_related_tree
+  if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == 'true' ]]; then
+    echo -e "\033[1;33m[DN trace]\033[0m Execute entrypoint_helper.global.init.bash from ${BASH_SOURCE[1]}"
+    if [[ "${show_tree}" == true ]]; then
+      dna::show_container_dn_related_tree
+    fi
   fi
 
   # ....Sanity check.................................................................................
@@ -63,12 +64,11 @@ Trouble shooting procedure:
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-  echo -e "${dna_error_prefix} This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "\033[1;31m[DN error]\033[0m This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # This script is being sourced, ie: __name__="__source__"
   dna::entrypoint_helper_global_init || n2st::print_msg_error_and_exit "$0 script exited with error!"

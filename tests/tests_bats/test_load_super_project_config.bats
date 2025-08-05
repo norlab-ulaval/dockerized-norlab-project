@@ -143,7 +143,7 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_failure
-  assert_output --regexp "[DNA error]".*"The N2ST lib is not loaded!"
+  assert_output --regexp "[dna error]".*"The N2ST lib is not loaded!"
 }
 
 
@@ -151,7 +151,7 @@ teardown() {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_failure
-  assert_output --regexp "[DNA error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[dna error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 # ====Tests for dna::check_offline_deploy_service_discovery function==============================

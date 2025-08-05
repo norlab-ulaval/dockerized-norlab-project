@@ -348,7 +348,7 @@ function dna::check_offline_deploy_service_discovery() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+dna_error_prefix="\033[1;31m[dna error]\033[0m"
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   echo -e "${dna_error_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2

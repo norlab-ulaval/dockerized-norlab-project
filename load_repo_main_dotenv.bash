@@ -6,7 +6,7 @@
 #   $ source load_repo_main_dotenv.bash
 #
 # =================================================================================================
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+dna_error_prefix="\033[1;31m[dna error]\033[0m"
 dna_done_prefix="\033[1;32m[DNA done]\033[0m"
 
 function dna::load_repository_environment_variables() {

@@ -29,7 +29,7 @@ function dna::execute_shell_requirement_script() {
   tmp_cwd=$(pwd)
 
   # ....Check pre-conditions.......................................................................
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # ....Begin......................................................................................
   n2st::print_msg "Execute shell.requirements.bash script..."
@@ -59,7 +59,7 @@ function dna::install_python_requirement() {
   # Note: Run shell requirement before python ones so that user have an option to update python or pip
 
   # ....Check pre-conditions.......................................................................
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # ....Begin......................................................................................
   n2st::print_msg "Execute pip install from python.requirements.txt file..."
@@ -86,7 +86,7 @@ function dna::setup_dockerized_norlab_project() {
   tmp_cwd=$(pwd)
 
   # ....Check pre-conditions.......................................................................
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # Check environment variables
   {
@@ -174,8 +174,8 @@ function dna::setup_dockerized_norlab_project() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-  echo -e "${dna_error_prefix} This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
+  error_prefix="\033[1;31m[DN error]\033[0m"
+  echo -e "${error_prefix} This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"

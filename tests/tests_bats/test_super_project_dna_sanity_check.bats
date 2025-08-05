@@ -328,7 +328,7 @@ teardown_file() {
   assert_failure
 
   # Should output an error message
-  assert_output --regexp  "[DNA error].* The 'src' directory is not installed at super-project repository root.*"
+  assert_output --regexp  "[dna error].* The 'src' directory is not installed at super-project repository root.*"
 }
 
 # ....Test script business logic...................................................................

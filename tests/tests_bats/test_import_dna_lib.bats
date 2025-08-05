@@ -124,7 +124,7 @@ teardown() {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_failure
-  assert_output --regexp "[DNA error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[dna error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 

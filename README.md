@@ -29,10 +29,10 @@
 [//]: # ( ==== Description =========================================== ) 
 **The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main) image builder.**
 
-It provide a containerized workflow tailor-made for robotic research.<br>
+It provides a containerized workflow tailor-made for robotic research.<br>
 Dockerized-NorLab project application (DNA) manage Dockerized-NorLab (DN) container lifecycle<br>
 providing functionality for robotic software development, deployment, testing,<br>
-continuous integration, slurm job experimentation and release publishing. 
+continuous integration, slurm job experimentation, and release publishing. 
 
 <br>
 
@@ -226,7 +226,7 @@ Note:
 - Existing file and directories with the same name will be safeguarded with the suffix `.old`, not overriden.
 - Content of the artifact directory is persistent. It will remain available even if the container is stopped or removed. 
 
-### Create, run and stop DN container
+### Create, run, and stop DN container
 
 To spin a DN container and open a terminal in it, run the following command from anywhere in the DNA initialized repository
 ```shell

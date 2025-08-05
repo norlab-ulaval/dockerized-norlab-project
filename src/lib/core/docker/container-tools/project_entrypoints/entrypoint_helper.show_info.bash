@@ -11,7 +11,7 @@ function dna::entrypoint_helper_show_info() {
   tmp_cwd=$(pwd)
 
   # ....Check pre-conditions.......................................................................
-  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DNA error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+  test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # ....User feedback................................................................................
   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash
@@ -33,8 +33,7 @@ function dna::entrypoint_helper_show_info() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
-  echo -e "${dna_error_prefix} This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "\033[1;31m[DN error]\033[0m This script must be sourced! i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"

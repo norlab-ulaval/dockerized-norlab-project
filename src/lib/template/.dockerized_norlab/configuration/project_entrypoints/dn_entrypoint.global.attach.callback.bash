@@ -12,7 +12,7 @@
 # =================================================================================================
 
 # ....DN-project internal logic....................................................................
-source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash
+source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.common.bash || exit 1
 
 # ====DN-project user defined logic================================================================
 # Add your code here
