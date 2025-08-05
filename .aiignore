@@ -1,6 +1,38 @@
 # An .aiignore file follows the same syntax as a .gitignore file.
 # .gitignore documentation: https://git-scm.com/docs/gitignore
 
+# ....Junie Related................................................................................
+/.junie/ai_ignored/
+
+# ....A2G Related..................................................................................
+/.junie/ai_agent_guidelines/README.human.md
+/.junie/ai_agent_guidelines/template/
+/.junie/ai_agent_guidelines/recipes/
+/.junie/ai_agent_guidelines/visual/
+
+# ....Repository Related...........................................................................
+**/CHANGELOG.md
+/artifact/
+/external_data/
+
+# ....Jetbrains....................................................................................
+**/.run/
+**/.idea/
+
+# ....General File Type............................................................................
+venv/
+__pycache__/
+*.benchmarks/
+*.pytest_cache/
+.DS_Store
+
+# ....Media........................................................................................
+**/video/*.meta.json
+*.mp4
+
+# An .aiignore file follows the same syntax as a .gitignore file.
+# .gitignore documentation: https://git-scm.com/docs/gitignore
+
 # ....Junie related................................................................................
 /.junie/iceboxed_plans/
 /.junie/scratch.md
