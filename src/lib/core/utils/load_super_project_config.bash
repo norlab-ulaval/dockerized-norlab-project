@@ -121,6 +121,11 @@ function dna::load_super_project_configurations() {
   fi
 
   # ....Load super project DNA dotenv file.........................................................
+
+  # (CRITICAL) ToDo: NMO-773 fix: implement macOs GID conversion to Ubuntu GID logic
+  # On macOs, GID=20 -> 'staff' group != Ubuntu GID=20 -> 'dialout' group
+
+
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   # shellcheck disable=SC1090
