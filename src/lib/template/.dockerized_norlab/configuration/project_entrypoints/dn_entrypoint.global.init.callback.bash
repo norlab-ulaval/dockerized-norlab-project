@@ -26,3 +26,4 @@ source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.show_info.
 #dn::source_ros2_underlay_only
 #dn::source_ros2_overlay_only
 dn::source_ros2
+source /dockerized-norlab/project/project-develop/dn_expose_container_env_variables.bash

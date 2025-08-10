@@ -110,9 +110,6 @@ dna exec -- pip3 install numpy matplotlib
 ### System Administration
 
 ```bash
-# Check system status
-dna exec -- systemctl status ssh
-
 # View logs
 dna exec -- journalctl -u my_service --since "1 hour ago"
 

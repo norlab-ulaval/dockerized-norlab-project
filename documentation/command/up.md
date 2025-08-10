@@ -212,7 +212,7 @@ DNA automatically discovers available services:
 
 **Solutions**:
 1. Verify container is running: `docker ps`
-2. Check SSH service in container: `dna exec systemctl status ssh`
+2. Check SSH service in container: `dna exec service ssh status`
 3. Verify port mappings: `docker port DN_CONTAINER_NAME`
 
 ### Permission Denied

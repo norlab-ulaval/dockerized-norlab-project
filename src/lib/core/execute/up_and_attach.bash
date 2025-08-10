@@ -178,9 +178,9 @@ function dna::up_and_attach() {
       # Note: XAUTH is also hardcoded in the docker compose file
       XAUTH=/tmp/.docker.xauth
       #    touch $XAUTH
-      #    # Create the '.Xauthority' if not not using X11 forwarding remotely
+      #    # Create the '.Xauthority' if not using X11 forwarding remotely
       #    touch ~/.Xauthority
-      xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
+      xauth nlist "$DISPLAY" | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
       sudo chmod 777 $XAUTH
 
       # Note: can't pass those argument to "docker compose up" only to "docker compose run"

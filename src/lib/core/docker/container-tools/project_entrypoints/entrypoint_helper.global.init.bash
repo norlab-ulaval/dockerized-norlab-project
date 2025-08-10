@@ -55,7 +55,7 @@ Trouble shooting procedure:
 
   # ....Remove byte-compiled files that could mess with tools on context/environment change..........
   pyclean "${DN_PROJECT_PATH}"
-  # Remember the pycharm-debugger user path nightmare
+  # Remember the non-interactive-ros2 user path nightmare
 
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0

@@ -70,6 +70,7 @@ services:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+        DN_SSH_SERVER_USER: ${DN_SSH_SERVER_USER:-dna-non-interactive-ros2}
         DN_SSH_SERVER_PORT: ${DN_SSH_SERVER_PORT:-2222}
         DN_GDB_SERVER_PORT: ${DN_GDB_SERVER_PORT:-7777}
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute

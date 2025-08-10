@@ -87,15 +87,21 @@ ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 # ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
 
+COPY --from=context-dn-container-tools ./dn_project_core_finalize.bash /dn_project_core_finalize.bash
 RUN <<EOF
     source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash "${TARGETPLATFORM}" "${BUILDPLATFORM}" "${DN_DEV_WORKSPACE:?err}/src" \
       || n2st::print_msg_error_and_exit "Failed to build repository ros pkgs!"
+
+    source /dn_project_core_finalize.bash \
+      || n2st::print_msg_error_and_exit "Failed dn_project_core_finalize.bash!"
 
     # Cleanup buidl script
     rm -f /dn_project_core_init.bash
     rm -f /dna-lib-container-tools/dn_project_core.setup.bash
     rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
+    rm -f /dn_project_core_finalize.bash
 EOF
+
 CMD [ "bash" ]
 
 

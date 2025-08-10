@@ -22,6 +22,7 @@ services:
       NVIDIA_DRIVER_CAPABILITIES:
       DISPLAY: ${DN_DISPLAY:-${DISPLAY}}
       QT_X11_NO_MITSHM: 1
+      XAUTHORITY: /tmp/.docker.xauth
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
@@ -42,7 +43,7 @@ services:
     # Note: Port mapping on macosx is incompatible with network_mode: host
     network_mode: bridge
     ports:
-      - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh pycharm-debugger
+      - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh non-interactive-ros2
       - ${DN_GDB_SERVER_PORT:-7777}:${DN_GDB_SERVER_PORT:-7777} # gdbserver
       - "6006:6006" # tensorboard
       - "8888:8888" # optuna-dashboard
@@ -67,6 +68,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw
@@ -82,6 +84,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       # ....Add host volume you want to mount into the container...................................

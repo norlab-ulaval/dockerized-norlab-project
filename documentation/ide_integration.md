@@ -273,7 +273,7 @@ For projects targeting multiple architectures:
 **Solutions**:
 1. Verify container is running: `dna up`
 2. Check SSH port: `docker ps` and look for port mapping
-3. Verify SSH service in container: `dna exec systemctl status ssh`
+3. Verify SSH service in container: `dna exec service ssh status`
 
 #### Debugging: "Breakpoints not hit"
 

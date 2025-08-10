@@ -49,7 +49,7 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 - If you encounter rsync error such as the infamous `exit code 23`, check file/dir permission and group by executing `tree -aug <path/to/remote/project/dir>` and update them if needed by executing `sudo chown -R $(id -un):$(id -gn) <path/to/remote/project/dir>`. 
 
 ### Python interpreter
-- Set up a ssh remote python interpreter pointing to `<dockerized-norlab-ssh-user>@<target-host-IP>:<dockerized-norlab-container-ssh-port>` e.g.: `pycharm-debugger@192.168.0.103:2222`. Note: use `localhost` explicitly if the container is running on your local machine i.e.: `pycharm-debugger@localhost:2222`
+- Set up a ssh remote python interpreter pointing to `<dockerized-norlab-ssh-user>@<target-host-IP>:<dockerized-norlab-container-ssh-port>` e.g.: `non-interactive-ros2@192.168.0.103:2222`. Note: use `localhost` explicitly if the container is running on your local machine i.e.: `non-interactive-ros2@localhost:2222`
 - Remote python interpreter, i.e. `<user-name>@<remote-ip-adress>:2222`:
   - ⚠️ Uncheck `Execute code with root privileges` otherwise experimental data writen to disk will be owned by `root` instead of `PLACEHOLDER_SUPER_PROJECT_USER`
   - ⚠️ Uncheck `Automatically upload project files`. The project is mounted as a docker volume for develop images and is copied at build stage for deploy images.

@@ -200,6 +200,7 @@ function dna::build_services() {
         #          then merge as in DN l4t base images
         dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core
         project_core_build_exit_code=$?
+        n2st::print_msg_done "project-core built and pushed sucessfully."
       fi
     done
 
@@ -211,6 +212,7 @@ function dna::build_services() {
         n2st::print_msg "Building ${each}"
         dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
         build_exit_code+=("$?")
+        n2st::print_msg_done "${each} built sucessfully."
       else
         build_exit_code+=("$project_core_build_exit_code")
       fi

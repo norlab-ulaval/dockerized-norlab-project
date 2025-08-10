@@ -31,7 +31,7 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 # (NICE TO HAVE) ToDo: refactor PYTHONPATH logic as a fct. Either in DN container-tools or in DN-project
 
 # Remove byte-compiled files that can mess with tools on context/environment change (Remember the
-# pycharm-debugger user path nightmare)
+# non-interactive-ros2 user path nightmare)
 pyclean "${DN_PROJECT_PATH}"
 
 # ....Load library.................................................................................
