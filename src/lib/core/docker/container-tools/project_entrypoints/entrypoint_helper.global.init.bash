@@ -38,7 +38,7 @@ function dna::entrypoint_helper_global_init() {
   tmp_cwd=$(pwd)
 
   if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == 'true' ]]; then
-    echo -e "\033[1;33m[DN trace]\033[0m Execute entrypoint_helper.global.init.bash from ${BASH_SOURCE[1]}"
+    echo -e "\033[1;33m[DN trace]\033[0m Execute $(basename "${BASH_SOURCE[1]}") -> entrypoint_helper.global.init.bash"
     if [[ "${show_tree}" == true ]]; then
       dna::show_container_dn_related_tree
     fi

@@ -21,7 +21,7 @@ function _show_debug_info() {
 
 # ....Debug logic..................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  echo -e "\033[1;33m[DN trace]\033[0m Execute entrypoint_helper.global.common.bash from ${BASH_SOURCE[1]}"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute $(basename "${BASH_SOURCE[1]}") -> entrypoint_helper.global.common.bash"
   if [[ "${DN_SHOW_DEBUG_INFO}" == true ]]; then
     _show_debug_info "script entrypoint_helper.global.common.bash"
   fi
