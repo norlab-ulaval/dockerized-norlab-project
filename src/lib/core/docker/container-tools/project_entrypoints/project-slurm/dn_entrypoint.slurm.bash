@@ -52,7 +52,7 @@ fi
 
 test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
-# ====DN-project user defined logic================================================================
+# ====DNA-project user defined logic===============================================================
 
 # ....Execute DN-project user callback.............................................................
 # Sanity check

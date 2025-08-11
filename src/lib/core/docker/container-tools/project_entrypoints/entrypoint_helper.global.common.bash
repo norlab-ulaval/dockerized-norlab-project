@@ -9,9 +9,6 @@
 #   Read/write all environment variable exposed in DN at runtime
 #
 # =================================================================================================
-#set -e
-
-#DN_SHOW_DEBUG_INFO=false # (CRITICAL) ToDo: on task end >> mute this line ←
 
 function _show_debug_info() {
   local caller="$1"
@@ -22,20 +19,18 @@ function _show_debug_info() {
   \033[0m"
 }
 
-# ....Sanity check.................................................................................
-test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
-test -n "$( declare -f dn::source_ros2 )" || { echo -e "\033[1;31m[DN error]\033[0m The DN lib is not loaded!" 1>&2 && exit 1; }
-
 # ....Debug logic..................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
   echo -e "\033[1;33m[DN trace]\033[0m Execute entrypoint_helper.global.common.bash from ${BASH_SOURCE[1]}"
   if [[ "${DN_SHOW_DEBUG_INFO}" == true ]]; then
-    _show_debug_info "script entrypoint_helper.common.bash"
+    _show_debug_info "script entrypoint_helper.global.common.bash"
   fi
 fi
 
+# ....DNA-project internal logic...................................................................
+source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash || exit 1
+
 # ....ROS2 logic...................................................................................
-# ToDo: assess refactoring out to a dedicated 'entrypoint_helper.ros2.bash' ⬇︎
 if [[ -n "${ROS_DISTRO}" ]]; then
   # Should be executed before using ROS2
   pkg_list=$(dn::source_ros2 && ros2 pkg list 2>/dev/null) || pkg_list=""

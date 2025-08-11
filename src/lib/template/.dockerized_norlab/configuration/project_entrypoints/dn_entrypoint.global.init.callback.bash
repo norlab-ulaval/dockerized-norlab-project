@@ -12,19 +12,17 @@
 #
 # =================================================================================================
 
-# ....DN-project internal logic....................................................................
+# ....DNA-project internal logic...................................................................
 source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.common.bash || exit 1
 source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.init.bash || exit 1
 
-# ====DN-project user defined logic================================================================
+# ====DNA-project user defined logic===============================================================
 # Add your code here
 
-# Optional
+# ....DNA-project optional logic...................................................................
 source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.show_info.bash || exit 1
 
 # ....Examples: source ROS2 environment variables..................................................
 #dn::source_ros2_underlay_only
 #dn::source_ros2_overlay_only
 dn::source_ros2
-n2st::print_msg "Sourcing dn_expose_container_env_variables.bash silently..."
-source /dockerized-norlab/project/project-develop/dn_expose_container_env_variables.bash >/dev/null

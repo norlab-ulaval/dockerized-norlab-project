@@ -11,10 +11,10 @@
 #
 # =================================================================================================
 
-# ....DN-project internal logic....................................................................
+# ....DNA-project internal logic...................................................................
 source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.common.bash || exit 1
 
-# ====DN-project user defined logic================================================================
+# ====DNA-project user defined logic===============================================================
 # Add your code here
 
 # ....Examples: source ROS2 environment variables..................................................

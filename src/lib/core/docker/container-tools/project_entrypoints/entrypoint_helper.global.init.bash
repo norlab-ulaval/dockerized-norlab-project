@@ -4,6 +4,12 @@
 # This script aggregate global init entrypoint logic so that entrypoint callback script
 # dn_entrypoint.global.init.callback.bash be less verbose for user.
 #
+# Helper script should be called in that order in dn_entrypoint.global.init.callback.bash:
+#
+#  # ....DNA-project internal logic................................................................
+#  source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.common.bash || exit 1
+#  source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.init.bash || exit 1
+#
 # =================================================================================================
 
 
