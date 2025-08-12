@@ -11,7 +11,7 @@
 # Global:
 #   read DNA_ROOT
 #   read N2ST_PATH
-#   read DN_SHOW_DEBUG_INFO
+#   read DNA_DEBUG
 #
 # =================================================================================================
 pushd "$(pwd)" >/dev/null || exit 1
@@ -33,8 +33,8 @@ function dna::setup_mock() {
     "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" \
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
 
-  if [[ ${DN_SHOW_DEBUG_INFO} == true ]]; then
-    cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock"
+  if [[ ${DNA_DEBUG} == true ]]; then
+    cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" || exit 1
     #git status
     dna project dotenv
     cd - || exit 1

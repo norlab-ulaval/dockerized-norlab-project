@@ -43,9 +43,9 @@ else
   _target_path="$(dirname "${_script_path}")"
 fi
 
-if [[ ${TEAMCITY_VERSION} ]] && [[ %vcsroot.url% == "https://github.com/norlab-ulaval/dockerized-norlab-project" ]]; then
-  dna_core=%system.teamcity.build.checkoutDir%/lib/core
-  echo -e "\033[1;33m[dna warning]\033[0m This is a DNA TC run, switching DNA to checkout directory $(%system.teamcity.build.checkoutDir%) instead of $(dirname "${_target_path}")"
+if [[ ${TEAMCITY_VERSION} ]] && [[ %env.vcsroot.url% == "https://github.com/norlab-ulaval/dockerized-norlab-project" ]]; then
+  dna_core=%env.system.teamcity.build.checkoutDir%/lib/core
+  echo -e "\033[1;33m[dna warning]\033[0m This is a DNA TC run, switching DNA to checkout directory $(%env.system.teamcity.build.checkoutDir%) instead of $(dirname "${_target_path}")"
 else
   dna_core="$(dirname "${_target_path}")/lib/core"
 fi
