@@ -83,8 +83,8 @@ function dna::build_services_multiarch() {
       exit
       ;;
     --) # no more option
-      shift
-      remaining_args=( -- "$@")
+      # Note: Need to pass '--' to build.all.bash so do not 'shift'
+      remaining_args=("$@")
       break
       ;;
     *) # Default case
