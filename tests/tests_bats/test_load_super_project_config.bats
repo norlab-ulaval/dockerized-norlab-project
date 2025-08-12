@@ -134,7 +134,7 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success
-  assert_output --regexp "[DNA done]".*"dockerized-norlab-project-mock project configurations loaded"
+  assert_output --regexp "[dna done]".*"dockerized-norlab-project-mock project configurations loaded"
 }
 
 

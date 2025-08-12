@@ -135,7 +135,7 @@ done
 
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
-echo -e "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
+echo -e "[dna done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 
   cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'

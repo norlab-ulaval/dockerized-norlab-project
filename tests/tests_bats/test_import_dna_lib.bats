@@ -117,7 +117,7 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success
-  assert_output --regexp "[DNA done]".*"librairies loaded"
+  assert_output --regexp "[dna done]".*"librairies loaded"
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {

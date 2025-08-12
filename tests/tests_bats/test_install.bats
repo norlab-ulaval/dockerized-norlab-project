@@ -145,7 +145,7 @@ for func in $(compgen -A function | grep -e dna::); do
 done
 
 # Print a message to indicate that the mock ui.bash has been loaded
-echo "[DNA done] Mock ui.bash loaded"
+echo "[dna done] Mock ui.bash loaded"
 EOF
 
   # Create a mock setup_host_dna_requirements.bash
