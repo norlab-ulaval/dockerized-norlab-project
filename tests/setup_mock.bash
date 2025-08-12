@@ -11,6 +11,7 @@
 # Global:
 #   read DNA_ROOT
 #   read N2ST_PATH
+#   read DN_SHOW_DEBUG_INFO
 #
 # =================================================================================================
 pushd "$(pwd)" >/dev/null || exit 1
@@ -32,10 +33,15 @@ function dna::setup_mock() {
     "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" \
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
 
-  cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock"
-  #git status
-  dna project dotenv
-  cd - || exit 1
+  if [[ ${DN_SHOW_DEBUG_INFO} == true ]]; then
+    cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock"
+    #git status
+    dna project dotenv
+    cd - || exit 1
+    echo
+    printenv | grep -e PATH -e PYTHONPATH
+    echo
+  fi
 
   # ....Sanity check...............................................................................
   test -d "${DNA_ROOT}/utilities/tmp" || n2st::print_msg_error_and_exit "The directory ${DNA_ROOT}/utilities/tmp is unreachable"
