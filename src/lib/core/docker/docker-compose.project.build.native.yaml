@@ -65,7 +65,7 @@ services:
         context-dn-root: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}
         context-dn-submodules: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:utilities/
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
-      pull: false # Use the local image store to execute the FROM directive
+      # pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
@@ -86,7 +86,7 @@ services:
         context-dn-root: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}
         context-dn-submodules: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:utilities/
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
-      pull: false # Use the local image store to execute the FROM directive
+      # pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
@@ -106,7 +106,7 @@ services:
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
         context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
-      pull: false # Use the local image store to execute the FROM directive
+      # pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
@@ -131,7 +131,7 @@ services:
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
         context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
-      pull: false # Use the local image store to execute the FROM directive
+      # pull: false # Use the local image store to execute the FROM directive
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
