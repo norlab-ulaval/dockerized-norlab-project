@@ -30,17 +30,17 @@
 # Returns:
 #   0 on success, 1 on error
 # =================================================================================================
-MSG_DIMMED_FORMAT_TEAMCITY="|[1;2m"
-MSG_BASE_FORMAT_TEAMCITY="|[1m"
-MSG_ERROR_FORMAT_TEAMCITY="|[1;31m"
-MSG_WARNING_FORMAT_TEAMCITY="|[1;33m"
-#MSG_STEP_FORMAT_TEAMCITY="|[1;104m"
-MSG_STEP_FORMAT_TEAMCITY="|[30;107m"
-MSG_END_FORMAT_TEAMCITY="|[0m"
+MSG_EMPH_FORMAT="\033[1;97m"
+MSG_DIMMED_FORMAT="\033[1;2m"
+MSG_BASE_FORMAT="\033[1m"
+MSG_ERROR_FORMAT="\033[1;31m"
+MSG_DONE_FORMAT="\033[1;32m"
+MSG_WARNING_FORMAT="\033[1;33m"
+MSG_END_FORMAT="\033[0m"
 
-dna_base_prefix="${MSG_BASE_FORMAT_TEAMCITY}|[dna|]${MSG_END_FORMAT_TEAMCITY}"
-dna_error_prefix="${MSG_ERROR_FORMAT_TEAMCITY}|[dna error|]${MSG_END_FORMAT_TEAMCITY}"
-dna_done_prefix="${MSG_STEP_FORMAT_TEAMCITY}|[dna done|]${MSG_END_FORMAT_TEAMCITY}"
+dna_base_prefix="${MSG_BASE_FORMAT}[dna]${MSG_END_FORMAT}"
+dna_error_prefix="${MSG_ERROR_FORMAT}[dna error]${MSG_END_FORMAT}"
+dna_done_prefix="${MSG_DONE_FORMAT}[dna done]${MSG_END_FORMAT}"
 
 function dna::teamcity_dna_path_override() {
   # ....Setup......................................................................................
