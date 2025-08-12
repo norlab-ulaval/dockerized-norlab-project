@@ -33,8 +33,9 @@ function dna::setup_mock() {
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
 
   cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock"
-  git status
-  cd -
+  #git status
+  dna project dotenv
+  cd - || exit 1
 
   # ....Sanity check...............................................................................
   test -d "${DNA_ROOT}/utilities/tmp" || n2st::print_msg_error_and_exit "The directory ${DNA_ROOT}/utilities/tmp is unreachable"
