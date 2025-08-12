@@ -74,7 +74,7 @@ function dna::run_slurm_teardown_callback() {
   popd >/dev/null || { echo "Return to original dir error" 1>&2 && exit 1; }
   # Note: Keep the pushd/popd logic for now
 
-  return ${exit_code:1}
+  return ${exit_code:-1}
 }
 
 function dna::run_slurm() {

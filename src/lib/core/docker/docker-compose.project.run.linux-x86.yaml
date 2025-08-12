@@ -33,7 +33,8 @@ services:
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
     container_name: ${DN_CONTAINER_NAME:?err}
     environment:
-      DN_HOST: 'linux/x86'
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # DN_HOST: 'linux/x86'
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-true}

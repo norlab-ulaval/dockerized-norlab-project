@@ -184,9 +184,16 @@ function dna::project_validate_slurm() {
   for each_slurm_job in "${slurm_job_file_name[@]}" ; do
     n2st::print_formated_script_header "$each_slurm_job" "${MSG_LINE_CHAR_BUILDER_LVL2}"
     bash "${each_slurm_job}" "${slurm_job_flags[@]}"
-    slurm_job_dryrun_exit_code+=("$?")
+    _SLURM_JOB_EXIT_CODE=$?
+    slurm_job_dryrun_exit_code+=("${_SLURM_JOB_EXIT_CODE}")
+    if [[ ${_SLURM_JOB_EXIT_CODE} != 0 ]]; then
+      n2st::print_msg_error "Slurm job ${each_slurm_job} completed with error! 👎"
+    else
+      n2st::print_msg_done "Slurm job ${each_slurm_job} completed successfully 👍"
+    fi
     n2st::print_formated_script_footer "$each_slurm_job" "${MSG_LINE_CHAR_BUILDER_LVL2}"
   done
+  unset _SLURM_JOB_EXIT_CODE
 
   popd >/dev/null || exit 1
   n2st::print_msg "Completed slurm job dry-run tests"

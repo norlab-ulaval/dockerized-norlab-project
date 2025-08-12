@@ -56,6 +56,41 @@ ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
 RUN test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
 
+RUN <<EOF
+    # ....Buildtime debug................................................................................
+    MSG_WARNING_FORMAT="\033[1;33m"
+    MSG_END_FORMAT="\033[0m"
+    echo -e "${MSG_WARNING_FORMAT}[DN runtime debug]${MSG_END_FORMAT} Check container DN env var..."
+    echo
+    printenv | grep -e DN_ -e DNA_ -e PATH -e PYTHONPATH
+    echo
+    echo -e "${MSG_WARNING_FORMAT}[DN runtime debug]${MSG_END_FORMAT} Check container available files..."
+    echo
+    tree -aguL 3 /dna-lib-container-tools
+    echo
+    tree -aguL 3 /project_entrypoints
+    echo
+    tree -aguL 1  -I .git /
+    echo
+    tree -aguL 1  -I .git "${DN_PATH}"
+    echo
+    tree -aguL 1  -I .git "$HOME"
+    echo
+    tree -aguL 3 -I .git -I utilities /dockerized-norlab/
+    echo
+    echo -e "${MSG_WARNING_FORMAT}[DN runtime debug]${MSG_END_FORMAT} Users configuration sanity check..."
+    echo
+    echo "whoami: $(whoami)"
+    echo "id ${DN_PROJECT_USER}: $(id "${DN_PROJECT_USER}")"
+    echo "DN_CONTAINER_TOOLS_LOADED: ${DN_CONTAINER_TOOLS_LOADED}"
+    echo "DEBIAN_FRONTEND: ${DEBIAN_FRONTEND}"
+    echo
+    echo -e "${MSG_WARNING_FORMAT}[DN runtime debug]${MSG_END_FORMAT} Check users setup..."
+    echo "getent passwd root: $(getent passwd root)"
+    echo "getent passwd ${DN_SSH_SERVER_USER}: $(getent passwd "${DN_SSH_SERVER_USER}")"
+    echo
+EOF
+
 ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.slurm.bash" ]
 CMD [ "-c","print('>>>Hello-slurm')" ]
 
