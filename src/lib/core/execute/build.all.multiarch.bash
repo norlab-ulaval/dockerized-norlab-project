@@ -84,7 +84,7 @@ function dna::build_services_multiarch() {
       ;;
     --) # no more option
       shift
-      remaining_args=("$@")
+      remaining_args=( -- "$@")
       break
       ;;
     *) # Default case
