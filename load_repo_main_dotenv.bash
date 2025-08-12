@@ -87,7 +87,7 @@ function dna::load_repository_environment_variables() {
   # ....Teardown...................................................................................
   if [[ "${DNA_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
     export DNA_DEBUG=true
-    echo -e "${dna_error_prefix} .env.dockerized-norlab-project loaded"
+    echo -e "${dna_done_prefix} .env.dockerized-norlab-project loaded"
     # Debug flags
     set -v # echo lines as they are read
     export BUILDKIT_PROGRESS=plain
@@ -100,7 +100,7 @@ function dna::load_repository_environment_variables() {
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
-  echo -e "${dna_done_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
+  echo -e "${dna_error_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
   exit 1
 else
   # This script is being sourced, ie: __name__="__source__"

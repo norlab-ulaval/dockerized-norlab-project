@@ -30,6 +30,7 @@
 # Returns:
 #   0 on success, 1 on error
 # =================================================================================================
+dna_base_prefix="\033[1m[dna]\033[0m"
 dna_error_prefix="\033[1;31m[dna error]\033[0m"
 dna_done_prefix="\033[1;32m[dna done]\033[0m"
 
@@ -41,9 +42,11 @@ function dna::teamcity_dna_path_override() {
   local dna_install_dir
   local dna_bin_dir
   local dna_entrypoint
-  local exit_code
+  declare -i exit_code
 
   # ....Begin......................................................................................
+  echo -e "\n${dna_base_prefix} dna::teamcity_dna_path_override path update..."
+
   # Determine the installation directory
   dna_install_dir="$( git rev-parse --show-toplevel )"
   dna_bin_dir="${dna_install_dir}/src/bin"
@@ -54,24 +57,24 @@ function dna::teamcity_dna_path_override() {
   exit_code=$?
 
   # export dna entrypoint path
-  export PATH="${dna_bin_dir}:$PATH"
-  (( exit_code += $? ))
+  PATH="${dna_bin_dir}:${PATH}"
+  export PATH
+  exit_code+=$?
 
   # ....Sanity check...............................................................................
-  echo -e "\n[dna] dna::teamcity_dna_path_override Sanity check...\n"
-  dna version --all
+  echo -e "\n${dna_base_prefix} path updated to PATH: ${PATH}\n"
 
-  echo -e "\n[dna] dna::teamcity_dna_path_override path update..."
-  echo -e"      PATH: ${PATH}\n"
+  echo -e "\n${dna_base_prefix} sanity check...\n"
+  dna version --all
 
   # ....Teardown...................................................................................
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
 
   if [[ ${exit_code} -eq 0 ]]; then
-    echo -e "${dna_error_prefix} dna::teamcity_dna_path_override completed successfully."
+    echo -e "${dna_done_prefix} dna::teamcity_dna_path_override completed successfully."
     return 0
   else
-    echo -e "${dna_done_prefix} dna::teamcity_dna_path_override exited with error!"
+    echo -e "${dna_error_prefix} dna::teamcity_dna_path_override exited with error!"
     return 1
   fi
 }

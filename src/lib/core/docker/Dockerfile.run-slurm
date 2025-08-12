@@ -19,6 +19,10 @@ RUN <<EOF
         test $(whoami) == "root" &&  \
         test -n ${DN_PROJECT_USER:?'Env variable need to be set and non-empty.'} && \
         test -d /home/${DN_PROJECT_USER} && \
+        test -n ${DN_PROJECT_UID:?'Env variable need to be set and non-empty.'} && \
+        test -n ${DN_PROJECT_GID:?'Env variable need to be set and non-empty.'} && \
+        test -n ${DN_PROJECT_PATH:?'Env variable need to be set and non-empty.'} && \
+        test -n ${DN_PROJECT_SERVICE_DIR:?'Env variable need to be set and non-empty.'} && \
         test -n ${DN_PROJECT_GIT_NAME:?'Env variable need to be set and non-empty.'} && \
         test -n ${DN_PROJECT_GIT_DOMAIN:?'Env variable need to be set and non-empty.'} ;
     } || exit 1
@@ -56,7 +60,18 @@ ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
 
 RUN <<EOF
-    test -x ${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash || exit 1
+    test -x "${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.slurm.bash" || exit 1
+
+    n2st::print_msg "Check project files ownership..."
+    incorrect_files=$(find ${DN_PROJECT_PATH} ! -user "${DN_PROJECT_UID}" -o ! -group "${DN_PROJECT_GID}" | wc -l)
+    if [[ ${incorrect_files} -gt 0 ]]; then
+        n2st::print_msg_error "${DN_PROJECT_PATH} failed ownership test!"
+        echo "Found ${incorrect_files} files with incorrect ownership in ${DN_PROJECT_PATH}"
+        find ${DN_PROJECT_PATH} ! -user "${DN_PROJECT_UID}" -o ! -group "${DN_PROJECT_GID}" -ls
+        exit 1
+    else
+      n2st::print_msg_done "All files in ${DN_PROJECT_PATH} have correct ownership (${DN_PROJECT_UID}:${DN_PROJECT_GID})"
+    fi
 
     # ....Buildtime debug..........................................................................
     #DN_SHOW_DEBUG_INFO=true
