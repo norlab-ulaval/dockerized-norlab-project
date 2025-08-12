@@ -44,6 +44,10 @@ function dna::entrypoint_helper_global_init() {
     fi
   fi
 
+  # ....Runtime debug..............................................................................
+  #DN_SHOW_DEBUG_INFO=true
+  source /dna-lib-container-tools/dn_sanity_checks.bash && dna::user_and_dir_content_sanity_check "runtime"
+
   # ....Sanity check.................................................................................
   if [[ "${DN_PROJECT_USER}" != "$(whoami)" ]]; then
     n2st::print_msg_error "Container login as user $(whoami) does not match project expected user DN_PROJECT_USER=${DN_PROJECT_USER}!\n
@@ -59,10 +63,11 @@ Trouble shooting procedure:
 
   test -n "$(pgrep -x 'sshd')" || n2st::print_msg_warning "Be advised, ssh daemon is not running!\n" 1>&2
 
-  # ....Remove byte-compiled files that could mess with tools on context/environment change..........
+  # ....Remove byte-compiled files that could mess with tools on context/environment change........
   pyclean "${DN_PROJECT_PATH}"
   # Remember the non-interactive-ros2 user path nightmare
 
+  # ....Teardown...................................................................................
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
 }
