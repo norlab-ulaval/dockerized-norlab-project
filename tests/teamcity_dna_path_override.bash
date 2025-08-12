@@ -30,9 +30,17 @@
 # Returns:
 #   0 on success, 1 on error
 # =================================================================================================
-dna_base_prefix="\033[1m[dna]\033[0m"
-dna_error_prefix="\033[1;31m[dna error]\033[0m"
-dna_done_prefix="\033[1;32m[dna done]\033[0m"
+MSG_DIMMED_FORMAT_TEAMCITY="|[1;2m"
+MSG_BASE_FORMAT_TEAMCITY="|[1m"
+MSG_ERROR_FORMAT_TEAMCITY="|[1;31m"
+MSG_WARNING_FORMAT_TEAMCITY="|[1;33m"
+#MSG_STEP_FORMAT_TEAMCITY="|[1;104m"
+MSG_STEP_FORMAT_TEAMCITY="|[30;107m"
+MSG_END_FORMAT_TEAMCITY="|[0m"
+
+dna_base_prefix="${MSG_BASE_FORMAT_TEAMCITY}|[dna|]${MSG_END_FORMAT_TEAMCITY}"
+dna_error_prefix="${MSG_ERROR_FORMAT_TEAMCITY}|[dna error|]${MSG_END_FORMAT_TEAMCITY}"
+dna_done_prefix="${MSG_STEP_FORMAT_TEAMCITY}|[dna done|]${MSG_END_FORMAT_TEAMCITY}"
 
 function dna::teamcity_dna_path_override() {
   # ....Setup......................................................................................
@@ -45,7 +53,8 @@ function dna::teamcity_dna_path_override() {
   declare -i exit_code
 
   # ....Begin......................................................................................
-  echo -e "\n${dna_base_prefix} dna::teamcity_dna_path_override path update..."
+  echo
+  echo -e "${dna_base_prefix} dna::teamcity_dna_path_override path update..."
 
   # Determine the installation directory
   dna_install_dir="$( git rev-parse --show-toplevel )"
@@ -59,17 +68,26 @@ function dna::teamcity_dna_path_override() {
   # export dna entrypoint path
   PATH="${dna_bin_dir}:${PATH}"
 
-#  export PATH
-#  exit_code+=$?
-
   # shellcheck disable=SC2028
   echo "##teamcity[setParameter name='env.PATH' value='${PATH}']"
 
   # ....Sanity check...............................................................................
-  echo -e "\n${dna_base_prefix} path updated to PATH: ${PATH}\n"
+  echo -e "\n${dna_base_prefix} TeamCity path update sanity check..."
+  case ":$PATH:" in
+    *":${dna_bin_dir}:"*)
+        echo -e "${dna_base_prefix} DNA path is reachable in TC environment variables"
+        ;;
+    *)
+        echo -e "${dna_error_prefix} DNA path is NOT reachable in TC environment variables"
+        exit_code+=1
+        ;;
+  esac
+  echo -e "${dna_base_prefix} path updated to PATH: ${PATH}"
 
-  echo -e "\n${dna_base_prefix} sanity check...\n"
+  echo -e "\n${dna_base_prefix} DNA sanity check...\n"
   dna version --all
+  exit_code+=$?
+  echo
 
   # ....Teardown...................................................................................
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
