@@ -58,8 +58,12 @@ function dna::teamcity_dna_path_override() {
 
   # export dna entrypoint path
   PATH="${dna_bin_dir}:${PATH}"
-  export PATH
-  exit_code+=$?
+
+#  export PATH
+#  exit_code+=$?
+
+  # shellcheck disable=SC2028
+  echo "##teamcity[setParameter name='env.PATH' value='${PATH}']"
 
   # ....Sanity check...............................................................................
   echo -e "\n${dna_base_prefix} path updated to PATH: ${PATH}\n"
