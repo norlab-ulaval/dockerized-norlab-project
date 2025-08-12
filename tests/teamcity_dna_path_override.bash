@@ -50,7 +50,7 @@ function dna::teamcity_dna_path_override() {
   dna_entrypoint="${dna_bin_dir}/dna"
 
   # Make the dna script executable
-  sudo chmod +x "${dna_entrypoint}"
+  chmod +x "${dna_entrypoint}"
   exit_code=$?
 
   # export dna entrypoint path
