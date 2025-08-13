@@ -66,14 +66,14 @@ function dna::teamcity_dna_path_override() {
   exit_code=$?
 
   # export dna entrypoint path
-  PATH="${dna_bin_dir}:${PATH}"
+  local path_dna_prepend="${dna_bin_dir}:${PATH}"
 
   # shellcheck disable=SC2028
-  echo "##teamcity[setParameter name='env.PATH' value='${PATH}']"
+  echo "##teamcity[setParameter name='env.PATH' value='${path_dna_prepend}']"
 
   # ....Sanity check...............................................................................
   echo -e "\n${dna_base_prefix} TeamCity path update sanity check..."
-  case ":$PATH:" in
+  case ":$path_dna_prepend:" in
     *":${dna_bin_dir}:"*)
         echo -e "${dna_base_prefix} DNA path is reachable in TC environment variables"
         ;;

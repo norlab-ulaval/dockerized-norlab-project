@@ -53,6 +53,11 @@ function dna::version_command() {
     local current_branch
     current_branch=$(cd "${DNA_ROOT:?err}" && git branch --show-current 2>/dev/null || echo "unknown")
 
+    if [[ ${TEAMCITY_VERSION} ]] && [[ -z ${current_branch} ]]; then
+      # Fetch TeamCity build branch environment variable
+      current_branch=%teamcity.build.branch%
+    fi
+
     local current_commit
     current_commit=$(cd "${DNA_ROOT}" && git rev-parse HEAD 2>/dev/null || echo "unknown")
 

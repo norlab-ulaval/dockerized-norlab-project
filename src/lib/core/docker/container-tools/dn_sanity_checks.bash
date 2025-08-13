@@ -46,7 +46,7 @@ function dna::user_and_dir_content_sanity_check() {
     echo
     echo "whoami: $(whoami)"
     echo "id ${DN_PROJECT_USER}: $(id "${DN_PROJECT_USER}")"
-    if [[ -n ${DN_SSH_SERVER_USER}  ]]; then
+    if [[ -n "$(getent passwd "${DN_SSH_SERVER_USER}")" ]]; then
       echo "id ${DN_SSH_SERVER_USER}: $(id "${DN_SSH_SERVER_USER}")"
       echo "DN_SSH_SERVER_USER: ${DN_SSH_SERVER_USER}"
     else
@@ -58,7 +58,7 @@ function dna::user_and_dir_content_sanity_check() {
     echo -e "${MSG_WARNING_FORMAT}[DN ${executed_at} debug]${MSG_END_FORMAT} Check users setup..."
     echo "getent passwd root: $(getent passwd root)"
     echo "getent passwd ${DN_PROJECT_USER}: $(getent passwd "${DN_PROJECT_USER}")"
-    if [[ -n ${DN_SSH_SERVER_USER}  ]]; then
+    if [[ -n "$(getent passwd "${DN_SSH_SERVER_USER}")" ]]; then
       echo "getent passwd ${DN_SSH_SERVER_USER}: $(getent passwd "${DN_SSH_SERVER_USER}")"
     fi
     echo
