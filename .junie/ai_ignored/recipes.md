@@ -1,6 +1,16 @@
 # Prompt Instruction Recipes
 
-Is AI ignore
+Is AI ignored
+
+```markdown
+# First time Junie run 
+Study the guidelines at `.junie/guidelines.md` thoroughly.
+Provide a comprehensive summary of all guidelines studied.
+
+# Evaluate codebase
+Given your study of the guidelines at `.junie/guidelines.md`, analyse the super project and make recommendations if relevant.   
+```
+
 
 ## General
 

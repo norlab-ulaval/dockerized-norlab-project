@@ -81,5 +81,6 @@ RUN <<EOF
     ./dn_entrypoint.ci_test.bash
 EOF
 
+# (CRITICAL) ToDo: update with a runtime version DN lib load shell wrapper
 SHELL ["/bin/bash", "-c"]
 ENTRYPOINT [ ]

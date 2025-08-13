@@ -81,5 +81,6 @@ RUN <<EOF
     source /dna-lib-container-tools/dn_sanity_checks.bash && dna::user_and_dir_content_sanity_check "buildtime"
 EOF
 
+# (CRITICAL) ToDo: update with a runtime version DN lib load shell wrapper
 SHELL ["/bin/bash", "-c"]
 ENTRYPOINT [ "./dn_entrypoint.ci_test.bash" ]
