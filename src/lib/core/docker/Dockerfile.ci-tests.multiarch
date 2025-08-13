@@ -63,7 +63,6 @@ ARG TARGETARCH
 ARG BUILDPLATFORM
 
 USER ${DN_PROJECT_USER:?err}
-SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DNA_PYTEST_CI_RUN=true
 
@@ -82,4 +81,5 @@ RUN <<EOF
     ./dn_entrypoint.ci_test.bash
 EOF
 
+SHELL ["/bin/bash", "-c"]
 ENTRYPOINT [ ]

@@ -55,7 +55,7 @@ function dna::version_command() {
 
     if [[ ${TEAMCITY_VERSION} ]] && [[ -z ${current_branch} ]]; then
       # Fetch TeamCity build branch environment variable
-      current_branch=%teamcity.build.branch%
+      current_branch="Probaly TC PR branch"
     fi
 
     local current_commit

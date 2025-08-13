@@ -65,7 +65,6 @@ ARG TARGETARCH
 ARG BUILDPLATFORM
 
 USER ${DN_PROJECT_USER:?err}
-SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DNA_PYTEST_CI_RUN=true
 
@@ -82,4 +81,5 @@ RUN <<EOF
     source /dna-lib-container-tools/dn_sanity_checks.bash && dna::user_and_dir_content_sanity_check "buildtime"
 EOF
 
+SHELL ["/bin/bash", "-c"]
 ENTRYPOINT [ "./dn_entrypoint.ci_test.bash" ]
