@@ -90,10 +90,10 @@ function dna::run_any() {
   # ....post-cli setup.............................................................................
   dna::up_and_attach --no-up --no-attach --service "${the_service}" || return 1
 
-  test -n "${_THE_COMPOSE_FILE:?err}" || n2st::print_msg_error_and_exit "Env var _THE_COMPOSE_FILE is empty!"
-  test -n "${_THE_SERVICE:?err}" || n2st::print_msg_error_and_exit "Env var _THE_SERVICE is empty!"
-  local compose_file="${_THE_COMPOSE_FILE}"
-  local the_service="${_THE_SERVICE}"
+  test -n "${_NO_UP_COMPOSE_FILE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_COMPOSE_FILE is empty!"
+  test -n "${_NO_UP_SERVICE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_SERVICE is empty!"
+  local compose_file="${_NO_UP_COMPOSE_FILE}"
+  local the_service="${_NO_UP_SERVICE}"
 
   # ....Begin......................................................................................
   DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${BASHPID:-$$}"

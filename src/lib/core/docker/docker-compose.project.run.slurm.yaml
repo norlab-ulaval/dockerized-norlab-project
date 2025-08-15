@@ -14,8 +14,8 @@ services:
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_ACTIVATE_POWERLINE_PROMT: false
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      # Use CUDA_VISIBLE_DEVICES instead of  NVIDIA_VISIBLE_DEVICES and NVIDIA_DRIVER_CAPABILITIES
-      #  as the slurm server automatically assign gpu id per job
+      # Use CUDA_VISIBLE_DEVICES instead of NVIDIA_VISIBLE_DEVICES and NVIDIA_DRIVER_CAPABILITIES
+      #  as the slurm server automatically assigned gpu id per job
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}
       DISPLAY: ${DISPLAY}
       QT_X11_NO_MITSHM: 1

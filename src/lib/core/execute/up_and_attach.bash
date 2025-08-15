@@ -235,8 +235,8 @@ function dna::up_and_attach() {
   fi
 
   if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then
-    export _THE_COMPOSE_FILE="${the_compose_file}"
-    export _THE_SERVICE="${the_service}"
+    export _NO_UP_COMPOSE_FILE="${the_compose_file}"
+    export _NO_UP_SERVICE="${the_service}"
     return 0
   fi
 

@@ -33,8 +33,8 @@ ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 
 # ====Set PATH related environment variable========================================================
 ENV DN_PROJECT_PATH=${DN_DEV_WORKSPACE:?'Build argument needs to be set and non-empty.'}/src/${DN_PROJECT_GIT_NAME}
-ENV PATH="${DN_PROJECT_PATH}:${PATH}"
-ENV PYTHONPATH="${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data:${PYTHONPATH}"
+ENV PATH=${DN_PROJECT_PATH}${PATH:+:${PATH}}
+ENV PYTHONPATH=${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data${PYTHONPATH:+:${PYTHONPATH}}
 
 # ====Copy init and setup files====================================================================
 COPY .dockerized_norlab/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash

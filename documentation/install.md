@@ -179,8 +179,10 @@ dna version
 1. **(Optional) Install NVIDIA Container Toolkit (for GPU support):**
    References: [Installing the NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-the-nvidia-container-toolkit)
    ```bash
-   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-      && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+   # Add NVIDIA Container Toolkit repository to apt sources (including experimental ones)
+   distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+     && curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+     && curl -s -L https://nvidia.github.io/libnvidia-container/experimental/$distribution/libnvidia-container.list | \
         sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
         sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
    
@@ -188,14 +190,10 @@ dna version
    sudo apt-get update
    
    # Install NVIDIA Container Toolkit
-   sudo apt-get install --assume-yes \
-      nvidia-container-toolkit \
-      nvidia-container-toolkit-base \
-      libnvidia-container-tools \
-      libnvidia-container1
+   sudo apt-get install -y nvidia-container-toolkit
    
-   # Configure container runtime
-   sudo nvidia-ctk runtime configure --runtime=docker
+   # Configure container runtime i.e., update /etc/docker/daemon.json
+   sudo nvidia-ctk runtime configure --runtime=docker --set-as-default
    
    sudo systemctl restart docker
    ```
@@ -291,6 +289,9 @@ dna init
 ### GPU Support Verification (if applicable)
 
 ```bash
+nvidia-container-cli --version
+nvidia-container-cli info
+
 # Test NVIDIA Container Toolkit
 docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 ```

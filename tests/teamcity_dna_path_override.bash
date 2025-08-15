@@ -66,7 +66,7 @@ function dna::teamcity_dna_path_override() {
   exit_code=$?
 
   # export dna entrypoint path
-  local path_dna_prepend="${dna_bin_dir}:${PATH}"
+  local path_dna_prepend="${dna_bin_dir}${PATH:+:${PATH}}"
 
   # shellcheck disable=SC2028
   echo "##teamcity[setParameter name='env.PATH' value='${path_dna_prepend}']"
