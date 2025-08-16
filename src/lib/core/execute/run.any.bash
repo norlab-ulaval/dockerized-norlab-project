@@ -6,12 +6,14 @@ DOCUMENTATION_BUFFER_RUN_ANY=$( cat <<'EOF'
 # Create a new container with a unique ID, to prevent name collision with those created by dna up.
 #
 # Usage:
-#   $ bash build.all.bash
-#   $ bash run.any.bash [OPTIONS] [-- COMMAND [ARGS...]]
+#   $ bash build.all.bash && bash run.any.bash [OPTIONS] [-- COMMAND [ARGS...]]
+#   or
+#   $ bash build.all.bash && source run.any.bash
+#   $ dna::run_any [OPTIONS] [-- COMMAND [ARGS...]]
 #
 # Options:
-#   --service SERVICE            The service to attach once up (Default: develop)
-#                                Service: develop, deploy, ...
+#   --service SERVICE            The service to attach once up (Default: project-develop)
+#                                Service: project-develop, project-deploy, ...
 #   -e, --env stringArray        Set container environment variables
 #   -w, --workdir string         Override path to workdir directory
 #   -T, --no-TTY                 Disable pseudo-TTY allocation
@@ -89,11 +91,18 @@ function dna::run_any() {
 
   # ....post-cli setup.............................................................................
   dna::up_and_attach --no-up --no-attach --service "${the_service}" || return 1
-
-  test -n "${_NO_UP_COMPOSE_FILE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_COMPOSE_FILE is empty!"
-  test -n "${_NO_UP_SERVICE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_SERVICE is empty!"
+  test -n "${_NO_UP_COMPOSE_FILE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_COMPOSE_FILE is empty! Should have been set by dna::up_and_attach"
+  test -n "${_NO_UP_SERVICE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_SERVICE is empty! Should have been set by dna::up_and_attach"
   local compose_file="${_NO_UP_COMPOSE_FILE}"
   local the_service="${_NO_UP_SERVICE}"
+
+  # ....Set GPU capabilities.......................................................................
+  # (CRITICAL) ToDo: validate (ref task NMO-777)
+#  dna::configure_gpu_capabilities "$(n2st::which_architecture_and_os)" "${compose_path}" "${compose_file}" "${the_service}"
+  test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
+  test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
+  test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
+
 
   # ....Begin......................................................................................
   DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${BASHPID:-$$}"
@@ -138,11 +147,11 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
-    source "${script_path_parent}/up_and_attach.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
     source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
   fi
+  source "${script_path_parent}/up_and_attach.bash" || exit 1
 
   # ....Execute....................................................................................
   if [[ "${DNA_CLEAR_CONSOLE_ACTIVATED}" == "true" ]]; then

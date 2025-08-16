@@ -201,10 +201,10 @@ function dna::build_command() {
       # Case: general
       if [[ "${service}" == "ci-tests" ]]; then
           header_footer_name="CI tests images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+          build_flag+=("--service-names" "project-core,project-ci-tests")
       elif [[ "${service}" == "slurm" ]]; then
           header_footer_name="slurm images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
+          build_flag+=("--service-names" "project-core,project-slurm")
       elif [[ "${service}" == "develop" ]]; then
           header_footer_name="develop images ${architecture} build procedure"
           build_flag+=("--service-names" "project-core,project-develop")

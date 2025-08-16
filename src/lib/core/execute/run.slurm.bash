@@ -59,8 +59,9 @@ function dna::run_slurm_teardown_callback() {
   if [[ ${exit_code} -ne 0 ]]; then
     n2st::print_msg_error "Container exited with error ${exit_code}"
   fi
-  compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  the_compose_file=docker-compose.project.run.slurm.yaml
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
+  local the_compose_file=docker-compose.project.run.slurm.yaml
+  local running_container_ids
   running_container_ids=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
   if [[ -n ${running_container_ids} ]]; then
     for each_id in "${running_container_ids[@]}"; do
@@ -159,18 +160,18 @@ function dna::run_slurm() {
   test -n "${python_arg[0]}" || n2st::print_msg_error_and_exit "Missing <any-python-arg> mandatory positional argument!"
 
   # ....Set env variables (post cli)...............................................................
-  dn_project_config_dir="${DNA_ROOT:?err}/src/lib/core/docker"
-  compose_file="docker-compose.project.run.slurm.yaml"
-  compose_file_path=${dn_project_config_dir}/${compose_file}
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
+  local compose_file="docker-compose.project.run.slurm.yaml"
+  local compose_file_path=${compose_path}/${compose_file}
+  local the_service="project-slurm"
+
+  # ....Set GPU capabilities.......................................................................
+  dna::configure_gpu_capabilities "$(n2st::which_architecture_and_os)" "${compose_path}" "${compose_file}" "${the_service}"
+  test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
+  test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
+  test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
 
   # ====Begin======================================================================================
-  if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V 2>/dev/null | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
-    n2st::print_msg_warning "Host computer does not support nvidia gpu, changing container runtime to docker default."
-    the_service="project-slurm-no-gpu"
-  else
-    the_service="project-slurm"
-  fi
-
   n2st::print_msg "force_rebuild_project_core: ${force_rebuild_project_core}, force_rebuild_slurm_img: ${force_rebuild_slurm_img}"
 
   # ....Build image in the local store.............................................................

@@ -51,16 +51,7 @@ services:
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
-
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '6.0'
-#          memory: 30gb
-#        reservations:
-#          cpus: '4.0'
-#          memory: 20gb
-
+    runtime: ${DN_DOCKER_RUNTIME:-runc}
 
   project-develop:
     extends:

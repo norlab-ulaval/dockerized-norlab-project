@@ -145,7 +145,7 @@ function dna::project_validate_slurm() {
   for each_compose in "${dryrun_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a add_fct_flag=()
-    add_fct_flag+=("--service-names" "project-slurm,project-slurm-no-gpu")
+    add_fct_flag+=("--service-names" "project-slurm")
     add_fct_flag+=("--file" "${each_compose}")
     add_fct_flag+=(--msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}")
     declare -a build_flag=()

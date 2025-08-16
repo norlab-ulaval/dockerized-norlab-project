@@ -95,6 +95,7 @@ function dna::import_lib_and_dependencies() {
   source "${DNA_LIB_PATH:?err}/core/utils/execute_compose.bash" || return 1
   source "${DNA_LIB_PATH:?err}/core/utils/ui.bash" || return 1
   source "${DNA_LIB_PATH:?err}/core/utils/online.bash" || return 1
+  source "${DNA_LIB_PATH:?err}/core/utils/cuda_tools.bash" || return 1
 
   # ....Export loaded functions....................................................................
   for func in $(compgen -A function | grep -e dna:: -e nbs:: -e n2st::); do

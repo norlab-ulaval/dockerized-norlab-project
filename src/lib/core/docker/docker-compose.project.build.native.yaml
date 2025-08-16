@@ -118,12 +118,6 @@ services:
     depends_on:
       - project-core
 
-  project-ci-tests-no-gpu:
-    extends:
-      service: project-ci-tests
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
-    runtime: !reset []
-
   project-slurm:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
@@ -141,8 +135,3 @@ services:
     runtime: nvidia
     depends_on:
       - project-core
-
-  project-slurm-no-gpu:
-    extends:
-      service: project-slurm
-    runtime: !reset []

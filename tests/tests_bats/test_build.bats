@@ -344,7 +344,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service › expect slurm images only" {
@@ -356,7 +356,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-slurm"
 }
 
 @test "dna::build_command with deploy service › expect deploy images only" {
@@ -621,7 +621,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service and --multiarch › expect multiarch slurm images" {
@@ -633,7 +633,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-slurm"
 }
 
 @test "dna::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
@@ -645,7 +645,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service and --online-build › expect slurm images with force push" {
@@ -657,7 +657,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-slurm"
 }
 
 @test "dna::build_command with develop service and -- docker args › expect develop images with docker args" {

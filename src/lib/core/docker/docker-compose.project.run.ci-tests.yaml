@@ -44,10 +44,5 @@ services:
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
-    runtime: nvidia
+    runtime: ${DN_DOCKER_RUNTIME:-runc}
 
-  project-ci-tests-no-gpu:
-    extends:
-      service: project-ci-tests
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
-    runtime: !reset null

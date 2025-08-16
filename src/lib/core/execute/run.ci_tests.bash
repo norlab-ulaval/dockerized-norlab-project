@@ -38,19 +38,19 @@ function dna::run_ci_tests() {
       esac
   done
 
-    # ....Set env variables (post cli)...............................................................
-  compose_file="docker-compose.project.run.ci-tests.yaml"
+  # ....Set env variables (post cli)...............................................................
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
+  local compose_file="docker-compose.project.run.ci-tests.yaml"
+  local the_service="project-ci-tests"
 
-  # ....Begin......................................................................................
+  # ....Set GPU capabilities.......................................................................
+  dna::configure_gpu_capabilities "$(n2st::which_architecture_and_os)" "${compose_path}" "${compose_file}" "${the_service}"
+  test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
+  test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
+  test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
 
-  if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V 2>/dev/null | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
-    n2st::print_msg_warning "Host computer does not support nvidia gpu, changing container runtime to docker default."
-    the_service="project-ci-tests-no-gpu"
-  else
-    the_service="project-ci-tests"
-  fi
-
-  docker_run_flag=("--rm")
+  # ====Begin======================================================================================
+  local docker_run_flag=("--rm")
   docker_run_flag+=("${the_service}")
   docker_run_flag+=("${in_docker_command[@]}")
   dna::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"

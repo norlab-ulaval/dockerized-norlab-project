@@ -22,21 +22,10 @@ source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.ini
 # ....DNA-project optional logic...................................................................
 source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.show_info.bash || exit 1
 
+# To check available N2ST lib and DN lib functions, un-comment the following lines
+#dn::show_dn_and_n2st_available_functions
+
 # ....Examples: source ROS2 environment variables..................................................
 #dn::source_ros2_underlay_only
 #dn::source_ros2_overlay_only
 dn::source_ros2
-
-# ....Show N2ST and DN librairy available functions................................................
-# To check available N2ST lib and DN lib functions, un-comment te following lines
-#n2st::print_msg "Show in container available N2ST functions...\n${MSG_DIMMED_FORMAT}"
-#for func in $(compgen -A function | grep -e n2st::); do
-#  # shellcheck disable=SC2163
-#  echo "   ${func}"
-#done
-#echo -e "${MSG_END_FORMAT}"
-#n2st::print_msg "Show in container available DN functions...\n${MSG_DIMMED_FORMAT}"
-#for func in $(compgen -A function | grep -e dn::); do
-#  # shellcheck disable=SC2163
-#  echo "   ${func}"
-#done

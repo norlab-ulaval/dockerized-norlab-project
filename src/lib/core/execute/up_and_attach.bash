@@ -127,9 +127,9 @@ function dna::up_and_attach() {
   local up_exit_code
   local exec_exit_code
 
-  local the_service_user_name="${the_service}"
-  local service_flag_options=("deploy" "develop")
-  for each in "${service_flag_options[@]}" ; do
+  # Add service prefix if missing
+  local service_flag_legal_options=("deploy" "develop")
+  for each in "${service_flag_legal_options[@]}" ; do
     if [[ "${the_service}" == "${each}" ]]; then
       the_service="project-${the_service}"
       break
@@ -147,8 +147,6 @@ function dna::up_and_attach() {
   #     from https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
 
   # ....Device specific config.....................................................................
-
-
   n2st::set_which_architecture_and_os
   n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
@@ -158,7 +156,7 @@ function dna::up_and_attach() {
 
       # copy file showing which Jetson board is running for mountinf as a volume in docker-compose
       # Source https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
-      cat /proc/device-tree/model >/tmp/nv_jetson_model
+      cat /proc/device-tree/model > /tmp/nv_jetson_model
 
     elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
       the_compose_file=docker-compose.project.run.linux-x86.yaml
@@ -223,15 +221,21 @@ function dna::up_and_attach() {
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
-  #n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
+  # ....Check host type: ci-server.................................................................
+  n2st::set_is_teamcity_run_environment_variable
+  if [[ ${IS_TEAMCITY_RUN} == true ]]; then
+    print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
+  fi
+
+  # ....Set GPU capabilities.......................................................................
+  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}"
+  test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
+  test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
+  test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
 
   # ....Start docker container.....................................................................
-  n2st::set_is_teamcity_run_environment_variable
-  print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
-
   if [[ ${no_up} != true ]]; then
     n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-    # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
   fi
 
   if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then

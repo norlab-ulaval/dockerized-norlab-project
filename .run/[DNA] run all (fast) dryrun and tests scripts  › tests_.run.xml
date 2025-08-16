@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[DNA] run dryrun and tests scripts › tests/ (all long)" type="ShConfigurationType" folderName="[DNA] B | script tests" focusToolWindowBeforeRun="true">
-    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests &amp;&amp; bash run_all_dryrun_and_tests_script_long_test.bash" />
+  <configuration default="false" name="[DNA] run all (fast) dryrun and tests scripts  › tests/" type="ShConfigurationType" folderName="[DNA] B | script tests" focusToolWindowBeforeRun="true">
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests &amp;&amp; bash run_all_dryrun_and_tests_script.bash" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
@@ -9,7 +9,7 @@
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
     <option name="INTERPRETER_PATH" value="/bin/zsh" />
     <option name="INTERPRETER_OPTIONS" value="" />
-    <option name="EXECUTE_IN_TERMINAL" value="true" />
+    <option name="EXECUTE_IN_TERMINAL" value="false" />
     <option name="EXECUTE_SCRIPT_FILE" value="false" />
     <envs>
       <env name="DOCKER_CONTEXT" value="desktop-linux" />

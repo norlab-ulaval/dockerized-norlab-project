@@ -216,6 +216,7 @@ function dna::run_command() {
 
     # ....Begin....................................................................................
     # Determine which run script to execute
+    declare -i fct_exit_code
     if [[ "${service}" == "ci-tests" ]]; then
         n2st::print_msg "Running CI tests..."
         # (temporary hack) ToDo: NMO-692 feat: add a build ci-tests option to run.ci_tests.bash

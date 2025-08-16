@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[DNA] run bats tests  › tests/* (jetson)" type="ShConfigurationType" folderName="[DNA] A | bats tests" focusToolWindowBeforeRun="true">
-    <option name="SCRIPT_TEXT" value="clear &amp;&amp; ssh -t $REMOTE_ASSET_ACTIVE 'cd /home/redleader/dockerized-norlab-project &amp;&amp; bash tests/run_bats_core_test_in_n2st.bash tests/tests_bats'  " />
+  <configuration default="false" name="[DNA] run all (long) dryrun and tests scripts › tests/" type="ShConfigurationType" folderName="[DNA] B | script tests" focusToolWindowBeforeRun="true">
+    <option name="SCRIPT_TEXT" value="clear &amp;&amp; cd tests &amp;&amp; bash run_all_dryrun_and_tests_script_long_test.bash" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tests/run_bats_core_test_in_n2st.bash" />
-    <option name="SCRIPT_OPTIONS" value="tests/tests_bats" />
+    <option name="SCRIPT_PATH" value="" />
+    <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
@@ -11,7 +11,9 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="EXECUTE_IN_TERMINAL" value="false" />
     <option name="EXECUTE_SCRIPT_FILE" value="false" />
-    <envs />
+    <envs>
+      <env name="DOCKER_CONTEXT" value="desktop-linux" />
+    </envs>
     <method v="2" />
   </configuration>
 </component>
