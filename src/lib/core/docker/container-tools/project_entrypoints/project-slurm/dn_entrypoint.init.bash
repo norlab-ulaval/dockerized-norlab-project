@@ -5,7 +5,7 @@
 #   - cleanup byte-compiled files to prevent execution bug
 #
 # Usage:
-#   $ bash dn_entrypoint.slurm.bash [<any-python-arg>]
+#   $ bash dn_entrypoint.init.bash [<any-python-arg>]
 #
 # Globals:
 #   Read DN_PROJECT_PATH
@@ -36,7 +36,7 @@ pyclean "${DN_PROJECT_PATH}"
 
 # ....Load library.................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  echo -e "\033[1;33m[DN trace]\033[0m Execute dn_entrypoint.slurm.bash"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute project-slurm/dn_entrypoint.init.bash"
 fi
 
 if [[ $- == *i* ]]; then
@@ -76,5 +76,5 @@ cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1
 
 # ....Release......................................................................................
-echo "$(basename $0) done!"
+n2st::print_msg_done "project-slurm/dn_entrypoint.init.bash done!"
 exit 0

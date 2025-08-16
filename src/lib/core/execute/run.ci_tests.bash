@@ -7,7 +7,13 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS=$( cat <<'EOF'
 #
 # Usage:
 #   $ bash build.ci_tests.bash [<any-build.all-argument>]
-#   $ bash run.ci_tests.bash [<command>]
+#   $ bash run.ci_tests.bash [OPTIONS] [<command>]
+#
+# Optional docker run flags:
+#   -e, --env stringArray        Set container environment variables
+#   -w, --workdir string         Override path to workdir directory
+#   -T, --no-TTY                 Disable pseudo-TTY allocation
+#   -v, --volume stringArray     Bind mount a volume
 #
 # Notes:
 #   The difference with `build.ci_tests.multiarch.bash` is that tests are only executed for the
@@ -22,19 +28,25 @@ function dna::run_ci_tests() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
-  declare -a in_docker_command=()
+  declare -a docker_run_args=()
+  declare -a the_command=()
 
   # ....cli......................................................................................
   while [[ $# -gt 0 ]]; do
       case "$1" in
+          -e|--env|-w|--workdir|-v|--volume) # Assume its a docker compose flag
+            docker_run_args+=("$1" "$2")
+            shift
+            shift
+            ;;
           --help|-h)
-              dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS:?err}"
-              exit 0
-              ;;
+            dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS:?err}"
+            exit 0
+            ;;
           *)
-              in_docker_command+=("$@")
-              break
-              ;;
+            the_command+=("$@")
+            break
+            ;;
       esac
   done
 
@@ -51,8 +63,9 @@ function dna::run_ci_tests() {
 
   # ====Begin======================================================================================
   local docker_run_flag=("--rm")
+  docker_run_flag+=("${docker_run_args[@]}")
   docker_run_flag+=("${the_service}")
-  docker_run_flag+=("${in_docker_command[@]}")
+  docker_run_flag+=("${the_command[@]}")
   dna::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"
   exit_code=$?
 

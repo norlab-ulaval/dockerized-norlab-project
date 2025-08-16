@@ -46,8 +46,8 @@ services:
     ports:
       - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh non-interactive-ros2
       - ${DN_GDB_SERVER_PORT:-7777}:${DN_GDB_SERVER_PORT:-7777} # gdbserver
-      - "6006:6006" # tensorboard
-      - "8888:8888" # optuna-dashboard
+      - ${DN_TENSORBOARD:-6006}:${DN_TENSORBOARD:-6006} # tensorboard
+      - ${DN_OPTUNA_DASHBOARD:-8888}:${DN_OPTUNA_DASHBOARD:-8888} # optuna-dashboard
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)

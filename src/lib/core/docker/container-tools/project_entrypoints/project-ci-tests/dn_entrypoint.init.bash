@@ -7,7 +7,7 @@
 # directory that follow the patern `run_ci_tests.*.bash`.
 #
 # Usage:
-#   bash dn_entrypoint.ci_test.bash
+#   bash dn_entrypoint.init.bash
 #
 # Globals:
 #   Read DN_PROJECT_PATH
@@ -37,7 +37,7 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 
 # ....Load library.................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  echo -e "\033[1;33m[DN trace]\033[0m Execute dn_entrypoint.ci_test.bash"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute project-ci-tests/dn_entrypoint.init.bash"
 fi
 
 if [[ $- == *i* ]]; then
@@ -92,12 +92,14 @@ declare -a exit_codes=()
 test -d "${DN_PROJECT_SERVICE_DIR:?err}/test_jobs" || { echo -e "${error_prefix} ${DN_PROJECT_SERVICE_DIR:?err}/test_jobs is unreachable" 1>&2 && exit 1; }
 for each_file_path in "${DN_PROJECT_SERVICE_DIR}"/test_jobs/run_ci_tests.*.bash ; do
   n2st::print_formated_script_header "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"
-  bash "${each_file_path}"
+  source "${each_file_path}"
   exit_codes+=("$?")
   n2st::print_formated_script_footer "$(basename $each_file_path)" "${MSG_LINE_CHAR_INSTALLER}"
 done
 
 # ====Teardown=====================================================================================
+n2st::print_msg_done "project-ci-tests/dn_entrypoint.init.bash done!"
+
 for idx in "${exit_codes[@]}" ; do
   if [[ ${idx} != 0 ]]; then
     # Test scripts completed with error!

@@ -61,5 +61,5 @@ dn::source_ros2
 python3 "$@" || exit 1
 
 # ....Release......................................................................................
-echo "$(basename $0) done!"
+n2st::print_msg_done "dn_entrypoint.python.bash done!"
 exit 0

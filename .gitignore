@@ -11,9 +11,6 @@
 **/artifact/**/*
 **/slurm_jobs_logs/*.log
 
-# (Priority) ToDo: validate (ref task NMO-777)
-**/.dna_cache/
-
 # ....Dev required.................................................................................
 /utilities/tmp/dockerized-norlab-project-mock/
 **/.env.dna-internal.local

@@ -65,9 +65,14 @@ DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 #   --log-path=<absolute-path-super-project-root>     The Absolute path to the slurm log directory.
 #                                                     Will be created if it does not exist.
 #   --skip-core-force-rebuild
+#   --skip-slurm-force-rebuild
 #   --hydra-dry-run                                   Dry-run slurm job using registered hydra flag
 #   --register-hydra-dry-run-flag                     Hydra flag used by '--hydra-dry-run'
 #                                                     e.g., "+dev@_global_=math_env_slurm_job_dryrun"
+#   -e, --env stringArray                             Set container environment variables
+#   -w, --workdir string                              Override path to workdir directory
+#   -T, --no-TTY                                      Disable pseudo-TTY allocation
+#   -v, --volume stringArray                          Bind mount a volume
 #   -h | --help                                       Show this help message
 #
 # Positional argument:
@@ -88,7 +93,13 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS_CMD=$( cat <<'EOF'
 #
 # Usage:
 #   $ dna build ci-tests
-#   $ dna run ci_tests [COMMAND [ARG...]]
+#   $ dna run ci_tests [OPTIONS] [COMMAND [ARG...]]
+#
+# Options:
+#   -e, --env stringArray        Set container environment variables
+#   -w, --workdir string         Override path to workdir directory
+#   -T, --no-TTY                 Disable pseudo-TTY allocation
+#   -v, --volume stringArray     Bind mount a volume
 #
 # Note: Require executing `dna build ci-tests` first.
 #

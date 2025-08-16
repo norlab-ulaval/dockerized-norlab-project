@@ -12,8 +12,8 @@ DOCUMENTATION_BUFFER_RUN_ANY=$( cat <<'EOF'
 #   $ dna::run_any [OPTIONS] [-- COMMAND [ARGS...]]
 #
 # Options:
-#   --service SERVICE            The service to attach once up (Default: project-develop)
-#                                Service: project-develop, project-deploy, ...
+#   --service SERVICE            The service to attach once up (Default: develop)
+#                                Service: [project-]develop, [project-]deploy, ...
 #   -e, --env stringArray        Set container environment variables
 #   -w, --workdir string         Override path to workdir directory
 #   -T, --no-TTY                 Disable pseudo-TTY allocation
@@ -95,6 +95,7 @@ function dna::run_any() {
   test -n "${_NO_UP_SERVICE:?err}" || n2st::print_msg_error_and_exit "Env var _NO_UP_SERVICE is empty! Should have been set by dna::up_and_attach"
   local compose_file="${_NO_UP_COMPOSE_FILE}"
   local the_service="${_NO_UP_SERVICE}"
+  [[ ${the_service} =~ "project-".* ]] || n2st::print_msg_error_and_exit "dna::up_and_attach did not sanitize the service name!"
 
   # ....Set GPU capabilities.......................................................................
   # (CRITICAL) ToDo: validate (ref task NMO-777)

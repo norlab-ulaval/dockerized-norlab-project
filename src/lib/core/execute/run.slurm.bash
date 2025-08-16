@@ -13,10 +13,17 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #   --log-path=<absolute-path-super-project-root>     The Absolute path to the slurm log directory.
 #                                                     Will be created if it does not exist.
 #   --skip-core-force-rebuild
+#   --skip-slurm-force-rebuild
 #   --hydra-dry-run                                   Dry-run slurm job using registered hydra flag
 #   --register-hydra-dry-run-flag                     Hydra flag used by '--hydra-dry-run'
 #                                                     e.g., "+dev@_global_=math_env_slurm_job_dryrun"
 #   -h | --help
+#
+# Optional docker run flags:
+#   -e, --env stringArray        Set container environment variables
+#   -w, --workdir string         Override path to workdir directory
+#   -T, --no-TTY                 Disable pseudo-TTY allocation
+#   -v, --volume stringArray     Bind mount a volume
 #
 # Positional argument:
 #   <sjob-id>              (required) Used to ID the docker container, slurm job, optuna study ...
@@ -96,12 +103,14 @@ function dna::run_slurm() {
   declare log_name
   declare log_path
   declare dry_run_slurm_job
+  declare -a docker_run_args
 
   # Default values
   log_name="slurm_job"
   force_rebuild_project_core=true
   force_rebuild_slurm_img=true
   dry_run_slurm_job=false
+  docker_run_args=()
 
   if [[ "${SJOB_ID}" == "--help"  ]] || [[ "${SJOB_ID}" == "-h"  ]]; then
     dna::show_help
@@ -135,6 +144,15 @@ function dna::run_slurm() {
       --skip-core-force-rebuild)
         force_rebuild_project_core=false
         shift # Remove argument (--skip-force-rebuild)
+        ;;
+      --skip-slurm-force-rebuild)
+        force_rebuild_slurm_img=false
+        shift # Remove argument (--skip-slurm-force-rebuild)
+        ;;
+      -e|--env|-w|--workdir|-v|--volume) # Assume its a docker compose flag
+        docker_run_args+=("$1" "$2")
+        shift
+        shift
         ;;
       -h | --help)
         clear
@@ -201,6 +219,7 @@ function dna::run_slurm() {
 
   declare -a docker_run=()
   docker_run+=("run" "--rm")
+  docker_run+=("${docker_run_args[@]}")
   docker_run+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
   #docker_run+=("--service-ports") # Publish compose service ports (Mute if collision with host)
 
