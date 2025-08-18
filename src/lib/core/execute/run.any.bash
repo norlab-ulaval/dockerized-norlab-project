@@ -102,6 +102,7 @@ function dna::run_any() {
   test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
   test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
   test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
+  test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
   # ....Begin......................................................................................
   DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${BASHPID:-$$}"

@@ -228,7 +228,7 @@ function dna::up_and_attach() {
   fi
 
   # ....Set GPU capabilities.......................................................................
-  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failled!"
+  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failed!"
   test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
   test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
   test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"

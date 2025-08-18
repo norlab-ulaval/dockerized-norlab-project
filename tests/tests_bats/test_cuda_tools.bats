@@ -46,10 +46,6 @@ fi
 TESTED_FILE="cuda_tools.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
-# (CRITICAL) ToDo: Update unit-test for refactored out function "dna::test_container_torch_supported_architecture" at
-# src/lib/core/docker/container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash
-#echo -e "\n${0}: breakpoint\n" && exit 1 # (CRITICAL) ToDo: on task end >> delete this line <--
-
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
@@ -211,33 +207,7 @@ echo "DOCKER_COMPOSE_ARGS: $*" > /tmp/docker_compose_call.log
 if [[ "$1" == "compose" ]]; then
   # Validate the command structure if validation parameters are provided
   if [[ -n "$EXPECTED_COMPOSE_PATH" && -n "$EXPECTED_COMPOSE_FILE" && -n "$EXPECTED_SERVICE" && -n "$EXPECTED_HOST_GPU_ARCH" ]]; then
-    expected_cmd="compose -f ${EXPECTED_COMPOSE_PATH}/${EXPECTED_COMPOSE_FILE} run ${EXPECTED_SERVICE} /usr/local/bin/bash-dn-non-interactive-ros2 -c function dna::test_container_torch_supported_architecture() {
-  local host_gpu_architecture=\"\${1:?err}\"
-  local is_host_gpu_to_container_torch_compatible
-
-  if pip -qq show torch; then
-    is_host_gpu_to_container_torch_compatible=\$(python3 -c \"
-import torch
-
-host_gpu_architecture = \${host_gpu_architecture}
-torch_compiled_arch_support = (
-  torch.cuda.get_arch_list() if torch.cuda.is_available() else 'None'
-  )
-
-if host_gpu_architecture in torch_compiled_arch_support:
-  print('true')
-else
-  print('false')
-
-\" 2>/dev/null) || return 1
-
-    echo \"\${is_host_gpu_to_container_torch_compatible}\"
-
-  else
-    # Torch is not available in container
-    echo \"no-torch\"
-  fi
-}; dna::test_container_torch_supported_architecture ${EXPECTED_HOST_GPU_ARCH}"
+    expected_cmd="compose -f ${EXPECTED_COMPOSE_PATH}/${EXPECTED_COMPOSE_FILE} run --rm --entrypoint /bin/bash -c ${EXPECTED_SERVICE} /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash '${EXPECTED_HOST_GPU_ARCH}'"
 
     # Log the expected command for debugging
     echo "EXPECTED_CMD: $expected_cmd" >> /tmp/docker_compose_call.log
@@ -245,11 +215,12 @@ else
     # Validate key components of the command
     if [[ "$*" == *"-f ${EXPECTED_COMPOSE_PATH}/${EXPECTED_COMPOSE_FILE}"* ]] && \
        [[ "$*" == *"run"* ]] && \
+       [[ "$*" == *"--rm"* ]] && \
+       [[ "$*" == *"--entrypoint"* ]] && \
+       [[ "$*" == *"/bin/bash -c"* ]] && \
        [[ "$*" == *"${EXPECTED_SERVICE}"* ]] && \
-       [[ "$*" == *"/usr/local/bin/bash-dn-non-interactive-ros2"* ]] && \
-       [[ "$*" == *"-c"* ]] && \
-       [[ "$*" == *"dna::test_container_torch_supported_architecture"* ]] && \
-       [[ "$*" == *"${EXPECTED_HOST_GPU_ARCH}"* ]]; then
+       [[ "$*" == *"/dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"* ]] && \
+       [[ "$*" == *"'${EXPECTED_HOST_GPU_ARCH}'"* ]]; then
       echo "VALIDATION: PASSED" >> /tmp/docker_compose_call.log
       echo "$RETURN_VALUE"
       exit 0
@@ -350,7 +321,7 @@ EOF
 @test "dna::fetch_host_nvidia_gpu_architecture › linux/x86_64 with nvidia-container-cli › expect sm_75" {
   create_mock_nvidia_container_cli "success" "7.5"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "linux/x86"
   assert_success
   assert_output "sm_75"
 }
@@ -358,7 +329,7 @@ EOF
 @test "dna::fetch_host_nvidia_gpu_architecture › linux/x86_64 with nvidia-container-cli › expect sm_86" {
   create_mock_nvidia_container_cli "success" "8.6"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "linux/x86"
   assert_success
   assert_output "sm_86"
 }
@@ -368,7 +339,7 @@ EOF
   create_mock_nvcc "success" "11.4"
   create_mock_nvidia_smi "success" "7.2"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "l4t/arm64"
   assert_success
   assert_output "sm_72"
 }
@@ -378,7 +349,7 @@ EOF
   create_mock_nvcc "success" "11.4"
   create_mock_nvidia_smi "success" "8.7"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "l4t/arm64"
   assert_success
   assert_output "sm_87"
 }
@@ -388,7 +359,7 @@ EOF
   create_mock_nvcc "not_found"
   create_mock_nvidia_smi "not_found"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "darwin/arm64"
   assert_success
   assert_output "NO-NVIDIA-GPU-SUPPORT"
 }
@@ -398,7 +369,7 @@ EOF
   create_mock_nvcc "success" "11.4"
   create_mock_nvidia_smi "success" "7.5"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "l4t/arm64"
   assert_success
   assert_output "sm_75"
 }
@@ -408,7 +379,7 @@ EOF
   create_mock_nvcc "fail"
   create_mock_nvidia_smi "fail"
   
-  run dna::fetch_host_nvidia_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture "linux/x86"
   assert_success
   assert_output "NO-NVIDIA-GPU-SUPPORT"
 }
@@ -436,38 +407,6 @@ EOF
   assert_failure
 }
 
-# ....Tests for dna::test_container_torch_supported_architecture function..........................
-
-@test "dna::test_container_torch_supported_architecture › torch available and compatible › expect true" {
-  create_mock_pip_show "has_torch"
-  create_mock_python3_is_host_gpu_to_container_torch_compatible "true"
-  
-  run dna::test_container_torch_supported_architecture "sm_75"
-  assert_success
-  assert_output "true"
-}
-
-@test "dna::test_container_torch_supported_architecture › torch available but incompatible › expect false" {
-  create_mock_pip_show "has_torch"
-  create_mock_python3_is_host_gpu_to_container_torch_compatible "false"
-  
-  run dna::test_container_torch_supported_architecture "sm_75"
-  assert_success
-  assert_output "false"
-}
-
-@test "dna::test_container_torch_supported_architecture › torch not available › expect no-torch" {
-  create_mock_pip_show "no_torch"
-  
-  run dna::test_container_torch_supported_architecture "sm_75"
-  assert_success
-  assert_output "no-torch"
-}
-
-@test "dna::test_container_torch_supported_architecture › missing argument › expect failure" {
-  run dna::test_container_torch_supported_architecture
-  assert_failure
-}
 
 # ....Tests for dna::test_host_gpu_to_container_torch_compatibility function.......................
 
@@ -481,7 +420,7 @@ EOF
   # Verify the docker compose command was called with correct arguments
   run cat /tmp/docker_compose_call.log
   assert_success
-  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run gpu-service /usr/local/bin/bash-dn-non-interactive-ros2 -c"
+  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "VALIDATION: PASSED"
 }
 
@@ -495,7 +434,7 @@ EOF
   # Verify the docker compose command was called with correct arguments
   run cat /tmp/docker_compose_call.log
   assert_success
-  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run gpu-service /usr/local/bin/bash-dn-non-interactive-ros2 -c"
+  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "VALIDATION: PASSED"
 }
 
@@ -509,7 +448,7 @@ EOF
   # Verify the docker compose command was called with correct arguments
   run cat /tmp/docker_compose_call.log
   assert_success
-  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run gpu-service /usr/local/bin/bash-dn-non-interactive-ros2 -c"
+  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "VALIDATION: PASSED"
 }
 
@@ -523,9 +462,8 @@ EOF
   # Verify the complete command structure as specified in the issue
   run cat /tmp/docker_compose_call.log #>&3
   assert_success
-  assert_line --partial "compose -f /tmp/docker-compose.yml run gpu-service /usr/local/bin/bash-dn-non-interactive-ros2 -c"
-  assert_line --partial "dna::test_container_torch_supported_architecture ()"
-  assert_line --partial "dna::test_container_torch_supported_architecture sm_75"
+  assert_line --partial "compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
+  assert_line --partial "'sm_75'"
   assert_line --partial "VALIDATION: PASSED"
 }
 

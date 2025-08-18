@@ -184,10 +184,11 @@ function dna::run_slurm() {
   local the_service="project-slurm"
 
   # ....Set GPU capabilities.......................................................................
-  dna::configure_gpu_capabilities "$(n2st::which_architecture_and_os)" "${compose_path}" "${compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failled!"
+  dna::configure_gpu_capabilities "$(n2st::which_architecture_and_os)" "${compose_path}" "${compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failed!"
   test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
   test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
   test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
+  test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
   # ====Begin======================================================================================
   n2st::print_msg "force_rebuild_project_core: ${force_rebuild_project_core}, force_rebuild_slurm_img: ${force_rebuild_slurm_img}"

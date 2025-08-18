@@ -363,7 +363,7 @@ else
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   if [[ ${_execute_now} == true  ]]; then
-    dna::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNA user project configurations" && exit 1; }
+    dna::load_super_project_configurations "$@" || { n2st::print_msg_error "failed to load DNA user project configurations" && exit 1; }
   fi
   unset _execute_now
 fi
