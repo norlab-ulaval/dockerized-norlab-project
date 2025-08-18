@@ -15,6 +15,8 @@ trap dna::test_teardown_callback EXIT
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 
 # ====begin========================================================================================
+# Execute project validate slurm script
+# Note: the "--include-multiarch" flag affect only the dry-run config check, not the slurm job check
 bash "${DNA_LIB_EXEC_PATH:?err}"/project_validate.slurm.bash --include-multiarch "slurm_jobs"
 
 ## ....Teardown.....................................................................................
