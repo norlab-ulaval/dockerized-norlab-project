@@ -1,22 +1,37 @@
 #!/bin/bash
+# =================================================================================================
+# CUDA and GPU compatibility utilities for NVIDIA Docker runtime configuration.
+#
+# Provides functions to detect host NVIDIA GPU architecture, validate CUDA development tools,
+# test PyTorch compatibility between host GPU and container, and configure Docker runtime
+# settings based on target platform architecture.
+#
+# Usage:
+#   $ source cuda_tools.bash
+#
+# Globals:
+#   Read/Write NVIDIA_VISIBLE_DEVICES - Controls GPU visibility to containers
+#   Read/Write NVIDIA_DRIVER_CAPABILITIES - Specifies NVIDIA driver capabilities
+#   Read/Write DN_DOCKER_RUNTIME - Sets Docker runtime (nvidia or runc)
+#   Write DN_HOST_GPU_ARCHITECTURE - Host GPU architecture detection result
+#   Read DNA_DEBUG - Enable debug output when set to true
+#
+# =================================================================================================
 
 
 # =================================================================================================
 # Extracts NVIDIA GPU architecture information from host system.
 #
-# Writes GPU architecture string to environment variable DN_HOST_GPU_ARCHITECTURE in format "sm_XX"
-# or "NO-NVIDIA-GPU-SUPPORT" if either "nvidia-container-cli" or "nvidia-smi" + "nvcc" are not
-# installed on host.
-#
 # Usage:
-#   $ dna::fetch_host_nvidia_gpu_architecture "image_arch_and_os"
-#   $ echo "Host GPU architecture: $DN_HOST_GPU_ARCHITECTURE"
+#   $ gpu_arch=$(dna::fetch_host_nvidia_gpu_architecture "image_arch_and_os")
+#   $ echo "Host GPU architecture: $gpu_arch"
 #
 # Positional argument:
 #   image_arch_and_os - Target image architecture and OS (e.g., 'darwin/arm64', 'l4t/arm64', 'linux/x86')
 #
-# Global:
-#   Write DN_HOST_GPU_ARCHITECTURE
+# Outputs:
+#   Writes GPU architecture string to stdout in format "sm_XX" or "NO-NVIDIA-GPU-SUPPORT" if either
+#   "nvidia-container-cli" or "nvidia-smi" + "nvcc" are not  installed on host.
 # =================================================================================================
 function dna::fetch_host_nvidia_gpu_architecture() {
   local image_arch_and_os=${1:?err}
@@ -28,7 +43,8 @@ function dna::fetch_host_nvidia_gpu_architecture() {
       arch_output=$(nvidia-container-cli info 2>/dev/null | grep "Architecture:" | awk '{print $2}' | tr -d '.')
 
       if [[ -n "$arch_output" ]]; then
-        export DN_HOST_GPU_ARCHITECTURE="sm_${arch_output}"
+        #export DN_HOST_GPU_ARCHITECTURE="sm_${arch_output}"
+        echo "sm_${arch_output}"
         return 0
       fi
     fi
@@ -40,13 +56,15 @@ function dna::fetch_host_nvidia_gpu_architecture() {
       jetson_arch=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d '.')
 
       if [[ -n "$jetson_arch" ]]; then
-        export DN_HOST_GPU_ARCHITECTURE="sm_${jetson_arch}"
+        #export DN_HOST_GPU_ARCHITECTURE="sm_${jetson_arch}"
+        echo "sm_${jetson_arch}"
         return 0
       fi
     fi
   else
     # Assume no gpu support since neither method worked
-    export DN_HOST_GPU_ARCHITECTURE="NO-NVIDIA-GPU-SUPPORT"
+    #export DN_HOST_GPU_ARCHITECTURE="NO-NVIDIA-GPU-SUPPORT"
+    echo "NO-NVIDIA-GPU-SUPPORT"
     return 0
   fi
 }
@@ -189,23 +207,23 @@ function dna::configure_gpu_capabilities() {
 
   # ....Begin......................................................................................
   if [[ $NVIDIA_VISIBLE_DEVICES == void ]] || [[ $DN_DOCKER_RUNTIME == runc ]]; then
-    # No nvidia gpu support expected by user
+    n2st::print_msg "No nvidia gpu support expected by user"
     NVIDIA_VISIBLE_DEVICES=void
     NVIDIA_DRIVER_CAPABILITIES=""
     DN_DOCKER_RUNTIME=runc
-    DN_HOST_GPU_ARCHITECTURE=""
+    DN_HOST_GPU_ARCHITECTURE=$(dna::fetch_host_nvidia_gpu_architecture "$image_arch_and_os")
   elif [[ ${image_arch_and_os:?err} == 'darwin/arm64' ]]; then
-    n2st::print_msg_warning "MacOs does not support nvidia gpu."
+    n2st::print_msg "No MacOs gpu support in container:"
     NVIDIA_VISIBLE_DEVICES=void
     NVIDIA_DRIVER_CAPABILITIES=""
     DN_DOCKER_RUNTIME=runc
     DN_HOST_GPU_ARCHITECTURE="apple_silicon"
   elif [[ $image_arch_and_os == 'l4t/arm64' ]] || [[ $image_arch_and_os == 'linux/x86' ]]; then
-    dna::fetch_host_nvidia_gpu_architecture "$image_arch_and_os"
-    test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
+    DN_HOST_GPU_ARCHITECTURE=$(dna::fetch_host_nvidia_gpu_architecture "$image_arch_and_os")
+    #test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
     if [[ ${DNA_DEBUG} == true ]]; then
-      n2st::print_msg "host_gpu_arch: $DN_HOST_GPU_ARCHITECTURE"
+      n2st::print_msg "dna::fetch_host_nvidia_gpu_architecture -> $DN_HOST_GPU_ARCHITECTURE"
     fi
 
     if [[ "${DN_HOST_GPU_ARCHITECTURE:?err}" != "NO-NVIDIA-GPU-SUPPORT" ]]; then
@@ -218,10 +236,10 @@ function dna::configure_gpu_capabilities() {
       if [[ ${DNA_DEBUG} == true ]]; then
         echo "run dna::test_host_gpu_to_container_torch_compatibility..."
       fi
-      is_host_gpu_to_container_torch_compatible=$( dna::test_host_gpu_to_container_torch_compatibility "${compose_path}" "${the_compose_file}" "${the_service}" "${DN_HOST_GPU_ARCHITECTURE}" )
+      is_host_gpu_to_container_torch_compatible=$( dna::test_host_gpu_to_container_torch_compatibility "${compose_path}" "${the_compose_file}" "${the_service}" "${DN_HOST_GPU_ARCHITECTURE:?err}" )
       local torch_test_exit_code=$?
       if [[ ${DNA_DEBUG} == true ]]; then
-        n2st::print_msg "is_host_gpu_to_container_torch_compatible: $is_host_gpu_to_container_torch_compatible"
+        n2st::print_msg "is_host_gpu_to_container_torch_compatible -> $is_host_gpu_to_container_torch_compatible"
       fi
 
       if [[ ${torch_test_exit_code} -ne 0 ]]; then
@@ -231,9 +249,6 @@ function dna::configure_gpu_capabilities() {
         NVIDIA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:-all}"
         NVIDIA_DRIVER_CAPABILITIES="${NVIDIA_DRIVER_CAPABILITIES:-all}"
         DN_DOCKER_RUNTIME=nvidia
-        echo "  NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES}"
-        echo "  NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES}"
-        echo "  DN_DOCKER_RUNTIME: nvidia"
       else
         n2st::print_msg_warning "Container has torch installed and expected gpu support but host device is not compatible!"
         echo "Disabling nvidia docker runtime."
@@ -242,7 +257,7 @@ function dna::configure_gpu_capabilities() {
         DN_DOCKER_RUNTIME=runc
       fi
     elif [[ "${host_gpu_arch}" == "NO-NVIDIA-GPU-SUPPORT" ]]; then
-      n2st::print_msg "No nvidia gpu support on host"
+      n2st::print_msg "No nvidia gpu support on host."
       NVIDIA_VISIBLE_DEVICES=void
       NVIDIA_DRIVER_CAPABILITIES=""
       DN_DOCKER_RUNTIME=runc
@@ -254,13 +269,16 @@ function dna::configure_gpu_capabilities() {
     n2st::print_msg "Current container on host..."
     docker container ls -a
     echo
-    n2st::print_msg "POST-dna::configure_gpu_capabilities related environment variable...
-    NVIDIA_VISIBLE_DEVICES: $NVIDIA_VISIBLE_DEVICES
-    NVIDIA_DRIVER_CAPABILITIES: $NVIDIA_DRIVER_CAPABILITIES
-    DN_DOCKER_RUNTIME: $DN_DOCKER_RUNTIME
-    DN_HOST_GPU_ARCHITECTURE: $DN_HOST_GPU_ARCHITECTURE
-    "
   fi
+
+  # ....User feedback..............................................................................
+  # Note: Section title is set in each 'if/the/else' clause
+  if [[ ${image_arch_and_os:?err} != 'darwin/arm64' ]]; then
+    echo "  NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES}"
+    echo "  NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES}"
+  fi
+  echo "  DN_DOCKER_RUNTIME: ${DN_DOCKER_RUNTIME}"
+  echo "  DN_HOST_GPU_ARCHITECTURE: ${DN_HOST_GPU_ARCHITECTURE}"
 
   # ....Teardown...................................................................................
   export NVIDIA_VISIBLE_DEVICES

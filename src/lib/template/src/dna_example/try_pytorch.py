@@ -59,9 +59,9 @@ def verify_pytorch_cuda_install() -> None:
             print(
                     f"CUDA available: {torch.cuda.is_available()}\n"
                     f"CUDA version: {torch.version.cuda}\n"
-                    f"GPU device: {torch.cuda.get_device_name()}\n"
-                    f"GPU device properties: {torch.cuda.get_device_properties()}\n"
-                    f"GPU compute capability: {torch.cuda.get_device_capability()}"
+                    f"GPU device: {torch.cuda.get_device_name(None)}\n"
+                    f"GPU device properties: {torch.cuda.get_device_properties(None)}\n"
+                    f"GPU compute capability: {torch.cuda.get_device_capability(None)}\n"
                     f"Torch compiled for CUDA architecture: {torch.cuda.get_arch_list()}"
                     )
 
