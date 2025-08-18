@@ -7,11 +7,17 @@ bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
 
 function dna::test_teardown_callback() {
   local exit_code=$?
+  echo "dna::test_teardown_callback › ${exit_code:-1}"
 
   bash "${DNA_LIB_EXEC_PATH:?err}"/down.bash
 
   cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
+
+  unset DN_SSH_SERVER_PORT
+  unset DN_GDB_SERVER_PORT
+  unset DN_TENSORBOARD
+  unset DN_OPTUNA_DASHBOARD
 
   exit ${exit_code:-1}
 }
@@ -35,7 +41,3 @@ bash "${DNA_LIB_EXEC_PATH:?err}"/build.develop.bash
 
 bash "${DNA_LIB_EXEC_PATH:?err}"/up_and_attach.bash --service project-develop -- bash -c "echo -e \"\nExecute up and attach test command\nWe are in! Execute tree command...\n\" && tree -L 2 -a \$(pwd) && echo \$(printenv | grep -e DN_SSH_ -e DN_GDB_)"
 
-unset DN_SSH_SERVER_PORT
-unset DN_GDB_SERVER_PORT
-unset DN_TENSORBOARD
-unset DN_OPTUNA_DASHBOARD

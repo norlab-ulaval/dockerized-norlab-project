@@ -162,6 +162,8 @@ function dna::setup_dockerized_norlab_project() {
     chmod +x "${each_file}"
   done
 
+  chmod +x /dna-lib-container-tools/project_entrypoints/dn_entrypoint_cuda_check.bash
+
   # ....Hack.......................................................................................
   # For Matplotlib default backend (QtAgg) when python script are launched from terminal
   mkdir -m 0700 -p "/tmp/runtime-root" && chown -R "${DN_PROJECT_USER}" "/tmp/runtime-root"
