@@ -122,8 +122,8 @@ function dna::up_and_attach() {
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file=""
   local display_device=""
-  declare -i up_exit_code=1
-  declare -i exec_exit_code=1
+  declare -i up_exit_code=0
+  declare -i exec_exit_code=0
 
   # Add service prefix if missing
   local service_flag_legal_options=("deploy" "develop")
@@ -228,16 +228,11 @@ function dna::up_and_attach() {
   fi
 
   # ....Set GPU capabilities.......................................................................
-  # (CRITICAL) ToDo: on task end >> UN-mute next bloc ↓↓
-  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}"
+  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failled!"
   test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
   test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
   test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
-
-  if [[ ${DNA_DEBUG} == true ]]; then
-    docker compose -f "${compose_path}/${the_compose_file}" ps
-  fi
-
+  test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
   # ....Start docker container.....................................................................
   if [[ ${no_up} != true ]]; then
@@ -291,13 +286,13 @@ function dna::up_and_attach() {
     fi
     declare -a docker_up=("up" "--detach" "--wait")
     #  docker_up+=("--build")
-    docker_up+=("--renew-anon-volumes")
     docker_up+=("${the_service}")
     n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose ${docker_up[*]}${MSG_END_FORMAT}"
     docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
     up_exit_code=$?
 
     local dn_ssh_server_port=${DN_SSH_SERVER_PORT:-2222}
+    # (Priority) ToDo: validate >> next bloc ↓↓
     n2st::print_msg "Updating ssh key [localhost]:${dn_ssh_server_port}"
     bash -c "ssh-keygen -R [localhost]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
     bash -c "ssh-keygen -R [127.0.0.1]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
@@ -306,13 +301,14 @@ function dna::up_and_attach() {
       n2st::print_msg "Current container on host..."
       docker container ls -a
       echo
-      n2st::print_msg "Inspect docker compose configuration for service ${the_service}..."
-      docker compose -f "${compose_path}/${the_compose_file}" config --dry-run "${the_service}"
-      echo
-      n2st::print_msg "pre docker compose exec related environment variable...
+      #n2st::print_msg "Inspect docker compose configuration for service ${the_service}..."
+      #docker compose -f "${compose_path}/${the_compose_file}" config --dry-run "${the_service}"
+      #echo
+      n2st::print_msg "Pre-exec stage environment variables...
       NVIDIA_VISIBLE_DEVICES: $NVIDIA_VISIBLE_DEVICES
       NVIDIA_DRIVER_CAPABILITIES: $NVIDIA_DRIVER_CAPABILITIES
-      DN_DOCKER_RUNTIME: $DN_DOCKER_RUNTIME"
+      DN_DOCKER_RUNTIME: $DN_DOCKER_RUNTIME
+      DN_HOST_GPU_ARCHITECTURE: $DN_HOST_GPU_ARCHITECTURE"
     fi
 
     if [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]]; then
@@ -329,15 +325,6 @@ function dna::up_and_attach() {
       :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-
-      # (CRITICAL) ToDo: on task end >> delete next bloc ↓↓
-      # /////////////////////////////////////////////////////////////////////
-#      export NVIDIA_VISIBLE_DEVICES=all
-#      export NVIDIA_DRIVER_CAPABILITIES=all
-#      export DN_DOCKER_RUNTIME=nvidia
-      # /////////////////////////////////////////////////////////////////////
-
-
       declare -a docker_flags=()
       if [[ ${DNA_DEBUG} == true ]]; then
         #docker_flags+=("--debug")

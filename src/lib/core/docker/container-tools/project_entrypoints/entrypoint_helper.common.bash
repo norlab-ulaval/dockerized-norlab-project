@@ -12,7 +12,7 @@
 
 # ....Debug logic..................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  echo -e "\033[1;33m[DN trace]\033[0m Execute $(basename $(dirname "${BASH_SOURCE[1]}"))/$(basename "${BASH_SOURCE[1]}") -> entrypoint_helper.common.bash"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute $(basename "$(dirname "${BASH_SOURCE[1]}")")/$(basename "${BASH_SOURCE[1]}") -> entrypoint_helper.common.bash"
 fi
 
 # ....Sanity check.................................................................................
@@ -20,7 +20,6 @@ test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033
 test -n "$( declare -f dn::source_ros2 )" || { echo -e "\033[1;31m[DN error]\033[0m The DN lib is not loaded!" 1>&2 && exit 1; }
 
 # ....Define callback convenient functions.........................................................
-
 function dn::show_dn_and_n2st_available_functions() {
   n2st::print_msg "Show in container available N2ST functions...\n${MSG_DIMMED_FORMAT}"
   for func in $(compgen -A function | grep -e n2st::); do
@@ -37,3 +36,5 @@ function dn::show_dn_and_n2st_available_functions() {
   done
   echo -e "${MSG_END_FORMAT}"
 }
+
+

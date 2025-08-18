@@ -46,6 +46,10 @@ fi
 TESTED_FILE="cuda_tools.bash"
 TESTED_FILE_PATH="src/lib/core/utils"
 
+# (CRITICAL) ToDo: Update unit-test for refactored out function "dna::test_container_torch_supported_architecture" at
+# src/lib/core/docker/container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash
+#echo -e "\n${0}: breakpoint\n" && exit 1 # (CRITICAL) ToDo: on task end >> delete this line <--
+
 # executed once before starting the first test (valide for all test in that file)
 setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
@@ -341,70 +345,70 @@ EOF
 
 # ====Test cases===================================================================================
 
-# ....Tests for dna::fetch_host_gpu_architecture function..........................................
+# ....Tests for dna::fetch_host_nvidia_gpu_architecture function..........................................
 
-@test "dna::fetch_host_gpu_architecture › linux/x86_64 with nvidia-container-cli › expect sm_75" {
+@test "dna::fetch_host_nvidia_gpu_architecture › linux/x86_64 with nvidia-container-cli › expect sm_75" {
   create_mock_nvidia_container_cli "success" "7.5"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "sm_75"
 }
 
-@test "dna::fetch_host_gpu_architecture › linux/x86_64 with nvidia-container-cli › expect sm_86" {
+@test "dna::fetch_host_nvidia_gpu_architecture › linux/x86_64 with nvidia-container-cli › expect sm_86" {
   create_mock_nvidia_container_cli "success" "8.6"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "sm_86"
 }
 
-@test "dna::fetch_host_gpu_architecture › l4t/arm64 fallback to nvidia-smi › expect sm_72" {
+@test "dna::fetch_host_nvidia_gpu_architecture › l4t/arm64 fallback to nvidia-smi › expect sm_72" {
   create_mock_nvidia_container_cli "not_found"
   create_mock_nvcc "success" "11.4"
   create_mock_nvidia_smi "success" "7.2"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "sm_72"
 }
 
-@test "dna::fetch_host_gpu_architecture › l4t/arm64 fallback to nvidia-smi › expect sm_87" {
+@test "dna::fetch_host_nvidia_gpu_architecture › l4t/arm64 fallback to nvidia-smi › expect sm_87" {
   create_mock_nvidia_container_cli "not_found"
   create_mock_nvcc "success" "11.4"
   create_mock_nvidia_smi "success" "8.7"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "sm_87"
 }
 
-@test "dna::fetch_host_gpu_architecture › darwin/arm64 no GPU support › expect NO-NVIDIA-GPU-SUPPORT" {
+@test "dna::fetch_host_nvidia_gpu_architecture › darwin/arm64 no GPU support › expect NO-NVIDIA-GPU-SUPPORT" {
   create_mock_nvidia_container_cli "not_found"
   create_mock_nvcc "not_found"
   create_mock_nvidia_smi "not_found"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "NO-NVIDIA-GPU-SUPPORT"
 }
 
-@test "dna::fetch_host_gpu_architecture › nvidia-container-cli fails but nvidia-smi works › expect sm_75" {
+@test "dna::fetch_host_nvidia_gpu_architecture › nvidia-container-cli fails but nvidia-smi works › expect sm_75" {
   create_mock_nvidia_container_cli "fail"
   create_mock_nvcc "success" "11.4"
   create_mock_nvidia_smi "success" "7.5"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "sm_75"
 }
 
-@test "dna::fetch_host_gpu_architecture › all commands fail › expect NO-NVIDIA-GPU-SUPPORT" {
+@test "dna::fetch_host_nvidia_gpu_architecture › all commands fail › expect NO-NVIDIA-GPU-SUPPORT" {
   create_mock_nvidia_container_cli "fail"
   create_mock_nvcc "fail"
   create_mock_nvidia_smi "fail"
   
-  run dna::fetch_host_gpu_architecture
+  run dna::fetch_host_nvidia_gpu_architecture
   assert_success
   assert_output "NO-NVIDIA-GPU-SUPPORT"
 }
@@ -561,10 +565,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › darwin/arm64 › expect no GPU support" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "NO-NVIDIA-GPU-SUPPORT"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   function n2st::print_msg_warning() {
     echo "WARNING: $*"
@@ -587,10 +591,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › linux/x86 with no GPU support › expect void settings" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "NO-NVIDIA-GPU-SUPPORT"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   # Set initial environment
   export NVIDIA_VISIBLE_DEVICES="all"
@@ -608,10 +612,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › linux/x86 with GPU support and torch compatible › expect nvidia runtime" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "sm_75"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   function dna::test_host_gpu_to_container_torch_compatibility() {
     echo "true"
@@ -634,10 +638,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › linux/x86 with GPU support and no torch › expect nvidia runtime" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "sm_75"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   function dna::test_host_gpu_to_container_torch_compatibility() {
     echo "no-torch"
@@ -660,10 +664,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › linux/x86 with GPU support but torch incompatible › expect void settings" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "sm_75"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   function dna::test_host_gpu_to_container_torch_compatibility() {
     echo "false"
@@ -691,10 +695,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › l4t/arm64 with GPU support and torch compatible › expect nvidia runtime" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "sm_72"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   function dna::test_host_gpu_to_container_torch_compatibility() {
     echo "true"
@@ -717,10 +721,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › user sets NVIDIA_VISIBLE_DEVICES to void › expect void settings" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "sm_75"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   # Set initial environment with user preference
   export NVIDIA_VISIBLE_DEVICES="void"
@@ -738,10 +742,10 @@ EOF
 
 @test "dna::configure_gpu_capabilities › torch compatibility test fails › expect failure" {
   # Mock the required functions
-  function dna::fetch_host_gpu_architecture() {
+  function dna::fetch_host_nvidia_gpu_architecture() {
     echo "sm_75"
   }
-  export -f dna::fetch_host_gpu_architecture
+  export -f dna::fetch_host_nvidia_gpu_architecture
   
   function dna::test_host_gpu_to_container_torch_compatibility() {
     return 1  # Simulate failure
