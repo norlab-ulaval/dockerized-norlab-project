@@ -55,7 +55,7 @@ function dna::up_and_attach() {
 
   # ....Set env variables (pre cli)................................................................
   declare -a remaining_args=()
-  declare -a interactive_login=()
+#  declare -a interactive_login=()
   declare -a docker_compose_exec_flag=()
   local the_service=develop
   local no_attach=false
@@ -64,8 +64,7 @@ function dna::up_and_attach() {
   local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
-  # ToDo: assess if moving to DN `dn_entrypoint.attach.bash` and `dn_entrypoint.init.bash` for all services woud be better.
-  interactive_login=("-e" "BASH_ENV")
+#  interactive_login=("-e" "BASH_ENV")
 
   # ....cli........................................................................................
   while [ $# -gt 0 ]; do
@@ -107,7 +106,7 @@ function dna::up_and_attach() {
         if [[ ${no_attach} == true ]]; then
           n2st::print_msg_warning "Be advised, ${MSG_DIMMED_FORMAT}--no-attach${MSG_END_FORMAT} imply that ${MSG_DIMMED_FORMAT}${remaining_args[*]}${MSG_END_FORMAT} won't be executed!\nUse ${MSG_DIMMED_FORMAT}--detach${MSG_END_FORMAT} if your intention is to run COMMAND in the background."
         fi
-        unset interactive_login
+#        unset interactive_login
         break
         ;;
       *) # Base case
@@ -123,12 +122,12 @@ function dna::up_and_attach() {
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file=""
   local display_device=""
-  local up_exit_code
-  local exec_exit_code
+  declare -i up_exit_code=0
+  declare -i exec_exit_code=0
 
-  local the_service_user_name="${the_service}"
-  local service_flag_options=("deploy" "develop")
-  for each in "${service_flag_options[@]}" ; do
+  # Add service prefix if missing
+  local service_flag_legal_options=("deploy" "develop")
+  for each in "${service_flag_legal_options[@]}" ; do
     if [[ "${the_service}" == "${each}" ]]; then
       the_service="project-${the_service}"
       break
@@ -145,9 +144,13 @@ function dna::up_and_attach() {
   # ToDo: validate >> check jetson-container implementation
   #     from https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
 
+  # ....Check host type: ci-server.................................................................
+  n2st::set_is_teamcity_run_environment_variable
+  if [[ ${IS_TEAMCITY_RUN} == true ]]; then
+    print_msg "IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
+  fi
+
   # ....Device specific config.....................................................................
-
-
   n2st::set_which_architecture_and_os
   n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
@@ -157,50 +160,52 @@ function dna::up_and_attach() {
 
       # copy file showing which Jetson board is running for mountinf as a volume in docker-compose
       # Source https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
-      cat /proc/device-tree/model >/tmp/nv_jetson_model
+      cat /proc/device-tree/model > /tmp/nv_jetson_model
 
     elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
       the_compose_file=docker-compose.project.run.linux-x86.yaml
     fi
 
-    if [ -n "$DISPLAY" ]; then
-      # Credit: dusty-nv
-      # Source: https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
+    if [[ ${IS_TEAMCITY_RUN} == false ]]; then
+      if [[ -n "$DISPLAY" ]]; then
+        # Credit: dusty-nv
+        # Source: https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
 
-      # give docker user X11 permissions
-      # Note:
-      # - 'root' is the username here (the one in the docker container)
-      sudo xhost +si:localuser:root
-      #    sudo xhost +si:localuser:"${DN_PROJECT_USER:?err}"
+        # give docker user X11 permissions
+        # Note:
+        # - 'root' is the username here (the one in the docker container)
+        sudo xhost +si:localuser:root
+        #    sudo xhost +si:localuser:"${DN_PROJECT_USER:?err}"
 
-      # enable SSH X11 forwarding inside container (https://stackoverflow.com/q/48235040)
-      # Note: XAUTH is also hardcoded in the docker compose file
-      XAUTH=/tmp/.docker.xauth
-      #    touch $XAUTH
-      #    # Create the '.Xauthority' if not not using X11 forwarding remotely
-      #    touch ~/.Xauthority
-      xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
-      sudo chmod 777 $XAUTH
+        # enable SSH X11 forwarding inside container (https://stackoverflow.com/q/48235040)
+        # Note: XAUTH is also hardcoded in the docker compose file
+        XAUTH=/tmp/.docker.xauth
+        #    touch $XAUTH
+        #    # Create the '.Xauthority' if not using X11 forwarding remotely
+        #    touch ~/.Xauthority
+        xauth nlist "$DISPLAY" | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
+        sudo chmod 777 $XAUTH
 
-      # Note: can't pass those argument to "docker compose up" only to "docker compose run"
-      # display_device="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH"
-    else
-      # Quick ref notes:
-      #   - To open the display: $ xset -display :0 dpms force on
-      #   - To fetch info on display: $ xset -display :0 q
-      #   - To fetch info on display (alt): $ xrandr -d :0
-      #   - To check connected device: $ xrandr -q
-      #   - Check/set configuration via $ nvidia-xconfig
-      #   - NVIDIA
-      #     - https://gist.github.com/shehzan10/8d36c908af216573a1f0#remote-opengl-setup-without-x
-      #     - https://docs.nvidia.com/jetson/archives/r35.3.1/DeveloperGuide/text/SD/WindowingSystems/XWindowSystem.html
+        # Note: can't pass those argument to "docker compose up" only to "docker compose run"
+        # display_device="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH"
+      else
+        # Quick ref notes:
+        #   - To open the display: $ xset -display :0 dpms force on
+        #   - To fetch info on display: $ xset -display :0 q
+        #   - To fetch info on display (alt): $ xrandr -d :0
+        #   - To check connected device: $ xrandr -q
+        #   - Check/set configuration via $ nvidia-xconfig
+        #   - NVIDIA
+        #     - https://gist.github.com/shehzan10/8d36c908af216573a1f0#remote-opengl-setup-without-x
+        #     - https://docs.nvidia.com/jetson/archives/r35.3.1/DeveloperGuide/text/SD/WindowingSystems/XWindowSystem.html
 
-      # NO display set in current bash session, set display for OpenGl rendering in headless mode
-      export DISPLAY=:0
+        # NO display set in current bash session, set display for OpenGl rendering in headless mode
+        export DISPLAY=:0
 
-      # give docker user X11 permissions
-      xhost +si:localuser:root
-      #    xhost +si:localuser:"${DN_PROJECT_USER:?err}"
+        # give docker user X11 permissions
+        xhost +si:localuser:root
+        #    xhost +si:localuser:"${DN_PROJECT_USER:?err}"
+      fi
     fi
 
   elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
@@ -222,20 +227,21 @@ function dna::up_and_attach() {
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
-  #n2st::print_msg "Execute docker compose with ${MSG_DIMMED_FORMAT}-f ${the_compose_file}${MSG_END_FORMAT}"
+  # ....Set GPU capabilities.......................................................................
+  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failed!"
+  test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
+  test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
+  test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
+  test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
   # ....Start docker container.....................................................................
-  n2st::set_is_teamcity_run_environment_variable
-  print_msg "IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:?err} ${TC_VERSION}"
-
   if [[ ${no_up} != true ]]; then
     n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-    # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
   fi
 
   if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then
-    export _THE_COMPOSE_FILE="${the_compose_file}"
-    export _THE_SERVICE="${the_service}"
+    export _NO_UP_COMPOSE_FILE="${the_compose_file}"
+    export _NO_UP_SERVICE="${the_service}"
     return 0
   fi
 
@@ -253,31 +259,57 @@ function dna::up_and_attach() {
       :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      declare -a docker_flags=()
+      if [[ ${DNA_DEBUG} == true ]]; then
+        #docker_flags+=("--debug")
+        docker_flags+=("--log-level" "debug")
+      fi
       declare -a docker_exec_no_up=("exec")
-      docker_exec_no_up+=("${interactive_login[@]}")
+#      docker_exec_no_up+=("${interactive_login[@]}")
       docker_exec_no_up+=("${docker_compose_exec_flag[@]}")
       docker_exec_no_up+=("${the_service}")
       docker_exec_no_up+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.attach.bash")
       docker_exec_no_up+=("${docker_exec_cmd_and_args[@]}")
-      n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} ${docker_exec_no_up[*]}${MSG_END_FORMAT}"
+      n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose -f ${compose_path}/${the_compose_file} ${docker_exec_no_up[*]}${MSG_END_FORMAT}"
       n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
-      docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec_no_up[@]}"
+      docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_exec_no_up[@]}"
       exec_exit_code=$?
     fi
 
   elif [[ ${no_up} != true ]]; then
 
     # . . Launch service as a daemon. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    declare -a docker_flags=()
+    if [[ ${DNA_DEBUG} == true ]]; then
+      #docker_flags+=("--debug")
+      docker_flags+=("--log-level" "debug")
+    fi
     declare -a docker_up=("up" "--detach" "--wait")
     #  docker_up+=("--build")
     docker_up+=("${the_service}")
-    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose ${docker_up[*]}${MSG_END_FORMAT}"
-    docker compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
+    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose ${docker_up[*]}${MSG_END_FORMAT}"
+    docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
     up_exit_code=$?
 
-    n2st::print_msg "Updating ssh key [localhost]:2222"
-    bash -c "ssh-keygen -R [localhost]:2222 >/dev/null 2>/dev/null"
-    bash -c "ssh-keygen -R [127.0.0.1]:2222 >/dev/null 2>/dev/null"
+    local dn_ssh_server_port=${DN_SSH_SERVER_PORT:-2222}
+    # (Priority) ToDo: validate >> next bloc ↓↓
+    n2st::print_msg "Updating ssh key [localhost]:${dn_ssh_server_port}"
+    bash -c "ssh-keygen -R [localhost]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
+    bash -c "ssh-keygen -R [127.0.0.1]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
+
+    if [[ ${DNA_DEBUG} == true ]]; then
+      n2st::print_msg "Current container on host..."
+      docker container ls -a
+      echo
+      #n2st::print_msg "Inspect docker compose configuration for service ${the_service}..."
+      #docker compose -f "${compose_path}/${the_compose_file}" config --dry-run "${the_service}"
+      #echo
+      n2st::print_msg "Pre-exec stage environment variables...
+      NVIDIA_VISIBLE_DEVICES: $NVIDIA_VISIBLE_DEVICES
+      NVIDIA_DRIVER_CAPABILITIES: $NVIDIA_DRIVER_CAPABILITIES
+      DN_DOCKER_RUNTIME: $DN_DOCKER_RUNTIME
+      DN_HOST_GPU_ARCHITECTURE: $DN_HOST_GPU_ARCHITECTURE"
+    fi
 
     if [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]]; then
       # (NICE TO HAVE) ToDo: implement case fetch docker context IP address
@@ -293,16 +325,21 @@ function dna::up_and_attach() {
       :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      declare -a docker_flags=()
+      if [[ ${DNA_DEBUG} == true ]]; then
+        #docker_flags+=("--debug")
+        docker_flags+=("--log-level" "debug")
+      fi
       declare -a docker_exec=("exec")
-      docker_exec+=("${interactive_login[@]}")
+#      docker_exec+=("${interactive_login[@]}")
       docker_exec+=("${docker_compose_exec_flag[@]}")
       docker_exec+=("${the_service}")
       # Note: The init entrypoint is executed here on purpose, not at docker compose up.
       docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
       docker_exec+=("${docker_exec_cmd_and_args[@]}")
-      n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} ${docker_exec[*]}${MSG_END_FORMAT}"
+      n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose -f ${compose_path}/${the_compose_file} ${docker_exec[*]}${MSG_END_FORMAT}"
       n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
-      docker compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
+      docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
       exec_exit_code=$?
     fi
   elif [[ ${no_up} == true ]]; then
@@ -340,12 +377,13 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   dna::up_and_attach "$@"
   fct_exit_code=$?
   n2st::print_formated_script_footer "$(basename $0)" "${MSG_LINE_CHAR_BUILDER_LVL1}"
-  exit "${fct_exit_code}"
+
+  exit $fct_exit_code
 else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }

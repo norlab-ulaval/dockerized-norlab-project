@@ -8,13 +8,14 @@ services:
       IS_SLURM_RUN: ${IS_SLURM_RUN}
       # (CRITICAL) ToDo: validate deleting env var DN_PROJECT_USER (ref task NMO-696)
       # DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
-      DN_HOST: 'linux/x86'
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # DN_HOST: 'linux/x86'
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}-slurm${SJOB_ID}
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_ACTIVATE_POWERLINE_PROMT: false
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      # Use CUDA_VISIBLE_DEVICES instead of  NVIDIA_VISIBLE_DEVICES and NVIDIA_DRIVER_CAPABILITIES
-      #  as the slurm server automatically assign gpu id per job
+      # Use CUDA_VISIBLE_DEVICES instead of NVIDIA_VISIBLE_DEVICES and NVIDIA_DRIVER_CAPABILITIES
+      #  as the slurm server automatically assigned gpu id per job
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}
       DISPLAY: ${DISPLAY}
       QT_X11_NO_MITSHM: 1
@@ -49,16 +50,7 @@ services:
       - SYS_PTRACE
       - SYS_NICE
     network_mode: host    # allow the container to have full access to the host’s networking system
-    # ports:
-    #   - "2222:2222" # ssh pycharm-debugger
-    #   - "6006:6006" # tensorboard
-    #   - "8888:8888" # optuna-dashboard
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
-    runtime: nvidia
-
-  project-slurm-no-gpu:
-    extends:
-      service: project-slurm
-    runtime: !reset []
+    runtime: ${DN_DOCKER_RUNTIME:-runc}

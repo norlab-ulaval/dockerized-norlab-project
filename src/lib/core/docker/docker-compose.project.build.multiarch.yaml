@@ -8,17 +8,18 @@ services:
       file: docker-compose.project.build.native.yaml
     build:
       platforms:
-        - "linux/arm64"
         - "linux/amd64"
+        - "linux/arm64"
 
   project-develop:
     extends:
       service: project-develop
       file: docker-compose.project.build.native.yaml
     build:
+      pull: true # Use the dockerhub registry
       platforms:
-        - "linux/arm64"
         - "linux/amd64"
+        - "linux/arm64"
     depends_on:
       - project-core
 
@@ -27,9 +28,10 @@ services:
       service: project-deploy
       file: docker-compose.project.build.native.yaml
     build:
+      pull: true # Use the dockerhub registry
       platforms:
-        - "linux/arm64"
         - "linux/amd64"
+        - "linux/arm64"
     depends_on:
       - project-core
 
@@ -38,6 +40,7 @@ services:
 #      service: project-deploy
 #      file: docker-compose.project.build.native.yaml
 #    build:
+#      pull: true # Use the dockerhub registry
 #      platforms:
 #        - "linux/arm64"
 #        - "linux/amd64"
@@ -50,42 +53,21 @@ services:
       file: docker-compose.project.build.native.yaml
     build:
       dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.multiarch
+      pull: true # Use the dockerhub registry
       platforms:
         - "linux/arm64"
         - "linux/amd64"
     depends_on:
       - project-core
-
-  project-ci-tests-no-gpu:
-    extends:
-      service: project-ci-tests
-      file: docker-compose.project.build.native.yaml
-    build:
-      dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.multiarch
-      platforms:
-        - "linux/arm64"
-        - "linux/amd64"
-    depends_on:
-      - project-ci-tests
 
   project-slurm:
     extends:
       service: project-slurm
       file: docker-compose.project.build.native.yaml
     build:
+      pull: true # Use the dockerhub registry
       platforms:
         - "linux/arm64"
         - "linux/amd64"
     depends_on:
       - project-core
-
-  project-slurm-no-gpu:
-    extends:
-      service: project-slurm
-      file: docker-compose.project.build.native.yaml
-    build:
-      platforms:
-        - "linux/arm64"
-        - "linux/amd64"
-    depends_on:
-      - project-slurm

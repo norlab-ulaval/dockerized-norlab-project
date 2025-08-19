@@ -11,9 +11,10 @@ ARG BASE_IMAGE
 ARG BASE_IMAGE_TAG
 FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS init-and-setup
 
-# ====Dockerized-NorLab-project internal configuration step========================================
-ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
+# ====Dockerized-NorLab-project internal configuration step========================================
 ARG DN_PROJECT_GIT_NAME
 ENV DN_PROJECT_GIT_NAME=${DN_PROJECT_GIT_NAME:?'Build argument needs to be set and non-empty.'}
 ARG DN_PROJECT_GIT_DOMAIN
@@ -32,8 +33,8 @@ ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 
 # ====Set PATH related environment variable========================================================
 ENV DN_PROJECT_PATH=${DN_DEV_WORKSPACE:?'Build argument needs to be set and non-empty.'}/src/${DN_PROJECT_GIT_NAME}
-ENV PATH="${DN_PROJECT_PATH}:${PATH}"
-ENV PYTHONPATH="${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data:${PYTHONPATH}"
+ENV PATH=${DN_PROJECT_PATH}${PATH:+:${PATH}}
+ENV PYTHONPATH=${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data${PYTHONPATH:+:${PYTHONPATH}}
 
 # ====Copy init and setup files====================================================================
 COPY .dockerized_norlab/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
@@ -55,21 +56,52 @@ ENV XDG_RUNTIME_DIR='/tmp/runtime-root'
 
 # ====User project custom steps====================================================================
 FROM init-and-setup AS user-project-custom-steps
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 # USER NOTES: ADD YOUR CODE IN THIS STAGE
 # ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 # ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
-# Example
+WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+
 RUN <<EOF
+    # ....Examples.................................................................................
     {
-        echo "..........................................." && \
-        echo "Sanity check" && \
-        python -c "import torch" && \
-        python -c "import torchvision" && \
-        python -c "import hydra" && \
-        python -c "from omegaconf import DictConfig, OmegaConf" && \
+        echo "...Sanity check............................" && \
+        echo "python version: $(n2st::which_python3_version)" && \
+        python -c "import pytest" && \
         echo "..........................................." ;
-    } || exit 1
+    } || n2st::print_msg_error_and_exit "Failed sanity check!"
+
+    # ....Examples with cuda.......................................................................
+    # Note: Assuming the base image is nvidia cuda enable and has pycuda and pytorch installed
+    if pip -qq show torch; then
+        {
+          echo "..........................................." && \
+          echo "Sanity check" && \
+          python -c "import torch" && \
+          echo "..........................................." ;
+        } || n2st::print_msg_error_and_exit "Failed torch sanity check!"
+        (
+          echo
+          echo "alias dn-pytorch-cuda-check='python3 /ros2_ws/src/dockerized-norlab-project-mock/src/dna_example/try_pytorch.py'"
+          echo
+        ) >> /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
+    fi
+    if pip -qq show pycuda; then
+        {
+          echo "..........................................." && \
+          echo "Sanity check" && \
+          python -c "import pycuda" && \
+          echo "..........................................." ;
+        } || n2st::print_msg_error_and_exit "Failed pycuda sanity check!"
+        (
+          echo
+          echo "alias dn-pycuda-check='python3 /ros2_ws/src/dockerized-norlab-project-mock/src/dna_example/try_pycuda.py'"
+          echo
+        ) >> /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
+    fi
 EOF
 
 # ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
@@ -78,18 +110,27 @@ EOF
 
 # ====DN-project final=============================================================================
 FROM user-project-custom-steps AS final
-# ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
+
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+# ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
 
+COPY --from=context-dn-container-tools ./dn_project_core_finalize.bash /dn_project_core_finalize.bash
 RUN <<EOF
-    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
+    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash "${TARGETPLATFORM}" "${BUILDPLATFORM}" "${DN_DEV_WORKSPACE:?err}/src" \
+      || n2st::print_msg_error_and_exit "Failed to build repository ros pkgs!"
+
+    source /dn_project_core_finalize.bash \
+      || n2st::print_msg_error_and_exit "Failed dn_project_core_finalize.bash!"
+
     # Cleanup buidl script
     rm -f /dn_project_core_init.bash
     rm -f /dna-lib-container-tools/dn_project_core.setup.bash
     rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
+    rm -f /dn_project_core_finalize.bash
 EOF
+
 CMD [ "bash" ]
 
 

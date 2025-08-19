@@ -200,6 +200,7 @@ function dna::build_services() {
         #          then merge as in DN l4t base images
         dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core
         project_core_build_exit_code=$?
+        n2st::print_msg_done "project-core built and pushed sucessfully."
       fi
     done
 
@@ -211,6 +212,7 @@ function dna::build_services() {
         n2st::print_msg "Building ${each}"
         dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
         build_exit_code+=("$?")
+        n2st::print_msg_done "${each} built sucessfully."
       else
         build_exit_code+=("$project_core_build_exit_code")
       fi
@@ -279,7 +281,7 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }

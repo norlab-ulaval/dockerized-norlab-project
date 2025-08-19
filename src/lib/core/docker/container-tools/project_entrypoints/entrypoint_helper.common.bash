@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Helper script executed by all dn_entrypoint.*.callback.bash.
+# Helper script executed by all "project-*/dn_entrypoint.*.callback.bash".
 #
 # Usage:
 #   source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash
@@ -9,18 +9,32 @@
 #   Read/write all environment variable exposed in DN at runtime
 #
 # =================================================================================================
-set -e
 
+# ....Debug logic..................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  n2st::print_msg "Execute ${BASH_SOURCE[0]}"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute $(basename "$(dirname "${BASH_SOURCE[1]}")")/$(basename "${BASH_SOURCE[1]}") -> entrypoint_helper.common.bash"
 fi
 
-if [[ -n "${ROS_DISTRO}" ]]; then
-  source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bashrc_non_interactive.bash
+# ....Sanity check.................................................................................
+test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+test -n "$( declare -f dn::source_ros2 )" || { echo -e "\033[1;31m[DN error]\033[0m The DN lib is not loaded!" 1>&2 && exit 1; }
 
-  # Should be executed before sourcing ROS2
-  if ! ros2 pkg list | grep -q "${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}"; then
-      echo "Warning: ${RMW_IMPLEMENTATION} not found, falling back to default RMW"
-      export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-  fi
-fi
+# ....Define callback convenient functions.........................................................
+function dn::show_dn_and_n2st_available_functions() {
+  n2st::print_msg "Show in container available N2ST functions...\n${MSG_DIMMED_FORMAT}"
+  for func in $(compgen -A function | grep -e n2st::); do
+    if [[ ! ${func} =~ "n2st::_".* ]]; then
+      # shellcheck disable=SC2163
+      echo "   ${func}"
+    fi
+  done
+  echo -e "${MSG_END_FORMAT}"
+  n2st::print_msg "Show in container available DN functions...\n${MSG_DIMMED_FORMAT}"
+  for func in $(compgen -A function | grep -e dn::); do
+    # shellcheck disable=SC2163
+    echo "   ${func}"
+  done
+  echo -e "${MSG_END_FORMAT}"
+}
+
+

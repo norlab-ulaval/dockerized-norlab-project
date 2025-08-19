@@ -181,7 +181,7 @@ services:
       - ./src:/ros2_ws/src/my-project:rw
       - ./artifact:/artifact:rw
     ports:
-      - "2222:22"
+      - "2222:2222"
       - "7777:7777"
 ```
 

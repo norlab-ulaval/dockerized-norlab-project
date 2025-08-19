@@ -90,13 +90,13 @@ teardown() {
   T_DN_PROJECT_ALIAS_PREFIX_CAP="UMOCK"
 #  cat ${HOME}/.bashrc
 
-  assert_file_not_contains "${HOME}/.bashrc" "#>>>>DNA dockerized-norlab-project-mock aliases and env variable"
-  assert_file_not_contains "${HOME}/.bashrc" "#<<<<DNA dockerized-norlab-project-mock aliases and env variable end"
+  assert_file_not_contains "${HOME}/.bashrc" "# >>>> DNA dockerized-norlab-project-mock aliases and env variables (start)"
+  assert_file_not_contains "${HOME}/.bashrc" "# <<<< DNA dockerized-norlab-project-mock aliases and env variables (end)"
 
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   assert_success
 
-  assert_file_contains "${HOME}/.bashrc" "^#>>>>DNA dockerized-norlab-project-mock aliases and env variable$"
+  assert_file_contains "${HOME}/.bashrc" "^# >>>> DNA dockerized-norlab-project-mock aliases and env variables (start)$"
   assert_file_contains "${HOME}/.bashrc" "^export _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab$"
   assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd='cd ${MOCK_PROJECT_PATH}'$"
   assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab'$"
@@ -104,7 +104,7 @@ teardown() {
   assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${MOCK_PROJECT_PATH}/tests'$"
   assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cda='cd ${MOCK_PROJECT_PATH}/artifact'$"
   assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cde='cd ${MOCK_PROJECT_PATH}/external_data'$"
-  assert_file_contains "${HOME}/.bashrc" "^#<<<<DNA dockerized-norlab-project-mock aliases and env variable end$"
+  assert_file_contains "${HOME}/.bashrc" "^# <<<< DNA dockerized-norlab-project-mock aliases and env variables (end)$"
 
   assert_output --partial "Adding project aliases to .bashrc..."
 

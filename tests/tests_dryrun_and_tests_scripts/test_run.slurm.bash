@@ -13,7 +13,7 @@ function dna::test_teardown_callback() {
   echo "test_run.slurm.bash DONE"
   cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
-  exit ${exit_code:1}
+  exit ${exit_code:-1}
 }
 trap dna::test_teardown_callback EXIT
 

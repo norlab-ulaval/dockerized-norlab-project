@@ -11,15 +11,16 @@ services:
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
     container_name: ${DN_CONTAINER_NAME:?err}
     environment:
-      DN_HOST: 'l4t/arm64'
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # DN_HOST: 'l4t/arm64'
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
       DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-true}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
-      NVIDIA_DRIVER_CAPABILITIES: all
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
       DISPLAY: ${DISPLAY}
       QT_X11_NO_MITSHM: 1
@@ -71,7 +72,7 @@ services:
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
-    runtime: nvidia
+    runtime: ${DN_DOCKER_RUNTIME:-runc}
 
 
   project-deploy:

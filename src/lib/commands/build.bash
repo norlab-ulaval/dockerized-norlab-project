@@ -9,8 +9,8 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   $ dna build [OPTIONS] [SERVICE] [-- <any-docker-argument>]
 #
 # Options:
-#   --multiarch                   Build services for multiple architectures (require a configured
-#                                  docker buildx multiarch builder)
+#   --multiarch                   Build services for multiple architectures
+#   --rmab                        Re-create a local docker buildx multiarch builder
 #   --online-build                Build image sequentialy by pushing/pulling intermediate images
 #                                  from Dockerhub (requires Docker Hub authentication)
 #   --save DIRPATH                Save built image to directory (develop or deploy services only)
@@ -25,6 +25,7 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   ci-tests                      Build CI tests images only
 #   slurm                         Build slurm images only
 #   release                       Build release images only
+#   core                          Build core images only
 #
 # Notes:
 #   - build all services for host native architecture by default
@@ -35,7 +36,7 @@ EOF
 )
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+dna_error_prefix="\033[1;31m[dna error]\033[0m"
 test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
 test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
 test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
@@ -93,6 +94,7 @@ function dna::build_command() {
 
     # ....Set env variables (pre cli)).............................................................
     local multiarch=false
+    local re_create_multiarch_builder=false
     local force_push_project_core=false
     local service=""
     local push_deploy=false
@@ -108,6 +110,10 @@ function dna::build_command() {
         case "$1" in
             --multiarch)
                 multiarch=true
+                shift
+                ;;
+            --rmab)
+                re_create_multiarch_builder=true
                 shift
                 ;;
             --online-build)
@@ -135,7 +141,7 @@ function dna::build_command() {
                 remaining_args+=("$@")
                 break
                 ;;
-            develop|deploy|ci-tests|slurm|release)
+            core|develop|deploy|ci-tests|slurm|release)
                 # If service is already set, it's an error
                 if [[ -n "${service}" ]]; then
                     dna::illegal_command_msg "build" "${original_command}" "Only one SERVICE can be specified.\n"
@@ -170,6 +176,12 @@ function dna::build_command() {
     local architecture="native"
     if [[ "${multiarch}" == true ]]; then
       architecture="multiarch"
+      # ToDo: on task (NMO-767) end >> delete next bloc ↓↓
+      if [[ "${force_push_project_core}" == false  ]]; then
+        echo
+        n2st::print_msg_warning "Be advised, multi-architecture build requires using online build at the moment i.e., 'dna build --multiarch --online-build [SERVICE]' until support for 'docker local registry' is implemented. Its comming soon, stay posted."
+        echo
+      fi
     fi
 
     if [[ "${force_push_project_core}" == true ]]; then
@@ -189,13 +201,16 @@ function dna::build_command() {
       # Case: general
       if [[ "${service}" == "ci-tests" ]]; then
           header_footer_name="CI tests images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-ci-tests,project-ci-tests-no-gpu")
+          build_flag+=("--service-names" "project-core,project-ci-tests")
       elif [[ "${service}" == "slurm" ]]; then
           header_footer_name="slurm images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-slurm,project-slurm-no-gpu")
+          build_flag+=("--service-names" "project-core,project-slurm")
       elif [[ "${service}" == "develop" ]]; then
           header_footer_name="develop images ${architecture} build procedure"
           build_flag+=("--service-names" "project-core,project-develop")
+      elif [[ "${service}" == "core" ]]; then
+          header_footer_name="core images ${architecture} build procedure"
+          build_flag+=("--service-names" "project-core")
       else
           header_footer_name="all images ${architecture} build procedure"
       fi
@@ -259,6 +274,15 @@ function dna::build_command() {
     fi
 
     # ....Begin....................................................................................
+    if [[ "${multiarch}" == true ]] && [[ "${re_create_multiarch_builder}" == true ]]; then
+        local builder_name='local-builder-multiarch-virtual'
+        bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${builder_name}" || {
+            n2st::print_msg_error "Failed to re-create docker buildx builder ${builder_name}!"
+            return 1
+        }
+        n2st::print_msg_done "New builder ${builder_name} created successfully."
+    fi
+
     if [[ "${service}" == "deploy" ]]; then
         dna::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
         fct_exit_code=$?

@@ -145,7 +145,7 @@ for func in $(compgen -A function | grep -e dna::); do
 done
 
 # Print a message to indicate that the mock ui.bash has been loaded
-echo "[DNA done] Mock ui.bash loaded"
+echo "[dna done] Mock ui.bash loaded"
 EOF
 
   # Create a mock setup_host_dna_requirements.bash
@@ -202,7 +202,7 @@ setup() {
 teardown() {
   bats_print_run_env_variable_on_error
   rm -f /usr/local/bin/dna
-  sed -i '/# >>>> dockerized-norlab-project (start)/,/# <<<< dockerized-norlab-project (end)/d' "${HOME}/.bashrc"
+  sed -i '/# >>>> dockerized-norlab-project app (start)/,/# <<<< dockerized-norlab-project app (end)/d' "${HOME}/.bashrc"
 
   # Clean up git safe directory configurations
   if [[ -n "${TEMP_DNA_DIR}" ]]; then
@@ -416,10 +416,10 @@ function run_git_status_with_teamcity_handling() {
   # Create a ~/.bashrc file with existing DNA_PATH entries
   cat > "${HOME}/.bashrc" << 'EOF'
 # Existing .bashrc content
-# >>>> dockerized-norlab-project (start)
+# >>>> dockerized-norlab-project app (start)
 export _DNA_PATH="/old/path"
 export PATH="$PATH:$_DNA_PATH"
-# <<<< dockerized-norlab-project (end)
+# <<<< dockerized-norlab-project app (end)
 EOF
 
   source "${TEMP_DNA_DIR}/load_repo_main_dotenv.bash"

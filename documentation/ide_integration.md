@@ -59,7 +59,7 @@ DNA supports integration with various IDEs and development environments, enablin
 2. **Add new interpreter**:
    - Choose "SSH Interpreter"
    - **Host**: `localhost` (local) or remote IP
-   - **Port**: Container SSH port (default: `2222`)
+   - **Port**: Container SSH port (from DN_SSH_SERVER_PORT, default: `2222`)
    - **Username**: Container user (from `DN_PROJECT_USER`)
 
 3. **Important settings**:
@@ -273,7 +273,7 @@ For projects targeting multiple architectures:
 **Solutions**:
 1. Verify container is running: `dna up`
 2. Check SSH port: `docker ps` and look for port mapping
-3. Verify SSH service in container: `dna exec systemctl status ssh`
+3. Verify SSH service in container: `dna exec service ssh status`
 
 #### Debugging: "Breakpoints not hit"
 

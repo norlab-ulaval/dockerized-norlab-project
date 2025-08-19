@@ -29,10 +29,10 @@
 [//]: # ( ==== Description =========================================== ) 
 **The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main) image builder.**
 
-It provide a containerized workflow tailor-made for robotic research.<br>
+It provides a containerized workflow tailor-made for robotic research.<br>
 Dockerized-NorLab project application (DNA) manage Dockerized-NorLab (DN) container lifecycle<br>
 providing functionality for robotic software development, deployment, testing,<br>
-continuous integration, slurm job experimentation and release publishing. 
+continuous integration, slurm job experimentation, and release publishing. 
 
 <br>
 
@@ -75,7 +75,7 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 - **Multi-platform support**: Runs seamlessly on `l4t/arm64` (Jetson), `darwin/arm64` (Mac OS X), and `linux/x86` without configuration changes.
 - **Flexible deployment modes**: Supports both local and remote workflows for personal workstations, remote embedded computers, and servers.
 - **Robotic Software System ([ROS2](https://github.com/ros2)) ready**: Ready to roll, out of the box.
-- **GPU acceleration**: Provides GPU support through [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) for both `l4t/arm64` and `linux/x86` platforms.
+- **GPU acceleration**: Provides GPU support through [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) for both `l4t/arm64` and `linux/x86` platforms.
 - **Transparent configuration**: Makes project configuration easy while keeping [Docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) logic transparent and accessible.
 
 [//]: # (</details>)
@@ -173,7 +173,7 @@ Work seamlessly across different operating systems and architectures:
 - `linux/x86` (Standard Linux systems)
 
 **🎮 GPU Acceleration**  
-Leverage GPU computing power for robotics applications through nvidia-docker integration, supporting both ARM64 and x86 platforms.
+Leverage GPU computing power for robotics applications through NVIDIA Container Toolkit integration, supporting both ARM64 and x86 platforms.
 
 [//]: # (</details>)
 
@@ -226,7 +226,7 @@ Note:
 - Existing file and directories with the same name will be safeguarded with the suffix `.old`, not overriden.
 - Content of the artifact directory is persistent. It will remain available even if the container is stopped or removed. 
 
-### Create, run and stop DN container
+### Create, run, and stop DN container
 
 To spin a DN container and open a terminal in it, run the following command from anywhere in the DNA initialized repository
 ```shell

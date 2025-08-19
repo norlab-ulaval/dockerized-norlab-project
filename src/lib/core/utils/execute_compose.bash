@@ -122,16 +122,18 @@ function dna::excute_compose() {
 
   # ....Set env variables (post cli)...............................................................
   docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
+  local dna_override_buildx=false
 
   # ====Begin======================================================================================
   n2st::print_formated_script_header "dna::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
 
   n2st::set_is_teamcity_run_environment_variable
   n2st::set_which_architecture_and_os
-  n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
+  n2st::print_msg "Host os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
   n2st::print_msg "Multiarch build: ${multiarch}"
-  n2st::print_msg "Is TeamCity CI/CD run: ${IS_TEAMCITY_RUN} ${TC_VERSION}"
-  local dna_override_buildx=false
+  if [[ ${IS_TEAMCITY_RUN} == true ]]; then
+    n2st::print_msg "Is TeamCity CI/CD run: ${IS_TEAMCITY_RUN} ${TC_VERSION}"
+  fi
 
   if [[ -n ${override_buildx_builder_name} ]]; then
     export BUILDX_BUILDER="${override_buildx_builder_name}"
@@ -156,6 +158,10 @@ function dna::excute_compose() {
       if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64*".* ]] || [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64*".* ]]; then
         n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "$0") execution."
         # Set builder for local execution
+        if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
+          n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create it..."
+          bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_exit "Failed to create docker buildx builder ${default_buildx_builder_name}!"
+        fi
         export BUILDX_BUILDER="${default_buildx_builder_name}"
         dna_override_buildx=true
       fi
@@ -170,10 +176,8 @@ function dna::excute_compose() {
     fi
   fi
 
-  # ToDo: NMO-739 feat: add mechanism to warn user if buildx builder does not exist
-
   # Note: The 'docker buildx inspect --bootstrap name' is to force builder initialisation
-  if [[ $(docker buildx inspect --bootstrap "${BUILDX_BUILDER}" >/dev/null ) =~ "ERROR: no builder".*"found" ]]; then
+  if ! docker buildx inspect --bootstrap "${BUILDX_BUILDER}" &> /dev/null; then
     n2st::print_msg_error "Can't find the selected docker buildx builder ${MSG_DIMMED_FORMAT}${BUILDX_BUILDER}${MSG_END_FORMAT}.
 Please investigate available ones and set explicitly using the following commands
 
