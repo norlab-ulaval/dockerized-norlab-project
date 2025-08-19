@@ -2,6 +2,24 @@
 
 services:
 
+  project-core-pre:
+    extends:
+      service: project-core-pre
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/amd64"
+        - "linux/arm64"
+
+  project-core-user:
+    extends:
+      service: project-core-user
+      file: docker-compose.project.build.native.yaml
+    build:
+      platforms:
+        - "linux/amd64"
+        - "linux/arm64"
+
   project-core:
     extends:
       service: project-core

@@ -82,6 +82,7 @@ function dna::load_repository_environment_variables() {
   # ....load environment variables in current shell................................................
   set -o allexport
   source ".env.dockerized-norlab-project" || return 1
+  source ".env.dockerized-norlab-project.local" || return 1
   set +o allexport
 
   # ....Teardown...................................................................................

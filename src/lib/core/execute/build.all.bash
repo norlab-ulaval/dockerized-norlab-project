@@ -147,7 +147,7 @@ function dna::build_services() {
         if [[ "${services_names[idx]}" == "project-core" ]]; then
           n2st::print_msg "Building project-core"
           project_core_build_idx=$idx
-          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" project-core
+          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies project-core
           project_core_build_exit_code=$?
         fi
       done
@@ -198,7 +198,7 @@ function dna::build_services() {
         #       1. check that project-core image on Dockerhub has been pushed for both arm64 and amd64
         #       2. if not, consider building and pushing manualy each arm64 and amd64 images and
         #          then merge as in DN l4t base images
-        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core
+        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies --push project-core
         project_core_build_exit_code=$?
         n2st::print_msg_done "project-core built and pushed sucessfully."
       fi
