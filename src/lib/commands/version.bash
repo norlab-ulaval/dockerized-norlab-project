@@ -18,7 +18,7 @@ EOF
 )
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+dna_error_prefix="\033[1;31m[dna error]\033[0m"
 test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
 test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
 test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
@@ -52,6 +52,11 @@ function dna::version_command() {
 
     local current_branch
     current_branch=$(cd "${DNA_ROOT:?err}" && git branch --show-current 2>/dev/null || echo "unknown")
+
+    if [[ ${TEAMCITY_VERSION} ]] && [[ -z ${current_branch} ]]; then
+      # Fetch TeamCity build branch environment variable
+      current_branch="Probaly TC PR branch"
+    fi
 
     local current_commit
     current_commit=$(cd "${DNA_ROOT}" && git rev-parse HEAD 2>/dev/null || echo "unknown")

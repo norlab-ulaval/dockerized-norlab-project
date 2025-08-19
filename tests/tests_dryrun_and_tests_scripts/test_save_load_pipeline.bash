@@ -5,10 +5,10 @@ source "$(git rev-parse --show-toplevel)/load_repo_main_dotenv.bash" || exit 1
 export PATH="$PATH:${DNA_PATH:?err}"
 bash "${DNA_ROOT:?err}/tests/setup_mock.bash"
 function dna::test_teardown_callback() {
-  exit_code=$?
+  local exit_code=$?
   cd "${DNA_ROOT:?err}" || exit 1
   bash tests/teardown_mock.bash
-  exit ${exit_code:1}
+  exit ${exit_code:-1}
 }
 trap dna::test_teardown_callback EXIT
 # Note: command `dna COMMAND ...` require a `|| exit 1` instruction for trap to catch EXIT

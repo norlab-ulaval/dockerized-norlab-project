@@ -120,7 +120,12 @@ function dna::load_super_project_configurations() {
     return 1
   fi
 
-  # ....Load super project DNA meta config dotenv file.............................................
+  # ....Load super project DNA dotenv file.........................................................
+
+  # (CRITICAL) ToDo: NMO-773 fix: implement macOs GID conversion to Ubuntu GID logic
+  # On macOs, GID=20 -> 'staff' group != Ubuntu GID=20 -> 'dialout' group
+
+
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   # shellcheck disable=SC1090
@@ -128,14 +133,37 @@ function dna::load_super_project_configurations() {
   source ".dockerized_norlab/configuration/.env.dna" || return 1
   set +o allexport
 
-  # ....Load run time DNA dotenv file for docker-compose...........................................
+  # ....Load DNA dotenv file for docker-compose....................................................
   cd "${SUPER_PROJECT_ROOT:?err}" || return 1
   set -o allexport
   source ".dockerized_norlab/configuration/.env" || return 1
-  source ".dockerized_norlab/configuration/.env.local" || return 1
   set +o allexport
 
+  local super_project_dotenv_local=".dockerized_norlab/configuration/.env.local"
+  if [[ -f "${super_project_dotenv_local}" ]]; then
+    if [[ $(grep -c '^[[:space:]]*[A-Z_][A-Z0-9_]*=' "${super_project_dotenv_local}" 2>/dev/null) -gt 0 ]]; then
+        n2st::print_msg_warning "Be advised, sourcing super project ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${super_project_dotenv_local}${MSG_END_FORMAT}."
+    fi
+    # Note: super project dotenv local should be source after the super project main dotenv
+    # shellcheck disable=SC1090
+    set -o allexport
+    source "${super_project_dotenv_local}" || return 1
+    set +o allexport
+  fi
+
   # ....Set DN git branch and version dynamicaly based on DNA current branch.......................
+  local dna_internal_local="${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local"
+  if [[ -f "${dna_internal_local}" ]]; then
+    # Note: Dotenv file '.env.dna-internal.local', if it exist, should be sourced
+    #       before '.env.dna-internal'.
+    if [[ $(grep -c '^[[:space:]]*[A-Z_][A-Z0-9_]*=' "${dna_internal_local}" 2>/dev/null) -gt 0 ]]; then
+        n2st::print_msg_warning "Be advised, sourcing dna internal ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${dna_internal_local}${MSG_END_FORMAT}."
+    fi
+    set -o allexport
+    # shellcheck disable=SC1090
+    source "${dna_internal_local}" || return 1
+    set +o allexport
+  fi
 
   # Set the Dockerized-NorLab repository branch for fetching container internal tools if not
   # overriden by super project user.
@@ -325,7 +353,7 @@ function dna::check_offline_deploy_service_discovery() {
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+dna_error_prefix="\033[1;31m[dna error]\033[0m"
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
   echo -e "${dna_error_prefix} This script must be sourced i.e.: $ source $(basename "$0")" 1>&2
@@ -335,7 +363,7 @@ else
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   if [[ ${_execute_now} == true  ]]; then
-    dna::load_super_project_configurations "$@" || { n2st::print_msg_error "failled to load DNA user project configurations" && exit 1; }
+    dna::load_super_project_configurations "$@" || { n2st::print_msg_error "failed to load DNA user project configurations" && exit 1; }
   fi
   unset _execute_now
 fi

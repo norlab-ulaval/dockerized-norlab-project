@@ -15,9 +15,9 @@ services:
       DN_ACTIVATE_POWERLINE_PROMT: false
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
-      NVIDIA_VISIBLE_DEVICES: all   # substitute for `--gpus all` flag
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
-      NVIDIA_DRIVER_CAPABILITIES: all
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
       QT_X11_NO_MITSHM: 1
       XAUTHORITY: /tmp/.docker.xauth
@@ -44,10 +44,5 @@ services:
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
-    runtime: nvidia
+    runtime: ${DN_DOCKER_RUNTIME:-runc}
 
-  project-ci-tests-no-gpu:
-    extends:
-      service: project-ci-tests
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests-no-gpu:${PROJECT_TAG:?err}
-    runtime: !reset []

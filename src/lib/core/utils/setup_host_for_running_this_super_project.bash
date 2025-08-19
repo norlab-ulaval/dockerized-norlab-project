@@ -46,7 +46,7 @@ function dna::setup_host_for_this_super_project() {
   dn_project_alias_prefix_caps="$(echo "${DN_PROJECT_ALIAS_PREFIX}" | tr '[:lower:]' '[:upper:]')"
   (
     echo ""
-    echo "#>>>>DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable"
+    echo "# >>>> DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variables (start)"
     echo "export _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab"
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cd='cd $SUPER_PROJECT_ROOT'"
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab'"
@@ -54,7 +54,7 @@ function dna::setup_host_for_this_super_project() {
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${SUPER_PROJECT_ROOT}/tests'"
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cda='cd ${SUPER_PROJECT_ROOT}/artifact'"
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
-    echo "#<<<<DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variable end"
+    echo "# <<<< DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variables (end)"
     echo ""
   ) | sudo tee -a "${HOME}/.bashrc" > /dev/null
 
@@ -99,7 +99,7 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
   test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }

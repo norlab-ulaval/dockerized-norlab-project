@@ -7,7 +7,13 @@ DOCUMENTATION_BUFFER_RUN_CI_TESTS=$( cat <<'EOF'
 #
 # Usage:
 #   $ bash build.ci_tests.bash [<any-build.all-argument>]
-#   $ bash run.ci_tests.bash [<command>]
+#   $ bash run.ci_tests.bash [OPTIONS] [<command>]
+#
+# Optional docker run flags:
+#   -e, --env stringArray        Set container environment variables
+#   -w, --workdir string         Override path to workdir directory
+#   -T, --no-TTY                 Disable pseudo-TTY allocation
+#   -v, --volume stringArray     Bind mount a volume
 #
 # Notes:
 #   The difference with `build.ci_tests.multiarch.bash` is that tests are only executed for the
@@ -22,37 +28,45 @@ function dna::run_ci_tests() {
   # ....Setup......................................................................................
   local tmp_cwd
   tmp_cwd=$(pwd)
-  declare -a in_docker_command=()
+  declare -a docker_run_args=()
+  declare -a the_command=()
 
   # ....cli......................................................................................
   while [[ $# -gt 0 ]]; do
       case "$1" in
+          -e|--env|-w|--workdir|-v|--volume) # Assume its a docker compose flag
+            docker_run_args+=("$1" "$2")
+            shift
+            shift
+            ;;
           --help|-h)
-              dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS:?err}"
-              exit 0
-              ;;
+            dna::command_help_menu "${DOCUMENTATION_BUFFER_RUN_CI_TESTS:?err}"
+            exit 0
+            ;;
           *)
-              in_docker_command+=("$@")
-              break
-              ;;
+            the_command+=("$@")
+            break
+            ;;
       esac
   done
 
-    # ....Set env variables (post cli)...............................................................
-  compose_file="docker-compose.project.run.ci-tests.yaml"
+  # ....Set env variables (post cli)...............................................................
+  local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
+  local compose_file="docker-compose.project.run.ci-tests.yaml"
+  local the_service="project-ci-tests"
 
-  # ....Begin......................................................................................
+  # ....Set GPU capabilities.......................................................................
+  dna::configure_gpu_capabilities "$(n2st::which_architecture_and_os)" "${compose_path}" "${compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failed!"
+  test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
+  test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
+  test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
+  test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
-  if [[ $(uname -s) == "Darwin" ]] || [[ $(nvcc -V 2>/dev/null | grep 'nvcc: NVIDIA (R) Cuda compiler driver') != "nvcc: NVIDIA (R) Cuda compiler driver" ]]; then
-    n2st::print_msg_warning "Host computer does not support nvidia gpu, changing container runtime to docker default."
-    the_service="project-ci-tests-no-gpu"
-  else
-    the_service="project-ci-tests"
-  fi
-
-  docker_run_flag=("--rm")
+  # ====Begin======================================================================================
+  local docker_run_flag=("--rm")
+  docker_run_flag+=("${docker_run_args[@]}")
   docker_run_flag+=("${the_service}")
-  docker_run_flag+=("${in_docker_command[@]}")
+  docker_run_flag+=("${the_command[@]}")
   dna::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"
   exit_code=$?
 
@@ -98,7 +112,7 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }

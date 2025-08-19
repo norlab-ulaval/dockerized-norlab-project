@@ -117,14 +117,14 @@ teardown() {
   run source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" --debug
 
   assert_success
-  assert_output --regexp "[DNA done]".*"librairies loaded"
+  assert_output --regexp "[dna done]".*"librairies loaded"
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_failure
-  assert_output --regexp "[DNA error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
+  assert_output --regexp "[dna error]".*"This script must be sourced i.e.:".*"source".*"$TESTED_FILE"
 }
 
 

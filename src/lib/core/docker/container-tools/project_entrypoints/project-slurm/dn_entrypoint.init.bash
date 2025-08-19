@@ -5,7 +5,7 @@
 #   - cleanup byte-compiled files to prevent execution bug
 #
 # Usage:
-#   $ bash dn_entrypoint.slurm.bash [<any-python-arg>]
+#   $ bash dn_entrypoint.init.bash [<any-python-arg>]
 #
 # Globals:
 #   Read DN_PROJECT_PATH
@@ -18,12 +18,9 @@
 # =================================================================================================
 set -e
 
-MSG_ERROR_FORMAT="\033[1;31m"
-MSG_END_FORMAT="\033[0m"
-
 # ====Setup========================================================================================
 if [[ ! -d "${DN_PROJECT_PATH:?'Required DN environment variable is set and not empty'}/src" ]]; then
-  echo -e "\n${MSG_ERROR_FORMAT}[DNA error]${MSG_END_FORMAT} '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
+  echo -e "\n\033[1;31m[DN error]\033[0m '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
   exit 1
 else
   cd "${DN_PROJECT_PATH}/src" || exit 1
@@ -34,21 +31,28 @@ export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
 # (NICE TO HAVE) ToDo: refactor PYTHONPATH logic as a fct. Either in DN container-tools or in DN-project
 
 # Remove byte-compiled files that can mess with tools on context/environment change (Remember the
-# pycharm-debugger user path nightmare)
+# non-interactive-ros2 user path nightmare)
 pyclean "${DN_PROJECT_PATH}"
 
 # ....Load library.................................................................................
-source /import_dockerized_norlab_container_tools.bash
-n2st::set_which_python3_version && test -n "${PYTHON3_VERSION}" || exit 1
-if [[ -z "${PYTHON3_VERSION}" ]]; then
-  echo -e "[\033[1;31mERROR\033[0m] $0 | Script import_dockerized_norlab_container_tools.bash failled" 1>&2
-fi
-
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  n2st::print_msg "Execute $0"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute project-slurm/dn_entrypoint.init.bash"
 fi
 
-# ====DN-project user defined logic================================================================
+if [[ $- == *i* ]]; then
+    if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
+      echo -e "\033[1;33m[DN trace]\033[0m Interactive shell. Sourcing DN lib is handled via .bashrc"
+    fi
+else
+    if [[ "${DN_ENTRYPOINT_TRACE_EXECUTION}" == true ]]; then
+      echo -e "\033[1;33m[DN trace]\033[0m Non-interactive shell. Sourcing DN lib"
+    fi
+    source /dockerized-norlab/dockerized-norlab-images/container-tools/bash_run_config/.bashrc.dn_non_interactive
+fi
+
+test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
+# ====DNA-project user defined logic===============================================================
 
 # ....Execute DN-project user callback.............................................................
 # Sanity check
@@ -72,5 +76,5 @@ cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1
 
 # ....Release......................................................................................
-echo "$(basename $0) done!"
+n2st::print_msg_done "project-slurm/dn_entrypoint.init.bash done!"
 exit 0

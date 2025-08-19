@@ -12,7 +12,8 @@ services:
     entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
     container_name: ${DN_CONTAINER_NAME:?err}
     environment:
-      DN_HOST: 'darwin/arm64'
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # DN_HOST: 'darwin/arm64'
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
@@ -22,6 +23,7 @@ services:
       NVIDIA_DRIVER_CAPABILITIES:
       DISPLAY: ${DN_DISPLAY:-${DISPLAY}}
       QT_X11_NO_MITSHM: 1
+      XAUTHORITY: /tmp/.docker.xauth
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
@@ -42,23 +44,14 @@ services:
     # Note: Port mapping on macosx is incompatible with network_mode: host
     network_mode: bridge
     ports:
-      - "2222:2222" # ssh pycharm-debugger
-      - "6006:6006" # tensorboard
-      - "8888:8888" # optuna-dashboard
-      # - "7777:7777" # gdbserver
+      - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh non-interactive-ros2
+      - ${DN_GDB_SERVER_PORT:-7777}:${DN_GDB_SERVER_PORT:-7777} # gdbserver
+      - ${DN_TENSORBOARD:-6006}:${DN_TENSORBOARD:-6006} # tensorboard
+      - ${DN_OPTUNA_DASHBOARD:-8888}:${DN_OPTUNA_DASHBOARD:-8888} # optuna-dashboard
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
-
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '6.0'
-#          memory: 30gb
-#        reservations:
-#          cpus: '4.0'
-#          memory: 20gb
-
+    runtime: ${DN_DOCKER_RUNTIME:-runc}
 
   project-develop:
     extends:
@@ -67,6 +60,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw
@@ -82,6 +76,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       # ....Add host volume you want to mount into the container...................................

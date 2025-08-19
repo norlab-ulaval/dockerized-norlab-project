@@ -109,7 +109,7 @@ for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   export -f "${func}"
 done
 
-echo "[DNA done] Mock import_dna_lib.bash and its libraries loaded"
+echo "[dna done] Mock import_dna_lib.bash and its libraries loaded"
 EOF
 
   # Create mock project structure for deploy tests

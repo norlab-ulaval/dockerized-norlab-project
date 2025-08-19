@@ -140,17 +140,12 @@ DNA handles SSH key management automatically:
 
 2. **Verify SSH service**:
    ```bash
-   dna exec systemctl status ssh
+   dna exec service ssh status
    ```
 
 3. **Check port mapping**:
    ```bash
    docker port DN_CONTAINER_NAME
-   ```
-
-4. **Restart SSH service**:
-   ```bash
-   dna exec sudo systemctl restart ssh
    ```
 
 ### Container Not Running

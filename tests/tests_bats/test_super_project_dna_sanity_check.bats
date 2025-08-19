@@ -123,7 +123,7 @@ teardown_file() {
 #  source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   run dna::super_project_dna_sanity_check
   assert_success
-  assert_output --regexp "[DNA done].*Super project dockerized-norlab-project-mock setup is OK"
+  assert_output --regexp "[dna done].*Super project dockerized-norlab-project-mock setup is OK"
 }
 
 @test "dna::super_project_dna_sanity_check (sourced) but missing super project | super project unreachable › expect fail" {
@@ -290,7 +290,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
-  assert_output --regexp "[DNA done].*Super project dockerized-norlab-project-mock setup is OK"
+  assert_output --regexp "[dna done].*Super project dockerized-norlab-project-mock setup is OK"
 }
 
 @test "dna::super_project_dna_sanity_check integration › expect fail with invalid super project" {
@@ -328,12 +328,12 @@ teardown_file() {
   assert_failure
 
   # Should output an error message
-  assert_output --regexp  "[DNA error].* The 'src' directory is not installed at super-project repository root.*"
+  assert_output --regexp  "[dna error].* The 'src' directory is not installed at super-project repository root.*"
 }
 
 # ....Test script business logic...................................................................
 @test "run $TESTED_FILE › expect pass" {
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
   assert_success
-  assert_output --regexp "[DNA done].*Super project dockerized-norlab-project-mock setup is OK"
+  assert_output --regexp "[dna done].*Super project dockerized-norlab-project-mock setup is OK"
 }

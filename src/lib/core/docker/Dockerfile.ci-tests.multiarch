@@ -22,7 +22,7 @@ ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
 ENV DN_PROJECT_SERVICE=project-ci-tests
 ENV DN_PROJECT_SERVICE_DIR=/dockerized-norlab/project/${DN_PROJECT_SERVICE}
 
-SHELL ["/bin/bash", "-c"]
+SHELL ["/usr/local/bin/bash-dn-buildtime", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN <<EOF
@@ -37,19 +37,22 @@ RUN <<EOF
 EOF
 
 # ===install teamcity & CI/CD utilities============================================================
-
-RUN pip3 install --no-cache-dir  --upgrade pip
-RUN pip3 install --no-cache-dir teamcity-messages
-
 RUN <<EOF
-    echo "Configure Matplotlib to use a non-interactive backends for TeamCity run"
-    echo "backend : Agg" >> /etc/matplotlibrc
+    pip3 install --no-cache-dir  --upgrade pip
+    pip3 install --no-cache-dir teamcity-messages
+
+    if [[ -f "/etc/matplotlibrc" ]]; then
+        if grep -q 'backend : Agg' "/etc/matplotlibrc" 2>/dev/null; then
+            echo "Configure Matplotlib to use a non-interactive backends for TeamCity run"
+            echo "backend : Agg" >> /etc/matplotlibrc
+        fi
+    fi
 EOF
 
 # ....DN and DN-project entrypoints and utilities................................................
 WORKDIR ${DN_PROJECT_SERVICE_DIR}
-COPY --chown=${DN_PROJECT_USER} --from=context-dna-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.ci_test.bash ./
-RUN chmod +x ./dn_entrypoint.ci_test.bash
+COPY --chown=${DN_PROJECT_USER} --from=context-dna-lib-container-tools project_entrypoints/${DN_PROJECT_SERVICE}/dn_entrypoint.init.bash ./
+RUN chmod +x ./dn_entrypoint.init.bash
 COPY --chown=${DN_PROJECT_USER} .dockerized_norlab/configuration/project_entrypoints/project-ci-tests .
 
 # ====Execute tests================================================================================
@@ -60,7 +63,6 @@ ARG TARGETARCH
 ARG BUILDPLATFORM
 
 USER ${DN_PROJECT_USER:?err}
-SHELL ["/bin/bash", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DNA_PYTEST_CI_RUN=true
 
@@ -70,6 +72,15 @@ COPY --chown=${DN_PROJECT_USER} . ${DN_PROJECT_PATH:?err}/
 
 # Note: Run tests in docker build stage to assess multi-architecture related potential problem.
 WORKDIR ${DN_PROJECT_SERVICE_DIR}
-RUN ./dn_entrypoint.ci_test.bash
+RUN <<EOF
+    # ....Buildtime debug..........................................................................
+    #DN_SHOW_DEBUG_INFO=true
+    source /dna-lib-container-tools/dn_sanity_checks.bash && dna::user_and_dir_content_sanity_check "buildtime"
 
+    # ....Execute multi-architecture tests.........................................................
+    ./dn_entrypoint.init.bash
+EOF
+
+# (CRITICAL) ToDo: update with a runtime version DN lib load shell wrapper
+SHELL ["/bin/bash", "-c"]
 ENTRYPOINT [ ]

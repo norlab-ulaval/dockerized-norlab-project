@@ -65,6 +65,20 @@ echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
 
+  # Create mock buildx_builder.bash
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/buildx_builder.bash" << 'EOF'
+#!/bin/bash
+# Mock buildx_builder.bash
+builder_name=${1:-"local-builder-multiarch-virtual"}
+if [[ "${MOCK_BUILDX_BUILDER_FAIL:-false}" == "true" ]]; then
+  echo "Mock buildx_builder.bash failed for builder: ${builder_name}"
+  exit 1
+else
+  echo "Mock buildx_builder.bash called with builder: ${builder_name}"
+  exit 0
+fi
+EOF
+
   cat > "${MOCK_DNA_DIR}/src/lib/core/execute/build.all.bash" << 'EOF'
 #!/bin/bash
 # Mock build.all.bash
@@ -240,7 +254,7 @@ function command() {
 
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
-echo "[DNA done] Mock import_dna_lib.bash and its librairies loaded"
+echo "[dna done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
 }
 
@@ -330,7 +344,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service › expect slurm images only" {
@@ -342,7 +356,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-slurm"
 }
 
 @test "dna::build_command with deploy service › expect deploy images only" {
@@ -607,7 +621,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service and --multiarch › expect multiarch slurm images" {
@@ -619,7 +633,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-slurm"
 }
 
 @test "dna::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
@@ -631,7 +645,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-ci-tests,project-ci-tests-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service and --online-build › expect slurm images with force push" {
@@ -643,7 +657,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-slurm,project-slurm-no-gpu"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-slurm"
 }
 
 @test "dna::build_command with develop service and -- docker args › expect develop images with docker args" {
@@ -834,4 +848,79 @@ teardown_file() {
   # Should output the expected build message
   assert_output --partial "develop images native build"
   assert_output --partial "Mock dna::build_services called with args:"
+}
+
+# ====New --rmab flag tests=======================================================================
+
+@test "dna::build_command with --rmab only › expect error" {
+  # Test case: When build command is called with --rmab flag only (without --multiarch), it should not call buildx_builder
+  # The --rmab flag should only work in combination with --multiarch
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --rmab"
+
+  # Should succeed (--rmab flag is parsed but buildx_builder is not called without --multiarch)
+  assert_success
+
+  # Should output the expected message for native build
+  assert_output --partial "all images native build"
+  assert_output --partial "Mock dna::build_services called with args:"
+  
+  # Should not call buildx_builder since --multiarch is not set
+  refute_output --partial "Mock buildx_builder.bash called"
+}
+
+@test "dna::build_command with --multiarch --rmab › expect multiarch build with builder recreation" {
+  # Test case: When build command is called with both --multiarch and --rmab, it should recreate the builder and build multiarch
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --multiarch --rmab"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "all images multiarch build"
+  assert_output --partial "Mock buildx_builder.bash called with builder: local-builder-multiarch-virtual"
+  assert_output --partial "Mock n2st::print_msg_done called with args: New builder local-builder-multiarch-virtual created successfully."
+  assert_output --partial "Mock dna::build_services_multiarch called with args:"
+}
+
+@test "dna::build_command with --multiarch --rmab and buildx_builder failure › expect error" {
+  # Test case: When build command is called with --multiarch --rmab but buildx_builder fails, it should return error
+  run bash -c "export MOCK_BUILDX_BUILDER_FAIL=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --multiarch --rmab"
+
+  # Should fail
+  assert_failure
+
+  # Should output the expected error messages
+  assert_output --partial "Mock buildx_builder.bash failed for builder: local-builder-multiarch-virtual"
+  assert_output --partial "Mock n2st::print_msg_error called with args: Failed to re-create docker buildx builder local-builder-multiarch-virtual!"
+  
+  # Should not proceed to build services
+  refute_output --partial "Mock dna::build_services_multiarch called"
+}
+
+@test "dna::build_command with develop service --multiarch --rmab › expect develop multiarch build with builder recreation" {
+  # Test case: When build command is called with develop service, --multiarch and --rmab, it should recreate builder and build develop multiarch
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command develop --multiarch --rmab"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "develop images multiarch build"
+  assert_output --partial "Mock buildx_builder.bash called with builder: local-builder-multiarch-virtual"
+  assert_output --partial "Mock n2st::print_msg_done called with args: New builder local-builder-multiarch-virtual created successfully."
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-develop"
+}
+
+@test "dna::build_command with deploy service --multiarch --rmab --push › expect deploy multiarch build with builder recreation" {
+  # Test case: When build command is called with deploy service, --multiarch, --rmab and --push, it should recreate builder and build deploy multiarch
+  run bash -c "export MOCK_DOCKER_LOGIN=true && source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command deploy --multiarch --rmab --push"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected messages
+  assert_output --partial "deploy images multiarch build procedure"
+  assert_output --partial "Mock buildx_builder.bash called with builder: local-builder-multiarch-virtual"
+  assert_output --partial "Mock n2st::print_msg_done called with args: New builder local-builder-multiarch-virtual created successfully."
+  assert_output --partial "Mock dna::build_project_deploy_service called with args: --multiarch --push"
 }

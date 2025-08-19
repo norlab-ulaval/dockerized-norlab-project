@@ -11,6 +11,7 @@
 # Global:
 #   read DNA_ROOT
 #   read N2ST_PATH
+#   read DNA_DEBUG
 #
 # =================================================================================================
 pushd "$(pwd)" >/dev/null || exit 1
@@ -31,6 +32,16 @@ function dna::setup_mock() {
   git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git \
     "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" \
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
+
+  if [[ ${DNA_DEBUG} == true ]]; then
+    cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" || exit 1
+    #git status
+    dna project dotenv
+    cd - || exit 1
+    echo
+    printenv | grep -e PATH -e PYTHONPATH
+    echo
+  fi
 
   # ....Sanity check...............................................................................
   test -d "${DNA_ROOT}/utilities/tmp" || n2st::print_msg_error_and_exit "The directory ${DNA_ROOT}/utilities/tmp is unreachable"
@@ -53,7 +64,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   dna::setup_mock
 else
   # This script is being sourced, ie: __name__="__source__"
-  dna_error_prefix="\033[1;31m[DNA error]\033[0m"
+  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   echo -e "${dna_error_prefix} This script must executed with bash! i.e.: $ bash $( basename "$0" )" 1>&2
   exit 1
 fi
