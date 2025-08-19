@@ -35,7 +35,7 @@ services:
         required: false
     tty: true
     stdin_open: true
-    privileged: true
+    privileged: false
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined

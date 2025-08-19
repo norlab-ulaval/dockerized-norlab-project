@@ -73,7 +73,7 @@ services:
       # ....From jetson-container run.sh...........................................................
       - /dev/snd
       - /dev/bus/usb
-    privileged: true
+    privileged: false
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined

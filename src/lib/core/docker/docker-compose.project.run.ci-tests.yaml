@@ -30,7 +30,7 @@ services:
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
         required: false
-    privileged: true
+    privileged: false
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined

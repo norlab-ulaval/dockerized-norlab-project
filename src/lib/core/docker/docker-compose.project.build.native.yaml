@@ -42,6 +42,7 @@ services:
         norlab.dockerized-norlab.project: "${DN_PROJECT_GIT_NAME:?err}"
         norlab.tools.norlab-shell-script-tools: "${N2ST_VERSION:?err}"
         norlab.tools.norlab-build-system: "${NBS_VERSION:?err}"
+      pull: false # Use the local image store to execute the FROM directive
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
