@@ -178,77 +178,28 @@ Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable
 ### Dockerfile Customization
 
 The generated `.dockerized_norlab/configuration/Dockerfile` can be customized for your specific needs. 
+Use cases:
+- leveraging the [Docker build cache](https://docs.docker.com/build/cache/) layer mechanism for minimizing build time;
+- leveraging the [Docker multi-stage builds](https://docs.docker.com/build/building/multi-stage/).
 In most cases however, using only `python.requirements.txt` and/or `shell.requirements.bash` is enough.
 
-#### ⚠️ Do not add code to the first stage `init-and-setup` unless you know what your doing.
 ```dockerfile
 # =================================================================================================
 #
-# Usage:
-#   - 👍 You can change code in the 'user-project-custom-steps' stage.
-#     See the line with the "↓ ↓ ↓ ..." character below.
-#   - ⚠️ Dont change code the first stage (init-and-setup) or in the last stage (final) unless you
-#     know what your doing.
+#   👍  You can change the code in this file to take advantage of the Docker cache layer mechanism
+#       and the Docker multi-stage build feature.
 #
 # =================================================================================================
-ARG BASE_IMAGE
-ARG BASE_IMAGE_TAG
-FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS init-and-setup
+FROM base_image AS user-project-custom-steps
 
-# ...
-```
-
-#### User can add code in the `user-project-custom-steps` stage.
-Check the following lines in `.dockerized_norlab/configuration/Dockerfile`
-```dockerfile
-# ...
-
-# ====User project custom steps====================================================================
-FROM init-and-setup AS user-project-custom-steps
-# USER NOTES: ADD YOUR CODE IN THIS STAGE
-# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-
-# Example
-RUN <<EOF
-    {
-        echo "..........................................." && \
-        echo "Sanity check" && \
-        python -c "import torch" && \
-        python -c "import torchvision" && \
-        python -c "import hydra" && \
-        python -c "from omegaconf import DictConfig, OmegaConf" && \
-        echo "..........................................." ;
-    } || exit 1
-EOF
-
-# ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
-# ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑
-# USER NOTES: ADD YOUR CODE BEFORE THIS LINE
-
-# ...
-```
-#### Expert user can also add code to the `final` stage for handling special cases.
-Check the following lines in `.dockerized_norlab/configuration/Dockerfile`
-
-```dockerfile
-# ...
-
-# ====DN-project final=============================================================================
-FROM --platform=${TARGETPLATFORM} user-project-custom-steps AS final
-# ⚠️ USER NOTES: Dont change code in this stage unless you know what your doing.
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 
-RUN <<EOF
-    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash ${TARGETPLATFORM} ${BUILDPLATFORM} ${DN_DEV_WORKSPACE:?err}/src || exit 1
-    # Cleanup buidl script
-    rm -f /dn_project_core_init.bash
-    rm -f /dna-lib-container-tools/dn_project_core.setup.bash
-    rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
-EOF
-CMD [ "bash" ]
+# ADD YOUR CODE HERE
+# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+# ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+
 ```
 
 ---

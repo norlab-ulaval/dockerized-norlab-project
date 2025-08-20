@@ -1,5 +1,3 @@
-# @formatter:off
-
 services:
 
   project-core-pre:
@@ -53,17 +51,17 @@ services:
     depends_on:
       - project-core
 
-#  project-release:
-#    extends:
-#      service: project-deploy
-#      file: docker-compose.project.build.native.yaml
-#    build:
-#      pull: true # Use the dockerhub registry
-#      platforms:
-#        - "linux/arm64"
-#        - "linux/amd64"
-#    depends_on:
-#      - project-core
+  #  project-release:
+  #    extends:
+  #      service: project-deploy
+  #      file: docker-compose.project.build.native.yaml
+  #    build:
+  #      pull: true # Use the dockerhub registry
+  #      platforms:
+  #        - "linux/arm64"
+  #        - "linux/amd64"
+  #    depends_on:
+  #      - project-core
 
   project-ci-tests:
     extends:
