@@ -163,6 +163,24 @@ function dna::load_super_project_configurations() {
     # shellcheck disable=SC1090
     source "${dna_internal_local}" || return 1
     set +o allexport
+  else
+    cat "${dna_internal_local}" << EOF
+# =================================================================================================
+# Set Dockerized-NorLab project application (DNA) internal environment variable LOCALY.
+#
+# Notes:
+#   - This file is git ignored ⚠️
+#   - This dotenv file is use both at buildtime and runtime
+#   - DNA dotenv file loading precedence:
+#       1. .env.dna
+#       2. .env
+#       3. .env.local
+#       4. .env.dna-internal.local  (DNA repo)
+#       5. .env.dna-internal        (DNA repo)
+#
+# =================================================================================================
+
+EOF
   fi
 
   # Set the Dockerized-NorLab repository branch for fetching container internal tools if not
