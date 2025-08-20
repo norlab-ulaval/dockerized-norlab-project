@@ -21,6 +21,7 @@ function dna::setup_mock() {
 
   test -n "${DNA_ROOT:?err}" || n2st::print_msg_error_and_exit "Env variable DNA_ROOT need to be set and non-empty."
   test -d "${DNA_ROOT}/utilities/tmp" || n2st::print_msg_error_and_exit "The directory ${DNA_ROOT}/utilities/tmp is unreachable"
+  test -n "${DN_PROJECT_MOCK_BRANCH:?err}" || n2st::print_msg_error_and_exit "Env variable DN_PROJECT_MOCK_BRANCH need to be set and non-empty."
 
   if [[ -d "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" ]]; then
       # Delete git cloned repo
@@ -29,7 +30,7 @@ function dna::setup_mock() {
   if [[ ! -d "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" ]]; then
     mkdir "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock"
   fi
-  git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git \
+  git clone --branch "${DN_PROJECT_MOCK_BRANCH}" https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git \
     "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" \
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
 

@@ -1,4 +1,3 @@
-# @formatter:off
 
 # =================================================================================================
 # Notes:
@@ -19,10 +18,10 @@
 # =================================================================================================
 services:
 
-  project-core:
+  project-core-pre:
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ".dockerized_norlab/configuration/Dockerfile"
+      dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.project-core-pre
       additional_contexts:
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
         context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
@@ -47,15 +46,46 @@ services:
         required: true
       - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal.local
+        required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
         required: false
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
+
+  project-core-user:
+    extends:
+      service: project-core-pre
+    build:
+      context: ${SUPER_PROJECT_ROOT:?err}
+      dockerfile: ".dockerized_norlab/configuration/Dockerfile"
+      additional_contexts:
+        base_image: "service:project-core-pre"
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+        context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
+      pull: false # Use the local image store to execute the FROM directive
+    depends_on:
+      - project-core-pre
+
+  project-core:
+    extends:
+      service: project-core-pre
+    build:
+      context: ${SUPER_PROJECT_ROOT:?err}
+      dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.project-core-final
+      additional_contexts:
+        base_image: "service:project-core-user"
+        context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
+        context-dna-lib-container-tools: ${DNA_ROOT:?err}/src/lib/core/docker/container-tools
+      pull: false # Use the local image store to execute the FROM directive
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}
+    depends_on:
+      - project-core-pre
+      - project-core-user
 
 
   project-develop:
