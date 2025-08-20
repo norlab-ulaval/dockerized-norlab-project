@@ -9,8 +9,8 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 #   $ bash run.slurm.bash <sjob-id> [<optional-flag>] [--] <any-python-args>
 #
 # Optional flag:
-#   --log-name=<name>                                 The log file name without postfix
-#   --log-path=<absolute-path-super-project-root>     The Absolute path to the slurm log directory.
+#   --log-name <name>                                 The log file name without postfix
+#   --log-path <absolute-path-super-project-root>     The Absolute path to the slurm log directory.
 #                                                     Will be created if it does not exist.
 #   --skip-core-force-rebuild
 #   --skip-slurm-force-rebuild
