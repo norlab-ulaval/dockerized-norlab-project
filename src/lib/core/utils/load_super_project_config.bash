@@ -145,8 +145,8 @@ function dna::load_super_project_configurations() {
         n2st::print_msg_warning "Be advised, sourcing super project ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${super_project_dotenv_local}${MSG_END_FORMAT}."
     fi
     # Note: super project dotenv local should be source after the super project main dotenv
-    # shellcheck disable=SC1090
     set -o allexport
+    # shellcheck disable=SC1090
     source "${super_project_dotenv_local}" || return 1
     set +o allexport
   fi
@@ -163,6 +163,25 @@ function dna::load_super_project_configurations() {
     # shellcheck disable=SC1090
     source "${dna_internal_local}" || return 1
     set +o allexport
+  else
+    # Note: Dotenv file .env.dna-internal.local is required by docker-compose.project.[build|run].*.yaml files
+    cat > "${dna_internal_local}" << EOF
+# =================================================================================================
+# Set Dockerized-NorLab project application (DNA) internal environment variable LOCALY.
+#
+# Notes:
+#   - This file is git ignored ⚠️
+#   - This dotenv file is use both at buildtime and runtime
+#   - DNA dotenv file loading precedence:
+#       1. .env.dna
+#       2. .env
+#       3. .env.local
+#       4. .env.dna-internal.local  (DNA repo)
+#       5. .env.dna-internal        (DNA repo)
+#
+# =================================================================================================
+
+EOF
   fi
 
   # Set the Dockerized-NorLab repository branch for fetching container internal tools if not

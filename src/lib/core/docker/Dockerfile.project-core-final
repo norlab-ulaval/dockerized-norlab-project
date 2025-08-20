@@ -1,0 +1,38 @@
+
+FROM base_image AS final
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
+
+COPY --from=context-dn-container-tools ./dn_project_core_finalize.bash /dn_project_core_finalize.bash
+
+RUN <<EOF
+    # ....Buildtime debug..........................................................................
+    #DN_SHOW_DEBUG_INFO=true
+    source /dna-lib-container-tools/dn_sanity_checks.bash && dna::user_and_dir_content_sanity_check "buildtime"
+
+    # ....Build ROS2 workspace ....................................................................
+    source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash "${TARGETPLATFORM}" "${BUILDPLATFORM}" "${DN_DEV_WORKSPACE:?err}/src" \
+      || n2st::print_msg_error_and_exit "Failed to build repository ros pkgs!"
+
+    # ....Finalize project-core install............................................................
+    source /dn_project_core_finalize.bash \
+      || n2st::print_msg_error_and_exit "Failed dn_project_core_finalize.bash!"
+
+    # Cleanup buidl script
+    rm -f /dn_project_core_init.bash
+    rm -f /dna-lib-container-tools/dn_project_core.setup.bash
+    rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash
+    rm -f /dn_project_core_finalize.bash
+EOF
+
+CMD [ "bash" ]
+
+
+
+
+
+
+
+

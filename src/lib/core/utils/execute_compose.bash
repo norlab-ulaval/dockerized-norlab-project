@@ -155,14 +155,19 @@ function dna::excute_compose() {
       CURRENT_BUILDX_BUILDER=$(docker buildx inspect | grep -i -m 1 -e Name: | sed "s/^Name:[[:space:]]*//")
       n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
       BUILDER_PLATFORM=$(docker buildx inspect --builder "${CURRENT_BUILDX_BUILDER}" | grep -i -e Platforms)
-      if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64*".* ]] || [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64*".* ]]; then
-        n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "$0") execution."
-        # Set builder for local execution
-        if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
-          n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create it..."
-          bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_exit "Failed to create docker buildx builder ${default_buildx_builder_name}!"
+      if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64".* ]] || [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64".* ]]; then
+        if [[ $(docker info -f '{{ .DriverStatus }}') =~ .*"driver-type io.containerd.snapshotter".* ]]; then
+          export BUILDX_BUILDER=default
+          n2st::print_msg_warning "Containerd snapshoter enable, setting env var BUILDX_BUILDER=$BUILDX_BUILDER for $(basename "${BASH_SOURCE[1]}") execution."
+        else
+          n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "${BASH_SOURCE[1]}") execution."
+          # Set builder for local execution
+          if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
+            n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create it..."
+            bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_exit "Failed to create docker buildx builder ${default_buildx_builder_name}!"
+          fi
+          export BUILDX_BUILDER="${default_buildx_builder_name}"
         fi
-        export BUILDX_BUILDER="${default_buildx_builder_name}"
         dna_override_buildx=true
       fi
     elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == false ]]; then

@@ -62,6 +62,8 @@ services:
         required: true
       - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
+      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal.local
+        required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
@@ -69,11 +71,11 @@ services:
     tty: true
     stdin_open: true
     devices:
-      - /dev/input/js0
+      #- /dev/input/js0
       # ....From jetson-container run.sh...........................................................
       - /dev/snd
       - /dev/bus/usb
-    privileged: true
+    privileged: false
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined

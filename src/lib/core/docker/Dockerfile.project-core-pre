@@ -1,0 +1,48 @@
+
+ARG BASE_IMAGE
+ARG BASE_IMAGE_TAG
+FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS init-and-setup
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+# ====Dockerized-NorLab-project internal configuration step========================================
+ARG DN_PROJECT_GIT_NAME
+ENV DN_PROJECT_GIT_NAME=${DN_PROJECT_GIT_NAME:?'Build argument needs to be set and non-empty.'}
+ARG DN_PROJECT_GIT_DOMAIN
+ENV DN_PROJECT_GIT_DOMAIN=${DN_PROJECT_GIT_DOMAIN:?'Build argument needs to be set and non-empty.'}
+ARG DN_PROJECT_ALIAS_PREFIX
+ENV DN_PROJECT_ALIAS_PREFIX=${DN_PROJECT_ALIAS_PREFIX:?'Build argument needs to be set and non-empty.'}
+ARG DN_PROJECT_USER
+ENV DN_PROJECT_USER=${DN_PROJECT_USER:?'Build argument needs to be set and non-empty.'}
+ENV DN_PROJECT_USER_HOME=/home/${DN_PROJECT_USER}
+ARG DN_PROJECT_UID
+ENV DN_PROJECT_UID=${DN_PROJECT_UID:?'Build argument needs to be set and non-empty.'}
+ARG DN_PROJECT_GID
+ENV DN_PROJECT_GID=${DN_PROJECT_GID:?'Build argument needs to be set and non-empty.'}
+ARG IS_TEAMCITY_RUN
+ENV IS_TEAMCITY_RUN=${IS_TEAMCITY_RUN:-false}
+
+# ====Set PATH related environment variable========================================================
+ENV DN_PROJECT_PATH=${DN_DEV_WORKSPACE:?'Build argument needs to be set and non-empty.'}/src/${DN_PROJECT_GIT_NAME}
+ENV PATH=${DN_PROJECT_PATH}${PATH:+:${PATH}}
+ENV PYTHONPATH=${DN_PROJECT_PATH}/src:${DN_PROJECT_PATH}/tests:${DN_PROJECT_PATH}/external_data${PYTHONPATH:+:${PYTHONPATH}}
+
+# ====Copy init and setup files====================================================================
+COPY .dockerized_norlab/configuration/project_requirements/shell.requirements.bash /shell.requirements.bash
+COPY .dockerized_norlab/configuration/project_requirements/python.requirements.txt /python.requirements.txt
+COPY .dockerized_norlab/configuration/project_entrypoints /project_entrypoints
+COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
+COPY --from=context-dna-lib-container-tools . /dna-lib-container-tools/
+
+RUN <<EOF
+    source /dn_project_core_init.bash || exit 1
+    source /dna-lib-container-tools/dn_project_core.setup.bash || exit 1
+    source /dna-lib-container-tools/dn_project_core.build.patch.bash || exit 1
+EOF
+
+
+# ====Matplotlib related===========================================================================
+# See dn_project_core.setup.bash for details
+ENV XDG_RUNTIME_DIR='/tmp/runtime-root'
+
