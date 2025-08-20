@@ -71,7 +71,7 @@ services:
     tty: true
     stdin_open: true
     devices:
-      - /dev/input/js0
+      #- /dev/input/js0
       # ....From jetson-container run.sh...........................................................
       - /dev/snd
       - /dev/bus/usb
