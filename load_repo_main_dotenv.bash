@@ -82,8 +82,20 @@ function dna::load_repository_environment_variables() {
   # ....load environment variables in current shell................................................
   set -o allexport
   source ".env.dockerized-norlab-project" || return 1
-  source ".env.dockerized-norlab-project.local" || return 1
   set +o allexport
+
+  local repo_dotenv_local="${DNA_LIB_PATH:?err}/.env.dockerized-norlab-project.local"
+  if [[ -f "${repo_dotenv_local}" ]]; then
+    # Note: Dotenv file '.env.dockerized-norlab-project.local', if it exist, should be sourced
+    #       after '.env.dockerized-norlab-project'.
+    if [[ $(grep -c '^[[:space:]]*[A-Z_][A-Z0-9_]*=' "${repo_dotenv_local}" 2>/dev/null) -gt 0 ]]; then
+        n2st::print_msg_warning "Be advised, sourcing dna internal ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${repo_dotenv_local}${MSG_END_FORMAT}."
+    fi
+    set -o allexport
+    # shellcheck disable=SC1090
+    source "${repo_dotenv_local}" || return 1
+    set +o allexport
+  fi
 
   # ....Teardown...................................................................................
   if [[ "${DNA_DEBUG}" == "true" ]] || [[ "${debug_flag}" == "true" ]]; then
