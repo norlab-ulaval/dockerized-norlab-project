@@ -201,7 +201,7 @@ function dna::build_services() {
       # Show build faillure summary
       n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}" "${line_style}"
       n2st::print_msg "Build faillure summary\n"
-      build_exit_code=( "${build_core_exit_codes[@]}}" "${build_non_core_exit_codes[@]}}" )
+      build_exit_code=( "${build_core_exit_codes[@]}" "${build_non_core_exit_codes[@]}" )
       merged_services_names=( "${project_core_services[@]}" "${non_project_core_services[@]}" )
       for idx in "${!build_exit_code[@]}"; do
         if [[ ${build_exit_code[idx]} != 0 ]]; then
@@ -256,7 +256,7 @@ function dna::build_services() {
       n2st::print_msg "Completed ${each} build."
     done
 
-    build_exit_code=( "${build_core_exit_codes[@]}}" "${build_non_core_exit_codes[@]}}" )
+    build_exit_code=( "${build_core_exit_codes[@]}" "${build_non_core_exit_codes[@]}" )
     merged_services_names=( "${project_core_services[@]}" "${non_project_core_services[@]}" )
 
     # ....Show build summary.......................................................................

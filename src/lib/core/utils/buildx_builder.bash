@@ -25,8 +25,8 @@ function dna::create_local_multiarch_docker_builder() {
   local builder_name=${1:-"local-builder-multiarch-virtual"}
   echo -e "Checking if ${builder_name} already exist..."
   if docker buildx inspect --bootstrap "${builder_name}" &> /dev/null; then
-    #echo -e "\nPruning ${builder_name} cache..."
-    #docker buildx prune -f --builder "${builder_name}"
+    echo -e "\nPruning ${builder_name} cache..."
+    docker buildx prune -f --builder "${builder_name}"
 
     echo -e "Removing ${builder_name} builder..."
     local buildx_rm_flags=()

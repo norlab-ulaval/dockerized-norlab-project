@@ -298,12 +298,28 @@ ${MSG_END_FORMAT}
         local resset_style
         dimmed_style=$(tput dim)
         resset_style=$(tput sgr0)
+        
+        # Create a temporary file to capture the exit code
+        local buildx_status_file=$(mktemp)
         {
           n2st::draw_horizontal_line_across_the_terminal_window "."
-          source "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${builder_name}" || n2st::print_msg_error "Failed to re-create docker buildx builder ${builder_name}!"
+          if source "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${builder_name}"; then
+            echo "0" > "$buildx_status_file"
+          else
+            echo "1" > "$buildx_status_file"
+          fi
           n2st::draw_horizontal_line_across_the_terminal_window "."
           echo
         } | sed "s/.*/${dimmed_style}&${resset_style}/"
+        
+        # Check the status and handle accordingly
+        if [[ "$(cat "$buildx_status_file")" != "0" ]]; then
+            rm -f "$buildx_status_file"
+            n2st::print_msg_error "Failed to re-create docker buildx builder ${builder_name}!"
+            return 1
+        fi
+        rm -f "$buildx_status_file"
+        
         n2st::print_msg_done "New builder ${MSG_DIMMED_FORMAT}${builder_name}${MSG_END_FORMAT} created successfully."
     fi
 
