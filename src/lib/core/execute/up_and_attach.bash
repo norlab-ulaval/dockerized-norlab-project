@@ -221,6 +221,9 @@ function dna::up_and_attach() {
     xhost +localhost
     export DN_DISPLAY=host.docker.internal:0
 
+    DN_DARWIN_HOSTNAME=$(hostname -s)
+    export DN_DARWIN_HOSTNAME
+
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet! Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else
