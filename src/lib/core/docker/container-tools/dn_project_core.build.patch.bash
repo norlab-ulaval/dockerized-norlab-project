@@ -102,6 +102,29 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
+  # (CRITICAL) ToDo: on task end >> delete next bloc ↓↓
+  local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
+  {
+    echo "echo '›'"
+    echo "echo '›'"
+    echo "echo '›'"
+    echo "echo '› HELLOOOOOOOOOOOOOOOOOO ‼️‼️‼️‼️‼️‼️‼️‼️‼️‼️!'"
+    echo "echo '› I am multiarch build ›› $(date)'"
+    echo "echo '› One more!!!'"
+    echo "echo '›'"
+    echo "echo '›'"
+    echo "echo '›'"
+   } >> "${dn_info_path}"
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  # ToDo: NMO-781 fix: DNA container prompt display is broken on L4T
+  n2st::set_which_python3_version
+  POWERLINE_DIR="/usr/local/lib/python${PYTHON3_VERSION:?err}/dist-packages/powerline"
+  n2st::seek_and_modify_string_in_file "\uf2dc" "" "${POWERLINE_DIR}/config_files/themes/shell/dockerized_snow.json"
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
   # ....Teardown...................................................................................
   apt-get autoremove --assume-yes
   apt-get clean

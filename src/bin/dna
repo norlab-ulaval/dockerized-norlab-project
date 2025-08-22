@@ -20,7 +20,7 @@ DOCUMENTATION_BUFFER_DNA=$( cat <<'EOF'
 #   project     Super project commands
 #   save        Save DNA Docker image to file for offline use
 #   load        Load DNA Docker image from file for offline use
-#   config      (In-progress) Show configuration
+#   config      Show parsed docker compose configuration
 #   version     Show DNA version
 #   help        Show this help message
 #

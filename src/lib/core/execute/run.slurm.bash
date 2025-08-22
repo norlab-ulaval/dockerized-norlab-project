@@ -212,6 +212,8 @@ function dna::run_slurm() {
 
   # ....Set environment variable for compose project...............................................
   export SJOB_ID
+
+  # (☕minor) ToDo: validate deleting env var IS_SLURM_RUN -> its not used
   export IS_SLURM_RUN=true
 
   # ....Run container on MAMBA/SLURM...............................................................

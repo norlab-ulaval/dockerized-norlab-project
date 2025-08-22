@@ -48,9 +48,14 @@ function dna::build_services() {
 
   # ....Set env variables (pre cli))...............................................................
   declare -a remaining_args=()
-  declare -a build_exit_code=()
   declare -a build_docker_flag=()
   declare -a services_names=("none")
+  declare -a project_core_services=()
+  declare -a non_project_core_services=()
+  declare -a build_exit_code=()
+  declare -i build_exit
+  declare -a build_core_exit_codes=()
+  declare -a build_non_core_exit_codes=()
   local force_push_project_core=false
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
@@ -132,51 +137,81 @@ function dna::build_services() {
     echo -e "$(dna::show_indexed_prefix "$idx") ${services_names[idx]}"
   done
 
+  # ....Split service list.........................................................................
+  local each_service
+  for each_service in "${services_names[@]}"; do
+      if [[ "$each_service" == project-core* ]]; then
+          project_core_services+=("$each_service")
+      else
+          non_project_core_services+=("$each_service")
+      fi
+  done
+  if [[ "${DNA_DEBUG}" == "true" ]]; then
+    n2st::print_msg "Services with project-core prefix: ${project_core_services[*]}"
+    n2st::print_msg "Services without project-core prefix: ${non_project_core_services[*]}"
+  fi
+
   # ....Execute build..............................................................................
   n2st::print_msg "force_push_project_core: ${force_push_project_core}"
   if [[ ${force_push_project_core} == false ]]; then
-    n2st::print_msg "Building from the local image store."
+    n2st::print_msg "Building from the local image store.."
 
-    dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies "${services_names[@]}"
-    build_exit_code=("$?")
+    build_exit_code=()
+    if [[ "${project_core_services[*]}" =~ "project-core-pre" ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" project-core-pre
+      build_exit_code+=($?)
+    fi
+    if [[ "${project_core_services[*]}" =~ "project-core-user" ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" project-core-user
+      build_exit_code+=($?)
+    fi
+    if [[ "${project_core_services[*]}" =~ "project-core" ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" project-core
+      build_exit_code+=($?)
+    fi
+
+    dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${non_project_core_services[@]}"
+    build_exit_code+=("$?")
+
+    build_exit=0
+    declare -i each_build_exit_code
+    for each_build_exit_code in "${build_exit_code[@]}"; do
+      build_exit=$((build_exit + each_build_exit_code))
+    done
 
     # ....On faillure, re-run build.all one service at the time....................................
-    if [[ ${build_exit_code[0]} != 0 ]]; then
+    if [[ $build_exit -ne 0 ]]; then
       n2st::print_msg_error "Build error, re-running ${MSG_DIMMED_FORMAT}dna::build_services${MSG_END_FORMAT} one service at the time"
-      for idx in "${!services_names[@]}"; do
-        if [[ "${services_names[idx]}" == "project-core" ]]; then
-          n2st::print_msg "Building project-core"
-          project_core_build_idx=$idx
-          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies project-core
-          project_core_build_exit_code=$?
-        fi
+      build_core_exit_codes=()
+      for each_core in "${project_core_services[@]}"; do
+        n2st::print_msg "Building ${each_core}..."
+        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each_core}"
+        build_core_exit_codes+=($?)
       done
 
       # Reset exit code buffer
-      build_exit_code=()
+      build_non_core_exit_codes=()
       # Execute docker cmd on all remaining service
-      for each in "${services_names[@]}"; do
-        if [[ "${each}" != "project-core" ]]; then
-          n2st::print_msg "Building ${each}"
-          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
-          build_exit_code+=("$?")
-        else
-          build_exit_code+=("$project_core_build_exit_code")
-        fi
+      for each in "${non_project_core_services[@]}"; do
+        n2st::print_msg "Building ${each}..."
+        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+        build_non_core_exit_codes+=("$?")
       done
 
       # Show build faillure summary
       n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}" "${line_style}"
       n2st::print_msg "Build faillure summary\n"
+      build_exit_code=( "${build_core_exit_codes[@]}}" "${build_non_core_exit_codes[@]}}" )
+      merged_services_names=( "${project_core_services[@]}" "${non_project_core_services[@]}" )
       for idx in "${!build_exit_code[@]}"; do
         if [[ ${build_exit_code[idx]} != 0 ]]; then
-          echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_ERROR_FORMAT}${services_names[idx]} completed build with error${MSG_END_FORMAT}"
+          echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_ERROR_FORMAT}${merged_services_names[idx]} completed build with error${MSG_END_FORMAT}"
         else
-          echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${services_names[idx]} completed build succesfully${MSG_END_FORMAT}"
+          echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${merged_services_names[idx]} completed build succesfully${MSG_END_FORMAT}"
         fi
       done
     else
-      # Show build succes
+      # Show build success
       n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}" "${line_style}"
       n2st::print_msg "Build summary\n"
       for idx in "${!services_names[@]}"; do
@@ -186,51 +221,57 @@ function dna::build_services() {
 
   else
 
+    n2st::print_msg "Begin online build"
+    n2st::print_msg "Building project-core..."
     # Rebuild and push the core image prior to building any other images
-    for idx in "${!services_names[@]}"; do
-      if [[ "${services_names[idx]}" == "project-core" ]]; then
-        n2st::print_msg "Building project-core"
-        project_core_build_idx=$idx
-        # Note:
-        #   - THIS WORK ON MacOs with buildx builder "docker-container:local-builder-multiarch-virtual"
-        #   - THIS WORK on TC server as its the same setup use in DN
-        #   - ⚠️ If you experience problem:
-        #       1. check that project-core image on Dockerhub has been pushed for both arm64 and amd64
-        #       2. if not, consider building and pushing manualy each arm64 and amd64 images and
-        #          then merge as in DN l4t base images
-        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --with-dependencies --push project-core
-        project_core_build_exit_code=$?
-        n2st::print_msg_done "project-core built and pushed sucessfully."
-      fi
-    done
+    # Note:
+    #   - THIS WORK ON MacOs with buildx builder "docker-container:local-builder-multiarch-virtual"
+    #   - THIS WORK on TC server as its the same setup use in DN
+    #   - ⚠️ If you experience problem:
+    #       1. check that project-core image on Dockerhub has been pushed for both arm64 and amd64
+    #       2. if not, consider building and pushing manualy each arm64 and amd64 images and
+    #          then merge as in DN l4t base images
+    build_core_exit_codes=()
+    if [[ "${project_core_services[*]}" =~ "project-core-pre" ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core-pre
+      build_core_exit_codes+=($?)
+    fi
+    if [[ "${project_core_services[*]}" =~ "project-core-user" ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core-user
+      build_core_exit_codes+=($?)
+    fi
+    if [[ "${project_core_services[*]}" =~ "project-core" ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" --push project-core
+      build_core_exit_codes+=($?)
+    fi
+    n2st::print_msg "Completed project-core build and push."
 
     # Reset exit code buffer
-    build_exit_code=()
+    build_non_core_exit_codes=()
     # Execute docker cmd on all remaining service
-    for each in "${services_names[@]}"; do
-      if [[ "${each}" != "project-core" ]]; then
-        n2st::print_msg "Building ${each}"
-        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
-        build_exit_code+=("$?")
-        n2st::print_msg_done "${each} built sucessfully."
-      else
-        build_exit_code+=("$project_core_build_exit_code")
-      fi
+    for each in "${non_project_core_services[@]}"; do
+      n2st::print_msg "Building ${each}..."
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+      build_non_core_exit_codes+=("$?")
+      n2st::print_msg "Completed ${each} build."
     done
+
+    build_exit_code=( "${build_core_exit_codes[@]}}" "${build_non_core_exit_codes[@]}}" )
+    merged_services_names=( "${project_core_services[@]}" "${non_project_core_services[@]}" )
 
     # ....Show build summary.......................................................................
     n2st::print_formated_script_header "Build summary" "${msg_line_level}" "${line_style}"
     local action="build"
     for idx in "${!build_exit_code[@]}"; do
-      if [[ "${services_names[idx]}" == "project-core" ]]; then
+      if [[ "${merged_services_names[idx]}" =~ "project-core".* ]]; then
         action="build+push"
       else
         action="build"
       fi
       if [[ ${build_exit_code[idx]} != 0 ]]; then
-        echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_ERROR_FORMAT}${services_names[idx]} completed ${action} with error${MSG_END_FORMAT}"
+        echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_ERROR_FORMAT}${merged_services_names[idx]} completed ${action} with error${MSG_END_FORMAT}"
       else
-        echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${services_names[idx]} completed ${action} succesfully${MSG_END_FORMAT}"
+        echo -e "$(dna::show_indexed_prefix "$idx") ${MSG_DONE_FORMAT}${merged_services_names[idx]} completed ${action} succesfully${MSG_END_FORMAT}"
       fi
     done
 
@@ -238,6 +279,7 @@ function dna::build_services() {
 
   # Check build faillure
   build_exit=0
+  declare -i each_build_exit_code
   for each_build_exit_code in "${build_exit_code[@]}"; do
     build_exit=$((build_exit + each_build_exit_code))
   done

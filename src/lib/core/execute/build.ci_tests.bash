@@ -20,7 +20,7 @@
 # Note: force push project core is set to false by default
 
 build_all_flag=()
-build_all_flag+=("--service-names" "project-core,project-ci-tests")
+build_all_flag+=("--service-names" "project-core-pre,project-core-user,project-core,project-ci-tests")
 
 # ....Path resolution..............................................................................
 script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"

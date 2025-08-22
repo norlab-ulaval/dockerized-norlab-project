@@ -4,7 +4,9 @@
 #       and the Docker multi-stage build feature.
 #
 # =================================================================================================
-FROM base_image AS user-project-custom-steps
+ARG BASE_IMAGE
+ARG BASE_IMAGE_TAG
+FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS user-project-custom-steps
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM

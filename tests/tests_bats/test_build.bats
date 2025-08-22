@@ -139,11 +139,6 @@ function dna::import_lib_and_dependencies() {
   return 0
 }
 
-function n2st::print_msg() {
-  echo "Mock n2st::print_msg: $*"
-  return 0
-}
-
 # ....Mock ui.bash functions.......................................................................
 function dna::command_help_menu() {
   echo "Mock dna::command_help_menu called with args: $*"
@@ -171,8 +166,23 @@ function n2st::print_formated_script_footer() {
   return 0
 }
 
+function n2st::print_msg() {
+  echo "Mock n2st::print_msg: $*"
+  return 0
+}
+
+function n2st::print_msg_warning() {
+  echo "Mock n2st::print_msg_warning called with args: $*"
+  return 0
+}
+
 function n2st::print_msg_error() {
   echo "Mock n2st::print_msg_error called with args: $*"
+  return 0
+}
+
+function n2st::print_msg_done() {
+  echo "Mock n2st::print_msg_done called with args: $*"
   return 0
 }
 
@@ -218,11 +228,6 @@ function docker() {
   esac
 }
 
-# ....Mock additional N2ST functions...............................................................
-function n2st::print_msg_done() {
-  echo "Mock n2st::print_msg_done called with args: $*"
-  return 0
-}
 
 # ....Export mock functions........................................................................
 for func in $(compgen -A function | grep -e dna:: -e n2st:: -e docker -e command); do
@@ -332,7 +337,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-develop"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-develop"
 }
 
 @test "dna::build_command with ci-tests service › expect CI tests images only" {
@@ -344,7 +349,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-ci-tests"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service › expect slurm images only" {
@@ -356,7 +361,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-slurm"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-slurm"
 }
 
 @test "dna::build_command with deploy service › expect deploy images only" {
@@ -549,7 +554,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-develop"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-develop"
 }
 
 @test "dna::build_command with multiple services › expect error" {
@@ -621,7 +626,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-ci-tests"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service and --multiarch › expect multiarch slurm images" {
@@ -633,7 +638,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images multiarch build"
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-slurm"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-slurm"
 }
 
 @test "dna::build_command with ci-tests service and --online-build › expect CI tests images with force push" {
@@ -645,7 +650,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "CI tests images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-ci-tests"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
 }
 
 @test "dna::build_command with slurm service and --online-build › expect slurm images with force push" {
@@ -657,7 +662,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "slurm images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-slurm"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core-pre,project-core-user,project-core,project-slurm"
 }
 
 @test "dna::build_command with develop service and -- docker args › expect develop images with docker args" {
@@ -669,7 +674,7 @@ teardown_file() {
 
   # Should output the expected message
   assert_output --partial "develop images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core,project-develop --no-cache --pull"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-develop --no-cache --pull"
 }
 
 @test "dna::build_command with deploy service and -- docker args › expect deploy images with docker args" {
@@ -815,7 +820,7 @@ teardown_file() {
   assert_output --partial "Checking Docker Hub authentication..."
   assert_output --partial "Docker Hub authentication verified"
   assert_output --partial "develop images native build"
-  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core,project-develop"
+  assert_output --regexp "Mock dna::build_services called with args:".*"--force-push-project-core --service-names project-core-pre,project-core-user,project-core,project-develop"
 }
 
 @test "dna::build_command with deploy without --push › expect no login check" {
@@ -908,7 +913,7 @@ teardown_file() {
   assert_output --partial "develop images multiarch build"
   assert_output --partial "Mock buildx_builder.bash called with builder: local-builder-multiarch-virtual"
   assert_output --partial "Mock n2st::print_msg_done called with args: New builder local-builder-multiarch-virtual created successfully."
-  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core,project-develop"
+  assert_output --regexp "Mock dna::build_services_multiarch called with args:".*"--service-names project-core-pre,project-core-user,project-core,project-develop"
 }
 
 @test "dna::build_command with deploy service --multiarch --rmab --push › expect deploy multiarch build with builder recreation" {

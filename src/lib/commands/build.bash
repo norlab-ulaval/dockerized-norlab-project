@@ -161,7 +161,7 @@ function dna::build_command() {
                     exit 1
                 fi
                 # Otherwise it's an unknown service
-                dna::illegal_command_msg "build" "${original_command}" "Unknown SERVICE: $1. Valid services are: ci-tests, deploy, develop, slurm.\n"
+                dna::illegal_command_msg "build" "${original_command}" "Unknown SERVICE: $1. Valid services are: core, deploy, develop, ci-tests, slurm, release.\n"
                 return 1
                 ;;
         esac
@@ -178,9 +178,26 @@ function dna::build_command() {
       architecture="multiarch"
       # ToDo: on task (NMO-767) end >> delete next bloc ↓↓
       if [[ "${force_push_project_core}" == false  ]]; then
-        echo
-        n2st::print_msg_warning "Be advised, multi-architecture build requires using online build at the moment i.e., 'dna build --multiarch --online-build [SERVICE]' until support for 'docker local registry' is implemented. Its comming soon, stay posted."
-        echo
+        if [[ $(docker info -f '{{ .DriverStatus }}') =~ .*"driver-type io.containerd.snapshotter".* ]]; then
+          n2st::print_msg "Containerd snapshotter is enabled, Build multi-architecture localy."
+        else
+          n2st::print_msg_warning "Offline multi-architecture build requires that Docker containerd snapshotter be enabled.
+Either run ${MSG_DIMMED_FORMAT}dna build${MSG_END_FORMAT} in online build mode i.e., ${MSG_DIMMED_FORMAT}$ dna build --multiarch --online-build [SERVICE]${MSG_END_FORMAT}
+or enable containerd snapshotter local image store:
+  - For Docker Desktop user: go to 'Setting / General'  and check the 'Use containerd for pulling and storing images' check box.
+  - For non Docker Desktop user: add the following to your ${MSG_DIMMED_FORMAT}/etc/docker/daemon.json${MSG_END_FORMAT} configuration file
+${MSG_DIMMED_FORMAT}
+      {
+          \"features\": {
+            \"containerd-snapshotter\": true
+          }
+      }
+${MSG_END_FORMAT}
+    and restart the docker daemon: ${MSG_DIMMED_FORMAT}$ sudo systemctl restart docker${MSG_END_FORMAT}
+"
+          echo
+          return 0
+        fi
       fi
     fi
 
@@ -201,16 +218,16 @@ function dna::build_command() {
       # Case: general
       if [[ "${service}" == "ci-tests" ]]; then
           header_footer_name="CI tests images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-ci-tests")
+          build_flag+=("--service-names" "project-core-pre,project-core-user,project-core,project-ci-tests")
       elif [[ "${service}" == "slurm" ]]; then
           header_footer_name="slurm images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-slurm")
+          build_flag+=("--service-names" "project-core-pre,project-core-user,project-core,project-slurm")
       elif [[ "${service}" == "develop" ]]; then
           header_footer_name="develop images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core,project-develop")
+          build_flag+=("--service-names" "project-core-pre,project-core-user,project-core,project-develop")
       elif [[ "${service}" == "core" ]]; then
           header_footer_name="core images ${architecture} build procedure"
-          build_flag+=("--service-names" "project-core")
+          build_flag+=("--service-names" "project-core-pre,project-core-user,project-core")
       else
           header_footer_name="all images ${architecture} build procedure"
       fi
@@ -276,12 +293,20 @@ function dna::build_command() {
     # ....Begin....................................................................................
     if [[ "${multiarch}" == true ]] && [[ "${re_create_multiarch_builder}" == true ]]; then
         local builder_name='local-builder-multiarch-virtual'
-        bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${builder_name}" || {
-            n2st::print_msg_error "Failed to re-create docker buildx builder ${builder_name}!"
-            return 1
-        }
-        n2st::print_msg_done "New builder ${builder_name} created successfully."
+        n2st::print_msg "Re-create buildx builder ${MSG_DIMMED_FORMAT}${builder_name}${MSG_END_FORMAT}...\n"
+        local dimmed_style
+        local resset_style
+        dimmed_style=$(tput dim)
+        resset_style=$(tput sgr0)
+        {
+          n2st::draw_horizontal_line_across_the_terminal_window "."
+          source "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${builder_name}" || n2st::print_msg_error "Failed to re-create docker buildx builder ${builder_name}!"
+          n2st::draw_horizontal_line_across_the_terminal_window "."
+          echo
+        } | sed "s/.*/${dimmed_style}&${resset_style}/"
+        n2st::print_msg_done "New builder ${MSG_DIMMED_FORMAT}${builder_name}${MSG_END_FORMAT} created successfully."
     fi
+
 
     if [[ "${service}" == "deploy" ]]; then
         dna::build_project_deploy_service "${deploy_flag[@]}" "${build_flag[@]}" "${remaining_args[@]}"
@@ -291,7 +316,7 @@ function dna::build_command() {
           dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
       else
-          dna::build_services  "${build_flag[@]}" "${remaining_args[@]}"
+          dna::build_services "${build_flag[@]}" "${remaining_args[@]}"
           fct_exit_code=$?
       fi
     fi
