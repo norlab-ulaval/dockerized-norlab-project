@@ -103,13 +103,11 @@ function dna::global_install_hack() {
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
   # ToDo: NMO-781 fix: DNA container prompt display is broken on L4T
-#  n2st::set_which_python3_version
-#  POWERLINE_DIR="/usr/local/lib/python${PYTHON3_VERSION:?err}/dist-packages/powerline"
-#  n2st::seek_and_modify_string_in_file "\uf2dc" "" "${POWERLINE_DIR}/config_files/themes/shell/dockerized_snow.json"
+  n2st::set_which_python3_versionπ
   POWERLINE_DIR="/usr/local/lib/python${PYTHON3_VERSION:?err}/dist-packages/powerline"
   POWERLINE_CONFIG="${POWERLINE_DIR}/config_files/themes/shell/dockerized_snow.json"
   test -f "${POWERLINE_CONFIG}" || n2st::print_msg_error_and_exit "$POWERLINE_CONFIG is unreacble"
-  mv -f /dna-lib-container-tools/patch_ressources/powerline/dockerized_snow.json ${POWERLINE_CONFIG}"
+  mv -f /dna-lib-container-tools/patch_ressources/powerline/dockerized_snow.json "${POWERLINE_CONFIG}"
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
