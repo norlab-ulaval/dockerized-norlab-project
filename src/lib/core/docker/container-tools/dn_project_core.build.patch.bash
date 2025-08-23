@@ -113,6 +113,14 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
+  # (Priority) ToDo: delete on task NMO-782 completion >> those lines ↓↓
+  local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
+  test -f "${dn_info_path}"
+  n2st::seek_and_modify_string_in_file '--env=' '--env ' "$dn_info_path"
+  test -z "$(grep -q "--env=" "$dn_info_path")" || n2st::print_msg_error_and_exit "Fix related to task NMO-782 did not work!"
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
   # ....Teardown...................................................................................
   apt-get autoremove --assume-yes
   apt-get clean
