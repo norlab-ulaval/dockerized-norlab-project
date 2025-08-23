@@ -77,7 +77,7 @@ function dna::build_project_deploy_service() {
 
   # ....Build stage..................................................................................
   {
-    build_flag+=("--service-names" "project-core,project-deploy")
+    build_flag+=("--service-names" "project-core-pre,project-core-user,project-core,project-deploy")
     if [[ ${push_deploy_image} == true ]]; then
       build_flag+=("--force-push-project-core")
     fi

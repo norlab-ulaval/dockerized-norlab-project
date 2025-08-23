@@ -51,8 +51,8 @@ The `dna run` command creates and runs new container instances with unique ident
 
 | Option | Description |
 |--------|-------------|
-| `--log-name=<name>` | Log file name without postfix |
-| `--log-path=<path>` | Absolute path to SLURM log directory |
+| `--log-name <name>` | Log file name without postfix |
+| `--log-path <path>` | Absolute path to SLURM log directory |
 | `--skip-core-force-rebuild` | Skip automatic core image rebuild |
 | `--hydra-dry-run` | Dry-run SLURM job using registered hydra flag |
 | `--register-hydra-dry-run-flag` | Hydra flag used by '--hydra-dry-run' |
@@ -114,7 +114,7 @@ dna run ci-tests pytest tests/ --junit-xml=results.xml
 dna run slurm job-001 -- python3 train_model.py --epochs 100
 
 # Run with custom log configuration
-dna run --log-name="training" --log-path="/logs" slurm job-002 -- python3 experiment.py
+dna run --log-name "training" --log-path "/logs" slurm job-002 -- python3 experiment.py
 
 # Dry run SLURM job
 dna run --hydra-dry-run slurm job-003 -- python3 simulation.py

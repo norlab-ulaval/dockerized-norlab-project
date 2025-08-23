@@ -1,23 +1,45 @@
 # dna config
 
-Show Docker Compose configuration (In Development).
+Show Docker Compose configuration file.
 
 ## Synopsis
 
 ```bash
-dna config MODE [PLATFORM] [OPTIONS]
+dna config [OPTIONS] MODE [--] [DOCKER_CONFIG_FLAGS|DOCKER_BAKE_FLAGS]
 ```
 
 ## Description
 
 The `dna config` command displays the resolved Docker Compose configuration for different DNA modes and platforms. This is useful for debugging configuration issues, understanding service definitions, and validating environment variable interpolation.
 
-> **⚠️ Note**: This command is currently in development and not yet fully released.
+The command uses `docker compose config` or `docker buildx bake` under the hood and can consume their respective option flags.
+
+### Features
+- **Multiple output formats**: Docker Compose YAML, Docker Buildx Bake JSON
+- **Extensible**: Supports additional Docker command flags via pass-through
+- **Docker integration**: Native docker compose config and docker buildx bake support
+- **Flexible mode support**: Development, deployment, CI/CD, SLURM, and build configurations
+- **Architecture support**: Native and multi-architecture
+- **Platform support**: MacOs, Ubunt, L4T (Jetson OS)
+
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--bake` | Use 'docker buildx bake' instead of 'docker compose config' |
+| `--compose-to-bake` | Print the compose file converted to bake format |
+| `-q`, `--quiet` | Skip DNA messages, only print docker command output |
+| `--help`, `-h` | Show help message and exit |
 
 ## Modes
 
 | Mode | Description |
 |------|-------------|
+| `build-core` | Core only (pre, user, final) native build config |
+| `build-core-ma` | Core only (pre, user, final) multi-architecture build config |
+| `build` | All native build config |
+| `build-ma` | All multi-architecture build config |
 | `dev` | Development mode configuration |
 | `deploy` | Deployment mode configuration |
 | `ci-tests` | CI tests mode configuration |
@@ -32,12 +54,6 @@ The `dna config` command displays the resolved Docker Compose configuration for 
 | `linux` | Linux configuration |
 | `jetson` | NVIDIA Jetson configuration |
 
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `--help`, `-h` | Show help message and exit |
-
 ## Examples
 
 ### Basic Configuration Display
@@ -51,6 +67,25 @@ dna config deploy
 
 # Show CI tests configuration
 dna config ci-tests
+
+# Show SLURM configuration
+dna config slurm
+```
+
+### Build Configuration
+
+```bash
+# Show core-only native build configuration
+dna config build-core
+
+# Show core-only multi-architecture build configuration
+dna config build-core-ma
+
+# Show all native build configuration
+dna config build
+
+# Show all multi-architecture build configuration
+dna config build-ma
 ```
 
 ### Platform-Specific Configuration
@@ -64,16 +99,38 @@ dna config dev linux
 
 # Show development configuration for Jetson
 dna config dev jetson
+
+# Show deployment configuration for specific platform
+dna config deploy jetson
 ```
 
-### Advanced Usage
+### Using Docker Buildx Bake
 
 ```bash
-# Show SLURM configuration
-dna config slurm
+# Use docker buildx bake instead of docker compose config
+dna config --bake build
 
-# Show release configuration
-dna config release
+# Convert compose file to bake format
+dna config --compose-to-bake build-core
+
+# Use bake with multi-architecture build
+dna config --bake build-ma
+```
+
+### Quiet Mode and Docker Flags
+
+```bash
+# Skip DNA messages, show only docker output
+dna config --quiet dev
+
+# Pass additional docker compose config flags
+dna config dev -- --services
+
+# Pass docker compose config flags with quiet mode
+dna config --quiet dev -- --volumes
+
+# Use bake with additional docker buildx bake flags
+dna config --bake build -- --load
 ```
 
 ## What it Shows
@@ -104,11 +161,35 @@ The command displays the resolved Docker Compose configuration including:
 # Debug development configuration issues
 dna config dev
 
+# Debug with quiet mode to focus on docker output
+dna config --quiet dev
+
 # Check if environment variables are resolved correctly
 dna config dev | grep -A 5 environment
 
 # Verify volume mount configurations
 dna config dev | grep -A 10 volumes
+
+# Debug specific services only
+dna config dev -- --services
+```
+
+### Build Configuration Analysis
+
+```bash
+# Analyze core build configuration
+dna config build-core
+
+# Compare native vs multi-architecture builds
+dna config build > native-build.yaml
+dna config build-ma > multiarch-build.yaml
+diff native-build.yaml multiarch-build.yaml
+
+# Use bake format for build analysis
+dna config --bake build-core
+
+# Convert compose to bake format
+dna config --compose-to-bake build
 ```
 
 ### Platform Validation
@@ -121,6 +202,9 @@ dna config dev jetson
 
 # Compare configurations across platforms
 diff <(dna config dev darwin) <(dna config dev linux)
+
+# Quiet comparison without DNA messages
+diff <(dna config --quiet dev darwin) <(dna config --quiet dev linux)
 ```
 
 ### CI/CD Integration
@@ -131,6 +215,12 @@ dna config ci-tests
 
 # Check SLURM configuration for cluster deployment
 dna config slurm
+
+# Validate build configuration in CI
+dna config --quiet build-ma -- --services
+
+# Generate bake configuration for CI
+dna config --bake build-ma > ci-bake-config.json
 ```
 
 ### Documentation and Sharing
@@ -141,6 +231,12 @@ dna config deploy > deployment-config.yaml
 
 # Share configuration with team
 dna config dev > team-dev-config.yaml
+
+# Generate build documentation
+dna config build-core > build-config.yaml
+
+# Create bake configuration files
+dna config --bake build > build.json
 ```
 
 ## Configuration Sources
@@ -187,36 +283,24 @@ services:
 
 ## Troubleshooting
 
-### Command Not Available
-
-**Problem**: "Command not released yet" message.
-
-**Explanation**: The config command is still in development.
-
-**Alternatives**:
-1. **Use docker-compose directly**: 
-   ```bash
-   docker-compose -f .dockerized_norlab/configuration/docker-compose.yml config
-   ```
-
-2. **Use dna project dotenv**: Check environment variables
-   ```bash
-   dna project dotenv
-   ```
-
 ### Configuration Errors
 
-**Problem**: Invalid configuration displayed.
+**Problem**: Invalid configuration displayed or command fails.
 
 **Solutions**:
-1. **Validate environment**: Check environment variable resolution
+1. **Use quiet mode**: Focus on docker output without DNA messages
+   ```bash
+   dna config --quiet dev
+   ```
+
+2. **Validate environment**: Check environment variable resolution
    ```bash
    dna project dotenv
    ```
 
-2. **Check compose files**: Validate Docker Compose syntax
+3. **Check compose files**: Validate Docker Compose syntax directly
    ```bash
-   docker-compose -f compose-file.yml config --quiet
+   docker compose -f .dockerized_norlab/core/docker/compose-file.yaml config --quiet
    ```
 
 ### Platform Issues
@@ -224,25 +308,43 @@ services:
 **Problem**: Platform-specific configuration not working.
 
 **Solutions**:
-1. **Check platform detection**: Verify platform is correctly detected
-2. **Use explicit platform**: Specify platform explicitly
+1. **Use explicit platform**: Specify platform explicitly
    ```bash
    dna config dev linux  # instead of just 'dna config dev'
    ```
 
-## Development Status
+2. **Check supported platforms**: Verify the platform is supported (darwin, linux, jetson)
 
-### Current Implementation
-- ✅ Basic command structure
-- ✅ Mode and platform parsing
-- ✅ Docker Compose file selection
-- ⚠️ Limited functionality (in development)
+### Build Mode Issues
 
-### Planned Features
-- 🔄 Full mode support
-- 🔄 Enhanced platform detection
-- 🔄 Configuration validation
-- 🔄 Output formatting options
+**Problem**: Build modes not working or showing unexpected results.
+
+**Solutions**:
+1. **Use appropriate build mode**: Choose the right mode for your needs
+   ```bash
+   dna config build-core    # For core-only builds
+   dna config build         # For complete builds
+   ```
+
+2. **Try bake format**: Use bake format for build configuration analysis
+   ```bash
+   dna config --bake build-core
+   ```
+
+### Docker Flags Not Working
+
+**Problem**: Additional Docker flags are not being passed correctly.
+
+**Solutions**:
+1. **Use double dash separator**: Separate DNA options from Docker flags
+   ```bash
+   dna config dev -- --services --volumes
+   ```
+
+2. **Check flag compatibility**: Ensure flags are compatible with the underlying Docker command
+   - For compose config: `docker compose config --help`
+   - For buildx bake: `docker buildx bake --help`
+
 
 ## See Also
 

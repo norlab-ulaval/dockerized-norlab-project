@@ -152,24 +152,41 @@ function dna::excute_compose() {
         dna_override_buildx=true
       fi
     elif [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == true ]]; then
-      CURRENT_BUILDX_BUILDER=$(docker buildx inspect | grep -i -m 1 -e Name: | sed "s/^Name:[[:space:]]*//")
-      n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
-      BUILDER_PLATFORM=$(docker buildx inspect --builder "${CURRENT_BUILDX_BUILDER}" | grep -i -e Platforms)
-      if [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/amd64".* ]] || [[ ! "${BUILDER_PLATFORM}" =~ "Platforms:".*"linux/arm64".* ]]; then
-        if [[ $(docker info -f '{{ .DriverStatus }}') =~ .*"driver-type io.containerd.snapshotter".* ]]; then
-          export BUILDX_BUILDER=default
-          n2st::print_msg_warning "Containerd snapshoter enable, setting env var BUILDX_BUILDER=$BUILDX_BUILDER for $(basename "${BASH_SOURCE[1]}") execution."
-        else
+      if [[ $(docker info -f '{{ .DriverStatus }}') =~ .*"driver-type io.containerd.snapshotter".* ]]; then
+        # Case containered snapshotter enableb
+        export BUILDX_BUILDER=default
+        n2st::print_msg_warning "Containerd snapshoter enable, setting env var BUILDX_BUILDER=$BUILDX_BUILDER for $(basename "${BASH_SOURCE[1]}") execution."
+      else
+        CURRENT_BUILDX_BUILDER=$(docker buildx inspect | grep -i -m 1 -e Name: | sed "s/^Name:[[:space:]]*//")
+        n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
+        if [[ "$CURRENT_BUILDX_BUILDER" =~ ^(desktop-linux|default)$ ]]; then
+          # Case containered snapshotter disableb and the docker builder is set to default i.e., non-multiarch capable
           n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "${BASH_SOURCE[1]}") execution."
           # Set builder for local execution
           if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
-            n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create it..."
-            bash "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error_and_exit "Failed to create docker buildx builder ${default_buildx_builder_name}!"
+            n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create a new one..."
+            local dimmed_style
+            local resset_style
+            dimmed_style=$(tput dim)
+            resset_style=$(tput sgr0)
+            {
+              n2st::draw_horizontal_line_across_the_terminal_window "."
+              source "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error "Failed to re-create docker buildx builder ${default_buildx_builder_name}!"
+              n2st::draw_horizontal_line_across_the_terminal_window "."
+              echo
+            } | sed "s/.*/${dimmed_style}&${resset_style}/"
+            n2st::print_msg_done "New builder ${MSG_DIMMED_FORMAT}${default_buildx_builder_name}${MSG_END_FORMAT} created successfully."
           fi
+
           export BUILDX_BUILDER="${default_buildx_builder_name}"
+        else
+          n2st::print_msg "Current builder ${CURRENT_BUILDX_BUILDER} is non-default -> dna assume that you know what you are know doing."
+          :
         fi
-        dna_override_buildx=true
       fi
+
+      dna_override_buildx=true
+
     elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == false ]]; then
       # Case TC native-architecture: Run build on native single arch builder. Required for build.all.bash
       export BUILDX_BUILDER=default
@@ -201,7 +218,6 @@ Exiting now!
   fi
 
   # ....Execute....................................................................................
-
   # (Priority) ToDo: validate >> changes to next bloc ↓↓ does'nt break TeamCity build
   local docker_cmd_str="${MSG_DIMMED_FORMAT}docker compose --file ${compose_path}/${the_compose_file} ${docker_command_w_flags[*]}${MSG_END_FORMAT}"
   n2st::print_msg "Execute ${docker_cmd_str}\n"

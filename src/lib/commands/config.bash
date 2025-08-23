@@ -3,29 +3,42 @@
 
 DOCUMENTATION_BUFFER_CONFIG=$( cat <<'EOF'
 # =================================================================================================
-# Show Docker Compose configuration
+# Show Docker Compose configuration file.
 #
 # Usage:
-#   $ dna config MODE
+#   $ dna config [OPTIONS] MODE [--] [DOCKER_CONFIG_FLAGS|DOCKER_BAKE_FLAGS]
+#
+# Options:
+#   --bake                 Use 'docker buildx bake' instead of 'docker compose config'
+#   --compose-to-bake      Print the compose file converted to bake format
+#   -q | --quiet           Skip dna messages, only print docker command output
+#   --help, -h             Show this help message
 #
 # Modes:
+#   build-core             Core only (pre, user, final) native build config
+#   build-core-ma          Core only (pre, user, final) multi-architecture build config
+#   build                  All native build config
+#   build-ma               All multi-architecture build config
 #   dev [platform]         Development mode
 #   deploy [platform]      Deployment mode
 #   ci-tests               CI tests mode
 #   slurm                  SLURM mode
-#   release                Release mode
+#   release [platform]     Release mode
 #
 # Platforms:
 #   darwin                 macOS
 #   linux                  Linux
 #   jetson                 NVIDIA Jetson
 #
-# Options:
-#   --help, -h             Show this help message
+# Docker [config|bake] flags options:
+#   'dna config' use 'docker compose config' or 'docker buildx bake' command under the hood, so it
+#   can consume their respective option flags. Check their respective help documentation for
+#   available options: '$ docker [compose config|buildx bake] --help'
 #
 # =================================================================================================
 EOF
 )
+
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dna_error_prefix="\033[1;31m[dna error]\033[0m"
@@ -36,13 +49,14 @@ test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load er
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::config_command() {
+    local initial_cwd
+    initial_cwd=$(pwd)
     local mode=""
     local platform=""
-    local help=false
-
-    declare -a remaining_args=()
-
-    n2st::print_msg "Command ${MSG_DIMMED_FORMAT}dna config MODE${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
+    local remaining_args=()
+    local docker_cmd=config
+    local dna_quiet=false
+    local initial_dna_cmd="$*"
 
     if [[ -z "$1" ]]; then
         dna::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG:?err}"
@@ -52,7 +66,7 @@ function dna::config_command() {
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            dev|deploy|ci-tests|slurm|release)
+            build-core|build-core-ma|build|build-ma|dev|deploy|ci-tests|slurm|release)
                 mode="$1"
                 shift
                 ;;
@@ -60,9 +74,26 @@ function dna::config_command() {
                 platform="$1"
                 shift
                 ;;
+            --bake)
+                docker_cmd=bake
+                shift
+                ;;
+            --compose-to-bake)
+                docker_cmd=build
+                shift
+                ;;
+            --quiet|-q)
+              dna_quiet=true
+              shift
+              ;;
             --help|-h)
                 dna::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG:?err}"
                 exit 0
+                ;;
+            --) # no more option
+                shift
+                remaining_args=("$@")
+                break
                 ;;
             *)
                 remaining_args=("$@")
@@ -72,48 +103,94 @@ function dna::config_command() {
     done
 
     if [[ -z "${mode}" ]]; then
-#        n2st::print_msg_error "Unknown mode!"
-#        dna::command_help_menu "${DOCUMENTATION_BUFFER_CONFIG}"
-        dna::unknown_subcommand_msg "config" "$remaining_args"
+        dna::illegal_command_msg "config" "$initial_dna_cmd" "Unknown mode!"
         exit 1
     fi
 
-
     # ....Load dependencies........................................................................
     # Load super project configuration
-    source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    if [[ ${dna_quiet} == true ]]; then
+      source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" >/dev/null || return 1
+    else
+      source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    fi
 
     # ....Begin....................................................................................
+#    n2st::set_is_teamcity_run_environment_variable
+
     # Determine which compose file to use
     local compose_file=""
+    local services=()
+    declare -a docker_command
 
 
-    if [[ "${mode}" == "dev" ]]; then
-        if [[ "${platform}" == "darwin" ]]; then
-#            compose_file="docker-compose.project.run.darwin.yaml"
-            compose_file="docker-compose.project.build.native.yaml"
-            # (CRITICAL) ToDo: implement <-- we are here
-            docker compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" config project-core project-develop
-        elif [[ "${platform}" == "jetson" ]]; then
+    if [[ "${mode}" =~ ^(build-core|build-core-ma)$ ]]; then
+        services+=(project-core-pre project-core-user project-core)
+        if [[ "${mode}" == build-core ]]; then
+          compose_file="docker-compose.project.build.native.yaml"
+        elif [[ "${mode}" == build-core-ma ]]; then
+          compose_file="docker-compose.project.build.multiarch.yaml"
+        fi
+    elif [[ "${mode}" =~ ^(build|build-ma)$ ]]; then
+        if [[ "${mode}" == build ]]; then
+          compose_file="docker-compose.project.build.native.yaml"
+        elif [[ "${mode}" == build-ma ]]; then
+          compose_file="docker-compose.project.build.multiarch.yaml"
+        fi
+    elif [[ "${mode}" == dev ]]; then
+        services+=(project-develop)
+        if [[ "${platform}" == darwin ]]; then
+            compose_file="docker-compose.project.run.darwin.yaml"
+        elif [[ "${platform}" == jetson ]]; then
             compose_file="docker-compose.project.run.jetson.yaml"
         else
             compose_file="docker-compose.project.run.linux-x86.yaml"
         fi
-    elif [[ "${mode}" == "deploy" ]]; then
-        compose_file="docker-compose.project.build.native.yaml"
-    elif [[ "${mode}" == "ci-tests" ]]; then
+    elif [[ "${mode}" == deploy ]]; then
+        services+=(project-deploy)
+        if [[ "${platform}" == darwin ]]; then
+            compose_file="docker-compose.project.run.darwin.yaml"
+        elif [[ "${platform}" == jetson ]]; then
+            compose_file="docker-compose.project.run.jetson.yaml"
+        else
+            compose_file="docker-compose.project.run.linux-x86.yaml"
+        fi
+    elif [[ "${mode}" == ci-tests ]]; then
+        services+=(project-ci-tests)
         compose_file="docker-compose.project.run.ci-tests.yaml"
-    elif [[ "${mode}" == "slurm" ]]; then
+    elif [[ "${mode}" == slurm ]]; then
+        services+=(project-slurm)
         compose_file="docker-compose.project.run.slurm.yaml"
-    elif [[ "${mode}" == "release" ]]; then
+    elif [[ "${mode}" == release ]]; then
+        n2st::print_msg_warning "Command ${MSG_DIMMED_FORMAT}dna config release${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
+        services+=(project-release)
         compose_file="docker-compose.project.build.multiarch.yaml"
     fi
 
+    if [[ ${docker_cmd} == bake ]]; then
+      if [[ ${mode} =~ ^(dev|deploy|ci-tests|slurm|release) ]]; then
+        n2st::print_msg_warning "Using ${MSG_DIMMED_FORMAT}--bake${MSG_END_FORMAT} flag with non-build mode ${MSG_DIMMED_FORMAT}${mode}${MSG_END_FORMAT} is pointless. Bake only handle the ${MSG_DIMMED_FORMAT}build${MSG_END_FORMAT} attribute in compose config file." && return 0
+      fi
+      cd "${DNA_LIB_PATH}/core/docker/" || return 1
+      docker_command=(buildx bake --file "${compose_file}" --print)
+    elif [[ ${docker_cmd} == config ]]; then
+      docker_command=(compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" config)
+    elif [[ ${docker_cmd} == build ]]; then
+      if [[ ${mode} =~ ^(dev|deploy|ci-tests|slurm|release) ]]; then
+        n2st::print_msg_warning "Using ${MSG_DIMMED_FORMAT}--compose-to-bake${MSG_END_FORMAT} flag with non-build mode ${MSG_DIMMED_FORMAT}${mode}${MSG_END_FORMAT} is pointless. Bake only handle the ${MSG_DIMMED_FORMAT}build${MSG_END_FORMAT} attribute in compose config file." && return 0
+      fi
+      docker_command=(compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" build --print)
+    fi
+
     # Execute docker-compose config command
-    echo "Showing configuration for ${mode} mode with ${compose_file}..."
-    docker compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" config "${remaining_args[@]}"
+    if [[ ${dna_quiet} == false ]]; then
+      n2st::print_msg "Showing ${MSG_DIMMED_FORMAT}${mode}${MSG_END_FORMAT} mode configuration from ${MSG_DIMMED_FORMAT}${compose_file}${MSG_END_FORMAT}...\n"
+    fi
+    docker "${docker_command[@]}" "${remaining_args[@]}" "${services[@]}"
     fct_exit_code=$?
 
+    # ....Teardown.................................................................................
+    cd "${initial_cwd}" || return 1
     return $fct_exit_code
 }
 

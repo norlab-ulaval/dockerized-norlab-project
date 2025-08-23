@@ -61,8 +61,8 @@ DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 #   $ dna run [OPTIONS] slurm <sjob-id> [--] <any-python-args>
 #
 # Optional flag:
-#   --log-name=<name>                                 The log file name without postfix
-#   --log-path=<absolute-path-super-project-root>     The Absolute path to the slurm log directory.
+#   --log-name <name>                                 The log file name without postfix
+#   --log-path <absolute-path-super-project-root>     The Absolute path to the slurm log directory.
 #                                                     Will be created if it does not exist.
 #   --skip-core-force-rebuild
 #   --skip-slurm-force-rebuild
@@ -223,7 +223,7 @@ function dna::run_command() {
     source "${DNA_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
     source "${DNA_LIB_PATH}/core/execute/run.any.bash" || return 1
     source "${DNA_LIB_PATH}/core/execute/run.slurm.bash" || return 1
-
+    source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
 
     # ....Begin....................................................................................
     # Determine which run script to execute

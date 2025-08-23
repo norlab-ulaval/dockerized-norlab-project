@@ -12,7 +12,7 @@
 #   <any-build.all-argument>               (Optional) Any build.all.bash arguments
 #
 # =================================================================================================
-add_docker_flag=("--service-names" "project-core,project-develop")
+add_docker_flag=("--service-names" "project-core-pre,project-core-user,project-core,project-develop")
 
 # ....Path resolution..............................................................................
 script_path="$(realpath -q "${BASH_SOURCE[0]:-.}")"

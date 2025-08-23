@@ -174,15 +174,17 @@ function dna::up_and_attach() {
         # give docker user X11 permissions
         # Note:
         # - 'root' is the username here (the one in the docker container)
-        sudo xhost +si:localuser:root
-        #    sudo xhost +si:localuser:"${DN_PROJECT_USER:?err}"
+        #sudo xhost +si:localuser:root
+        sudo xhost +si:localuser:"${DN_PROJECT_USER:?err}"
 
         # enable SSH X11 forwarding inside container (https://stackoverflow.com/q/48235040)
         # Note: XAUTH is also hardcoded in the docker compose file
         XAUTH=/tmp/.docker.xauth
-        #    touch $XAUTH
-        #    # Create the '.Xauthority' if not using X11 forwarding remotely
-        #    touch ~/.Xauthority
+        if [[ ! -f ${XAUTH} ]]; then
+          touch $XAUTH
+        fi
+        ## Create the '.Xauthority' if not using X11 forwarding remotely
+        #touch ~/.Xauthority
         xauth nlist "$DISPLAY" | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
         sudo chmod 777 $XAUTH
 
@@ -203,8 +205,8 @@ function dna::up_and_attach() {
         export DISPLAY=:0
 
         # give docker user X11 permissions
-        xhost +si:localuser:root
-        #    xhost +si:localuser:"${DN_PROJECT_USER:?err}"
+        #xhost +si:localuser:root
+        xhost +si:localuser:"${DN_PROJECT_USER:?err}"
       fi
     fi
 
@@ -221,6 +223,9 @@ function dna::up_and_attach() {
     xhost +localhost
     export DN_DISPLAY=host.docker.internal:0
 
+    DN_DARWIN_HOSTNAME=$(hostname -s)
+    export DN_DARWIN_HOSTNAME
+
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet! Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else
@@ -235,15 +240,15 @@ function dna::up_and_attach() {
   test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
   # ....Start docker container.....................................................................
-  if [[ ${no_up} != true ]]; then
-    n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-  fi
-
   if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then
+    # No up and no attach logic completed --> exit script
     export _NO_UP_COMPOSE_FILE="${the_compose_file}"
     export _NO_UP_SERVICE="${the_service}"
     return 0
+  elif [[ ${no_up} != true ]]; then
+    n2st::print_msg "Starting container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
   fi
+
 
   if [[ $(docker compose -f "${compose_path}/${the_compose_file}" ps --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME:?err} ${the_service} running" ]]; then
 
@@ -253,7 +258,6 @@ function dna::up_and_attach() {
     fi
 
     if [[ ${IS_TEAMCITY_RUN} == true ]]; then
-      # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
       n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
     elif [[ ${no_attach} == true ]]; then
       :
@@ -319,7 +323,6 @@ function dna::up_and_attach() {
     fi
 
     if [[ ${IS_TEAMCITY_RUN} == true ]]; then
-      # (NICE TO HAVE) ToDo: implement >> fetch container name from an .env file
       n2st::print_msg "The container is running inside a TeamCity agent >> keep container detached"
     elif [[ ${no_attach} == true ]]; then
       :

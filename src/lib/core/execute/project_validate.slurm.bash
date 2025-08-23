@@ -232,6 +232,7 @@ function dna::project_validate_slurm() {
   # ....Set exit code................................................................................
   test_exit_code=("${config_test_exit_code[@]}" "${build_test_exit_code[@]}" "${slurm_job_dryrun_exit_code[@]}")
   test_exit=0
+  declare -i each_build_exit_code
   for each_build_exit_code in "${test_exit_code[@]}"; do
     test_exit=$((test_exit + each_build_exit_code))
   done

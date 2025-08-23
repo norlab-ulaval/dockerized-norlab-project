@@ -36,14 +36,14 @@ services:
       # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
       # DN_HOST: 'linux/x86'
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
-      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME}
-      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-true}
-      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN}
+      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
+      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-false}
+      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
       NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
-      DISPLAY: ${DISPLAY}
+      DISPLAY: ${DISPLAY:-":0"}
       QT_X11_NO_MITSHM: 1
       XAUTHORITY: /tmp/.docker.xauth
     volumes:
@@ -51,19 +51,19 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Dockerized-NorLab-project internal. ...................................................
-      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/:rw
-      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
+      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/:rw
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/external_data/:ro
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true
       - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
         required: true
       - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal.local
-        required: true
+        required: false
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
         required: true
       - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
@@ -98,9 +98,9 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
       # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
+      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME:?err}/external_data/:ro
+      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
+      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/external_data/:ro
 
 
