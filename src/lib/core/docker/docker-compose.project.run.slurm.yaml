@@ -4,13 +4,11 @@ services:
   project-slurm:
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-slurm:${PROJECT_TAG:?err}
     environment:
-      # SJOB_ID: ${SJOB_ID}
       # (☕minor) ToDo: validate deleting env var IS_SLURM_RUN -> its not used
       IS_SLURM_RUN: ${IS_SLURM_RUN:-false}
-      # (CRITICAL) ToDo: validate deleting env var DN_PROJECT_USER (ref task NMO-696)
-      # DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
       # DN_HOST: 'linux/x86'
+      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}-slurm${SJOB_ID}
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_ACTIVATE_POWERLINE_PROMT: false

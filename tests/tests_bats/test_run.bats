@@ -56,6 +56,15 @@ setup_file() {
   mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Create mock functions for dependencies
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/build.all.bash" << 'EOF'
+#!/bin/bash
+# Mock build.all.bash
+function dna::build_services() {
+  echo "Mock dna::build_services called with args: $*"
+  return 0
+}
+EOF
+
   cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
 #!/bin/bash
 # Mock load_super_project_config.bash
@@ -143,6 +152,11 @@ function dna::illegal_command_msg() {
 # ....Mock N2ST functions..........................................................................
 function n2st::norlab_splash() {
   echo "Mock n2st::norlab_splash called with args: $*"
+  return 0
+}
+
+function n2st::print_formated_script_header() {
+  echo "Mock n2st::print_formated_script_header called with args: $*"
   return 0
 }
 

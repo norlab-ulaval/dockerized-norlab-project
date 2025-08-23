@@ -223,7 +223,7 @@ function dna::run_command() {
     source "${DNA_LIB_PATH}/core/execute/up_and_attach.bash" || return 1
     source "${DNA_LIB_PATH}/core/execute/run.any.bash" || return 1
     source "${DNA_LIB_PATH}/core/execute/run.slurm.bash" || return 1
-
+    source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
 
     # ....Begin....................................................................................
     # Determine which run script to execute

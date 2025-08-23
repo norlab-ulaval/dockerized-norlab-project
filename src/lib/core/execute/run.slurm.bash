@@ -191,16 +191,16 @@ function dna::run_slurm() {
   if [[ ${force_rebuild_project_core} == true ]]; then
     # shellcheck disable=SC2034
     declare -a docker_build=()
-    docker_build+=("--no-cache")
-    docker_build+=("project-core")
-    dna::excute_compose "${docker_build[@]}"  || exit 1
+    docker_build+=("--service-names" "project-core-pre,project-core-user,project-core")
+    docker_build+=("--" "--no-cache")
+    dna::build_services "${docker_build[@]}"  || exit 1
   fi
 
   if [[ ${force_rebuild_slurm_img} == true ]]; then
     declare -a docker_build=()
-    docker_build+=("--no-cache")
-    docker_build+=("${the_service}")
-    dna::excute_compose "${docker_build[@]}" || exit 1
+    docker_build+=("--service-names" "${the_service}")
+    docker_build+=("--" "--no-cache")
+    dna::build_services "${docker_build[@]}"  || exit 1
   fi
 
   # ....Set GPU capabilities.......................................................................
@@ -268,6 +268,7 @@ function dna::run_slurm() {
 
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dna_error_prefix="\033[1;31m[dna error]\033[0m"
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # This script is being run, ie: __name__="__main__"
 
@@ -277,9 +278,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [[ -z $( declare -f dna::import_lib_and_dependencies ) ]]; then
     source "${script_path_parent}/../utils/import_dna_lib.bash" || exit 1
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
-  fi
-  if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
     source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+    source "${script_path_parent}/build.all.bash" || return 1
   fi
 
   # ....Execute....................................................................................
@@ -296,7 +296,6 @@ else
   # This script is being sourced, ie: __name__="__source__"
 
   # ....Pre-condition..............................................................................
-  dna_error_prefix="\033[1;31m[dna error]\033[0m"
   test -n "$( declare -f dna::import_lib_and_dependencies )" || { echo -e "${dna_error_prefix} The DNA lib is not loaded!" 1>&2 && exit 1; }
   test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The N2ST lib is not loaded!" 1>&2 && exit 1; }
   test -n "${SUPER_PROJECT_ROOT}" || { echo -e "${dna_error_prefix} The super project DNA configuration is not loaded!" 1>&2 && exit 1; }

@@ -23,7 +23,7 @@ trap dna::test_teardown_callback EXIT
 # ====begin========================================================================================
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 _build_all_flag=()
-_build_all_flag+=("--service-names" "project-core")
+_build_all_flag+=("--service-names" "project-core-pre,project-core-user,project-core")
 bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash "${_build_all_flag[@]}"
 
 _services=( "develop" "deploy" )
