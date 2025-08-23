@@ -10,7 +10,7 @@ DOCUMENTATION_BUFFER_CONFIG=$( cat <<'EOF'
 #
 # Options:
 #   --bake                 Use 'docker buildx bake' instead of 'docker compose config'
-#   --compose-to-bake      Print the conpose file converted to bake format
+#   --compose-to-bake      Print the compose file converted to bake format
 #   -q | --quiet           Skip dna messages, only print docker command output
 #   --help, -h             Show this help message
 #
@@ -39,7 +39,6 @@ DOCUMENTATION_BUFFER_CONFIG=$( cat <<'EOF'
 EOF
 )
 
-# (Priority) ToDo: unit-test (ref task NMO-721)
 
 # ::::Pre-condition::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dna_error_prefix="\033[1;31m[dna error]\033[0m"
@@ -104,7 +103,7 @@ function dna::config_command() {
     done
 
     if [[ -z "${mode}" ]]; then
-        dna::illegal_command_msg "config" "$initial_dna_cmd" "Unkown mode!"
+        dna::illegal_command_msg "config" "$initial_dna_cmd" "Unknown mode!"
         exit 1
     fi
 
