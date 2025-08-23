@@ -37,7 +37,7 @@ services:
       # DN_HOST: 'linux/x86'
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
-      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-true}
+      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-false}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
