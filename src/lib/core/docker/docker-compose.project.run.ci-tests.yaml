@@ -15,9 +15,9 @@ services:
       DN_ACTIVATE_POWERLINE_PROMT: false
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
       IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
-      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-void}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
-      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-""}
       #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
       QT_X11_NO_MITSHM: 1
       XAUTHORITY: /tmp/.docker.xauth
