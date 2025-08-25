@@ -46,6 +46,9 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   # ....check super project directory structure....................................................
   dna::check_super_project_dir_structure || return 1
 
+  # ....Check dna compatibility....................................................................
+  dna::check_config_scheme_compatibility || return 1
+
   # ....check .dockerized_norlab directory structure.......................................
   dna::check_dockerized_project_configuration_dir_structure || return 1
   dna::check_project_configuration || return 1
@@ -62,6 +65,14 @@ Dockerized-NorLab-Porject require that the super project be under version contro
 
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
   return 0
+}
+
+function dna::check_config_scheme_compatibility() {
+    declare -i dna_config_scheme
+    dna_config_scheme=$("${DNA_PATH:?err}/dna" version --config-scheme)
+    if [[ ${DNA_CONFIG_SCHEME_VERSION:?err} -ne dna_config_scheme ]]; then
+      dna::print_msg_error_and_return "Super project dna config schemme ${MSG_EMPH_FORMAT}${DNA_CONFIG_SCHEME_VERSION}${MSG_END_FORMAT} does not match current dna config scheme version ${MSG_EMPH_FORMAT}${dna_config_scheme}${MSG_END_FORMAT}. Either downgrade DNA version or update super project dna configuration."
+    fi
 }
 
 function dna::check_super_project_dir_structure() {

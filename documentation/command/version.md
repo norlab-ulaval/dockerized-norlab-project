@@ -69,7 +69,7 @@ DNA follows semantic versioning (SemVer):
 ### Version Source
 
 The version information is obtained from:
-- **Environment Variables**: DNA_VERSION, DNA_CONFIG_SCHEME_VERSION, N2ST_VERSION, NBS_VERSION
+- **Environment Variables**: DNA_VERSION, DNA_RELEASE_CONFIG_SCHEME_VERSION, N2ST_VERSION, NBS_VERSION
 - **Git Repository**: Current branch and commit information
 - **System**: Host architecture and OS information
 
@@ -88,8 +88,8 @@ Running DNA version: 1.2.3
 
 ```bash
 # Check version before running commands
-$ dna version --all | grep -e "Config scheme version"
-Config scheme version: 1
+$ dna version --config-scheme
+1
 $ cat .dockerized_norlab/.env.dockerized-norlab-project-mock | grep DNA_CONFIG_SCHEME_VERSION
 DNA_CONFIG_SCHEME_VERSION=1
 ```
