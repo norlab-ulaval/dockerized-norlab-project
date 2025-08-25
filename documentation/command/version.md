@@ -18,6 +18,7 @@ The `dna version` command displays the current version of Dockerized-NorLab proj
 |--------|-------------|
 | `--short`, `-s` | Show version number only |
 | `--all`, `-a` | Show detailed version information |
+| `--config-scheme`, `-c` | Show configuration scheme version only |
 | `--help`, `-h` | Show help message and exit |
 
 ## Output Examples
@@ -35,6 +36,14 @@ Show only version number
 ```bash
 $ dna version --short
 1.2.3
+```
+
+### Config Scheme Version Display
+Show only configuration scheme version
+
+```bash
+$ dna version --config-scheme
+1
 ```
 
 ### Detailed Version Display
