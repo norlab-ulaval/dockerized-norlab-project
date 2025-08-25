@@ -83,6 +83,7 @@ function dna::version_command() {
   Local repository:
     Current branch: ${current_branch}
     Current commit: ${current_commit}
+    Path: ${DNA_ROOT:?err}
   Host architecture and OS: ${IMAGE_ARCH_AND_OS:?err}
 "
         else
