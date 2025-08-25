@@ -678,6 +678,27 @@ EOF
   assert_equal "${DN_DOCKER_RUNTIME}" "runc"
 }
 
+@test "dna::configure_gpu_capabilities › user did not set NVIDIA_VISIBLE_DEVICES › expect void settings" {
+  # Mock the required functions
+  function dna::fetch_host_nvidia_gpu_architecture() {
+    echo "sm_75"
+  }
+  export -f dna::fetch_host_nvidia_gpu_architecture
+
+  # Set initial environment with user preference
+  unset NVIDIA_VISIBLE_DEVICES
+  unset NVIDIA_DRIVER_CAPABILITIES
+  #export DN_DOCKER_RUNTIME="runc"
+
+  # Execute the function directly (not in subshell)
+  dna::configure_gpu_capabilities "linux/x86" "/tmp" "docker-compose.yml" "gpu-service"
+
+  # Verify environment variables respect user setting
+  assert_equal "${NVIDIA_VISIBLE_DEVICES}" "void"
+  assert_equal "${NVIDIA_DRIVER_CAPABILITIES}" ""
+  assert_equal "${DN_DOCKER_RUNTIME}" "runc"
+}
+
 @test "dna::configure_gpu_capabilities › torch compatibility test fails › expect failure" {
   # Mock the required functions
   function dna::fetch_host_nvidia_gpu_architecture() {
