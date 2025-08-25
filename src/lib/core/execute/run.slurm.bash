@@ -69,6 +69,7 @@ function dna::run_slurm_teardown_callback() {
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file=docker-compose.project.run.slurm.yaml
   local running_container_ids
+  source "${DNA_LIB_PATH:?err}/core/utils/load_super_project_config.bash"
   running_container_ids=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
   if [[ -n ${running_container_ids} ]]; then
     for each_id in "${running_container_ids[@]}"; do
@@ -253,11 +254,13 @@ function dna::run_slurm() {
       n2st::print_msg "Execute docker ${MSG_DIMMED_FORMAT}${docker_log[*]}${MSG_END_FORMAT}"
       # Note: Operator "2>&1 |" redirect both stdin and stderr (portable version of "|&")
       docker "${docker_log[@]}" "${container_id}" 2>&1 | tee "${SUPER_PROJECT_ROOT:?err}/${log_path}/${log_name}.log"
+      exit_code=$?
+    else
+      echo && n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker wait${MSG_END_FORMAT}"
+      docker wait "${container_id}" # Required if docker logs is skipped
+      #docker compose "${compose_flags[@]}" wait "${the_service}" # Required if docker logs is skipped
+      exit_code=$?
     fi
-
-    echo && n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker wait${MSG_END_FORMAT}"
-    docker wait "${container_id}" # Required if docker logs is skipped
-    exit_code=$?
   fi
 
   # ....Teardown...................................................................................

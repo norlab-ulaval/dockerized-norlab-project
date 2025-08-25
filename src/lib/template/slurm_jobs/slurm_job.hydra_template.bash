@@ -58,7 +58,7 @@ hydra_flags+=("launcher/example_app.py")
 # ....Debug flags..................................................................................
 dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
 
-#dna_run_slurm_flags+=("--skip-core-force-rebuild")
+dna_run_slurm_flags+=("--skip-core-force-rebuild")
 #dna_run_slurm_flags+=("--dry-run")
 #hydra_flags+=("--cfg" "all")
 

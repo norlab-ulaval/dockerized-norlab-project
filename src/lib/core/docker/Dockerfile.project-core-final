@@ -21,7 +21,22 @@ RUN <<EOF
     source /dn_project_core_finalize.bash \
       || n2st::print_msg_error_and_exit "Failed dn_project_core_finalize.bash!"
 
-    # Cleanup buidl script
+    # ....Project directories ownership............................................................
+    n2st::print_msg "Set project directories ownership"
+    {
+      chown -R $(id -u ${DN_PROJECT_USER:?err}):$(id -g ${DN_PROJECT_USER}) ${DN_PROJECT_USER_HOME:?err}
+      chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) ${DN_PROJECT_PATH:?err}
+      chown -R $(id -u ${DN_PROJECT_USER}):$(id -g ${DN_PROJECT_USER}) ${DN_DEV_WORKSPACE:?err}
+    } || {
+      # Collect debugg information on faillure
+      pwd
+      tree -agu
+      tree -agu ${DN_PROJECT_USER_HOME}
+      tree -agu ${DN_DEV_WORKSPACE}
+      exit 1
+    }
+
+    # ....Cleanup buidl script.....................................................................
     rm -f /dn_project_core_init.bash
     rm -f /dna-lib-container-tools/dn_project_core.setup.bash
     rm -f /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash

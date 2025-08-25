@@ -196,7 +196,7 @@ function dna::configure_gpu_capabilities() {
   fi
 
   # ....Begin......................................................................................
-  if [[ $NVIDIA_VISIBLE_DEVICES == void ]]; then
+  if [[ -z $NVIDIA_VISIBLE_DEVICES ]] || [[ $NVIDIA_VISIBLE_DEVICES == void ]]; then
     n2st::print_msg "No nvidia gpu support expected by user"
     NVIDIA_VISIBLE_DEVICES=void
     NVIDIA_DRIVER_CAPABILITIES=""
