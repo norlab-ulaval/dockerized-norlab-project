@@ -280,6 +280,7 @@ ${MSG_END_FORMAT}"
 
     # Rename the super project DNA meta .env file
     mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" ".env.${super_project_name}" || return 1
+    n2st::seek_and_modify_string_in_file "DNA_CONFIG_SCHEME_VERSION_PLACEHOLDER" "${DNA_RELEASE_CONFIG_SCHEME_VERSION:?err}" ".env.${super_project_name}" || return 1
     git add ".env.${super_project_name}"
 
     # Replace placeholders in the .env.dna file

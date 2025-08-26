@@ -18,8 +18,30 @@ Given your study of the guidelines at `.junie/guidelines.md`, analyse the super 
 Read and implement the plan at `.junie/active_plans/TODO.md`.
 ```
 
-```mardowm
+```markdown
 QUESTION
 Be thorough in your search.
 Consider the technical implication for python, c++, ROS2 and shell scripting development.
+```
+
+## Add `dna` command
+
+```markdown
+# Tasks
+1. Review guidelines at `.junie/guidelines.md`.
+2. Implement dna command `dna COMMAND` in `src/lib/commands/COMMAND.bash` with the following features:
+   - logic for blablabla; 
+   - implement a `-F|--FLAG` flag to blablabla;
+   - default case: 
+     - blablab. 
+   Inspire yourself with `src/lib/commands/OTHER_COMMAND.bash` for the implementation.
+   Implement bats tests for `src/lib/commands/COMMAND.bash`.
+   Create at least one test case per cli options.
+   Inspire yourself with `tests/tests_bats/test_OTHER_COMMAND.bats`.
+   Implement Markdown documentation at `documentation/command/COMMAND.md`.
+4. Check if any Markdown documentation at `documentation/` need to be updated.
+
+# Instructions
+- Always comply with `.junie/guidelines.md` guidelines.
+- Execute all unit-tests and all integration tests before submitting.
 ```

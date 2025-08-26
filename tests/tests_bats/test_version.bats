@@ -72,7 +72,7 @@ export DNA_ROOT="${MOCK_DNA_DIR}"
 export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 export DNA_HUMAN_NAME="Dockerized-NorLab project application"
 export DNA_VERSION="1.0.0"
-export DNA_CONFIG_SCHEME_VERSION="1"
+export DNA_RELEASE_CONFIG_SCHEME_VERSION="1"
 export N2ST_VERSION="2.0.0"
 export NBS_VERSION="3.0.0"
 export IMAGE_ARCH_AND_OS="linux/amd64"
@@ -226,6 +226,30 @@ teardown_file() {
   assert_output "${DNA_VERSION}"
 }
 
+@test "dna::version_command with --config-scheme › expect dna config scheme version display" {
+  # Test case: When version command is called with --config-scheme, it should display only the config scheme version number
+  # Expected behavior: Shows only "DNA_RELEASE_CONFIG_SCHEME_VERSION"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command --config-scheme"
+
+  # Should succeed
+  assert_success
+
+  # Should output only the dna config scheme version number
+  assert_output "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
+}
+
+@test "dna::version_command with -c › expect dna config scheme version display" {
+  # Test case: When version command is called with -c, it should display only the config scheme version number
+  # Expected behavior: Shows only "DNA_RELEASE_CONFIG_SCHEME_VERSION"
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/version.bash && dna::version_command -c"
+
+  # Should succeed
+  assert_success
+
+  # Should output only the dna config scheme version number
+  assert_output "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
+}
+
 @test "dna::version_command with --all › expect detailed version display" {
   # Test case: When version command is called with --all, it should display detailed version information
   # Expected behavior: Shows comprehensive version info including submodules, git info, and architecture
@@ -237,11 +261,12 @@ teardown_file() {
   # Should output detailed version information
   assert_output --partial "${DNA_HUMAN_NAME}:"
   assert_output --partial "Version: ${DNA_VERSION}"
-  assert_output --partial "Config scheme version: ${DNA_CONFIG_SCHEME_VERSION}"
+  assert_output --partial "Config scheme version: ${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
   assert_output --partial "norlab-shell-script-tools: ${N2ST_VERSION}"
   assert_output --partial "norlab-build-system: ${NBS_VERSION}"
   assert_output --partial "Current branch: main"
   assert_output --partial "Current commit: abc123def456"
+  assert_output --partial "Path: ${MOCK_DNA_DIR}"
   assert_output --partial "Host architecture and OS: ${IMAGE_ARCH_AND_OS}"
 }
 
@@ -256,11 +281,12 @@ teardown_file() {
   # Should output detailed version information
   assert_output --partial "${DNA_HUMAN_NAME}:"
   assert_output --partial "Version: ${DNA_VERSION}"
-  assert_output --partial "Config scheme version: ${DNA_CONFIG_SCHEME_VERSION}"
+  assert_output --partial "Config scheme version: ${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
   assert_output --partial "norlab-shell-script-tools: ${N2ST_VERSION}"
   assert_output --partial "norlab-build-system: ${NBS_VERSION}"
   assert_output --partial "Current branch: main"
   assert_output --partial "Current commit: abc123def456"
+  assert_output --partial "Path: ${MOCK_DNA_DIR}"
   assert_output --partial "Host architecture and OS: ${IMAGE_ARCH_AND_OS}"
 }
 

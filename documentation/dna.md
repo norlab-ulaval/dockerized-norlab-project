@@ -23,6 +23,7 @@
   - [load](#load) - Load Docker images from files
   - [config](#config) - Show configuration
   - [version](#version) - Show DNA version
+  - [update](#update) - Update DNA to latest version
   - [help](#help) - Show help information
 
 ## Overview
@@ -180,6 +181,20 @@ dna version
 ```
 
 **[→ Detailed Documentation](command/version.md)**
+
+---
+
+### update
+Update DNA to the latest release version.
+
+DNA supports automatic daily updates when `DNA_AUTO_UPDATE=true` is set in `.env.dockerized-norlab-project.local`. When enabled, DNA automatically checks for and applies updates once per day during regular command execution (skips for help, version, and update commands to prevent interference).
+
+**Quick Reference:**
+```bash
+dna update [OPTIONS]
+```
+
+**[→ Detailed Documentation](command/update.md)**
 
 ---
 
