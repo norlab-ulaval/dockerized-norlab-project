@@ -12,14 +12,15 @@ dna update [OPTIONS]
 
 The `dna update` command manages DNA repository updates by fetching the latest release version from the remote repository and updating the local installation. It provides intelligent update management with configurable auto-update behavior and user confirmation options.
 
-The command compares the local DNA version with the remote repository's latest release tag and performs updates when newer versions are available. Update behavior can be controlled through the `DNA_AUTO_UPDATE` setting in the `.env.dockerized-norlab-project.local` file.
+The command compares the local DNA version with the remote repository's latest release tag and performs updates when newer versions are available.
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
 | `-y`, `--yes` | Auto update DNA without confirmation prompt |
-| `--toggle-auto` | Toggle DNA_AUTO_UPDATE between true/false in .env.dockerized-norlab-project.local |
+| `--status` | Show update information and exit |
+| `--toggle-auto` | Enable/disable daily auto-update capability |
 | `--help`, `-h` | Show help message and exit |
 
 ## Examples

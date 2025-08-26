@@ -320,7 +320,35 @@ teardown_file() {
   assert_success
 
   # Should output up to date message
-  assert_output --partial "DNA is already up to date"
+  assert_output --partial "Already up to date"
+}
+
+@test "dna::update_command with --status and no update needed › expect up to date message" {
+  # Test case: When update command is called and DNA is up to date
+  # Mock DNA_VERSION to match remote version
+  export DNA_VERSION="1.2.0"
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_command --status"
+
+  # Should succeed
+  assert_success
+
+  # Should output up to date message
+  assert_output --partial "Already up to date"
+}
+
+@test "dna::update_command with --status and update available › expect update available message" {
+  # Test case: When update command is called and DNA is up to date
+  # Mock DNA_VERSION to match remote version
+  export DNA_VERSION="0.9.0"
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_command --status"
+
+  # Should succeed
+  assert_success
+
+  # Should output up to date message
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
 }
 
 @test "dna::update_command with no arguments and update available, no auto-update, user declines › expect skip message" {
@@ -334,7 +362,7 @@ teardown_file() {
   assert_success
 
   # Should show update available and skip message
-  assert_output --partial "DNA update available: 0.9.0"
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
   assert_output --partial "DNA update skipped"
 }
 
@@ -349,7 +377,7 @@ teardown_file() {
   assert_success
 
   # Should show update available and perform update
-  assert_output --partial "DNA update available: 0.9.0"
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
   assert_output --partial "DNA successfully updated"
 }
 
@@ -364,7 +392,7 @@ teardown_file() {
   assert_success
 
   # Should show update available and auto-update message
-  assert_output --partial "DNA update available: 0.9.0"
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
   assert_output --partial "Auto-update enabled, updating DNA"
   assert_output --partial "DNA successfully updated"
 }
@@ -380,7 +408,7 @@ teardown_file() {
   assert_success
 
   # Should show update available and perform update
-  assert_output --partial "DNA update available: 0.9.0"
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
   assert_output --partial "DNA successfully updated"
 }
 
@@ -395,7 +423,7 @@ teardown_file() {
   assert_success
 
   # Should show update available and perform update
-  assert_output --partial "DNA update available: 0.9.0"
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
   assert_output --partial "DNA successfully updated"
 }
 
@@ -409,7 +437,7 @@ teardown_file() {
   assert_success
 
   # Should output up to date message (simplified logic no longer distinguishes local newer)
-  assert_output --partial "DNA is already up to date"
+  assert_output --partial "Already up to date"
 }
 
 @test "dna::update_command with unknown option › expect error" {

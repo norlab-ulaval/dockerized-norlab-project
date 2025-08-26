@@ -3,22 +3,25 @@
 
 DOCUMENTATION_BUFFER_UPDATE=$( cat <<'EOF'
 # =================================================================================================
-# Update Dockerized-NorLab project application (DNA)
+# Update Dockerized-NorLab project application (DNA) to latest release
+#
+#   1. Fetch DNA repository release tags;
+#   2. Update dna local version to latest release if user accept to proceed, flag `--yes` is used
+#      or auto-update is enable.
 #
 # Usage:
 #   $ dna update [OPTIONS]
 #
 # Options:
 #   -y, --yes              Auto update DNA without confirmation
-#   --toggle-auto          Toggle DNA_AUTO_UPDATE between true/false in .env.dockerized-norlab-project.local
+#   --status               Show update information and exit
+#   --toggle-auto          Enable/disable daily auto-update capability
 #   --help, -h             Show this help message
 #
-# Description:
-#   Updates the DNA repository to the latest release version. 
-#   Checks DNA_AUTO_UPDATE setting in .env.dockerized-norlab-project.local:
-#   - If true: performs update automatically
-#   - If false: warns user and asks for confirmation when update is available
-#   - If not set: behaves as if false
+# About auto-update:
+#   - Perform daily auto-update check on the first daily use of `dna` command (except on dna [help|version|update])
+#   - If auto-update is enable: performs update automatically
+#   - If auto-update is disable: warns user and asks for confirmation when update is available
 #
 # =================================================================================================
 EOF
@@ -147,6 +150,7 @@ function dna::update_perform_update() {
 function dna::update_command() {
     local auto_yes=false
     local toggle_auto=false
+    local status=false
 
     # ....cli......................................................................................
     while [[ $# -gt 0 ]]; do
@@ -157,6 +161,10 @@ function dna::update_command() {
                 ;;
             -y|--yes)
                 auto_yes=true
+                shift
+                ;;
+            --status)
+                status=true
                 shift
                 ;;
             --toggle-auto)
@@ -179,20 +187,37 @@ function dna::update_command() {
     # Get current and remote versions
     local current_version="${DNA_VERSION:?err}"
     local remote_version
-    
-    n2st::print_msg "Checking for DNA updates..."
+
+    if [[ ${status} == false ]]; then
+      n2st::print_msg "Checking for DNA updates..."
+    fi
+
     remote_version=$(dna::update_fetch_remote_latest_version)
-    
+
     # Check if remote version is newer
+    local msg
     if dna::update_is_remote_newer "${current_version}" "${remote_version}"; then
         # Remote version is newer - update available
-        n2st::print_msg "DNA update available: ${current_version} → ${remote_version}"
+        msg="Update available: ${current_version} → ${remote_version}"
     else
         # Remote version is not newer (equal or local is newer)
-        n2st::print_msg "DNA is already up to date (version ${current_version})"
-        return 0
+        msg="Already up to date (version ${current_version})"
     fi
-    
+    if [[ ${status} == true ]]; then
+        #dna::help_header
+        #n2st::print_msg "Update status"
+        echo "Dockerized-NorLab project application:"
+        echo "   $msg"
+        echo "   Auto-update: $(dna::update_get_auto_update_setting)"
+        #dna::help_footer
+        return 0
+    else
+        n2st::print_msg "$msg"
+        if ! dna::update_is_remote_newer "${current_version}" "${remote_version}"; then
+          return 0
+        fi
+    fi
+
     # Check auto-update behavior
     if [[ "${auto_yes}" == true ]]; then
         # Force update with --yes flag
@@ -208,7 +233,9 @@ function dna::update_command() {
             dna::update_perform_update
         else
             # Ask user for confirmation
-            read -n 1 -r -p "Would you like to update DNA now? [y/N]" response
+            n2st::print_msg "Would you like to update DNA now? [y/N]"
+            read -n 1 -r response
+            echo
             if [[ ${response} =~ ^(y|Y)$ ]]; then
               dna::update_perform_update
             else

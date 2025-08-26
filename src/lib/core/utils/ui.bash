@@ -20,7 +20,7 @@ source "${DNA_LIB_PATH:?err}/core/utils/.env.cli_format_and_style" || exit 1
 set +o allexport
 
 
-function dna:help_header() {
+function dna::help_header() {
 #    echo -n -e "${MSG_DIMMED_FORMAT}"
 #    echo -e "▶︎"
     n2st::draw_horizontal_line_across_the_terminal_window "${MSG_LINE_CHAR_HELP:?err}" "${MSG_LINE_STYLE_LVL2:?err}"
@@ -45,7 +45,7 @@ function dna::documentation_buffer_to_help_parser() {
 
 function dna::command_help_menu() {
     local documentation_buffer=$*
-    dna:help_header
+    dna::help_header
     dna::documentation_buffer_to_help_parser "${documentation_buffer}"
     dna::help_footer
     return 0
