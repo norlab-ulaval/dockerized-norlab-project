@@ -271,6 +271,69 @@ teardown_file() {
   assert_output --partial "The line '!**/.dockerized_norlab/' is not present in .dockerignore"
 }
 
+@test "dna::check_config_scheme_compatibility › expect pass with matching versions" {
+  # Test case: When config scheme versions match, the function should pass
+  # Create a mock dna script that returns the matching version
+  mkdir -p "${TEST_TEMP_DIR}/bin"
+  cat > "${TEST_TEMP_DIR}/bin/dna" << 'EOF'
+#!/bin/bash
+if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=1
+  echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
+else
+  exit 1
+fi
+EOF
+  chmod +x "${TEST_TEMP_DIR}/bin/dna"
+  
+  # Temporarily modify PATH and DNA_PATH for the test
+  local original_path="${PATH}"
+  local original_dna_path="${DNA_PATH}"
+  export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
+  export DNA_PATH="${TEST_TEMP_DIR}/bin"
+
+  export DNA_CONFIG_SCHEME_VERSION=1
+
+  run dna::check_config_scheme_compatibility
+  assert_success
+
+  # Restore original PATH and DNA_PATH
+  export PATH="${original_path}"
+  export DNA_PATH="${original_dna_path}"
+}
+
+@test "dna::check_config_scheme_compatibility › expect fail with mismatched versions" {
+  # Test case: When config scheme versions don't match, the function should fail
+  # Create a mock dna script that returns a different version
+  mkdir -p "${TEST_TEMP_DIR}/bin"
+  cat > "${TEST_TEMP_DIR}/bin/dna" << 'EOF'
+#!/bin/bash
+if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
+  echo "99"  # Different version that won't match
+else
+  exit 1
+fi
+EOF
+  chmod +x "${TEST_TEMP_DIR}/bin/dna"
+
+  # Temporarily modify PATH and DNA_PATH for the test
+  local original_path="${PATH}"
+  local original_dna_path="${DNA_PATH}"
+  export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
+  export DNA_PATH="${TEST_TEMP_DIR}/bin"
+
+  export DNA_CONFIG_SCHEME_VERSION=1
+
+  run dna::check_config_scheme_compatibility
+  assert_failure
+  assert_output --partial "Super project dna config schemme"
+  assert_output --partial "does not match current dna config scheme version"
+
+  # Restore original PATH and DNA_PATH
+  export PATH="${original_path}"
+  export DNA_PATH="${original_dna_path}"
+}
+
 # ....Test integration of dna::super_project_dna_sanity_check.....................................
 @test "dna::super_project_dna_sanity_check integration › expect pass with valid super project" {
   # Test case: When the super project is valid, the function should pass without mocking any check functions

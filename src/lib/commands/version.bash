@@ -24,6 +24,7 @@ test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The 
 test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
+
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::version_command() {
     local verbose=default # options: 'default', 'short' or 'all'
@@ -41,6 +42,10 @@ function dna::version_command() {
                 ;;
             -a|--all)
                 verbose="all"
+                shift
+                ;;
+            -c|--config-scheme)
+                verbose="config-scheme"
                 shift
                 ;;
             *)
@@ -66,17 +71,20 @@ function dna::version_command() {
           echo "${DNA_HUMAN_NAME:?err} version ${DNA_VERSION:?err}"
         elif [[ "${verbose}" == "short"  ]]; then
           echo "${DNA_VERSION:?err}"
+        elif [[ "${verbose}" == "config-scheme"  ]]; then
+          echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION:?err}"
         elif [[ "${verbose}" == "all"  ]]; then
           n2st::set_which_architecture_and_os
           echo -en "${DNA_HUMAN_NAME:?err}:
   Version: ${DNA_VERSION:?err}
-  Config scheme version: ${DNA_CONFIG_SCHEME_VERSION:?err}
+  Config scheme version: ${DNA_RELEASE_CONFIG_SCHEME_VERSION:?err}
   Submodule version:
     norlab-shell-script-tools: ${N2ST_VERSION:?err}
     norlab-build-system: ${NBS_VERSION:?err}
   Local repository:
     Current branch: ${current_branch}
     Current commit: ${current_commit}
+    Path: ${DNA_ROOT:?err}
   Host architecture and OS: ${IMAGE_ARCH_AND_OS:?err}
 "
         else

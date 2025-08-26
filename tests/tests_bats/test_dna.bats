@@ -106,6 +106,20 @@ function dna::version_command() {
 }
 EOF
 
+  cat > "${MOCK_DNA_DIR}/src/lib/commands/update.bash" << 'EOF'
+function dna::update_command() {
+  if [[ ${MOCK_DNA_AUTO_UPDATE} == true ]]; then
+    echo "dna::run_daily_auto_update >> mock dna::update_command --yes"
+  else
+    echo "Mock dna::update_command called with args: $*"
+  fi
+  return 0
+}
+
+function dna::update_get_auto_update_setting() {
+  echo "${MOCK_DNA_AUTO_UPDATE:-false}"
+}
+EOF
 
   cat > "${MOCK_DNA_DIR}/src/lib/commands/project.bash" << 'EOF'
 DOCUMENTATION_BUFFER_PROJECT="
@@ -230,6 +244,8 @@ setup() {
 # ....Teardown.....................................................................................
 teardown() {
   bats_print_run_env_variable_on_error
+  unset MOCK_DNA_AUTO_UPDATE
+  rm -f "${MOCK_DNA_DIR}/.dna_last_update_check"
 }
 
 teardown_file() {
@@ -237,8 +253,9 @@ teardown_file() {
   temp_del "${MOCK_DNA_DIR}"
 }
 
-# ====Test cases==================================================================================
+# ====Test cases===================================================================================
 
+# ....Help message.................................................................................
 @test "dna with no arguments › expect help message and no failure" {
 
   # Test case: When dna is called without arguments, it should show help and exit
@@ -252,6 +269,20 @@ teardown_file() {
   assert_output --partial "Commands:"
 }
 
+@test "dna help command › expect help message and success" {
+  # Test case: When dna is called with 'help' command, it should show help and exit successfully
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna help
+
+  # Should succeed with exit code 0
+  assert_success
+
+  # Should output help message
+  assert_output --partial "Usage:"
+  assert_output --partial "Commands:"
+}
+
+
+# ....Comand menu..................................................................................
 @test "dna init command › expect init function to be called" {
   # Test case: When dna is called with 'init' command, it should call the init function
   run bash "${MOCK_DNA_DIR}"/src/bin/dna init
@@ -262,6 +293,7 @@ teardown_file() {
   # Should call the init function
   assert_output --partial "Mock dna::init_command called with args:"
 }
+
 
 @test "dna build command › expect build function to be called" {
   # Test case: When dna is called with 'build' command, it should call the build function
@@ -329,17 +361,17 @@ teardown_file() {
   assert_output --partial "Mock dna::version_command called with args:"
 }
 
-@test "dna help command › expect help message and success" {
-  # Test case: When dna is called with 'help' command, it should show help and exit successfully
-  run bash "${MOCK_DNA_DIR}"/src/bin/dna help
+@test "dna update command › expect update function to be called" {
+  # Test case: When dna is called with 'update' command, it should call the update function
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna update
 
-  # Should succeed with exit code 0
+  # Should succeed
   assert_success
 
-  # Should output help message
-  assert_output --partial "Usage:"
-  assert_output --partial "Commands:"
+  # Should call the update function
+  assert_output --partial "Mock dna::update_command called with args:"
 }
+
 
 @test "dna with unknown command › expect error message and failure" {
   # Test case: When dna is called with an unknown command, it should show error and help, and exit with error
@@ -516,4 +548,96 @@ teardown_file() {
 
   # Should call the attach function with the help option
   assert_output --partial "Mock dna::attach_command called with args: --help"
+}
+
+
+# ....Auto-update logic............................................................................
+@test "dna auto-update › expect auto-update to run for regular commands" {
+  # Test case: When dna is called with a regular command like 'init', auto-update should run
+  export MOCK_DNA_AUTO_UPDATE=true
+
+  echo "0000-00-00" > "${MOCK_DNA_DIR}/.dna_last_update_check"
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna init
+
+  # Should succeed
+  assert_success
+
+  # Should call auto-update function
+  assert_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
+  # Should also call the init function
+  assert_output --partial "Mock dna::init_command called with args:"
+  assert_file_exist "${MOCK_DNA_DIR}/.dna_last_update_check"
+  assert_file_contains "${MOCK_DNA_DIR}/.dna_last_update_check" "$(date +%Y-%m-%d)"
+  #cat "${MOCK_DNA_DIR}/.dna_last_update_check" >&3
+}
+
+@test "dna auto-update › expect auto-update to be skipped if executed twice on same day" {
+  # Test case: When dna is called more than once in a day, auto-update should be skipped
+  export MOCK_DNA_AUTO_UPDATE=true
+  date +%Y-%m-%d > "${MOCK_DNA_DIR}/.dna_last_update_check"
+
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna init
+
+  # Should succeed
+  assert_success
+
+  # Should call auto-update function
+  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
+  # Should also call the init function
+  assert_output --partial "Mock dna::init_command called with args:"
+  assert_file_exist "${MOCK_DNA_DIR}/.dna_last_update_check"
+  assert_file_contains "${MOCK_DNA_DIR}/.dna_last_update_check" "$(date +%Y-%m-%d)"
+  #cat "${MOCK_DNA_DIR}/.dna_last_update_check" >&3
+}
+
+@test "dna version command › expect auto-update to be skipped" {
+  # Test case: When dna is called with 'version' command, auto-update should be skipped
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna version
+
+  # Should succeed
+  assert_success
+
+  # Should call the version function
+  assert_output --partial "Mock dna::version_command called with args:"
+  # Should NOT call auto-update function
+  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
+}
+
+@test "dna update command › expect auto-update to be skipped" {
+  # Test case: When dna is called with 'update' command, auto-update should be skipped
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna update --fake-flag
+
+  # Should succeed
+  assert_success
+
+  # Should call the update function
+  assert_output --partial "Mock dna::update_command called with args: --fake-flag"
+  # Should NOT call auto-update function
+  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
+}
+
+@test "dna help command › expect auto-update to be skipped" {
+  # Test case: When dna is called with 'help' command, auto-update should be skipped
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna help
+
+  # Should succeed
+  assert_success
+
+  # Should output help message
+  assert_output --partial "Usage:"
+  # Should NOT call auto-update function
+  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
+}
+
+@test "dna --help flag › expect auto-update to be skipped" {
+  # Test case: When dna is called with '--help' flag, auto-update should be skipped
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna --help
+
+  # Should succeed
+  assert_success
+
+  # Should output help message
+  assert_output --partial "Usage:"
+  # Should NOT call auto-update function
+  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
 }
