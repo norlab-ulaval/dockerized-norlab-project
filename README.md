@@ -260,6 +260,7 @@ dna down
   - [dna load](documentation/command/load.md) - Load Docker images from files
   - [dna config](documentation/command/config.md) - Show configuration
   - [dna version](documentation/command/version.md) - Show DNA version
+  - [dna update](documentation/command/update.md) - Update DNA to latest version
 
 ### ⚙️ Setup & Configuration
 

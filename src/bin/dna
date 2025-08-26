@@ -22,6 +22,7 @@ DOCUMENTATION_BUFFER_DNA=$( cat <<'EOF'
 #   load        Load DNA Docker image from file for offline use
 #   config      Show parsed docker compose configuration
 #   version     Show DNA version
+#   update      Update DNA to latest version
 #   help        Show this help message
 #
 # Run 'dna COMMAND --help' for more information on a command.
@@ -54,12 +55,71 @@ test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The 
 test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
+# ::::Auto-update functions:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+function dna::should_run_daily_update() {
+    # Check if daily update should run based on timestamp
+    local timestamp_file="${DNA_ROOT}/.dna_last_update_check"
+    local current_date
+    local last_check_date
+    
+    current_date=$(date +%Y-%m-%d)
+    
+    if [[ -f "${timestamp_file}" ]]; then
+        last_check_date=$(cat "${timestamp_file}" 2>/dev/null)
+        if [[ "${last_check_date}" == "${current_date}" ]]; then
+            return 1  # Already updated today
+        fi
+    fi
+    
+    return 0  # Should update
+}
+
+function dna::update_timestamp() {
+    # Update the timestamp file with current date
+    local timestamp_file="${DNA_ROOT}/.dna_last_update_check"
+    local current_date
+    
+    current_date=$(date +%Y-%m-%d)
+    echo "${current_date}" > "${timestamp_file}"
+}
+
+function dna::run_daily_auto_update() {
+    # Run daily auto-update if conditions are met
+    local auto_update_setting
+    source "${DNA_LIB_PATH}/commands/update.bash" || return 1
+
+    # Check if auto-update is enabled
+    auto_update_setting=$(dna::update_get_auto_update_setting)
+    if [[ "${auto_update_setting}" != "true" ]]; then
+        return 0  # Auto-update disabled, skip
+    fi
+
+    # Check if we should run update today
+    if ! dna::should_run_daily_update; then
+        return 0  # Already updated today, skip
+    fi
+
+    # Update timestamp first to prevent multiple runs
+    dna::update_timestamp
+
+    # Run the update silently
+    dna::update_command --yes || return 1
+
+    return 0
+}
+
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::entrypoint() {
 
   # ....Set env variables (pre cli)................................................................
   local the_command="$1"
   shift || true
+
+  # ....Auto-update check (run early, before processing commands).................................
+  # Skip auto-update for help, version, and update commands to avoid recursion/interference
+  if [[ ! "${the_command}" =~ .*(help|--help|-h|version|update).* ]]; then
+    dna::run_daily_auto_update
+  fi
 
   # ....cli........................................................................................
   if [[ -z ${the_command}  ]]; then
@@ -121,6 +181,11 @@ function dna::entrypoint() {
       version)
           source "${DNA_LIB_PATH}/commands/version.bash" || exit 1
           dna::version_command "$@"
+          exit $?
+          ;;
+      update)
+          source "${DNA_LIB_PATH}/commands/update.bash" || exit 1
+          dna::update_command "$@"
           exit $?
           ;;
       project)

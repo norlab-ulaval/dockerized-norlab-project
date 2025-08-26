@@ -24,6 +24,7 @@ test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The 
 test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
+
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::version_command() {
     local verbose=default # options: 'default', 'short' or 'all'
