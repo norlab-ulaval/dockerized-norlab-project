@@ -236,6 +236,7 @@ teardown_file() {
 }
 
 # ....Test helper functions........................................................................
+# (NICE TO HAVE) ToDo: NMO-785 feat: consolidate update helper function to dedicated utility script
 
 @test "dna::update_is_remote_newer function › expect correct version comparison" {
   # Test case: Test simplified version comparison function directly

@@ -87,18 +87,17 @@ function dna::update_timestamp() {
 
 function dna::run_daily_auto_update() {
     # Run daily auto-update if conditions are met
-    local auto_update_setting
-    source "${DNA_LIB_PATH}/commands/update.bash" || return 1
+    source "${DNA_LIB_PATH:?err}/commands/update.bash" || return 1
 
     # Check if auto-update is enabled
-    auto_update_setting=$(dna::update_get_auto_update_setting)
-    if [[ "${auto_update_setting}" != "true" ]]; then
-        return 0  # Auto-update disabled, skip
-    fi
-
-    # Check if we should run update today
-    if ! dna::should_run_daily_update; then
-        return 0  # Already updated today, skip
+    if [[ "$(dna::update_get_auto_update_setting)" != "true" ]]; then
+      return 0  # Auto-update disabled, skip
+    elif ! dna::is_online; then
+      n2st::print_msg_warning "Be advised, you are currently offline, skipping auto-update."
+      return 0
+    elif ! dna::should_run_daily_update; then
+      # Check if we should run update today
+      return 0  # Already updated today, skip
     fi
 
     # Update timestamp first to prevent multiple runs

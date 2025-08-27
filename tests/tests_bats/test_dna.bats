@@ -198,6 +198,11 @@ function n2st::print_msg() {
   return 0
 }
 
+function n2st::print_msg_warning() {
+  echo "Mock n2st::print_msg_warning called with args: $*"
+  return 0
+}
+
 function n2st::echo_centering_str() {
   echo "Mock n2st::echo_centering_str called with args: $*"
   return 0
@@ -210,6 +215,16 @@ function n2st::draw_horizontal_line_across_the_terminal_window() {
 
 # ....Load DNA lib functions.......................................................................
 source "${DNA_LIB_PATH:?err}/core/utils/ui.bash" || exit 1
+
+# ....Mock DNA network functions...................................................................
+function dna::is_online() {
+  # Default to online unless MOCK_OFFLINE is set
+  if [[ "${MOCK_OFFLINE:-false}" == "true" ]]; then
+    return 1
+  else
+    return 0
+  fi
+}
 
 # ....Export loaded functions......................................................................
 for func in $(compgen -A function | grep -e dna:: -e nbs:: -e n2st::); do
@@ -588,6 +603,26 @@ teardown_file() {
   assert_file_exist "/tmp/.dna_last_update_check"
   assert_file_contains "/tmp/.dna_last_update_check" "$(date +%Y-%m-%d)"
   #cat "/tmp/.dna_last_update_check" >&3
+}
+
+@test "dna auto-update › expect auto-update to be skipped if offline" {
+  # Test case: When dna is called without internet connection, auto-update should be skipped
+  export MOCK_DNA_AUTO_UPDATE=true
+  export MOCK_OFFLINE=true
+  echo "0000-00-00" > "/tmp/.dna_last_update_check"
+
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna init
+
+  # Should succeed
+  assert_success
+
+  # Should call auto-update function
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently offline, skipping auto-update."
+  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
+  # Should also call the init function
+  assert_output --partial "Mock dna::init_command called with args:"
+  assert_file_contains "/tmp/.dna_last_update_check" "0000-00-00"
+  unset MOCK_OFFLINE
 }
 
 @test "dna version command › expect auto-update to be skipped" {

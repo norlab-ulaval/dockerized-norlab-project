@@ -638,7 +638,7 @@ teardown_file() {
   assert_failure
 
   # Should output the error message about being offline
-  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently, offline. Executing dna build require internet connection."
+  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently offline. Executing dna build require internet connection."
 }
 
 @test "dna::build_command when offline with service › expect error" {
@@ -650,7 +650,7 @@ teardown_file() {
   assert_failure
 
   # Should output the error message about being offline
-  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently, offline. Executing dna build require internet connection."
+  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently offline. Executing dna build require internet connection."
 }
 
 @test "dna::build_command when offline with options › expect error" {
@@ -662,7 +662,7 @@ teardown_file() {
   assert_failure
 
   # Should output the error message about being offline
-  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently, offline. Executing dna build require internet connection."
+  assert_output --partial "Mock n2st::print_msg_error called with args: Be advised, you are currently offline. Executing dna build require internet connection."
 }
 
 @test "dna::build_command with ci-tests service and --multiarch › expect multiarch CI tests images" {
