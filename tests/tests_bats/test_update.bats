@@ -115,18 +115,47 @@ function git() {
       if [[ "$2" == "--tags" && "$3" == "origin" ]]; then
         echo "Mock git fetch --tags origin"
         return 0
+      elif [[ "$2" == "--all" && "$3" == "--tags" && "$4" == "origin" ]]; then
+        echo "Mock git fetch --tags origin"
+        return 0
       fi
       ;;
     "tag")
       if [[ "$2" == "-l" ]]; then
-        echo "v1.1.0"
-        echo "v1.0.0"
-        echo "v1.2.0"
+        if [[ "$3" == "--merged" && "$4" == "origin/main" ]]; then
+          echo "v1.1.0"
+          echo "v1.2.0"
+          return 0
+        elif [[ "$3" == "--merged" && "$4" == "origin/beta" ]]; then
+          echo "v1.0.0-beta.1"
+          echo "v1.1.0-beta.5"
+          return 0
+        else
+          echo "v1.1.0"
+          echo "v1.0.0"
+          echo "v1.2.0"
+          echo "v1.0.0-beta.1"
+          echo "v1.1.0-beta.5"
+          return 0
+        fi
+      fi
+      ;;
+    "checkout")
+      if [[ "$2" == "main" || "$2" == "beta" ]]; then
+        echo "Mock git checkout $2"
         return 0
       fi
       ;;
     "pull")
-      if [[ "$2" == "origin" ]]; then
+      if [[ "$2" == "--recurse-submodules" && "$3" == "origin" ]]; then
+        if [[ "$4" == "main" || "$4" == "beta" ]]; then
+          echo "Mock git pull --recurse-submodules origin $4"
+          return 0
+        else
+          echo "Mock git pull --recurse-submodules origin"
+          return 0
+        fi
+      elif [[ "$2" == "origin" ]]; then
         echo "Mock git pull origin"
         return 0
       fi
@@ -144,7 +173,6 @@ for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   export -f "${func}"
 done
 
-
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
 echo "[dna done] Mock import_dna_lib.bash and its librairies loaded"
@@ -158,6 +186,7 @@ setup() {
 
   # Copy the update.bash file to the temporary directory
   cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/update_helper.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
@@ -204,57 +233,6 @@ teardown_file() {
 
   # Should output the help menu
   assert_output --partial "Mock dna::command_help_menu called with args:"
-}
-
-# ....Test helper functions........................................................................
-
-@test "dna::update_is_remote_newer function › expect correct version comparison" {
-  # Test case: Test simplified version comparison function directly
-  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
-
-  # Signature: dna::update_is_remote_newer "local-v" "remote-v"
-
-  echo "Test equal versions - should return failure (not newer)" # >&3
-  run dna::update_is_remote_newer '1.0.0' '1.0.0'
-  assert_failure  # Function returns 1 (failure) when versions are equal
-
-  echo "Test remote version newer - should return success" # >&3
-  run dna::update_is_remote_newer '1.0.0' '1.1.0'
-  assert_success  # Function returns 0 (success) when remote is newer
-
-  echo "Test beta remote version equal - should return failure (not newer)" # >&3
-  run dna::update_is_remote_newer '1.0.0-beta.21' '1.0.0-beta.21'
-  assert_failure  # Function returns 1 (failure) when local is newer
-
-  echo "Test beta remote version newer - should return success" # >&3
-  run dna::update_is_remote_newer '1.0.0-beta.21' '1.0.0-beta.29'
-  assert_success  # Function returns 0 (success) when remote is newer
-
-  echo "Test local beta and main remote version newer - should return success" # >&3
-  run dna::update_is_remote_newer '1.0.0-beta.21' '1.0.1'
-  assert_success  # Function returns 0 (success) when remote is newer
-}
-
-@test "dna::update_get_auto_update_setting function › expect correct setting retrieval" {
-  # Test case: Test auto-update setting retrieval
-
-  # Case auto update set to true
-  echo "DNA_AUTO_UPDATE=true" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_get_auto_update_setting"
-  assert_success
-  assert_output "true"
-
-  # Case auto update set to false
-  echo "DNA_AUTO_UPDATE=false" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_get_auto_update_setting"
-  assert_success
-  assert_output "false"
-
-  # Case dotenv file does not exist
-  rm -f "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_get_auto_update_setting"
-  assert_success
-  assert_output "false"
 }
 
 # ....Test dna::update_command.....................................................................
@@ -356,7 +334,7 @@ teardown_file() {
   echo "DNA_AUTO_UPDATE=false" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
   export DNA_VERSION="0.9.0"
 
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && echo 'N' | dna::update_command"
+  run timeout 10s bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && echo 'N' | dna::update_command"
 
   # Should succeed
   assert_success
@@ -371,7 +349,7 @@ teardown_file() {
   echo "DNA_AUTO_UPDATE=false" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
   export DNA_VERSION="0.9.0"
 
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && echo 'Y' | dna::update_command"
+  run timeout 10s bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && echo 'Y' | dna::update_command"
 
   # Should succeed
   assert_success
@@ -438,6 +416,104 @@ teardown_file() {
 
   # Should output up to date message (simplified logic no longer distinguishes local newer)
   assert_output --partial "Already up to date"
+}
+
+@test "dna::update_command with --include-prerelease flag › expect prerelease branch update" {
+  # Test case: When update command is called with --include-prerelease flag, it should consider both branches
+  export DNA_VERSION="0.9.0"
+  rm -f "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_command --include-prerelease --yes"
+
+  # Should succeed
+  assert_success
+
+  # Should show update available from main branch (since 1.2.0 > 1.1.0-beta.5) and perform update
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
+  assert_output --partial "Updating DNA repository to latest release from 'main' branch"
+  assert_output --partial "DNA successfully updated to latest version from 'main' branch"
+}
+
+@test "dna::update_command with --include-prerelease and --status › expect prerelease branch status" {
+  # Test case: When update command is called with --include-prerelease and --status, it should show status considering both branches
+  export DNA_VERSION="1.0.0-beta.1"
+
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_command --include-prerelease --status"
+
+  # Should succeed
+  assert_success
+
+  # Should show update available from main branch (since 1.2.0 > 1.1.0-beta.5)
+  assert_output --partial "Update available: 1.0.0-beta.1 → 1.2.0"
+}
+
+@test "dna::update_command with --toggle-auto --include-prerelease › expect prerelease auto-update setting toggled" {
+  # Test case: When update command is called with --toggle-auto --include-prerelease, it should toggle prerelease setting
+  echo "DNA_INCLUDE_PRERELEASE=false" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
+
+  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
+  run dna::update_command --toggle-auto --include-prerelease
+
+  # Should succeed
+  assert_success
+
+  # Should output current value and toggle confirmation
+  assert_output --partial "Current DNA_INCLUDE_PRERELEASE: false"
+  assert_output --partial "DNA_INCLUDE_PRERELEASE toggled to true"
+  assert_file_contains "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local" "DNA_INCLUDE_PRERELEASE=true"
+}
+
+@test "dna::update_command with DNA_INCLUDE_PRERELEASE=true › expect automatic prerelease update" {
+  # Test case: When DNA_INCLUDE_PRERELEASE is true, should automatically consider both branches
+  export DNA_VERSION="0.9.0"
+  echo "DNA_INCLUDE_PRERELEASE=true" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
+
+  run timeout 10s bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_command"
+
+  # Should succeed
+  assert_success
+
+  # Should show update available from main branch (auto selection) and perform update
+  refute_output --partial "Mock n2st::print_msg: Would you like to update DNA now?"
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
+  assert_output --partial "DNA successfully updated to latest version from 'main' branch"
+}
+
+@test "dna::update_determine_latest_release_branch function › expect correct branch determination" {
+  # Test case: Test branch determination function directly
+  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
+
+  # Test should return "main" as it has version 1.2.0 which is newer than beta's 1.1.0-beta.5
+  run dna::update_determine_latest_release_branch
+  assert_success
+  assert_output "main"
+}
+
+@test "dna::update_fetch_remote_latest_version with beta target › expect beta version" {
+  # Test case: Test fetching latest version from beta branch
+  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
+
+  run dna::update_fetch_remote_latest_version "beta"
+  assert_success
+  assert_output "1.1.0-beta.5"
+}
+
+@test "dna::update_fetch_remote_latest_version with main target › expect main version" {
+  # Test case: Test fetching latest version from main branch
+  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
+
+  run dna::update_fetch_remote_latest_version "main"
+  assert_success
+  assert_output "1.2.0"
+}
+
+@test "dna::update_fetch_remote_latest_version with auto target › expect automatic branch selection" {
+  # Test case: Test automatic branch selection (should return main branch version)
+  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
+
+  run dna::update_fetch_remote_latest_version "auto"
+  assert_success
+  assert_output "1.2.0"
 }
 
 @test "dna::update_command with unknown option › expect error" {

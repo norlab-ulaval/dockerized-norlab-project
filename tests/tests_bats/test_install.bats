@@ -644,7 +644,7 @@ EOF
   assert_success
 
   # Should show offline warning
-  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently offline. Can't proceed with installing software requirement!"
 
   # Should not call online-specific functions
   refute_output --partial "Mock dna::check_install_darwin_package_manager called with args:"
@@ -669,7 +669,7 @@ EOF
   assert_success
 
   # Should show offline warning
-  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently offline. Can't proceed with installing software requirement!"
 
   # Should not call online-specific functions
   refute_output --partial "Mock dna::check_install_darwin_package_manager called with args:"
@@ -743,7 +743,7 @@ EOF
   assert_success
 
   # Should show offline warning
-  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+  assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently offline. Can't proceed with installing software requirement!"
 
   # Should not create a symlink
   assert_file_executable "${TEMP_DNA_DIR}/src/bin/dna"

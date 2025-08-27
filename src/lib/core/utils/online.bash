@@ -17,7 +17,7 @@
 #
 # Example in code:
 #    if ! dna::is_online; then
-#      n2st::print_msg_error "Be advised, you are currently, offline."
+#      n2st::print_msg_error "Be advised, you are currently offline."
 #    fi
 #
 # =================================================================================================
