@@ -58,7 +58,7 @@ test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load er
 # ::::Auto-update functions:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::should_run_daily_update() {
     # Check if daily update should run based on timestamp
-    local timestamp_file="${DNA_ROOT}/.dna_last_update_check"
+    local timestamp_file="/tmp/.dna_last_update_check"
     local current_date
     local last_check_date
     
@@ -76,10 +76,12 @@ function dna::should_run_daily_update() {
 
 function dna::update_timestamp() {
     # Update the timestamp file with current date
-    local timestamp_file="${DNA_ROOT}/.dna_last_update_check"
+    local timestamp_file="/tmp/.dna_last_update_check"
     local current_date
     
     current_date=$(date +%Y-%m-%d)
+#    sudo touch "${timestamp_file}"
+#    sudo chmod 664 "${timestamp_file}"
     echo "${current_date}" > "${timestamp_file}"
 }
 
