@@ -245,7 +245,7 @@ setup() {
 teardown() {
   bats_print_run_env_variable_on_error
   unset MOCK_DNA_AUTO_UPDATE
-  rm -f "${MOCK_DNA_DIR}/.dna_last_update_check"
+  rm -f "/tmp/.dna_last_update_check"
 }
 
 teardown_file() {
@@ -556,7 +556,7 @@ teardown_file() {
   # Test case: When dna is called with a regular command like 'init', auto-update should run
   export MOCK_DNA_AUTO_UPDATE=true
 
-  echo "0000-00-00" > "${MOCK_DNA_DIR}/.dna_last_update_check"
+  echo "0000-00-00" > "/tmp/.dna_last_update_check"
   run bash "${MOCK_DNA_DIR}"/src/bin/dna init
 
   # Should succeed
@@ -566,15 +566,15 @@ teardown_file() {
   assert_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
   # Should also call the init function
   assert_output --partial "Mock dna::init_command called with args:"
-  assert_file_exist "${MOCK_DNA_DIR}/.dna_last_update_check"
-  assert_file_contains "${MOCK_DNA_DIR}/.dna_last_update_check" "$(date +%Y-%m-%d)"
-  #cat "${MOCK_DNA_DIR}/.dna_last_update_check" >&3
+  assert_file_exist "/tmp/.dna_last_update_check"
+  assert_file_contains "/tmp/.dna_last_update_check" "$(date +%Y-%m-%d)"
+  #cat "/tmp/.dna_last_update_check" >&3
 }
 
 @test "dna auto-update › expect auto-update to be skipped if executed twice on same day" {
   # Test case: When dna is called more than once in a day, auto-update should be skipped
   export MOCK_DNA_AUTO_UPDATE=true
-  date +%Y-%m-%d > "${MOCK_DNA_DIR}/.dna_last_update_check"
+  date +%Y-%m-%d > "/tmp/.dna_last_update_check"
 
   run bash "${MOCK_DNA_DIR}"/src/bin/dna init
 
@@ -585,9 +585,9 @@ teardown_file() {
   refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
   # Should also call the init function
   assert_output --partial "Mock dna::init_command called with args:"
-  assert_file_exist "${MOCK_DNA_DIR}/.dna_last_update_check"
-  assert_file_contains "${MOCK_DNA_DIR}/.dna_last_update_check" "$(date +%Y-%m-%d)"
-  #cat "${MOCK_DNA_DIR}/.dna_last_update_check" >&3
+  assert_file_exist "/tmp/.dna_last_update_check"
+  assert_file_contains "/tmp/.dna_last_update_check" "$(date +%Y-%m-%d)"
+  #cat "/tmp/.dna_last_update_check" >&3
 }
 
 @test "dna version command › expect auto-update to be skipped" {

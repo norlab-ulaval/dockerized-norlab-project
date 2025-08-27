@@ -11,7 +11,6 @@
 **/artifact/**/*
 **/slurm_jobs_logs/*.log
 /.env.dockerized-norlab-project.local
-/.dna_last_update_check
 
 # ....Dev required.................................................................................
 /utilities/tmp/dockerized-norlab-project-mock/

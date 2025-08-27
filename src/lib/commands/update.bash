@@ -126,6 +126,7 @@ function dna::update_toggle_auto_update_setting() {
         fi
     else
         # Create new file
+        sudo touch "${env_file}"
         echo "DNA_AUTO_UPDATE=${new_value}" > "${env_file}"
     fi
 
@@ -180,7 +181,7 @@ function dna::update_command() {
 
     # Handle --toggle-auto flag
     if [[ "${toggle_auto}" == true ]]; then
-        dna::update_toggle_auto_update_setting
+        dna::update_toggle_auto_update_setting || n2st::print_msg_error_and_exit "Unable to toggle auto-update! Might require sudo."
         return 0
     fi
 
