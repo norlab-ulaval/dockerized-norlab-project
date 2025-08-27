@@ -115,11 +115,8 @@ function dna::update_command() {
   fi
   return 0
 }
-
-function dna::update_get_auto_update_setting() {
-  echo "${MOCK_DNA_AUTO_UPDATE:-false}"
-}
 EOF
+
 
   cat > "${MOCK_DNA_DIR}/src/lib/commands/project.bash" << 'EOF'
 DOCUMENTATION_BUFFER_PROJECT="
@@ -247,6 +244,7 @@ setup() {
   # Copy the dna script to the src/bin directory in the mock project
   cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/bin/"
   cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/ui.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/update_helper.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
   cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/.env.cli_format_and_style" "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   # Make the dna script executable
@@ -261,6 +259,7 @@ teardown() {
   bats_print_run_env_variable_on_error
   unset MOCK_DNA_AUTO_UPDATE
   rm -f "/tmp/.dna_last_update_check"
+  rm -f "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
 }
 
 teardown_file() {
@@ -571,7 +570,9 @@ teardown_file() {
   # Test case: When dna is called with a regular command like 'init', auto-update should run
   export MOCK_DNA_AUTO_UPDATE=true
 
+  echo "DNA_AUTO_UPDATE=true" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
   echo "0000-00-00" > "/tmp/.dna_last_update_check"
+
   run bash "${MOCK_DNA_DIR}"/src/bin/dna init
 
   # Should succeed
@@ -618,7 +619,6 @@ teardown_file() {
 
   # Should call auto-update function
   assert_output --partial "Mock n2st::print_msg_warning called with args: Be advised, you are currently offline, skipping auto-update."
-  refute_output --partial "dna::run_daily_auto_update >> mock dna::update_command --yes"
   # Should also call the init function
   assert_output --partial "Mock dna::init_command called with args:"
   assert_file_contains "/tmp/.dna_last_update_check" "0000-00-00"

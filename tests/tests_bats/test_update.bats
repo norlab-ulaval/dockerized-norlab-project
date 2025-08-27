@@ -173,7 +173,6 @@ for func in $(compgen -A function | grep -e dna:: -e n2st::); do
   export -f "${func}"
 done
 
-
 # ....Teardown.....................................................................................
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
 echo "[dna done] Mock import_dna_lib.bash and its librairies loaded"
@@ -187,6 +186,7 @@ setup() {
 
   # Copy the update.bash file to the temporary directory
   cp "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" "${MOCK_DNA_DIR}/src/lib/commands/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/update_helper.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   source "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" || exit 1
 
@@ -233,58 +233,6 @@ teardown_file() {
 
   # Should output the help menu
   assert_output --partial "Mock dna::command_help_menu called with args:"
-}
-
-# ....Test helper functions........................................................................
-# (NICE TO HAVE) ToDo: NMO-785 feat: consolidate update helper function to dedicated utility script
-
-@test "dna::update_is_remote_newer function › expect correct version comparison" {
-  # Test case: Test simplified version comparison function directly
-  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
-
-  # Signature: dna::update_is_remote_newer "local-v" "remote-v"
-
-  echo "Test equal versions - should return failure (not newer)" # >&3
-  run dna::update_is_remote_newer '1.0.0' '1.0.0'
-  assert_failure  # Function returns 1 (failure) when versions are equal
-
-  echo "Test remote version newer - should return success" # >&3
-  run dna::update_is_remote_newer '1.0.0' '1.1.0'
-  assert_success  # Function returns 0 (success) when remote is newer
-
-  echo "Test beta remote version equal - should return failure (not newer)" # >&3
-  run dna::update_is_remote_newer '1.0.0-beta.21' '1.0.0-beta.21'
-  assert_failure  # Function returns 1 (failure) when local is newer
-
-  echo "Test beta remote version newer - should return success" # >&3
-  run dna::update_is_remote_newer '1.0.0-beta.21' '1.0.0-beta.29'
-  assert_success  # Function returns 0 (success) when remote is newer
-
-  echo "Test local beta and main remote version newer - should return success" # >&3
-  run dna::update_is_remote_newer '1.0.0-beta.21' '1.0.1'
-  assert_success  # Function returns 0 (success) when remote is newer
-}
-
-@test "dna::update_get_auto_update_setting function › expect correct setting retrieval" {
-  # Test case: Test auto-update setting retrieval
-
-  # Case auto update set to true
-  echo "DNA_AUTO_UPDATE=true" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_get_auto_update_setting"
-  assert_success
-  assert_output "true"
-
-  # Case auto update set to false
-  echo "DNA_AUTO_UPDATE=false" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_get_auto_update_setting"
-  assert_success
-  assert_output "false"
-
-  # Case dotenv file does not exist
-  rm -f "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
-  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/update.bash && dna::update_get_auto_update_setting"
-  assert_success
-  assert_output "false"
 }
 
 # ....Test dna::update_command.....................................................................

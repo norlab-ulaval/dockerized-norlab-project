@@ -55,64 +55,8 @@ test -n "$( declare -f n2st::print_msg )" || { echo -e "${dna_error_prefix} The 
 test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
-# ::::Auto-update functions:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# (NICE TO HAVE) ToDo: NMO-785 feat: consolidate update helper function to dedicated utility script
 
-# =================================================================================================
-# Determines if the daily update check should run based on timestamp comparison.
-#
-# Checks if an update check has already been performed today by comparing the current date
-# with the date stored in a timestamp file. Creates the timestamp file if it doesn't exist.
-#
-# Usage:
-#   $ if dna::should_run_daily_update; then echo "Should update"; fi
-#
-# Returns:
-#   0 if daily update should run (no check today or file doesn't exist)
-#   1 if daily update should not run (already checked today)
-# =================================================================================================
-function dna::should_run_daily_update() {
-    # Check if daily update should run based on timestamp
-    local timestamp_file="/tmp/.dna_last_update_check"
-    local current_date
-    local last_check_date
-    
-    current_date=$(date +%Y-%m-%d)
-    
-    if [[ -f "${timestamp_file}" ]]; then
-        last_check_date=$(cat "${timestamp_file}" 2>/dev/null)
-        if [[ "${last_check_date}" == "${current_date}" ]]; then
-            return 1  # Already updated today
-        fi
-    fi
-    
-    return 0  # Should update
-}
-
-# =================================================================================================
-# Update the timestamp file with current date.
-#
-# Creates or overwrites a timestamp file containing the current date in YYYY-MM-DD format. This
-# function is typically used to track the last update check for the DNA system.
-#
-# Usage:
-#   $ dna::update_timestamp
-#
-# Outputs:
-#   Writes current date to /tmp/.dna_last_update_check file
-#
-# Returns:
-#   0 on success
-# =================================================================================================
-function dna::update_timestamp() {
-    # Update the timestamp file with current date
-    local timestamp_file="/tmp/.dna_last_update_check"
-    local current_date
-    
-    current_date=$(date +%Y-%m-%d)
-    echo "${current_date}" > "${timestamp_file}"
-    return 0
-}
+# ::::Helper fonctions:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # =================================================================================================
 # Run daily auto-update if conditions are met.
@@ -127,24 +71,22 @@ function dna::update_timestamp() {
 # Usage:
 #   $ dna::run_daily_auto_update
 #
-# Globals:
-#   Read DNA_LIB_PATH: Path to DNA library directory
-#
 # Returns:
 #   0 on success (including when auto-update is disabled or already run today)
-#   1 on failure (source error or update command failure)
+#   1 on update command failure
 #
 # =================================================================================================
 function dna::run_daily_auto_update() {
     # Run daily auto-update if conditions are met
-    source "${DNA_LIB_PATH:?err}/commands/update.bash" || return 1
+    source "${DNA_LIB_PATH:?err}/core/utils/update_helper.bash" || return 1
 
-    # Check if auto-update is enabled
-    if [[ "$(dna::update_get_auto_update_setting)" != "true" ]]; then
-      return 0  # Auto-update disabled, skip
-    elif ! dna::is_online; then
+    if ! dna::is_online; then
+      # Check if online
       n2st::print_msg_warning "Be advised, you are currently offline, skipping auto-update."
       return 0
+    elif [[ "$(dna::update_get_auto_update_setting)" != "true" ]]; then
+      # Check if auto-update is enabled
+      return 0  # Auto-update disabled, skip
     elif ! dna::should_run_daily_update; then
       # Check if we should run update today
       return 0  # Already updated today, skip
@@ -154,6 +96,7 @@ function dna::run_daily_auto_update() {
     dna::update_timestamp
 
     # Run the update silently
+    source "${DNA_LIB_PATH}/commands/update.bash" || return 1
     dna::update_command --yes || return 1
 
     return 0
@@ -169,7 +112,7 @@ function dna::entrypoint() {
   # ....Auto-update check (run early, before processing commands).................................
   # Skip auto-update for help, version, and update commands to avoid recursion/interference
   if [[ ! "${the_command}" =~ .*(help|--help|-h|version|update).* ]]; then
-    dna::run_daily_auto_update
+    dna::run_daily_auto_update || n2st::print_msg_warning "Be advised, auto-update failed. Continue anyway"
   fi
 
   # ....cli........................................................................................
