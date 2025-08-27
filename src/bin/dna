@@ -56,6 +56,21 @@ test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!
 test -d "${DNA_LIB_PATH:?err}" || { echo -e "${dna_error_prefix} library load error!" 1>&2 && exit 1; }
 
 # ::::Auto-update functions:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# (NICE TO HAVE) ToDo: NMO-785 feat: consolidate update helper function to dedicated utility script
+
+# =================================================================================================
+# Determines if the daily update check should run based on timestamp comparison.
+#
+# Checks if an update check has already been performed today by comparing the current date
+# with the date stored in a timestamp file. Creates the timestamp file if it doesn't exist.
+#
+# Usage:
+#   $ if dna::should_run_daily_update; then echo "Should update"; fi
+#
+# Returns:
+#   0 if daily update should run (no check today or file doesn't exist)
+#   1 if daily update should not run (already checked today)
+# =================================================================================================
 function dna::should_run_daily_update() {
     # Check if daily update should run based on timestamp
     local timestamp_file="/tmp/.dna_last_update_check"
@@ -74,17 +89,52 @@ function dna::should_run_daily_update() {
     return 0  # Should update
 }
 
+# =================================================================================================
+# Update the timestamp file with current date.
+#
+# Creates or overwrites a timestamp file containing the current date in YYYY-MM-DD format. This
+# function is typically used to track the last update check for the DNA system.
+#
+# Usage:
+#   $ dna::update_timestamp
+#
+# Outputs:
+#   Writes current date to /tmp/.dna_last_update_check file
+#
+# Returns:
+#   0 on success
+# =================================================================================================
 function dna::update_timestamp() {
     # Update the timestamp file with current date
     local timestamp_file="/tmp/.dna_last_update_check"
     local current_date
     
     current_date=$(date +%Y-%m-%d)
-#    sudo touch "${timestamp_file}"
-#    sudo chmod 664 "${timestamp_file}"
     echo "${current_date}" > "${timestamp_file}"
+    return 0
 }
 
+# =================================================================================================
+# Run daily auto-update if conditions are met.
+#
+# Performs an automatic update of the DNA system only when all conditions are satisfied:
+#   1. auto-update is enabled;
+#   2. system is online;
+#   3. and daily update is due.
+# The function updates the timestamp first to prevent multiple concurrent runs, then executes the
+# update silently.
+#
+# Usage:
+#   $ dna::run_daily_auto_update
+#
+# Globals:
+#   Read DNA_LIB_PATH: Path to DNA library directory
+#
+# Returns:
+#   0 on success (including when auto-update is disabled or already run today)
+#   1 on failure (source error or update command failure)
+#
+# =================================================================================================
 function dna::run_daily_auto_update() {
     # Run daily auto-update if conditions are met
     source "${DNA_LIB_PATH:?err}/commands/update.bash" || return 1
