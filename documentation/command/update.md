@@ -21,6 +21,7 @@ The command compares the local DNA version with the remote repository's latest r
 | `-y`, `--yes` | Auto update DNA without confirmation prompt |
 | `--status` | Show update information and exit |
 | `--toggle-auto` | Enable/disable daily auto-update capability |
+| `--include-prerelease` | Consider both main and beta branches for updates |
 | `--help`, `-h` | Show help message and exit |
 
 ## Examples
@@ -36,11 +37,27 @@ dna update --yes
 dna update -y
 ```
 
+### Prerelease Branch Updates
+
+```bash
+# Update considering both main and beta branches (auto-selects latest)
+dna update --include-prerelease
+
+# Force update with prerelease consideration without confirmation
+dna update --include-prerelease --yes
+
+# Check update status considering both branches
+dna update --include-prerelease --status
+```
+
 ### Auto-Update Configuration
 
 ```bash
 # Toggle auto-update setting (switches between true/false)
 dna update --toggle-auto
+
+# Toggle prerelease auto-update setting (switches between true/false)
+dna update --toggle-auto --include-prerelease
 
 # Shows current value and toggles to opposite state in .env.dockerized-norlab-project.local
 ```
@@ -62,10 +79,21 @@ dna update --toggle-auto && dna update
 
 When you run `dna update`, the command will:
 
-1. **Fetch remote information**: Connects to the DNA repository and fetches the latest release tags
-2. **Compare versions**: Compares local DNA version (`$DNA_VERSION`) with the latest remote release version
-3. **Check auto-update setting**: Reads `DNA_AUTO_UPDATE` value from `.env.dockerized-norlab-project.local`
-4. **Perform update logic**: Based on settings and flags, either updates automatically, prompts user, or skips update
+1. **Fetch remote information**: Connects to the DNA repository and fetches the latest release tags and branches
+2. **Determine target branch**: Automatically detects which branch (main or beta) has the latest release, or considers both branches if `--include-prerelease` flag is specified
+3. **Compare versions**: Compares local DNA version (`$DNA_VERSION`) with the latest remote release version from the target branch
+4. **Check auto-update setting**: Reads `DNA_AUTO_UPDATE` value from `.env.dockerized-norlab-project.local`
+5. **Checkout and update**: Switches to the target branch and performs the update
+6. **Perform update logic**: Based on settings and flags, either updates automatically, prompts user, or skips update
+
+### Automatic Branch Selection
+
+By default, `dna update` automatically determines which branch contains the latest release:
+
+- **Main branch priority**: Compares latest stable releases from `main` branch
+- **Beta branch priority**: Compares latest releases (including beta versions) from `beta` branch  
+- **Intelligent selection**: Chooses the branch with the newer version using semantic version comparison
+- **Manual override**: Use `--include-prerelease` flag to consider both main and beta branches regardless of default behavior
 
 ## Update Behavior
 
@@ -218,3 +246,4 @@ dna update --yes
 | `DNA_VERSION` | Current local DNA version |
 | `DNA_ROOT` | Path to DNA installation directory |
 | `DNA_AUTO_UPDATE` | Auto-update setting (true/false) from .env file |
+| `DNA_INCLUDE_PRERELEASE` | Auto-update prerelease setting (true/false) from .env file |
