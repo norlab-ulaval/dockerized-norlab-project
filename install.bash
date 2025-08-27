@@ -283,7 +283,7 @@ function dna::install_dockerized_norlab_project_on_host() {
   if dna::is_online; then
     dna::check_install_darwin_package_manager "${option_yes}" || return 1
   else
-    n2st::print_msg_warning "Be advised, you are currently, offline. Can't proceed with installing software requirement!"
+    n2st::print_msg_warning "Be advised, you are currently offline. Can't proceed with installing software requirement!"
   fi
 
   # ====Begin======================================================================================

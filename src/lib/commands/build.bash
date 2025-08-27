@@ -88,7 +88,7 @@ function dna::check_user_is_login_dockerhub() {
 function dna::build_command() {
 
     if ! dna::is_online; then
-      n2st::print_msg_error "Be advised, you are currently, offline. Executing ${MSG_DIMMED_FORMAT}dna build${MSG_END_FORMAT} require internet connection."
+      n2st::print_msg_error "Be advised, you are currently offline. Executing ${MSG_DIMMED_FORMAT}dna build${MSG_END_FORMAT} require internet connection."
       return 1
     fi
 

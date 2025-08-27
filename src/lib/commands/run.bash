@@ -231,7 +231,10 @@ function dna::run_command() {
     if [[ "${service}" == "ci-tests" ]]; then
         n2st::print_msg "Running CI tests..."
         # (temporary hack) ToDo: NMO-692 feat: add a build ci-tests option to run.ci_tests.bash
-        dna build ci-tests -- --no-cache || return 1
+        build_all_flag=()
+        build_all_flag+=(--service-names "project-core-pre,project-core-user,project-core,project-ci-tests")
+        build_all_flag+=(-- --no-cache)
+        dna::build_services "${build_all_flag[@]}"
         dna::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${service}" == "slurm" ]]; then
