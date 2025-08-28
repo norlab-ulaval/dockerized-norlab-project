@@ -58,8 +58,10 @@ hydra_flags+=("launcher/example_app_hparm_optim.py")
 # ....Debug flags..................................................................................
 dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
 
-dna_run_slurm_flags+=("--skip-core-force-rebuild")
-#dna_run_slurm_flags+=("--dry-run")
+#dna_run_slurm_flags+=("--skip-core-force-rebuild")
+#dna_run_slurm_flags+=("--skip-slurm-force-rebuild")
+#dna_run_slurm_flags+=("--hydra-dry-run")
+
 #hydra_flags+=("--cfg" "all")
 
 # ====DNA internal=================================================================================

@@ -59,7 +59,8 @@ hydra_flags+=("launcher/example_app_hparm_optim.py")
 dna_run_slurm_flags+=(--register-hydra-dry-run-flag "run_pytorch_check=true")
 
 dna_run_slurm_flags+=("--skip-core-force-rebuild")
-dna_run_slurm_flags+=("--dry-run")
+dna_run_slurm_flags+=("--skip-slurm-force-rebuild")
+dna_run_slurm_flags+=("--hydra-dry-run")
 
 # ====DNA internal=================================================================================
 dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")

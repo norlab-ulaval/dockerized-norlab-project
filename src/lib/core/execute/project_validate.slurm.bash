@@ -179,6 +179,8 @@ function dna::project_validate_slurm() {
 
   n2st::print_msg "Begin dry-run slurm job"
   slurm_job_flags=()
+  slurm_job_flags+=("--skip-core-force-rebuild")
+  slurm_job_flags+=("--skip-slurm-force-rebuild")
   slurm_job_flags+=("--hydra-dry-run")
   cd "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" || exit 1
   for each_slurm_job in "${slurm_job_file_name[@]}" ; do

@@ -47,8 +47,10 @@ python_arguments+=("launcher/example.py")
 # Note: assume container workdir is `<super-project>/src/`
 
 # ....Debug flags..................................................................................
-dna_run_slurm_flags+=("--skip-core-force-rebuild")
-#dna_run_slurm_flags+=("--dry-run")
+#dna_run_slurm_flags+=("--skip-core-force-rebuild")
+#dna_run_slurm_flags+=("--skip-slurm-force-rebuild")
+#dna_run_slurm_flags+=("--hydra-dry-run")
+
 
 # ====DNA internal=================================================================================
 dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
