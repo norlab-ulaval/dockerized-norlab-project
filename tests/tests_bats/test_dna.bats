@@ -585,6 +585,23 @@ teardown_file() {
   assert_file_exist "/tmp/.dna_last_update_check"
   assert_file_contains "/tmp/.dna_last_update_check" "$(date +%Y-%m-%d)"
   #cat "/tmp/.dna_last_update_check" >&3
+
+}
+
+@test "dna auto-update › expect auto-update logic to cd to dna root and back to user initial cwd" {
+  # Test case: auto-update logic returned to user initial cwd (project mock -> dna root --> project mock)
+  export MOCK_DNA_AUTO_UPDATE=true
+  echo "DNA_AUTO_UPDATE=true" > "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
+  echo "0000-00-00" > "/tmp/.dna_last_update_check"
+
+  assert_equal "${MOCK_PROJECT_PATH}" "$(pwd)"
+
+  run bash "${MOCK_DNA_DIR}"/src/bin/dna init
+
+  # Should succeed
+  assert_success
+
+  assert_equal "${MOCK_PROJECT_PATH}" "$(pwd)"
 }
 
 @test "dna auto-update › expect auto-update to be skipped if executed twice on same day" {
