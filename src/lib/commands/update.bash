@@ -39,7 +39,7 @@ source "${DNA_LIB_PATH:?err}/core/utils/update_helper.bash" || exit 1
 
 # ::::Command functions::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 function dna::update_command() {
-    local auto_yes=false
+    local force_update=false
     local toggle_auto=false
     local status=false
     local include_prerelease_flag=false
@@ -52,7 +52,7 @@ function dna::update_command() {
                 exit 0
                 ;;
             -y|--yes)
-                auto_yes=true
+                force_update=true
                 shift
                 ;;
             --status)
@@ -118,6 +118,7 @@ function dna::update_command() {
         # Remote version is not newer (equal or local is newer)
         msg="Already up to date (version ${current_version})"
     fi
+
     if [[ ${status} == true ]]; then
         #dna::help_header
         #n2st::print_msg "Update status"
@@ -129,20 +130,20 @@ function dna::update_command() {
         return 0
     else
         n2st::print_msg "$msg"
-        if ! dna::update_is_remote_newer "${current_version}" "${latest_remote_version}"; then
-          return 0
-        fi
     fi
 
-    # Check auto-update behavior
-    if [[ "${auto_yes}" == true ]]; then
+    if [[ "${force_update}" == true ]]; then
         # Force update with --yes flag
         dna::update_perform_update "${target_branch}"
+    elif ! dna::update_is_remote_newer "${current_version}" "${latest_remote_version}"; then
+        # No update available
+        return 0
     else
-        # Check DNA_AUTO_UPDATE and DNA_INCLUDE_PRERELEASE settings
+        # Check auto-update behavior
         local auto_update_setting
         auto_update_setting=$(dna::update_get_auto_update_setting)
 
+        # Check DNA_AUTO_UPDATE and DNA_INCLUDE_PRERELEASE settings
         if [[ "${auto_update_setting}" == "true" ]] || [[ "${auto_update_prerelease_setting}" == "true" ]]; then
             # Auto-update enabled (either regular or prerelease)
             n2st::print_msg "Auto-update enabled, updating DNA..."
