@@ -526,3 +526,26 @@ teardown_file() {
   # Should output the unknown option message
   assert_output --partial "Mock dna::unknown_option_msg called with args: update --unknown-option"
 }
+
+
+@test "dna::update_command › expect update logic to cd to dna root and back to user initial cwd" {
+  # Test case: update logic returned to user initial cwd (project mock -> dna root --> project mock)
+
+  source "${MOCK_DNA_DIR}/src/lib/commands/update.bash"
+  cd "${MOCK_PROJECT_PATH}" || exit 1
+  assert_equal "${MOCK_PROJECT_PATH}" "$(pwd)"
+
+  export DNA_VERSION="0.9.0"
+  rm -f "${MOCK_DNA_DIR}/.env.dockerized-norlab-project.local"
+
+  run dna::update_command --yes
+
+  # Should succeed
+  assert_success
+
+  # Should show update available and perform update
+  assert_output --partial "Update available: 0.9.0 → 1.2.0"
+  assert_output --partial "DNA successfully updated"
+
+  assert_equal "${MOCK_PROJECT_PATH}" "$(pwd)"
+}

@@ -63,14 +63,21 @@ test -d "${DNA_ROOT:?err}" || { echo -e "${dna_error_prefix} library load error!
 function dna::update_determine_latest_release_branch() {
     # Determine which branch (main or beta) has the latest release
     # Returns: "main" or "beta"
+
+    # ....Setup....................................................................................
     local main_version
     local beta_version
+    local tmp_cwd
+    tmp_cwd=$(pwd)
 
     cd "${DNA_ROOT:?err}" || return 1
 
+    # ....Begin....................................................................................
     # Fetch all remote branches and tags
     git fetch --tags origin >/dev/null 2>&1 || {
-        n2st::print_msg_error "Failed to fetch remote branches and tags from origin"; return 1;
+        n2st::print_msg_error "Failed to fetch remote branches and tags from origin";
+        cd "${tmp_cwd}";
+        return 1;
     }
 
     # Get latest version from main branch
@@ -78,6 +85,8 @@ function dna::update_determine_latest_release_branch() {
 
     # Get latest version from beta branch (including beta tags)
     beta_version=$(git tag -l --merged origin/beta 2>/dev/null | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+(\-beta\.[0-9]+)?$' | sort -V | tail -n1)
+
+    cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
 
     # Remove 'v' prefix if present for comparison
     main_version="${main_version#v}"
@@ -104,6 +113,7 @@ function dna::update_determine_latest_release_branch() {
     else
         echo "main"
     fi
+
     return 0
 }
 
@@ -139,12 +149,15 @@ function dna::update_fetch_remote_latest_version() {
     # If --include-prerelease flag is used, get latest from both branches, otherwise only main
     local target_branch="${1:-auto}"
     local latest_remote_version
+    local tmp_cwd
+    tmp_cwd=$(pwd)
 
     cd "${DNA_ROOT:?err}" || return 1
 
     # Fetch remote tags and branches
     git fetch --tags origin >/dev/null 2>&1 || {
         n2st::print_msg_error "Failed to fetch remote tags from origin";
+        cd "${tmp_cwd}";
         return 1;
     }
 
@@ -165,6 +178,8 @@ function dna::update_fetch_remote_latest_version() {
             latest_remote_version=$(git tag -l --merged origin/main 2>/dev/null | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
         fi
     fi
+
+    cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
 
     if [[ -z "${latest_remote_version}" ]]; then
         n2st::print_msg_error "Could not determine latest remote version for branch: ${target_branch}"
@@ -390,6 +405,8 @@ function dna::update_perform_update() {
     # Parameters: $1 = target_branch (optional: "beta", "main", or "auto")
     local target_branch="${1:-auto}"
     local checkout_branch
+    local tmp_cwd
+    tmp_cwd=$(pwd)
 
     cd "${DNA_ROOT:?err}" || return 1
 
@@ -408,15 +425,18 @@ function dna::update_perform_update() {
     # Checkout the target branch
     if ! git checkout "${checkout_branch}" >/dev/null 2>&1; then
         n2st::print_msg_error "Failed to checkout branch: ${checkout_branch}"
+        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 1
     fi
 
     # Pull the latest changes
     if git pull --recurse-submodules origin "${checkout_branch}" >/dev/null 2>&1; then
         n2st::print_msg "DNA successfully updated to latest version from '${checkout_branch}' branch"
+        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 0
     else
         n2st::print_msg_error "Failed to update DNA repository from branch: ${checkout_branch}"
+        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 1
     fi
 }
