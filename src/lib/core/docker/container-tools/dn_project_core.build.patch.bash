@@ -46,14 +46,6 @@ function dna::global_install_hack() {
   echo "net.core.rmem_max=8388608\nnet.core.rmem_default=8388608\n" | sudo tee /etc/sysctl.d/60-cyclonedds.conf || return 1
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
-  # (StandBy) ToDo: maybe transfer to Dockerized-NorLab
-  # Temporary hack (might be resolved now)
-  # Ref issues
-  #  - https://github.com/ipython/ipython/issues/14390
-  #  - https://github.com/ros2/launch/issues/765
-  #pip3 install 'pytest==8.0'
-
-  # ///////////////////////////////////////////////////////////////////////////////////////////////
   # (STANDBY) ToDo: add the following Hydra requirements to Dockerized-NorLab
   # (STANDBY) ToDo: assess where to put hydra in DN since its a partial requirement for DNA
 
@@ -118,6 +110,11 @@ function dna::global_install_hack() {
   test -f "${dn_info_path}"
   n2st::seek_and_modify_string_in_file '--env=' '--env ' "$dn_info_path"
   test -z "$(grep -q "--env=" "$dn_info_path")" || n2st::print_msg_error_and_exit "Fix related to task NMO-782 did not work!"
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  # NMO-789 fix: path pytest-rerunfailure bogus release
+  pip3 install pytest-rerunfailures!=16.0
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
