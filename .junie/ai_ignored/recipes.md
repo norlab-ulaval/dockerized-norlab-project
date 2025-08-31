@@ -11,6 +11,15 @@ Provide a comprehensive summary of all guidelines studied.
 Given your study of the guidelines at `.junie/guidelines.md`, analyse the super project and make recommendations if relevant.   
 ```
 
+```markdown
+# Tasks
+1. Review guidelines at `.junie/guidelines.md`;
+2. TODO
+
+# Instructions
+- Always comply with `.junie/guidelines.md` guidelines.
+- Execute all tests before submitting.
+```
 
 ## General
 

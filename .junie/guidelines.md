@@ -11,15 +11,15 @@ manage Dockerized-NorLab (DN) container lifecycle providing functionality for ro
 testing, continuous integration, slurm job experimentation, and release publishing.
 Refer to the repository [README.md](../README.md) for more details.
 
-## Prime directive:
-
-Always comply with guidelines and instructions.
-
 ## Repository Guidelines Instructions
 
-- First, review _A2G Framework Guidelines_ specified in `.junie/ai_agent_guidelines/guidelines.a2g_framework.md` for
-  additional guidelines.
-- Then proceed with the remaining repository guidelines instructions.
+1. First, review and learn _A2G Framework Guidelines_ specified in
+  `.junie/ai_agent_guidelines/guidelines.a2g_framework.md`.
+2. Then review the remaining repository guidelines below.
+
+## Prime directive:
+
+Always comply with _A2G Framework Guidelines_, _Repository Guidelines_ and _AI operator_ instructions.
 
 ## Repository Organization
 
@@ -47,3 +47,7 @@ Always comply with guidelines and instructions.
 
 - DNA: Is the acronym for _Dockerized-NorLab project application_
 - DN: Is the acronym for _Dockerized-NorLab_
+
+## Repository Specific Additional Guidelines
+
+Proceed with _AI operator_ instructions
