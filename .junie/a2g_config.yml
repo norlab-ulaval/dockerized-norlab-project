@@ -5,8 +5,9 @@ A2G:
 
 # Specialized Guidelines Activation
 specialized_guidelines:
+  - "guidelines.dna.md"
   - "guidelines.markdown.md"
-  - "guidelines.n2st.md" 
+  - "guidelines.n2st.md"
   - "guidelines.nbs.md"
   - "guidelines.python.md"
   - "guidelines.shell_script.md"
