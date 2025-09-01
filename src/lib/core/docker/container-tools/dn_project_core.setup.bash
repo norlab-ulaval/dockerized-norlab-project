@@ -32,8 +32,8 @@ function dna::execute_shell_requirement_script() {
   test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # ....Begin......................................................................................
-  n2st::print_msg "Execute shell.requirements.bash script..."
-  source /shell.requirements.bash
+  n2st::print_msg "Execute shell.requirements-dna.bash script..."
+  source /shell.requirements-dna.bash
   local exit_code=$?
 
   # ....Teardown...................................................................................
@@ -43,13 +43,13 @@ function dna::execute_shell_requirement_script() {
   apt-get clean
   rm -rf /var/lib/apt/lists/*
 
-  rm -f /shell.requirements.bash
+  rm -f /shell.requirements-dna.bash
 
   if [[ ${exit_code} -eq 0 ]]; then
-    n2st::print_msg_done "shell.requirements.bash completed successfully."
+    n2st::print_msg_done "shell.requirements-dna.bash completed successfully."
     return 0
   else
-    n2st::print_msg_error "shell.requirements.bash exited with error!"
+    n2st::print_msg_error "shell.requirements-dna.bash exited with error!"
     return 1
   fi
 }
@@ -62,18 +62,18 @@ function dna::install_python_requirement() {
   test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
   # ....Begin......................................................................................
-  n2st::print_msg "Execute pip install from python.requirements.txt file..."
-  pip3 install --verbose -r /python.requirements.txt
+  n2st::print_msg "Execute pip install from python.requirements-dna.txt file..."
+  pip3 install --verbose -r /python.requirements-dna.txt
   local exit_code=$?
 
   # ....Teardown...................................................................................
-  rm -f /python.requirements.txt
+  rm -f /python.requirements-dna.txt
 
   if [[ ${exit_code} -eq 0 ]]; then
-    n2st::print_msg_done "pip install from python.requirements.txt completed successfully."
+    n2st::print_msg_done "pip install from python.requirements-dna.txt completed successfully."
     return 0
   else
-    n2st::print_msg_error "pip install from python.requirements.txt exited with error!"
+    n2st::print_msg_error "pip install from python.requirements-dna.txt exited with error!"
     return 1
   fi
 }

@@ -2,8 +2,8 @@
 # DNA python requirements
 #
 # Notes:
-# - This file is used in .dockerized_norlab/configuration/Dockerfile via pip install
-# - It is executed after shell.requirements.bash
+# - This file is used in DNA Dockerfile.project-core-pre via pip install
+# - It is executed after shell.requirements-dna.bash
 #
 # Doc
 #  - Requirements File Format:  https://pip.pypa.io/en/stable/reference/requirements-file-format/
