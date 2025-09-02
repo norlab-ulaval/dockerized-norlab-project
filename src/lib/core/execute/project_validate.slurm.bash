@@ -66,7 +66,7 @@ function dna::project_validate_slurm() {
 
   # ....Validate user argument.......................................................................
   if [[ ! -d "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" ]]; then
-    n2st::print_msg_error "\n${MSG_ERROR_FORMAT}[dna error]${MSG_END_FORMAT} Slurm jobs script directory ${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path} is unreachable!" 1>&2
+    n2st::print_msg_error "Slurm jobs script directory ${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path} is unreachable!" 1>&2
     return 1
   fi
 

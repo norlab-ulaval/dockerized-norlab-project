@@ -83,11 +83,12 @@ function dna::illegal_command_msg() {
     return 1
 }
 
-function n2st::print_msg_error() {
-  # This is an override version of the original one but with no newline before and after
-  local error_msg=$1
-  echo -e "${MSG_ERROR}: ${error_msg}" 1>&2
-}
+# ToDo: Deprecate fct local override >> validate (ref task NMO-790) >> on task end >> delete next bloc ↓↓
+#function n2st::print_msg_error() {
+#  # This is an override version of the original one but with no newline before and after
+#  local error_msg=$1
+#  echo -e "${MSG_ERROR} ${error_msg}" 1>&2
+#}
 
 # ====Entrypoint splash============================================================================
 function dna::show_entrypoint_help() {
