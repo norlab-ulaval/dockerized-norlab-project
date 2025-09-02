@@ -65,8 +65,8 @@ DNA supports integration with various IDEs and development environments, enablin
 3. **Important settings**:
    - ⚠️ **Uncheck** "Execute code with root privileges"
    - ⚠️ **Uncheck** "Automatically upload project files"
-   - **Interpreter path**: `/usr/bin/python3` or specific Python path
-   - **Sync folders**: Set to `/ros2_ws/src/YOUR_PROJECT_NAME` or delete entry
+   - **Interpreter path**: `/usr/local/bin/python3` (should be set by default) or specific Python path
+   - **Sync folders**: Set to `/ros2_ws/src/YOUR_PROJECT_NAME`
 
 #### 4. **Add ROS to Python Path** 
 Add ROS specific Python paths to interpreter
