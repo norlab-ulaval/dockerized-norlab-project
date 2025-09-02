@@ -36,7 +36,7 @@ EOF
 #RUN <<EOF
 #  n2st::print_msg "Install project via pyproject.toml..."
 #  cd "${DN_PROJECT_PATH}"
-#  python -m pip install --editable . \
+#  pip3 install --editable . \
 #    || n2st::print_msg_error_and_exit "Failed project install via pyproject.toml!"
 #EOF
 
@@ -56,13 +56,22 @@ EOF
 
 # ....ROS project recipies: build ROS workspace....................................................
 # Note:
-#   Copying project source code is required for build/install ros package. However,
-#   'DN_PROJECT_PATH' will be overwritten at runtime in develop image because 'SUPER_PROJECT_ROOT'
-#   is mounted to 'DN_PROJECT_PATH'.
-# ↓ ↓ ↓ UNMUTE ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+#   - Pip install project package first
+#   - DN_DEV_WORKSPACE is the container ros workspace.
+#   - DN_PROJECT_PATH is symlinked to $DN_DEV_WORKSPACE/src/$DN_PROJECT_PATH.
+#   - Copying project source code is required for building and installing ros package.
+#     'DN_PROJECT_PATH' will be overwritten at runtime in develop image because 'SUPER_PROJECT_ROOT'
+#     is mounted to 'DN_PROJECT_PATH'.
 COPY  . ${DN_PROJECT_PATH:?err}/
 RUN <<EOF
   n2st::print_msg "Build/install ROS project..."
-  source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash "${TARGETPLATFORM}" "${BUILDPLATFORM}" "${DN_DEV_WORKSPACE:?err}/src" \
+  cd "${DN_DEV_WORKSPACE:?'environment variable is not set'}"
+  INSTALL_FROM_PATH="${DN_DEV_WORKSPACE:?err}/src"
+  COLCON_BUILD_FLAGS=()
+  #COLCON_BUILD_FLAGS+=( "ANY_COLCON_BUILD_FLAG" )
+  #COLCON_BUILD_FLAGS+=("--packages-select" MY_ROS_PKG)
+  source /dna-lib-container-tools/dn_project_core.build.aarch_aware_build_ros.bash \
+            "${TARGETPLATFORM}" "${BUILDPLATFORM}" \
+            "${INSTALL_FROM_PATH}" "${COLCON_BUILD_FLAGS[@]}" \
     || n2st::print_msg_error_and_exit "Failed to build repository ros pkgs!"
 EOF
