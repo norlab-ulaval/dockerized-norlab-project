@@ -130,7 +130,7 @@ function dna::setup_dockerized_norlab_project() {
     echo ""
     echo "# General utility"
     # shellcheck disable=SC2028
-    echo "alias dn-show-python-path-split=\"printenv | grep PYTHONPATH | tr ':' '\n' | tr '=' '\n'\""
+    echo "alias dn-show-python-path-split='printenv | grep PYTHONPATH | tr \":\" \"\\n\" | tr \"=\" \"\\n\"'"
     echo ""
   ) >> /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
 
