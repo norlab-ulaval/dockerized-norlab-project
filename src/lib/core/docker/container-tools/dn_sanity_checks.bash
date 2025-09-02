@@ -16,6 +16,8 @@
 #
 # =================================================================================================
 
+# (NICE TO HAVE) ToDo: make the funciton available to dna user via alias
+
 function dna::user_and_dir_content_sanity_check() {
   # ....Setup......................................................................................
   local executed_at=${1:-runtime}

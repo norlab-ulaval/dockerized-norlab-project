@@ -127,16 +127,17 @@ VERBOSE_LOGGING=true
 ## Project Requirements
 
 There is three method for configuring container in DNA. In execution order:
-1. using shell script file `shell.requirements.bash`
-2. via `pip` using python requirement file `python.requirements.txt`
-3. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for details)
+1. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for details)
+2. using shell script file `shell.requirements-dna.bash`
+3. via `pip` using python requirement file `python.requirements-dna.txt`
 
-Each one of them serve different purposes. Use the ones best suited for your project needs. 
-You can use all tree in combinaison if necessary. 
+Each one of them serves different purposes. Use the ones best suited for your project needs. 
+You can use all three in combinaison if necessary. 
+
 
 ### Specifying Python Requirements
 
-Specify Python dependencies in `.dockerized_norlab/configuration/project_requirements/python.requirements.txt`:
+Specify DNA container specific Python dependencies in `.dockerized_norlab/configuration/project_requirements/python.requirements-dna.txt`:
 
 Example:
 ```txt
@@ -162,16 +163,7 @@ Documentation
 
 ### Shell Requirements
 
-Specify shell dependencies in `.dockerized_norlab/configuration/project_requirements/shell.requirements.bash` as if it is a instalation script.  
-
-
-## Project Entrypoints
-
-Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker container entrypoint. Each one of them serve different purposes:
-- `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm) 
-- `<mode>/dn_entrypoint.*.callback.bash` are specialized version executed after the global one and only in that mode
-- `*.init.callback.bash` are executed on container initialization only. It happen only once in a container life-cycle.
-- `*.attach.callback.bash` are executed on every time a shell is attach to a conatiner. It can happen many time in a container life-cycle.  
+Specify DNA container specific shell dependencies in `.dockerized_norlab/configuration/project_requirements/shell.requirements-dna.bash` as if it is a instalation script.  
 
 ## Docker Configuration
 
@@ -181,7 +173,6 @@ The generated `.dockerized_norlab/configuration/Dockerfile` can be customized fo
 Use cases:
 - leveraging the [Docker build cache](https://docs.docker.com/build/cache/) layer mechanism for minimizing build time;
 - leveraging the [Docker multi-stage builds](https://docs.docker.com/build/building/multi-stage/).
-In most cases however, using only `python.requirements.txt` and/or `shell.requirements.bash` is enough.
 
 ```dockerfile
 # =================================================================================================
@@ -190,7 +181,9 @@ In most cases however, using only `python.requirements.txt` and/or `shell.requir
 #       and the Docker multi-stage build feature.
 #
 # =================================================================================================
-FROM base_image AS user-project-custom-steps
+ARG BASE_IMAGE
+ARG BASE_IMAGE_TAG
+FROM ${BASE_IMAGE:?err}:${BASE_IMAGE_TAG:?err} AS user-project-custom-steps
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -201,6 +194,14 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 # ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
 ```
+
+### Project Entrypoints
+
+Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker container entrypoint. Each one of them serve different purposes:
+- `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm) 
+- `<mode>/dn_entrypoint.*.callback.bash` are specialized version executed after the global one and only in that mode
+- `*.init.callback.bash` are executed on container initialization only. It happen only once in a container life-cycle.
+- `*.attach.callback.bash` are executed on every time a shell is attach to a conatiner. It can happen many time in a container life-cycle.  
 
 ---
 

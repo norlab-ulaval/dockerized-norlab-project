@@ -26,10 +26,6 @@ else
   cd "${DN_PROJECT_PATH}/src" || exit 1
 fi
 
-# Add the DN-project path to python path (see header Notes).
-export PYTHONPATH="${DN_PROJECT_PATH:?err}:${PYTHONPATH:?err}"
-# (NICE TO HAVE) ToDo: refactor PYTHONPATH logic as a fct. Either in DN container-tools or in DN-project
-
 # Remove byte-compiled files that can mess with tools on context/environment change (Remember the
 # non-interactive-ros2 user path nightmare)
 pyclean "${DN_PROJECT_PATH}"
@@ -51,6 +47,9 @@ else
 fi
 
 test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
+
+# Add the DN-project path to python path if missing (see header Notes).
+source /dna-lib-container-tools/project_entrypoints/dn_entrypoint_pythonpath_checks.bash "${DN_PROJECT_PATH:?err}/src"
 
 # ====DNA-project user defined logic===============================================================
 

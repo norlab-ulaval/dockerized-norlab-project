@@ -21,7 +21,7 @@ function dna::entrypoint_helper_show_info() {
   \n$(
     SP="    " &&
       cd "/dockerized-norlab/dockerized-norlab-images/container-tools" &&
-      sed "s;alias dna-${DN_PROJECT_ALIAS_PREFIX:?err}-;${SP}$ dna-${DN_PROJECT_ALIAS_PREFIX}-;" ./dn_bash_alias.bash | sed "s;='.*;;" | grep -e "dna-${DN_PROJECT_ALIAS_PREFIX}-"
+      sed "s;alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-;${SP}$ dn-${DN_PROJECT_ALIAS_PREFIX}-;" ./dn_bash_alias.bash | sed "s;='.*;;" | grep -e "dn-${DN_PROJECT_ALIAS_PREFIX}-"
   )
   ${MSG_END_FORMAT}"
 
