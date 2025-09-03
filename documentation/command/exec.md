@@ -202,7 +202,7 @@ dna exec -- pkill -f "ros2 launch"
 
 2. **Use full path**: Specify complete path to executable
    ```bash
-   dna exec -- /usr/bin/python3 script.py
+   dna exec -- /usr/local/bin/python3 script.py
    ```
 
 3. **Install missing packages**: Install required software

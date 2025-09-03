@@ -291,15 +291,15 @@ function dna::cd_to_dna_super_project_root() {
     done
 
     # If we get here, the directory was not found
-    n2st::print_msg_error "${MSG_ERROR_FORMAT}${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT}${MSG_ERROR_FORMAT} directory not found in any parent directory.\n\n$(
+    n2st::print_msg_error "${MSG_DIMMED_FORMAT}.dockerized_norlab${MSG_END_FORMAT} directory not found in any parent directory.\n\n$(
 echo -e "        cwd -> $initial_working_dir"
 for each in "${current_working_dir_trace[@]}" ; do
   echo -e "               $each"
 done
     )\n
-Check if the project in which your curently executing a DNA command as been initialize with ${MSG_DIMMED_FORMAT}dna init${MSG_END_FORMAT}${MSG_ERROR_FORMAT}.
-Execute ${MSG_DIMMED_FORMAT}dna project sanity${MSG_END_FORMAT}${MSG_ERROR_FORMAT} if your unsure.
-${MSG_END_FORMAT}" >&2
+Check if the project in which your curently executing a DNA command as been initialize with ${MSG_DIMMED_FORMAT}dna init${MSG_END_FORMAT}.
+Execute ${MSG_DIMMED_FORMAT}dna project sanity${MSG_END_FORMAT} if you're unsure.
+" >&2
     return 1
 }
 
