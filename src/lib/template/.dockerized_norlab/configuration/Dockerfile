@@ -26,42 +26,50 @@ RUN <<EOF
     } || n2st::print_msg_error_and_exit "Failed sanity check!"
 EOF
 
-# ....Python project recipies: install python requirement from pyproject.toml......................
+# ....Recipies: Install python project from pyproject.toml.........................................
+# Recommended approach for modern python centric project.
 # Note:
-#   Copying project source code is required for installing python package in editable mode and
-#   build/install ros package. However, 'DN_PROJECT_PATH' will be overwritten at runtime in develop
-#   image because 'SUPER_PROJECT_ROOT' is mounted to 'DN_PROJECT_PATH'.
+#  - If you are using poetry, uv, hatch or any other python dependency management tools, just make
+#    sure your install destination match the container default python3. Python install in a docker
+#    container usualy don't rely in virtual environment, especialy when dealing with ros and cuda.
+#  - (pro) Take advantage of dedicated tools for building and distribution.
+#  - (con) Requires copying project source code before installing python package in editable mode.
+#    Remark that 'DN_PROJECT_PATH' will be overwritten at runtime in dna develop image because
+#    'SUPER_PROJECT_ROOT' is mounted to 'DN_PROJECT_PATH'.
 # ↓ ↓ ↓ UNMUTE ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 #COPY  . ${DN_PROJECT_PATH:?err}/
 #RUN <<EOF
+#  echo -e "python version: $(n2st::which_python3_version)\ndefault python path: $(which python)\n"
 #  n2st::print_msg "Install project via pyproject.toml..."
 #  cd "${DN_PROJECT_PATH}"
-#  pip3 install --editable . \
+#  python -m pip install --editable . \
 #    || n2st::print_msg_error_and_exit "Failed project install via pyproject.toml!"
 #EOF
 
 
-# ....Python project recipies: install python requirement from requirement.txt file................
+# ....Recipies: Install python project from requirement.txt file...................................
+# Recommended only for python project dependency management requiring special handling
 # Note:
 #  - (pro) No need to copy the src code in the container before install
+#  - (con) Require handling building, python path and distribution manualy
 #  - Requires setting PYTHONPATH explicitly in the container
 # ↓ ↓ ↓ UNMUTE ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 #ENV PYTHONPATH=${DN_PROJECT_PATH}/src${PYTHONPATH:+:${PYTHONPATH}}
 #COPY ./requirements.txt "${DN_PROJECT_PATH:?err}/requirements.txt"
 #RUN <<EOF
 #  n2st::print_msg "Execute pip install from repository root python requirement file..."
-#  pip3 install --verbose -r "${DN_PROJECT_PATH}/requirements.txt" \
-#    || n2st::print_msg_error_and_exit "Failed pip install from repository root requirement!"
+#  python -m pip install --verbose -r "${DN_PROJECT_PATH}/requirements.txt" \
+#    || n2st::print_msg_error_and_exit "Failed pip install from repository root requirement file!"
 #EOF
 
-# ....ROS project recipies: build ROS workspace....................................................
+# ....Recipies: Build ROS workspace................................................................
 # Note:
-#   - Pip install project package first
-#   - DN_DEV_WORKSPACE is the container ros workspace.
-#   - DN_PROJECT_PATH is symlinked to $DN_DEV_WORKSPACE/src/$DN_PROJECT_PATH.
-#   - Copying project source code is required for building and installing ros package.
-#     'DN_PROJECT_PATH' will be overwritten at runtime in develop image because 'SUPER_PROJECT_ROOT'
-#     is mounted to 'DN_PROJECT_PATH'.
+#  - Requires installing python project first
+#  - Requires copying ros source code before building and installing ros package.
+#    Remark that 'DN_PROJECT_PATH' will be overwritten at runtime in dna develop image because
+#    'SUPER_PROJECT_ROOT' is mounted to 'DN_PROJECT_PATH'.
+#  - 'DN_DEV_WORKSPACE' is the container ros workspace.
+#  - 'DN_PROJECT_PATH' is symlinked to '$DN_DEV_WORKSPACE/src/$DN_PROJECT_PATH'.
 COPY  . ${DN_PROJECT_PATH:?err}/
 RUN <<EOF
   n2st::print_msg "Build/install ROS project..."
