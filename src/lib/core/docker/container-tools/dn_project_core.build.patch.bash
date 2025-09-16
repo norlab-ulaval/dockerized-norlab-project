@@ -94,25 +94,6 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
-  # ToDo: NMO-781 fix: DNA container prompt display is broken on L4T
-  n2st::set_which_python3_version
-  POWERLINE_DIR="/usr/local/lib/python${PYTHON3_VERSION:?err}/dist-packages/powerline"
-  POWERLINE_CONFIG="${POWERLINE_DIR}/config_files/themes/shell/dockerized_snow.json"
-  PATCHED_POWERLINE_CONFIG="/dna-lib-container-tools/patch_ressources/powerline/dockerized_snow.json"
-  test -f "${POWERLINE_CONFIG}" || n2st::print_msg_error_and_exit "$POWERLINE_CONFIG is unreacble"
-  test -f "${PATCHED_POWERLINE_CONFIG}" || n2st::print_msg_error_and_exit "$PATCHED_POWERLINE_CONFIG is unreacble"
-  mv -f "${PATCHED_POWERLINE_CONFIG}" "${POWERLINE_CONFIG}"
-
-  # ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  # (Priority) ToDo: delete on task NMO-782 completion >> those lines ↓↓
-  local dn_info_path="/dockerized-norlab/dockerized-norlab-images/container-tools/dn_info.bash"
-  test -f "${dn_info_path}"
-  n2st::seek_and_modify_string_in_file '--env=' '--env ' "$dn_info_path"
-  test -z "$(grep -q "--env=" "$dn_info_path")" || n2st::print_msg_error_and_exit "Fix related to task NMO-782 did not work!"
-
-  # ///////////////////////////////////////////////////////////////////////////////////////////////
-
   # NMO-789 fix: path pytest-rerunfailure bogus release
   pip3 install pytest-rerunfailures!=16.0
 
