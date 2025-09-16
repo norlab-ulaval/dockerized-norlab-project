@@ -12,11 +12,15 @@ function dna::test_teardown_callback() {
 }
 trap dna::test_teardown_callback EXIT
 
-cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
-
 # ====begin========================================================================================
+
+# Re-build slurm image (required on TC to prevent ownership error related to agent switching)
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
+bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash --service-names project-slurm -- --no-cache
+
 # Execute project validate slurm script
 # Note: the "--include-multiarch" flag affect only the dry-run config check, not the slurm job check
+cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 bash "${DNA_LIB_EXEC_PATH:?err}"/project_validate.slurm.bash --include-multiarch "slurm_jobs"
 
 ## ....Teardown.....................................................................................

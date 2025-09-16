@@ -162,13 +162,14 @@ function dna::project_validate_slurm() {
 
   n2st::print_msg "Completed build in dry-run mode tests"
 
-  # ....Dry-run SLURM/Mamba jobs.....................................................................
+  # ....Dry-run SLURM/Mamba jobs on native aarch.....................................................
   n2st::print_formated_script_header "Dry-run slurm job" "${line_format}" "${line_style}"
   pushd "$(pwd)" >/dev/null || exit 1
 
+  # Execute slurm joc dry-run tests
   slurm_job_file_name=()
   for each_file_path in "${SUPER_PROJECT_ROOT:?err}"/"${slurm_script_job_path}"/slurm_job.*.bash ; do
-    each_file_name="$(basename $each_file_path)"
+    each_file_name="$(basename "${each_file_path}")"
     slurm_job_file_name+=("$each_file_name")
   done
 
