@@ -110,17 +110,15 @@ services:
     build:
       context: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/core-images/dn-project/project-deploy
       additional_contexts:
-        context-dn-project-local-src-path: ${DN_PROJECT_DEPLOY_SRC_PATH:?err}
+        context-dn-project-local-src-path: ${SUPER_PROJECT_ROOT:?err}
         context-dn-root: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}
         context-dn-submodules: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:utilities/
         context-dn-container-tools: https://github.com/norlab-ulaval/dockerized-norlab.git#${DN_GIT_BRANCH:?err}:dockerized-norlab-images/container-tools
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}
-        DN_PROJECT_DEPLOY_REPO_BRANCH: ${DN_PROJECT_DEPLOY_REPO_BRANCH:?err}
         BUILDKIT_CONTEXT_KEEP_GIT_DIR: 1
         IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
-        DN_DEV_TESTS: false
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
     depends_on:
