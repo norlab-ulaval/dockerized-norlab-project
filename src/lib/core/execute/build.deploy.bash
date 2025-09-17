@@ -42,7 +42,6 @@ function dna::build_project_deploy_service() {
   local build_core_exit_code
   local build_deploy_exit_code
   declare -a build_flag=()
-  declare -a push_flag=()
   declare -a remaining_args=()
 
   # ....cli........................................................................................
@@ -81,6 +80,7 @@ function dna::build_project_deploy_service() {
     if [[ ${push_deploy_image} == true ]]; then
       build_flag+=("--force-push-project-core")
     fi
+
     if [[ "${multiarch}" == true ]]; then
       dna::build_services_multiarch "${build_flag[@]}" "${remaining_args[@]}"
       build_core_exit_code=$?

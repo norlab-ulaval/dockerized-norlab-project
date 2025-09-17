@@ -21,6 +21,7 @@ DOCUMENTATION_BUILD_ALL=$(
 #                                          (instead of building images from the local image store).
 #                                         Require a docker hub account.
 #   --msg-line-level CHAR                 Set consol horizontal line character when used as a fct
+#   --target-release-branch BRANCH        Traget release branch for release image
 #   -h | --help
 #
 # Positional argument:
@@ -40,11 +41,16 @@ EOF
 )
 
 # (Priority) ToDo: unit-test of flag option
+# (Priority) ToDo: unit-test "--target-release-branch" logic (ref task NMO-681)
 
 # ....Function.....................................................................................
 function dna::build_services() {
   local tmp_cwd
   tmp_cwd=$(pwd)
+
+  cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
+  local original_branch
+  original_branch="$(git branch --show-current)"
 
   # ....Set env variables (pre cli))...............................................................
   declare -a remaining_args=()
@@ -52,10 +58,12 @@ function dna::build_services() {
   declare -a services_names=("none")
   declare -a project_core_services=()
   declare -a non_project_core_services=()
+  declare -a non_project_core_target_branch_services=()
   declare -a build_exit_code=()
   declare -i build_exit
   declare -a build_core_exit_codes=()
   declare -a build_non_core_exit_codes=()
+  local target_release_branch
   local force_push_project_core=false
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
@@ -96,6 +104,11 @@ function dna::build_services() {
       ;;
     --msg-line-level)
       msg_line_level="${2}"
+      shift
+      shift
+      ;;
+    --target-release-branch)
+      target_release_branch="${2}"
       shift
       shift
       ;;
@@ -142,6 +155,8 @@ function dna::build_services() {
   for each_service in "${services_names[@]}"; do
       if [[ "$each_service" == project-core* ]]; then
           project_core_services+=("$each_service")
+      elif [[ "$each_service" == project-release* ]]; then
+          non_project_core_target_branch_services+=("$each_service")
       else
           non_project_core_services+=("$each_service")
       fi
@@ -170,8 +185,19 @@ function dna::build_services() {
       build_exit_code+=($?)
     fi
 
-    dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${non_project_core_services[@]}"
-    build_exit_code+=("$?")
+    # Build develope, deploy, ci-tests, slurm images
+    if [[ "${#non_project_core_services[@]}" -gt 0 ]]; then
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${non_project_core_services[@]}"
+      build_exit_code+=("$?")
+    fi
+
+    # Build release images
+    if [[ "${#non_project_core_target_branch_services[@]}" -gt 0 ]]; then
+      dna::checkout_target_branch  "${target_release_branch}" "${original_branch}"
+      dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${non_project_core_target_branch_services[@]}"
+      build_exit_code+=("$?")
+      dna::checkout_original_branch "${original_branch}"
+    fi
 
     build_exit=0
     declare -i each_build_exit_code
@@ -191,17 +217,31 @@ function dna::build_services() {
 
       # Reset exit code buffer
       build_non_core_exit_codes=()
-      # Execute docker cmd on all remaining service
+      # Execute docker cmd on all remaining service except release
       for each in "${non_project_core_services[@]}"; do
         n2st::print_msg "Building ${each}..."
         dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
         build_non_core_exit_codes+=("$?")
       done
 
+      # Reset exit code buffer
+      build_non_core_target_release_branch_exit_codes=()
+      # Execute docker cmd on all release images
+      if [[ "${#non_project_core_target_branch_services[@]}" -gt 0 ]]; then
+        dna::checkout_target_branch  "${target_release_branch}" "${original_branch}"
+        for each in "${non_project_core_target_branch_services[@]}"; do
+          n2st::print_msg "Building ${each}..."
+          dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+          build_non_core_target_release_branch_exit_codes+=("$?")
+        done
+        dna::checkout_original_branch "${original_branch}"
+      fi
+
+
       # Show build faillure summary
       n2st::draw_horizontal_line_across_the_terminal_window "${msg_line_level}" "${line_style}"
       n2st::print_msg "Build faillure summary\n"
-      build_exit_code=( "${build_core_exit_codes[@]}" "${build_non_core_exit_codes[@]}" )
+      build_exit_code=( "${build_core_exit_codes[@]}" "${build_non_core_exit_codes[@]}"  "${build_non_core_target_release_branch_exit_codes[@]}" )
       merged_services_names=( "${project_core_services[@]}" "${non_project_core_services[@]}" )
       for idx in "${!build_exit_code[@]}"; do
         if [[ ${build_exit_code[idx]} != 0 ]]; then
@@ -248,7 +288,7 @@ function dna::build_services() {
 
     # Reset exit code buffer
     build_non_core_exit_codes=()
-    # Execute docker cmd on all remaining service
+    # Execute docker cmd on all remaining service except release
     for each in "${non_project_core_services[@]}"; do
       n2st::print_msg "Building ${each}..."
       dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
@@ -256,7 +296,21 @@ function dna::build_services() {
       n2st::print_msg "Completed ${each} build."
     done
 
-    build_exit_code=( "${build_core_exit_codes[@]}" "${build_non_core_exit_codes[@]}" )
+    # Reset exit code buffer
+    build_non_core_target_release_branch_exit_codes=()
+    # Execute docker cmd on all release images
+    if [[ "${#non_project_core_target_branch_services[@]}" -gt 0 ]]; then
+      dna::checkout_target_branch  "${target_release_branch}" "${original_branch}"
+      for each in "${non_project_core_target_branch_services[@]}"; do
+        n2st::print_msg "Building ${each}..."
+        dna::excute_compose --file "${the_compose_file}" "${build_docker_flag[@]}" "${each}"
+        build_non_core_target_release_branch_exit_codes+=("$?")
+      done
+      dna::checkout_original_branch "${original_branch}"
+    fi
+
+
+    build_exit_code=( "${build_core_exit_codes[@]}" "${build_non_core_exit_codes[@]}" "${build_non_core_target_release_branch_exit_codes[@]}" )
     merged_services_names=( "${project_core_services[@]}" "${non_project_core_services[@]}" )
 
     # ....Show build summary.......................................................................
@@ -296,6 +350,67 @@ function dna::build_services() {
 
 function dna::show_indexed_prefix() {
   echo -e "      ${MSG_DIMMED_FORMAT}$1)${MSG_END_FORMAT}"
+  return 0
+}
+
+function dna::checkout_target_branch() {
+  local original_branch
+  original_branch=$1
+  target_branch=$2
+  local tmp_cwd
+  tmp_cwd=$(pwd)
+
+  cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
+
+  n2st::print_msg "Check git status..."
+  git status || return 1
+
+  if [[ "${original_branch}" != "${target_branch}" ]]; then
+    n2st::print_msg "Checking out target branch ${target_branch}..."
+
+    # Fetch all remote branches and tags
+    git fetch --tags origin >/dev/null 2>&1 || {
+        n2st::print_msg_error "Failed to fetch remote branches and tags from origin";
+        cd "${tmp_cwd}";
+        return 1;
+    }
+
+    # Checkout the target branch
+    if ! git checkout "${target_branch}" >/dev/null 2>&1; then
+        n2st::print_msg_error "Failed to checkout branch ${target_branch}"
+        n2st::print_msg_error "Note on git checkout faillure: If you experience problem checking out a tag, use prefix 'tags/<my-tags-name>' e.g.: target_branch=\"tags/v0.0.1\""
+        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
+        return 1
+    fi
+
+    # Pull the latest changes
+    n2st::print_msg "Pull latest version from '${target_branch}' branch..."
+    if ! git pull --recurse-submodules origin "${target_branch}" >/dev/null 2>&1; then
+        n2st::print_msg_error "Failed to pull branch latest commits from ${target_branch}"
+        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
+        return 1
+    fi
+
+  fi
+  return 0
+}
+
+function  dna::checkout_original_branch() {
+  local original_branch
+  original_branch=$1
+  local tmp_cwd
+  tmp_cwd=$(pwd)
+
+  cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
+  if [[ "$(git branch --show-current)" != "${original_branch}" ]]; then
+    echo
+    n2st::print_msg "Checkout original branch ${original_branch}..."
+    if ! git checkout "${original_branch}" >/dev/null 2>&1; then
+        n2st::print_msg_error "Failed to checkout branch ${target_branch}"
+        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
+        return 1
+    fi
+  fi
   return 0
 }
 
