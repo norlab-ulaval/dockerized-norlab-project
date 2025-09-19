@@ -12,8 +12,10 @@
 
 # ....Repository Related...........................................................................
 **/CHANGELOG.md
-/artifact/
-/external_data/
+**/artifact/*
+**/data/*
+
+!**/README.md
 
 # ....Jetbrains....................................................................................
 **/.run/
@@ -27,29 +29,5 @@ __pycache__/
 .DS_Store
 
 # ....Media........................................................................................
-**/video/*.meta.json
-*.mp4
-
-# An .aiignore file follows the same syntax as a .gitignore file.
-# .gitignore documentation: https://git-scm.com/docs/gitignore
-
-# ....Junie related................................................................................
-/.junie/iceboxed_plans/
-/.junie/scratch.md
-/.junie/recipes.md
-
-# ....dockerized-norlab-project related............................................................
-/external_data/
-/artifact/
-/tests/artifact/
-
-# ....General file type............................................................................
-venv/
-__pycache__/
-*.benchmarks/
-*.pytest_cache/
-.idea/
-.DS_Store
-
 **/video/*.meta.json
 *.mp4

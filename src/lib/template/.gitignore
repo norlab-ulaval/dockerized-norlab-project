@@ -4,14 +4,17 @@
 /.dockerized_norlab/dn_container_env_variable/.env*
 !/.dockerized_norlab/dn_container_env_variable/README.md
 
-# ====Dockerized-NorLab(recommended)===============================================================
-**/external_data/**/*
-**/artifact/**/*
-!**/external_data/README.md
-!**/artifact/README.md
-!**/artifact/optuna_storage/README.md
+# DNA artifact and data non-tracked directory
+artifact/*
+data/external_data/*
+data/shared_data/*
 
-**/slurm_jobs_logs/*.log
+# Track README.md files from ignored DNA artifact and data directory so that those required
+# directory exist in vcs
+!artifact/**/README.md
+!data/**/README.md
+
+# ====Dockerized-NorLab(recommended)===============================================================
 **/slurm_jobs/*.out
 **/slurm_jobs/out/*.out
 

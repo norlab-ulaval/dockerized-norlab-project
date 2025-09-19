@@ -7,18 +7,19 @@
 
 # ....DNA common...................................................................................
 **/.dockerized_norlab/dn_container_env_variable/.env*
-**/external_data/**/*
-**/artifact/**/*
-**/slurm_jobs_logs/*.log
 /.env.dockerized-norlab-project.local
+
+**/artifact/*
+**/data/external_data/*
+**/data/shared_data/*
 
 # ....Dev required.................................................................................
 /utilities/tmp/dockerized-norlab-project-mock/
 **/.env.dna-internal.local
-!**/external_data/README.md
-!**/artifact/README.md
-!**/artifact/optuna_storage/README.md
+
 !**/.dockerized_norlab/dn_container_env_variable/README.md
+!**/data/**/README.md
+!**/artifact/**/README.md
 
 # ====Common=======================================================================================
 
@@ -41,7 +42,7 @@
 **/*.pyc
 
 # ....Log..........................................................................................
-out/
+**/out/
 **/*.out
 **/*.log
 
