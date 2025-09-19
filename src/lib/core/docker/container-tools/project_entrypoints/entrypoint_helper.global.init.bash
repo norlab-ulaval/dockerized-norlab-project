@@ -61,8 +61,6 @@ Trouble shooting procedure:
     exit 1
   fi
 
-  test -n "$(pgrep -x 'sshd')" || n2st::print_msg_warning "Be advised, ssh daemon is not running!\n" 1>&2
-
   # ....Remove byte-compiled files that could mess with tools on context/environment change........
   pyclean "${DN_PROJECT_PATH}"
   # Remember the non-interactive-ros2 user path nightmare
