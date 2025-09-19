@@ -231,8 +231,11 @@ ${MSG_DIMMED_FORMAT}
      │   ├── dn_container_env_variable/           ← Container environment exports
      │   ├── .env.${super_project_name}
      │   └── README.md                            ← DNA configuration quick documentation
-     ├── artifact/                                ← Runtime produced data (mounted)
-     ├── external_data/                           ← Pre-existing data (mounted)
+     ├── artifact/                                ← Runtime produced data (mounted rw, vcs ignored)
+     ├── data/
+     │   ├── external_data/                       ← Non-tracked data not required by src/tests code logic (mounted ro, vcs ignored)
+     │   ├── repository_data/                     ← Data that are required by the src/test code logic (mounted rw)
+     │   └── shared_data/                         ← Placeholder directory for shared local data directory volume (mounted ro, vcs ignored)
      ├── src/                                     ← Your source code (mounted/copied)
      ├── tests/                                   ← Your test code (mounted/copied)
      ...
