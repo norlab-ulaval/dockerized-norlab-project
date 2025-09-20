@@ -48,5 +48,5 @@ _local data volume_
 - [External Data Directory README](../data/external_data/README.md)
 - [Repository Data Directory README](../data/repository_data/README.md)
 - [Shared Data Directory README](../data/shared_data/README.md)
-- [DNA Documentation](https://github.com/norlab-ulaval/dockerized-norlab-project.git) section on _Project
-  Initialization & Configuration / Directory Structure_ for details.
+- [DNA documentation](https://github.com/norlab-ulaval/dockerized-norlab-project?tab=readme-ov-file#documentation) on
+  _Project Initialization & Configuration_, section _Directory Structure_ for details.

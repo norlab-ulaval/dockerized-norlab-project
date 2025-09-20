@@ -114,13 +114,13 @@ Tests releated data, demo related data, benchmarking releated data.
 Placeholder directory replaced by an optional local data volume. 
 
 #### Configuration instructions
-Set the target data directory path via `DNA_HOST_SHARED_DATA_PATH` environment variable in `.dockerized_norlab/configuration/.env.local`.
+Set the target data directory path via `DNA_HOST_SHARED_DATA_PATH` environment variable in `.dockerized_norlab/configuration/.env.local` e.g.,
 
 ```dotenv
-DNA_HOST_SHARED_DATA_PATH=/Path/to/host/computer/shared_data/directory
+DNA_HOST_SHARED_DATA_PATH="/Path/to/host/computer/shared_data/directory"
 ```
 It will be accessible at runtime in the dna container at `data/shared_data/`.
-Many container can mount the target path at the same time.
+Many DNA container can mount that same target path at the same time.
 
 
 ### Directory Properties Summary
@@ -137,6 +137,12 @@ Many container can mount the target path at the same time.
 | `tests/`                | Test code                       | Mounted (develop) / Copied (deploy) | VCS Tracked                     | Rsync              |
 
 ## Configuration Files
+
+### ★ Note On Configuration Changes 
+
+- Rebuild and restart container after modifying requirement files i.e., `dna build && dna down && dna up`
+- Restart container after modifying entrypoints i.e., `dna down && dna up`
+
 
 ### Environment Files
 
