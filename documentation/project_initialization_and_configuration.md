@@ -18,7 +18,9 @@ Complete guide to setting up and configuring DNA projects for containerized robo
 
 ## Overview
 
-DNA transforms regular Git repositories into containerized development environments through the `dna init` command. This process creates a standardized directory structure and configuration files that enable reproducible, isolated development workflows.
+DNA transforms regular Git repositories into containerized development environments through the `dna init` command. This
+process creates a standardized directory structure and configuration files that enable reproducible, isolated
+development workflows.
 
 ## Project Initialization
 
@@ -66,8 +68,11 @@ your-project-repository/
 │   ├── dn_container_env_variable/      ← Container environment exports
 │   ├── .env.your-project-repository    ← Project DNA configuration meta
 │   └── README.md                       ← DNA configuration quick documentation
-├── artifact/                           ← Runtime produced data (mounted)
-├── external_data/                      ← Pre-existing data (mounted)
+├── artifact/                           ← Runtime produced data (mounted rw, vcs ignored)
+├── data/
+│   ├── external_data/                  ← Non-tracked data not required by src/tests code logic (mounted rw, vcs ignored)
+│   ├── repository_data/                ← Data that are required by the src/test code logic (mounted rw)
+│   └── shared_data/                    ← Placeholder directory replaced by an optional local data volume (mounted ro, vcs ignored)
 ├── src/                                ← Your source code (mounted/copied)
 ├── tests/                              ← Your test code (mounted/copied)
 ...
@@ -76,17 +81,68 @@ your-project-repository/
 └── README.md                           ← Project documentation
 ```
 
-### Directory Purposes
+### About Artifact And Data Directories
 
-| Directory | Purpose | Mount Behavior |
-|-----------|---------|----------------|
-| `src/` | Source code | Mounted (develop) / Copied (deploy) |
-| `tests/` | Test code | Mounted (develop) / Copied (deploy) |
-| `artifact/` | Runtime data | Persistent volume mount |
-| `external_data/` | External datasets | Read-only mount |
-| `.dockerized_norlab/` | DNA configuration | Build context only |
+The `data/` sub-directories are configured for handling input data such as _test data_, _demo data_, _experimental data_ and mounted _local data volume_ 
+while the `artifact/` directory is configured for handling output data such as log, plot and trained model.
+
+### Artifact Directory
+
+Project artifact should go here e.g., experimental log, plot, trained model, ...
+
+### External Data
+
+Directory for non-tracked data not required by source code or tests code logic.
+
+#### Use cases: 
+Temporary data that you want to use on a remote host, experimental input data, data downloaded at dna runtime e.g., from a NAS, from a www dataset 
+
+#### Directory usage examples: 
+- Rsync from a data directory on host
+- Use it as a target path for a dataset download script
+- Simply Manualy copy files 
+
+### Repository Data 
+ 
+Data required by source code or tests code logic.
+
+#### Use cases 
+Tests releated data, demo related data, benchmarking releated data.
+
+### Shared Data
+
+Placeholder directory replaced by an optional local data volume. 
+
+#### Configuration instructions
+Set the target data directory path via `DNA_HOST_SHARED_DATA_PATH` environment variable in `.dockerized_norlab/configuration/.env.local` e.g.,
+
+```dotenv
+DNA_HOST_SHARED_DATA_PATH="/Path/to/host/computer/shared_data/directory"
+```
+It will be accessible at runtime in the dna container at `data/shared_data/`.
+Many DNA container can mount that same target path at the same time.
+
+
+### Directory Properties Summary
+
+| Directory               | Purpose                         | Docker Mount Behavior               | Version Control System Behavior | Remote Development |
+|-------------------------|---------------------------------|-------------------------------------|---------------------------------|--------------------|
+| `.dockerized_norlab/`   | DNA configuration               | Build context only                  | VCS Tracked                     | Rsync              |
+| `artifact/`             | Runtime data (i.e., output)     | Persistent volume mount             | VCS Ignored                     | Rsync              |
+| `data/`                 | Input Data                      |                                     |                                 |                    |
+| `data/external_data/`   | External data                   | Read-and-write mount                | VCS Ignored                     | Rsync              |
+| `data/repository_data/` | Source/tests code required data | Read-and-write mount                | VCS Tracked                     | Rsync              |
+| `data/shared_data/`     | External data                   | Read-only mount                     | VCS Ignored                     | Local only         |
+| `src/`                  | Source code                     | Mounted (develop) / Copied (deploy) | VCS Tracked                     | Rsync              |
+| `tests/`                | Test code                       | Mounted (develop) / Copied (deploy) | VCS Tracked                     | Rsync              |
 
 ## Configuration Files
+
+### ★ Note On Configuration Changes 
+
+- Rebuild and restart container after modifying requirement files i.e., `dna build && dna down && dna up`
+- Restart container after modifying entrypoints i.e., `dna down && dna up`
+
 
 ### Environment Files
 
@@ -102,10 +158,11 @@ DNA uses a hierarchical environment variable system with the following precedenc
 Main project configuration file. This file is for project related environment variable (i.e., non-DNA/DN env var).
 
 #### `.env.dna` - DNA-specific environment variables
-This file is for DN/DNA specific setting.
-Variables `DN_PROJECT_GIT_REMOTE_URL`, `DN_CONTAINER_NAME` and `DN_PROJECT_ALIAS_PREFIX` are automaticaly configured on initialization.
-Check `.env.dna` comment for other available environment variable.
 
+This file is for DN/DNA specific setting.
+Variables `DN_PROJECT_GIT_REMOTE_URL`, `DN_CONTAINER_NAME` and `DN_PROJECT_ALIAS_PREFIX` are automaticaly configured on
+initialization.
+Check `.env.dna` comment for other available environment variable.
 
 #### `.env.local` - Local environment variables overrides
 
@@ -123,23 +180,25 @@ DEBUG_MODE=true
 VERBOSE_LOGGING=true
 ```
 
-
-## Project Requirements
+### Project Requirements
 
 There is three method for configuring container in DNA. In execution order:
-1. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for details)
+
+1. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for
+   details)
 2. using shell script file `shell.requirements-dna.bash`
 3. via `pip` using python requirement file `python.requirements-dna.txt`
 
-Each one of them serves different purposes. Use the ones best suited for your project needs. 
-You can use all three in combinaison if necessary. 
+Each one of them serves different purposes. Use the ones best suited for your project needs.
+You can use all three in combinaison if necessary.
 
+#### Specifying Python Requirements
 
-### Specifying Python Requirements
-
-Specify DNA container specific Python dependencies in `.dockerized_norlab/configuration/project_requirements/python.requirements-dna.txt`:
+Specify DNA container specific Python dependencies in
+`.dockerized_norlab/configuration/project_requirements/python.requirements-dna.txt`:
 
 Example:
+
 ```txt
 # Core dependencies
 numpy>=1.21.0
@@ -156,21 +215,24 @@ pytest>=6.0.0
 black>=21.0.0
 flake8>=3.9.0
 ```
+
 Documentation
- - Requirements File Format:  https://pip.pypa.io/en/stable/reference/requirements-file-format/
- - Requirement Specifiers:  https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 
+- Requirements File Format:  https://pip.pypa.io/en/stable/reference/requirements-file-format/
+- Requirement Specifiers:  https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 
-### Shell Requirements
+#### Shell Requirements
 
-Specify DNA container specific shell dependencies in `.dockerized_norlab/configuration/project_requirements/shell.requirements-dna.bash` as if it is a instalation script.  
+Specify DNA container specific shell dependencies in
+`.dockerized_norlab/configuration/project_requirements/shell.requirements-dna.bash` as if it is a instalation script.
 
-## Docker Configuration
+### Docker Configuration
 
-### Dockerfile Customization
+#### Dockerfile Customization
 
-The generated `.dockerized_norlab/configuration/Dockerfile` can be customized for your specific needs. 
+The generated `.dockerized_norlab/configuration/Dockerfile` can be customized for your specific needs.
 Use cases:
+
 - leveraging the [Docker build cache](https://docs.docker.com/build/cache/) layer mechanism for minimizing build time;
 - leveraging the [Docker multi-stage builds](https://docs.docker.com/build/building/multi-stage/).
 
@@ -195,13 +257,16 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 
 ```
 
-### Project Entrypoints
+#### Project Entrypoints
 
-Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker container entrypoint. Each one of them serve different purposes:
-- `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm) 
+Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker
+container entrypoint. Each one of them serve different purposes:
+
+- `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm)
 - `<mode>/dn_entrypoint.*.callback.bash` are specialized version executed after the global one and only in that mode
 - `*.init.callback.bash` are executed on container initialization only. It happen only once in a container life-cycle.
-- `*.attach.callback.bash` are executed on every time a shell is attach to a conatiner. It can happen many time in a container life-cycle.  
+- `*.attach.callback.bash` are executed on every time a shell is attach to a conatiner. It can happen many time in a
+  container life-cycle.
 
 ---
 
@@ -252,6 +317,7 @@ Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable
 **Problem**: Custom environment variables not available in container.
 
 **Solutions:**
+
 1. Check file precedence order
 2. Verify syntax (no spaces around `=`)
 3. Rebuild container after changes
@@ -261,6 +327,7 @@ Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable
 **Problem**: Container ports already in use.
 
 **Solution**: Change ports in `.env.local`:
+
 ```bash
 DN_SSH_SERVER_PORT=2223
 DN_GDB_SERVER_PORT=7778
@@ -271,6 +338,7 @@ DN_GDB_SERVER_PORT=7778
 **Problem**: Files created in container have wrong ownership.
 
 **Solution**: Ensure `DN_PROJECT_USER` matches host user:
+
 ```bash
 # Host user
 id -un
@@ -284,6 +352,7 @@ dna project dotenv | grep -e DN_PROJECT_USER -e DN_PROJECT_UID -e DN_PROJECT_GID
 **Problem**: Docker build fails with dependency errors.
 
 **Solutions:**
+
 1. Check internet connectivity
 2. Verify package names in requirements files
 3. Update base image versions

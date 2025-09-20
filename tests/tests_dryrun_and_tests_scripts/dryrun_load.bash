@@ -56,7 +56,7 @@ cat > "${mock_save_dir}/meta.txt" << 'EOF'
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNA_CONFIG_SCHEME_VERSION=1.0
+DNA_CONFIG_SCHEME_VERSION=2
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 

@@ -1,26 +1,20 @@
-# Artifact
+# Data directory
 
-## Directory purpose
+## Data Directories Purposes
 
-Project artifact should go in here e.g., experimental log, plot, trained model, ...
+Use for input source such as  _test data_, _demo data_, _experimental data_ and mounted _local data volume_.
 
-## Properties:
+## It contains three directories each configured for a distinct purposes
 
-- Vcs non-tracked data
-- Rsync to remote host
-- Docker read-and-write volume
+1. [External Data Directory](external_data/README.md): Non-tracked data not required by src/tests code logic
+2. [Repository Data Directory](repository_data/README.md): Data that are required by the src/test code logic
+3. [Shared Data Directory](shared_data/README.md): Placeholder directory replaced by an optional local data volume
 
-## Notes
+# About Data And Artifact Directories
 
-- ★ Dockerized-NorLab project application (DNA) **required** directory.
-- Be advised, this directory is VCS ignored so these data need to be safeguarded on another device.
-- Directory `artifact/optuna_storage/` is required by `hydra-optuna-sweeper` dna configuration for hyperparam search.
-
-# About Artifact And Data Directories
-
-The `artifact/` directory is configured for handling output data such as log, plot and trained model while the `data/`
-sub-directories are configured for handling input data such as _test data_, _demo data_, _experimental data_ and mounted
-_local data volume_
+The `data/` sub-directories are configured for handling input data such as _test data_, _demo data_, _experimental data_
+and mounted _local data volume_ while the `artifact/` directory is configured for handling output data such as log, plot
+and trained model.
 
 ```terminaloutput
 ⋮
@@ -44,9 +38,6 @@ _local data volume_
 
 ## See Also
 
-- [Data Directories README](../data/README.md)
-- [External Data Directory README](../data/external_data/README.md)
-- [Repository Data Directory README](../data/repository_data/README.md)
-- [Shared Data Directory README](../data/shared_data/README.md)
+- [Artifact Directory README](../artifact/README.md)
 - [DNA documentation](https://github.com/norlab-ulaval/dockerized-norlab-project?tab=readme-ov-file#documentation) on
   _Project Initialization & Configuration_, section _Directory Structure_ for details.

@@ -117,11 +117,10 @@ function dna::setup_dockerized_norlab_project() {
     echo ""
     echo "# Project specific aliases (general)"
     echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cd='cd ${DN_PROJECT_PATH:?err}'"
-    echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cdd='cd ${DN_PROJECT_PATH:?err}/.dockerized_norlab'"
     echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cds='cd ${DN_PROJECT_PATH:?err}/src'"
     echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cdt='cd ${DN_PROJECT_PATH:?err}/tests'"
     echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cda='cd ${DN_PROJECT_PATH:?err}/artifact'"
-    echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cde='cd ${DN_PROJECT_PATH:?err}/external_data'"
+    echo "alias dn-${DN_PROJECT_ALIAS_PREFIX:?err}-cdd='cd ${DN_PROJECT_PATH:?err}/data'"
     echo ""
   ) >> /dockerized-norlab/dockerized-norlab-images/container-tools/dn_bash_alias.bash
 

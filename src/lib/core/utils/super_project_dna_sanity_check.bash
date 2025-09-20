@@ -77,11 +77,14 @@ function dna::check_config_scheme_compatibility() {
 
 function dna::check_super_project_dir_structure() {
   test -d ".dockerized_norlab" || dna::print_msg_error_and_return "'.dockerized_norlab' is not installed at super-project repository root as required!"
-  test -d "src/" || dna::print_msg_error_and_return "The 'src' directory is not installed at super-project repository root as required!"
-  test -d "tests/" || dna::print_msg_error_and_return "The 'tests' directory is not installed at super-project repository root as required!"
-  test -d "external_data/" || dna::print_msg_error_and_return "The 'external_data' directory is not installed at super-project repository root as required!"
   test -d "artifact/" || dna::print_msg_error_and_return "The 'artifact' directory is not installed at super-project repository root as required!"
   test -d "artifact/optuna_storage/" || dna::print_msg_error_and_return "The 'optuna_storage' directory is not installed in the super-project 'artifact/' directory as required!"
+  test -d "data/" || dna::print_msg_error_and_return "The 'data' directory is not installed at super-project repository root as required!"
+  test -d "data/external_data/" || dna::print_msg_error_and_return "The 'external_data' directory is not installed in super-project repository data directory as required!"
+  test -d "data/repository_data/" || dna::print_msg_error_and_return "The 'repository_data' directory is not installed in super-project repository data directory as required!"
+  test -d "data/shared_data/" || dna::print_msg_error_and_return "The 'shared_data' directory is not installed in super-project repository data directory as required!"
+  test -d "src/" || dna::print_msg_error_and_return "The 'src' directory is not installed at super-project repository root as required!"
+  test -d "tests/" || dna::print_msg_error_and_return "The 'tests' directory is not installed at super-project repository root as required!"
   test -f ".gitignore" || dna::print_msg_error_and_return "'.gitignore' is not installed at super-project repository root as required!"
   test -f ".dockerignore" || dna::print_msg_error_and_return "'.dockerignore' is not installed at super-project repository root as it should!"
   test -d "slurm_jobs/" || n2st::print_msg_warning "The 'slurm_jobs/' directory is not present as recommended!"
@@ -117,22 +120,46 @@ function dna::check_project_entrypoints() {
 function dna::check_gitignore() {
   cd "${SUPER_PROJECT_ROOT}" || exit 1
 
-  # Check required entry: /.dockerized_norlab/dn_container_env_variable/.env*
-  if ! grep --silent -E "^\/\.dockerized_norlab\/dn_container_env_variable\/\.env\*$" ".gitignore"; then
-    dna::print_msg_error_and_return "The line '/.dockerized_norlab/dn_container_env_variable/.env*' is not present in .gitignore as required!"
-  fi
   # Check required entry: /.dockerized_norlab/configuration/.env.local
   if ! grep --silent -E "^\/\.dockerized_norlab\/configuration\/\.env.local$" ".gitignore"; then
     dna::print_msg_error_and_return "The line '/.dockerized_norlab/configuration/.env.local' is not present in .gitignore as required!"
   fi
-  # Check recommended entry: **/external_data/
-  if ! grep --silent -E "^\*\*\/external_data\/\*\*\/\*$" ".gitignore"; then
-    n2st::print_msg_warning "The line '**/external_data/**/*' is not present in .gitignore as recommended!"
+  # Check required entry: /.dockerized_norlab/dn_container_env_variable/.env*
+  if ! grep --silent -E "^\/\.dockerized_norlab\/dn_container_env_variable\/\.env\*$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line '/.dockerized_norlab/dn_container_env_variable/.env*' is not present in .gitignore as required!"
   fi
-  # Check recommended entry: **/artifact/
-  if ! grep --silent -E "^\*\*\/artifact\/\*\*\/\*$" ".gitignore"; then
-    n2st::print_msg_warning "The line '**/artifact/**/*' is not present in .gitignore as recommended!"
+
+  # Check required entry: !/.dockerized_norlab/dn_container_env_variable/README.md
+  if ! grep --silent -E "^\!\/\.dockerized_norlab\/dn_container_env_variable\/\README\.md$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line '!/.dockerized_norlab/dn_container_env_variable/README.md' is not present in .gitignore as required!"
   fi
+
+  # ....Check artifact and data directory related entries..........................................
+  # Check required entry: artifact/*
+  if ! grep --silent -E "^artifact\/\*$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line 'artifact/*' is not present in .gitignore as required!"
+  fi
+
+  # Check required entry: data/external_data/*
+  if ! grep --silent -E "^data\/external_data\/\*$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line 'data/external_data/*' is not present in .gitignore as required!"
+  fi
+
+  # Check required entry: data/shared_data/*
+  if ! grep --silent -E "^data\/shared_data\/\*$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line 'data/shared_data/*' is not present in .gitignore as required!"
+  fi
+
+  # Check required entry: !artifact/**/README.md
+  if ! grep --silent -E "^\!artifact\/\*\*\/README\.md$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line '!artifact/**/README.md' is not present in .gitignore as required!"
+  fi
+
+  # Check required entry: !data/**/README.md
+  if ! grep --silent -E "^\!data\/\*\*\/README\.md$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line '!data/**/README.md' is not present in .gitignore as required!"
+  fi
+
 }
 
 function dna::check_dockerignore() {
@@ -150,14 +177,28 @@ function dna::check_dockerignore() {
   if ! grep --silent -E "^\!\*\*\/\.git$" ".dockerignore"; then
     dna::print_msg_error_and_return "The line '!**/.git' is not present in .dockerignore as it should be!"
   fi
-    # Check recommended entry: **/external_data/
-  if ! grep --silent -E "^\*\*\/external_data\/$" ".dockerignore"; then
-    n2st::print_msg_warning "The line '**/external_data/' is not present in .dockerignore as recommended!"
+
+  # ....Check artifact and data directory related entries..........................................
+  # Check required entry: artifact/*
+  if ! grep --silent -E "^artifact\/\*$" ".dockerignore"; then
+    dna::print_msg_error_and_return "The line 'artifact/*' is not present in .dockerignore as required!"
   fi
-  # Check recommended entry: **/artifact/
-  if ! grep --silent -E "^\*\*\/artifact\/$" ".dockerignore"; then
-    n2st::print_msg_warning "The line '**/artifact/' is not present in .dockerignore as recommended!"
+
+  # Check required entry: data/external_data/*
+  if ! grep --silent -E "^data\/external_data\/\*$" ".dockerignore"; then
+    dna::print_msg_error_and_return "The line 'data/external_data/*' is not present in .dockerignore as required!"
   fi
+
+  # Check required entry: data/repository_data/*
+  if ! grep --silent -E "^data\/repository_data\/\*$" ".dockerignore"; then
+    dna::print_msg_error_and_return "The line 'data/repository_data/*' is not present in .dockerignore as required!"
+  fi
+
+  # Check required entry: data/shared_data/*
+  if ! grep --silent -E "^data\/shared_data\/\*$" ".dockerignore"; then
+    dna::print_msg_error_and_return "The line 'data/shared_data/*' is not present in .dockerignore as required!"
+  fi
+
 }
 
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

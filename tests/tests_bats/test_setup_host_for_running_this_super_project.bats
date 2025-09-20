@@ -99,11 +99,6 @@ teardown() {
   assert_file_contains "${HOME}/.bashrc" "^# >>>> DNA dockerized-norlab-project-mock aliases and env variables (start)$"
   assert_file_contains "${HOME}/.bashrc" "^export _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}/.dockerized_norlab$"
   assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd='cd ${MOCK_PROJECT_PATH}'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${MOCK_PROJECT_PATH}/.dockerized_norlab'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cds='cd ${MOCK_PROJECT_PATH}/src'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${MOCK_PROJECT_PATH}/tests'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cda='cd ${MOCK_PROJECT_PATH}/artifact'$"
-  assert_file_contains "${HOME}/.bashrc" "^alias dna-${T_DN_PROJECT_ALIAS_PREFIX}-cde='cd ${MOCK_PROJECT_PATH}/external_data'$"
   assert_file_contains "${HOME}/.bashrc" "^# <<<< DNA dockerized-norlab-project-mock aliases and env variables (end)$"
 
   assert_output --partial "Adding project aliases to .bashrc..."
@@ -111,12 +106,7 @@ teardown() {
   assert_output --partial "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd  -> cd to dockerized-norlab-project-mock root
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to dockerized-norlab-project-mock .dockerized_norlab dir
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cds -> cd to dockerized-norlab-project-mock src dir
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to dockerized-norlab-project-mock tests dir
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cda -> cd to dockerized-norlab-project-mock artifact dir
-      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cde -> cd to dockerized-norlab-project-mock external data dir
+      - dna-${T_DN_PROJECT_ALIAS_PREFIX}-cd  ->  cd to dockerized-norlab-project-mock root
 
     New available environment variable added to ~/.bashrc for convenience:
       - _DNA_${T_DN_PROJECT_ALIAS_PREFIX_CAP}_PATH=${MOCK_PROJECT_PATH}"

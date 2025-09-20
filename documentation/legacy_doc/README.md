@@ -45,7 +45,7 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
    and set `Paths to ".env" files` in run configuration window 
     ![set_interpreter_env.png](visual/set_run_config_env.png)
 
-#### Rsync to remote machine
+#### Rsync to remote host machine
 - If you encounter rsync error such as the infamous `exit code 23`, check file/dir permission and group by executing `tree -aug <path/to/remote/project/dir>` and update them if needed by executing `sudo chown -R $(id -un):$(id -gn) <path/to/remote/project/dir>`. 
 
 ### Python interpreter

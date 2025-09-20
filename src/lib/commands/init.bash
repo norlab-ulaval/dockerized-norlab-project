@@ -231,8 +231,11 @@ ${MSG_DIMMED_FORMAT}
      │   ├── dn_container_env_variable/           ← Container environment exports
      │   ├── .env.${super_project_name}
      │   └── README.md                            ← DNA configuration quick documentation
-     ├── artifact/                                ← Runtime produced data (mounted)
-     ├── external_data/                           ← Pre-existing data (mounted)
+     ├── artifact/                                ← Runtime produced data (mounted rw, vcs ignored)
+     ├── data/
+     │   ├── external_data/                       ← Non-tracked data not required by src/tests code logic (mounted rw, vcs ignored)
+     │   ├── repository_data/                     ← Data that are required by the src/test code logic (mounted rw)
+     │   └── shared_data/                         ← Placeholder directory replaced by an optional local data volume (mounted ro, vcs ignored)
      ├── src/                                     ← Your source code (mounted/copied)
      ├── tests/                                   ← Your test code (mounted/copied)
      ...
@@ -319,7 +322,11 @@ ${MSG_END_FORMAT}"
 
     {
       mkdir -p artifact/optuna_storage &&
-      mkdir -p external_data &&
+      mkdir -p data/external_data &&
+      mkdir -p data/repository_data &&
+      mkdir -p data/repository_data/demo_data &&
+      mkdir -p data/repository_data/test_data &&
+      mkdir -p data/shared_data &&
       mkdir -p src/launcher/configs &&
       mkdir -p src/dna_example &&
       mkdir -p tests/test_dna_example &&
@@ -328,7 +335,10 @@ ${MSG_END_FORMAT}"
 
     dna::portable_copy "${DNA_LIB_PATH}/template/artifact/README.md" artifact/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/artifact/optuna_storage/README.md" artifact/optuna_storage/ "${super_project_root}" || return 1
-    dna::portable_copy "${DNA_LIB_PATH}/template/external_data/README.md" external_data/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/data/README.md" data/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/data/external_data/README.md" data/external_data/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/data/repository_data/README.md" data/repository_data/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/data/shared_data/README.md" data/shared_data/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher/" src/launcher/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
 
@@ -361,24 +371,33 @@ EOF
         # Case: file does not exist => copy template
         dna::portable_copy "${DNA_LIB_PATH}/template/.gitignore" .gitignore "${super_project_root}" || return 1
     else
-        # Case: file exist => append required .gitignore entries
-        cat >> ".gitignore" << EOF
+        # Case: file exist => prepend required .gitignore entries
+        touch "tmp_prepend.gitignore"
+        cat > "tmp_prepend.gitignore" << 'EOF'
 
 # ====Dockerized-NorLab(required)==================================================================
 /.dockerized_norlab/configuration/.env.local
 /.dockerized_norlab/dn_container_env_variable/.env*
 !/.dockerized_norlab/dn_container_env_variable/README.md
 
-# ====Dockerized-NorLab(recommended)===============================================================
-**/external_data/**/*
-**/artifact/**/*
-!**/external_data/README.md
-!**/artifact/README.md
-!**/artifact/optuna_storage/README.md
-**/slurm_jobs_logs/*.log
+# DNA artifact and data non-tracked directory
+artifact/*
+data/external_data/*
+data/shared_data/*
 
+# Track README.md files from ignored DNA artifact and data directory so that those required
+# directory exist in vcs
+!artifact/**/README.md
+!data/**/README.md
+
+# ====Dockerized-NorLab(recommended)===============================================================
+**/slurm_jobs/*.out
+**/slurm_jobs/out/*.out
 
 EOF
+        cat ".gitignore" >> "tmp_prepend.gitignore"
+        mv -f "tmp_prepend.gitignore" ".gitignore"
+
     fi
     git add ".gitignore"
 
@@ -386,20 +405,29 @@ EOF
         # Case: file does not exist => copy template
         dna::portable_copy "${DNA_LIB_PATH}/template/.dockerignore" .dockerignore "${super_project_root}" || return 1
     else
-        # Case: file exist => append required .gitignore entries
-      cat >> ".dockerignore" << EOF
+        # Case: file exist => prepend required .dockerignore entries
+        touch "tmp_prepend.dockerignore"
+        cat > "tmp_prepend.dockerignore" << 'EOF'
 
 # ====Dockerized-NorLab(required)==================================================================
 !**/.dockerized_norlab/
 !**/version.txt
 !**/.git
 
+# Don't copy/add those directories (they are mounted as volumes)
+artifact/*
+data/external_data/*
+data/repository_data/*
+data/shared_data/*
+
 # ====Dockerized-NorLab(recommended)===============================================================
-**/external_data/
-**/artifact/
-**/slurm_jobs_logs/*.log
+**/slurm_jobs/*.out
+**/slurm_jobs/out/*.out
 
 EOF
+        cat ".dockerignore" >> "tmp_prepend.dockerignore"
+        mv -f "tmp_prepend.dockerignore" ".dockerignore"
+
     fi
     git add ".dockerignore"
 
