@@ -61,12 +61,21 @@ setup_file() {
   mkdir -p "${MOCK_DNA_DIR}/src/lib"
   cp -r "${BATS_DOCKER_WORKDIR}/src/lib/template" "${MOCK_DNA_DIR}/src/lib/"
 
-  mkdir -p "${MOCK_DNA_DIR}/src/lib/core/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/core"
   cp -r "${BATS_DOCKER_WORKDIR}/src/lib/core/utils" "${MOCK_DNA_DIR}/src/lib/core/"
-#  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/super_project_dna_sanity_check.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/super_project_dna_sanity_check.bash"
-#  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/setup_host_for_running_this_super_project.bash"
-#  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/load_super_project_config.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash"
 
+  mkdir -p "${MOCK_DNA_DIR}/src/bin"
+  cat > "${MOCK_DNA_DIR}/src/bin/dna" << 'EOF'
+#!/bin/bash
+if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=1
+  echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
+else
+  exit 1
+fi
+EOF
+  # Make the dna script executable
+  chmod +x "${MOCK_DNA_DIR}/src/bin/dna"
 
   # Create a mock import_dna_lib.bash that sets up the environment
   cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
@@ -150,7 +159,7 @@ export DN_PROJECT_HUB="norlabulaval"
 export PROJECT_TAG="latest"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNA_CONFIG_SCHEME_VERSION="1.0"
+export DNA_CONFIG_SCHEME_VERSION=1
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
@@ -351,6 +360,7 @@ teardown_file() {
   assert_output --partial "Mock dna::unknown_subcommand_msg called with args: init"
 }
 
+
 @test "dna::init_command without .git directory › expect error" {
   # Test case: When init command is called in a directory without .git, it should show an error
   # Remove the .git directory
@@ -421,6 +431,7 @@ teardown_file() {
   assert_output --partial "Mock n2st::print_msg_done called with args: DNA project initialized successfully."
 }
 
+
 @test "dna::init_command tests for PLACEHOLDER_* substitutions › expect all placeholders replaced" {
   assert_dir_not_exist "${TEST_EMPTY_REPO}/.dockerized_norlab"
 
@@ -463,7 +474,9 @@ teardown_file() {
 
   # Check if the required directories were created
   assert_dir_exist "${TEST_EMPTY_REPO}/artifact"
-  assert_dir_exist "${TEST_EMPTY_REPO}/external_data"
+  assert_dir_exist "${TEST_EMPTY_REPO}/data/external_data"
+  assert_dir_exist "${TEST_EMPTY_REPO}/data/repository_data"
+  assert_dir_exist "${TEST_EMPTY_REPO}/data/shared_data"
   assert_dir_exist "${TEST_EMPTY_REPO}/src/launcher"
   assert_dir_exist "${TEST_EMPTY_REPO}/src/dna_example"
   assert_dir_exist "${TEST_EMPTY_REPO}/tests"
@@ -485,11 +498,15 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/tests/test_dna_example/test_python_interpreter_has_ros.py"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/test_dna_example/test_try_pytorch.py"
 
-  assert_file_exist "${TEST_EMPTY_REPO}/external_data/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/optuna_storage/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/shared_data/README.md"
 
 }
+
 
 @test "dna::init_command check validate and setup sub script are executed › expect succes" {
   # Test case: When init command exit, function execution from subscript should have succeed
@@ -534,6 +551,8 @@ teardown_file() {
   assert_output --partial "This project is initialized with [Dockerized-NorLab project application (DNA)](https:"
 }
 
+
+
 @test "dna::init_command tests for README.md creation when it exists › expect README.md not modified" {
   # Test case: When init command is called and README.md exists, it should not modify it
 
@@ -550,15 +569,12 @@ teardown_file() {
   refute_output --partial "cat > \"README.md\" << EOF"
 }
 
+
 @test "dna::init_command tests for .gitignore setup when it doesn't exist › expect .gitignore created from template" {
   # Test case: When init command is called and .gitignore doesn't exist, it should create it from template
 
   # Make sure .gitignore doesn't exist
   rm -f "${TEST_EMPTY_REPO}/.gitignore"
-
-  # Create a mock template .gitignore file
-  mkdir -p "${MOCK_DNA_DIR}/src/lib/template"
-  echo "# Template .gitignore file" > "${MOCK_DNA_DIR}/src/lib/template/.gitignore"
 
   # Run the init command
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
@@ -592,6 +608,11 @@ teardown_file() {
   assert_output --partial "/.dockerized_norlab/dn_container_env_variable/"
   assert_output --partial "/.dockerized_norlab/configuration/.env.local"
   assert_output --partial "!/.dockerized_norlab/dn_container_env_variable/README.md"
+  assert_output --partial "artifact/*"
+  assert_output --partial "data/external_data/*"
+  assert_output --partial "data/shared_data/*"
+  assert_output --partial "!artifact/**/README.md"
+  assert_output --partial "!data/**/README.md"
 }
 
 @test "dna::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
@@ -599,10 +620,6 @@ teardown_file() {
 
   # Make sure .dockerignore doesn't exist
   rm -f "${TEST_EMPTY_REPO}/.dockerignore"
-
-  # Create a mock template .dockerignore file
-  mkdir -p "${MOCK_DNA_DIR}/src/lib/template"
-  echo "# Template .dockerignore file" > "${MOCK_DNA_DIR}/src/lib/template/.dockerignore"
 
   # Run the init command
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
@@ -613,6 +630,7 @@ teardown_file() {
   # Verify .dockerignore was created
   assert_file_exist "${TEST_EMPTY_REPO}/.dockerignore"
 }
+
 
 @test "dna::init_command tests for .dockerignore setup when it exists › expect .dockerignore appended" {
   # Test case: When init command is called and .dockerignore exists, it should append required entries
@@ -636,6 +654,10 @@ teardown_file() {
   assert_output --partial "!**/.dockerized_norlab/"
   assert_output --partial "!**/version.txt"
   assert_output --partial "!**/.git"
+  assert_output --partial "artifact/*"
+  assert_output --partial "data/external_data/*"
+  assert_output --partial "data/repository_data/*"
+  assert_output --partial "data/shared_data/*"
 }
 
 @test "dna::init_command tests for backup functionality › expect .old backup files created when files exist" {
@@ -646,8 +668,13 @@ teardown_file() {
   mkdir -p "${TEST_EMPTY_REPO}/artifact"
   echo "Original artifact README content" > "${TEST_EMPTY_REPO}/artifact/README.md"
 
-  mkdir -p "${TEST_EMPTY_REPO}/external_data"
-  echo "Original external_data README content" > "${TEST_EMPTY_REPO}/external_data/README.md"
+  mkdir -p "${TEST_EMPTY_REPO}/data/external_data"
+  mkdir -p "${TEST_EMPTY_REPO}/data/repository_data"
+  mkdir -p "${TEST_EMPTY_REPO}/data/shared_data"
+  echo "Original data README content" > "${TEST_EMPTY_REPO}/data/README.md"
+  echo "Original data external_data README content" > "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  echo "Original data repository_data README content" > "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  echo "Original data shared_data README content" > "${TEST_EMPTY_REPO}/data/shared_data/README.md"
 
   # Run the init command
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/init.bash && echo 'Y' | dna::init_command"
@@ -657,18 +684,33 @@ teardown_file() {
 
   # Verify backup files were created (rsync always creates backups when files exist)
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/README.md.old"
-  assert_file_exist "${TEST_EMPTY_REPO}/external_data/README.md.old"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/README.md.old"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/external_data/README.md.old"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/repository_data/README.md.old"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/shared_data/README.md.old"
 
   # Verify backup files contain original content
   run cat "${TEST_EMPTY_REPO}/artifact/README.md.old"
   assert_output "Original artifact README content"
 
-  run cat "${TEST_EMPTY_REPO}/external_data/README.md.old"
-  assert_output "Original external_data README content"
+  run cat "${TEST_EMPTY_REPO}/data/README.md.old"
+  assert_output "Original data README content"
+
+  run cat "${TEST_EMPTY_REPO}/data/external_data/README.md.old"
+  assert_output "Original data external_data README content"
+
+  run cat "${TEST_EMPTY_REPO}/data/repository_data/README.md.old"
+  assert_output "Original data repository_data README content"
+
+  run cat "${TEST_EMPTY_REPO}/data/shared_data/README.md.old"
+  assert_output "Original data shared_data README content"
 
   # Verify new files were created with template content
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/README.md"
-  assert_file_exist "${TEST_EMPTY_REPO}/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/shared_data/README.md"
 }
 
 @test "dna::init_command tests .dockerized_norlab content › expect rsync commands work and content is setup" {
@@ -687,7 +729,10 @@ teardown_file() {
   assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab"
   assert_file_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/README.md"
-  assert_file_exist "${TEST_EMPTY_REPO}/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/shared_data/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/example_app.py"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
 
@@ -710,22 +755,34 @@ teardown_file() {
 
   # Verify files were created
   assert_file_exist "${TEST_EMPTY_REPO}/artifact/README.md"
-  assert_file_exist "${TEST_EMPTY_REPO}/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  assert_file_exist "${TEST_EMPTY_REPO}/data/shared_data/README.md"
   assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab"
 
   # Verify ownership
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/artifact/README.md"
-  assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/external_data/README.md"
+  assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/README.md"
+  assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/shared_data/README.md"
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/.dockerized_norlab"
 
   # Verify permission
   echo "Permissions:
    artifact/README.md: $(stat -c '%a' "${TEST_EMPTY_REPO}/artifact/README.md")
-   external_data/README.md: $(stat -c '%a' "${TEST_EMPTY_REPO}/external_data/README.md")
+   data/README.md: $(stat -c '%a' "${TEST_EMPTY_REPO}/data/README.md")
+   data/external_data/README.md: $(stat -c '%a' "${TEST_EMPTY_REPO}/data/external_data/README.md")
+   data/repository_data/README.md: $(stat -c '%a' "${TEST_EMPTY_REPO}/data/repository_data/README.md")
+   data/shared_data/README.md: $(stat -c '%a' "${TEST_EMPTY_REPO}/data/shared_data/README.md")
    .dockerized_norlab/: $(stat -c '%a' "${TEST_EMPTY_REPO}/.dockerized_norlab")"
 
   assert_file_permission 644 "${TEST_EMPTY_REPO}/artifact/README.md"
-  assert_file_permission 644 "${TEST_EMPTY_REPO}/external_data/README.md"
+  assert_file_permission 644 "${TEST_EMPTY_REPO}/data/README.md"
+  assert_file_permission 644 "${TEST_EMPTY_REPO}/data/external_data/README.md"
+  assert_file_permission 644 "${TEST_EMPTY_REPO}/data/repository_data/README.md"
+  assert_file_permission 644 "${TEST_EMPTY_REPO}/data/shared_data/README.md"
   assert_file_permission 755 "${TEST_EMPTY_REPO}/.dockerized_norlab"
 
 }

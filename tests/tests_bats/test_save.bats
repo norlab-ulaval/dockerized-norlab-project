@@ -130,7 +130,7 @@ export PROJECT_TAG="latest"
 export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/test/test-project.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNA_CONFIG_SCHEME_VERSION="1.0"
+export DNA_CONFIG_SCHEME_VERSION=1
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
@@ -353,5 +353,8 @@ teardown_file() {
 
   # Verify artifact and external_data directories were created
   assert_dir_exist "${project_copy_path}/artifact"
-  assert_dir_exist "${project_copy_path}/external_data"
+  assert_dir_exist "${project_copy_path}/data"
+  assert_dir_exist "${project_copy_path}/data/external_data"
+  assert_dir_exist "${project_copy_path}/data/repository_data"
+  assert_dir_exist "${project_copy_path}/data/shared_data"
 }

@@ -29,7 +29,9 @@ services:
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/:rw
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/external_data/:ro
+      - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
+      - ${SUPER_PROJECT_ROOT}/data/repository_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/repository_data/:rw
+      - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro
     env_file:
       - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
         required: true

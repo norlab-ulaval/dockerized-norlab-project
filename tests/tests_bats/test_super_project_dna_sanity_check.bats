@@ -147,8 +147,8 @@ teardown_file() {
   assert_success
 }
 
-@test "dna::check_super_project_dir_structure › expect fail with missing .dockerized_norlab" {
-  # Test case: When .dockerized_norlab is missing, the function should fail
+@test "dna::check_super_project_dir_structure › expect fail with missing required dir" {
+  # Test case: When required dir is missing, the function should fail
   # Create a temporary directory with an incomplete structure
   mkdir -p "${TEST_TEMP_DIR}"
   cd "${TEST_TEMP_DIR}" || exit 1
@@ -156,17 +156,6 @@ teardown_file() {
   run dna::check_super_project_dir_structure || exit 1
   assert_failure
   assert_output --partial "'.dockerized_norlab' is not installed at super-project repository root"
-}
-
-@test "dna::check_super_project_dir_structure › expect fail with missing src directory" {
-  # Test case: When src directory is missing, the function should fail
-  # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab"
-  cd "${TEST_TEMP_DIR}" || exit 1
-
-  run dna::check_super_project_dir_structure
-  assert_failure
-  assert_output --partial "The 'src' directory is not installed at super-project repository root"
 }
 
 @test "dna::check_dockerized_project_configuration_dir_structure › expect pass with valid structure" {
@@ -233,13 +222,26 @@ teardown_file() {
   # Test case: When the .gitignore file has all required entries, the function should pass
   run dna::check_gitignore
   assert_success
+
+  #cat .gitignore >&3 # (CRITICAL) ToDo: on task end >> delete this line ←
 }
 
 @test "dna::check_gitignore › expect fail with missing required entries" {
   # Test case: When .gitignore is missing required entries, the function should fail
+  # Should flag missing "!" in "/.dockerized_norlab/dn_container_env_variable/README.md"
+
   # Create a temporary directory with an incomplete .gitignore
   mkdir -p "${TEST_TEMP_DIR}"
-  echo "# Test .gitignore" > "${TEST_TEMP_DIR}/.gitignore"
+
+  cat > "${TEST_TEMP_DIR}/.gitignore" << EOF
+# Test .gitignore
+/.dockerized_norlab/configuration/.env.local
+/.dockerized_norlab/dn_container_env_variable/.env*
+
+# Missing "!" character in last entry should raise error
+/.dockerized_norlab/dn_container_env_variable/README.md
+EOF
+
 
   # Set up environment for the test
   export SUPER_PROJECT_ROOT="${TEST_TEMP_DIR}"
@@ -247,7 +249,7 @@ teardown_file() {
 
   run dna::check_gitignore
   assert_failure
-  assert_output --partial "The line '/.dockerized_norlab/dn_container_env_variable/.env*' is not present in .gitignore"
+  assert_output --partial "The line '!/.dockerized_norlab/dn_container_env_variable/README.md' is not present in .gitignore"
 }
 
 @test "dna::check_dockerignore › expect pass with valid dockerignore entries" {

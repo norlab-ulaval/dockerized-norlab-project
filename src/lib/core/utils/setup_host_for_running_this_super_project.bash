@@ -49,11 +49,6 @@ function dna::setup_host_for_this_super_project() {
     echo "# >>>> DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variables (start)"
     echo "export _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab"
     echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cd='cd $SUPER_PROJECT_ROOT'"
-    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cdd='cd ${SUPER_PROJECT_ROOT}/.dockerized_norlab'"
-    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cds='cd ${SUPER_PROJECT_ROOT}/src'"
-    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cdt='cd ${SUPER_PROJECT_ROOT}/tests'"
-    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cda='cd ${SUPER_PROJECT_ROOT}/artifact'"
-    echo "alias dna-${DN_PROJECT_ALIAS_PREFIX}-cde='cd ${SUPER_PROJECT_ROOT}/external_data'"
     echo "# <<<< DNA ${SUPER_PROJECT_REPO_NAME:?err} aliases and env variables (end)"
     echo ""
   ) | sudo tee -a "${HOME}/.bashrc" > /dev/null
@@ -69,12 +64,7 @@ function dna::setup_host_for_this_super_project() {
   n2st::print_msg_done "Setup completed!
 
     New available alias added to ~/.bashrc:
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cd  -> cd to ${SUPER_PROJECT_REPO_NAME} root
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cdd -> cd to ${SUPER_PROJECT_REPO_NAME} .dockerized_norlab dir
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cds -> cd to ${SUPER_PROJECT_REPO_NAME} src dir
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cdt -> cd to ${SUPER_PROJECT_REPO_NAME} tests dir
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cda -> cd to ${SUPER_PROJECT_REPO_NAME} artifact dir
-      - dna-${DN_PROJECT_ALIAS_PREFIX}-cde -> cd to ${SUPER_PROJECT_REPO_NAME} external data dir
+      - dna-${DN_PROJECT_ALIAS_PREFIX}-cd  ->  cd to ${SUPER_PROJECT_REPO_NAME} root
 
     New available environment variable added to ~/.bashrc for convenience:
       - _DNA_${dn_project_alias_prefix_caps}_PATH=${SUPER_PROJECT_ROOT}"

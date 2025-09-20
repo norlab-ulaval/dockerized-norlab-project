@@ -246,11 +246,13 @@ function dna::copy_project_structure_for_deploy() {
         }
     fi
 
-    # ....Create empty artifact and external_data directories......................................
-    echo -e "       ↳ Creating artifact directory"
+    # ....Create empty artifact and data directories...............................................
+    echo -e "       ↳ Creating artifact directories"
     mkdir -p "${project_copy_path}/artifact" || return 1
-    echo -e "       ↳ Creating external_data directory"
-    mkdir -p "${project_copy_path}/external_data" || return 1
+    echo -e "       ↳ Creating data directories"
+    mkdir -p "${project_copy_path}/data/external_data" || return 1
+    mkdir -p "${project_copy_path}/data/repository_data" || return 1
+    mkdir -p "${project_copy_path}/data/shared_data" || return 1
 
     return 0
 }
