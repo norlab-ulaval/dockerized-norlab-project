@@ -268,18 +268,26 @@ dna down
 ### ⚙️ Setup & Configuration
 
 - **[Installation Guide](documentation/install.md)** - Detailed installation instructions for all supported platforms
-- **[Offline Installation Guide](documentation/offline_installation.md)** - Complete guide for installing DNA in environments without internet connectivity
 - **[Project Initialization & Configuration](documentation/project_initialization_and_configuration.md)** - Complete guide to setting up and configuring DNA projects
+- **[Offline Installation Guide](documentation/offline_installation.md)** - Complete guide for installing DNA in environments without internet connectivity
 - **[IDE Integration](documentation/ide_integration.md)** - Setup instructions for development environments and IDEs
 
 ---
 
-## 🧪 For Beta Testers
+## 🧪 For Beta Testers and Developer
 
-To try DNA in a throwaway project:
+To try DNA in a throwaway project or for development on initialization related feature:
 ```shell
 # Clone dockerized-norlab-project-mock-EMPTY
 git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git
 cd dockerized-norlab-project-mock-EMPTY
 dna init
+```
+
+For general DNA development in a throwaway project:
+```shell
+# Clone dockerized-norlab-project-mock-EMPTY
+git clone https://github.com/norlab-ulaval/dockerized-norlab-project-mock.git
+cd dockerized-norlab-project-mock
+dna [build|up|down|attach|run|...]
 ```

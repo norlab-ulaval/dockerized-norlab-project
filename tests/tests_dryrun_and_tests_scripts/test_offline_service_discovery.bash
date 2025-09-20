@@ -71,7 +71,7 @@ cat > "${temp_test_dir}/meta.txt" << 'EOF'
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 
 # Configuration
-DNA_CONFIG_SCHEME_VERSION=1
+DNA_CONFIG_SCHEME_VERSION=2
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -128,7 +128,7 @@ cat > "${temp_test_dir}/meta.txt" << 'EOF'
 #   Generated on: Fri Dec 15 14:30:00 UTC 2023
 
 # Configuration
-DNA_CONFIG_SCHEME_VERSION=1
+DNA_CONFIG_SCHEME_VERSION=2
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 

@@ -62,7 +62,7 @@ setup_file() {
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNA_CONFIG_SCHEME_VERSION=1
+DNA_CONFIG_SCHEME_VERSION=2
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -89,7 +89,7 @@ EOF
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNA_CONFIG_SCHEME_VERSION=1
+DNA_CONFIG_SCHEME_VERSION=2
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 
@@ -225,7 +225,7 @@ teardown_file() {
 #     Architecture and OS: darwin/arm64
 
 # Configuration
-DNA_CONFIG_SCHEME_VERSION=1
+DNA_CONFIG_SCHEME_VERSION=2
 DN_PROJECT_GIT_REMOTE_URL=https://github.com/test/test-project.git
 DN_PROJECT_ALIAS_PREFIX=test
 

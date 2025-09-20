@@ -98,10 +98,12 @@ Running DNA version: 1.2.3
 ```bash
 # Check version before running commands
 $ dna version --config-scheme
-1
-$ cat .dockerized_norlab/.env.dockerized-norlab-project-mock | grep DNA_CONFIG_SCHEME_VERSION
-DNA_CONFIG_SCHEME_VERSION=1
+2
+$ cd dockerized-norlab-project/.dockerized_norlab
+$ cat .env.dockerized-norlab-project-mock | grep DNA_CONFIG_SCHEME_VERSION
+DNA_CONFIG_SCHEME_VERSION=2
 ```
+Note: Under the hood, that's one of the check performed by the command `dna project sanity`.
 
 ### CI/CD Integration
 

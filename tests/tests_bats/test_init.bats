@@ -68,7 +68,7 @@ setup_file() {
   cat > "${MOCK_DNA_DIR}/src/bin/dna" << 'EOF'
 #!/bin/bash
 if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
-  DNA_RELEASE_CONFIG_SCHEME_VERSION=1
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=2
   echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
 else
   exit 1
@@ -95,7 +95,7 @@ export DNA_ROOT="${MOCK_DNA_DIR}"
 export DNA_PATH="${MOCK_DNA_DIR}/src/bin"
 export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
 export DNA_HUMAN_NAME="Dockerized-NorLab project application"
-export DNA_RELEASE_CONFIG_SCHEME_VERSION="1"
+export DNA_RELEASE_CONFIG_SCHEME_VERSION=2
 export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project"
 
 export N2ST_PATH="${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
@@ -159,7 +159,7 @@ export DN_PROJECT_HUB="norlabulaval"
 export PROJECT_TAG="latest"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNA_CONFIG_SCHEME_VERSION=1
+export DNA_CONFIG_SCHEME_VERSION=2
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF

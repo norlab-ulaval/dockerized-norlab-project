@@ -280,7 +280,7 @@ EOF
   cat > "${TEST_TEMP_DIR}/bin/dna" << 'EOF'
 #!/bin/bash
 if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
-  DNA_RELEASE_CONFIG_SCHEME_VERSION=1
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=2
   echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
 else
   exit 1
@@ -294,7 +294,7 @@ EOF
   export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
   export DNA_PATH="${TEST_TEMP_DIR}/bin"
 
-  export DNA_CONFIG_SCHEME_VERSION=1
+  export DNA_CONFIG_SCHEME_VERSION=2
 
   run dna::check_config_scheme_compatibility
   assert_success
@@ -324,7 +324,7 @@ EOF
   export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
   export DNA_PATH="${TEST_TEMP_DIR}/bin"
 
-  export DNA_CONFIG_SCHEME_VERSION=1
+  export DNA_CONFIG_SCHEME_VERSION=2
 
   run dna::check_config_scheme_compatibility
   assert_failure
