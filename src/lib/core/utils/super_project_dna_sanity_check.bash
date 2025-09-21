@@ -189,9 +189,9 @@ function dna::check_dockerignore() {
     dna::print_msg_error_and_return "The line 'data/external_data/*' is not present in .dockerignore as required!"
   fi
 
-  # Check required entry: data/repository_data/*
-  if ! grep --silent -E "^data\/repository_data\/\*$" ".dockerignore"; then
-    dna::print_msg_error_and_return "The line 'data/repository_data/*' is not present in .dockerignore as required!"
+  # Check required entry: !data/repository_data/*
+  if ! grep --silent -E "^!data\/repository_data\/\*$" ".dockerignore"; then
+    dna::print_msg_error_and_return "The line '!data/repository_data/*' is not present in .dockerignore as required!"
   fi
 
   # Check required entry: data/shared_data/*

@@ -18,10 +18,12 @@
 !**/version.txt
 !**/.git
 
+# Copy/add those directories (they must be available at build time)
+!data/repository_data/*
+
 # Don't copy/add those directories (they are mounted as volumes)
 artifact/*
 data/external_data/*
-data/repository_data/*
 data/shared_data/*
 
 # ====Dockerized-NorLab(recommended)===============================================================

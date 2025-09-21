@@ -629,6 +629,17 @@ teardown_file() {
 
   # Verify .dockerignore was created
   assert_file_exist "${TEST_EMPTY_REPO}/.dockerignore"
+
+  # Check .dockerignore content
+  run cat "${TEST_EMPTY_REPO}/.dockerignore"
+  assert_output --partial "# ====Dockerized-NorLab(required)=="
+  assert_output --partial "!**/.dockerized_norlab/"
+  assert_output --partial "!**/version.txt"
+  assert_output --partial "!**/.git"
+  assert_output --partial "!data/repository_data/*"
+  assert_output --partial "artifact/*"
+  assert_output --partial "data/external_data/*"
+  assert_output --partial "data/shared_data/*"
 }
 
 
@@ -654,9 +665,9 @@ teardown_file() {
   assert_output --partial "!**/.dockerized_norlab/"
   assert_output --partial "!**/version.txt"
   assert_output --partial "!**/.git"
+  assert_output --partial "!data/repository_data/*"
   assert_output --partial "artifact/*"
   assert_output --partial "data/external_data/*"
-  assert_output --partial "data/repository_data/*"
   assert_output --partial "data/shared_data/*"
 }
 

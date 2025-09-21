@@ -71,7 +71,7 @@ your-project-repository/
 ├── artifact/                           ← Runtime produced data (mounted rw, vcs ignored)
 ├── data/
 │   ├── external_data/                  ← Non-tracked data not required by src/tests code logic (mounted rw, vcs ignored)
-│   ├── repository_data/                ← Data that are required by the src/test code logic (mounted rw)
+│   ├── repository_data/                ← Data that are required by the src/test code logic (mounted rw in develop, copied otherwise)
 │   └── shared_data/                    ← Placeholder directory replaced by an optional local data volume (mounted ro, vcs ignored)
 ├── src/                                ← Your source code (mounted/copied)
 ├── tests/                              ← Your test code (mounted/copied)
@@ -83,7 +83,8 @@ your-project-repository/
 
 ### About Artifact And Data Directories
 
-The `data/` sub-directories are configured for handling input data such as _test data_, _demo data_, _experimental data_ and mounted _local data volume_ 
+The `data/` sub-directories are configured for handling input data such as _test data_, _demo data_, _experimental data_
+and mounted _local data volume_
 while the `artifact/` directory is configured for handling output data such as log, plot and trained model.
 
 ### Artifact Directory
@@ -94,55 +95,61 @@ Project artifact should go here e.g., experimental log, plot, trained model, ...
 
 Directory for non-tracked data not required by source code or tests code logic.
 
-#### Use cases: 
-Temporary data that you want to use on a remote host, experimental input data, data downloaded at dna runtime e.g., from a NAS, from a www dataset 
+#### Use cases:
 
-#### Directory usage examples: 
+Temporary data that you want to use on a remote host, experimental input data, data downloaded at dna runtime e.g., from
+a NAS, from a www dataset
+
+#### Directory usage examples:
+
 - Rsync from a data directory on host
 - Use it as a target path for a dataset download script
-- Simply Manualy copy files 
+- Simply Manualy copy files
 
-### Repository Data 
- 
+### Repository Data
+
 Data required by source code or tests code logic.
+Note that this data directory is the only one available both at build time and runtime.
 
-#### Use cases 
-Tests releated data, demo related data, benchmarking releated data.
+#### Use cases
+
+Data used for integration tests, benchmarking data, demo data published with a release, ...
 
 ### Shared Data
 
-Placeholder directory replaced by an optional local data volume. 
+Placeholder directory replaced by an optional local data volume.
 
 #### Configuration instructions
-Set the target data directory path via `DNA_HOST_SHARED_DATA_PATH` environment variable in `.dockerized_norlab/configuration/.env.local` e.g.,
+
+Set the target data directory path via `DNA_HOST_SHARED_DATA_PATH` environment variable in
+`.dockerized_norlab/configuration/.env.local` e.g.,
 
 ```dotenv
 DNA_HOST_SHARED_DATA_PATH="/Path/to/host/computer/shared_data/directory"
 ```
+
 It will be accessible at runtime in the dna container at `data/shared_data/`.
 Many DNA container can mount that same target path at the same time.
 
-
 ### Directory Properties Summary
 
-| Directory               | Purpose                         | Docker Mount Behavior               | Version Control System Behavior | Remote Development |
-|-------------------------|---------------------------------|-------------------------------------|---------------------------------|--------------------|
-| `.dockerized_norlab/`   | DNA configuration               | Build context only                  | VCS Tracked                     | Rsync              |
-| `artifact/`             | Runtime data (i.e., output)     | Persistent volume mount             | VCS Ignored                     | Rsync              |
-| `data/`                 | Input Data                      |                                     |                                 |                    |
-| `data/external_data/`   | External data                   | Read-and-write mount                | VCS Ignored                     | Rsync              |
-| `data/repository_data/` | Source/tests code required data | Read-and-write mount                | VCS Tracked                     | Rsync              |
-| `data/shared_data/`     | External data                   | Read-only mount                     | VCS Ignored                     | Local only         |
-| `src/`                  | Source code                     | Mounted (develop) / Copied (deploy) | VCS Tracked                     | Rsync              |
-| `tests/`                | Test code                       | Mounted (develop) / Copied (deploy) | VCS Tracked                     | Rsync              |
+| Directory               | Purpose                         | Docker Mount Behavior                | Version Control System Behavior | Remote Development |
+|-------------------------|---------------------------------|--------------------------------------|---------------------------------|--------------------|
+| `.dockerized_norlab/`   | DNA configuration               | Build context only                   | VCS Tracked                     | Rsync              |
+| `artifact/`             | Runtime data (i.e., output)     | Read-and-write (rw) mount            | VCS Ignored                     | Rsync              |
+| `data/`                 | Input Data                      |                                      |                                 |                    |
+| `data/external_data/`   | External data                   | Rw mount                             | VCS Ignored                     | Rsync              |
+| `data/repository_data/` | Source/tests code required data | Rw mount (develop), copied otherwise | VCS Tracked                     | Rsync              |
+| `data/shared_data/`     | External data                   | Read-only (ro) mount                 | VCS Ignored                     | Local only         |
+| `src/`                  | Source code                     | Rw mount (develop), copied otherwise | VCS Tracked                     | Rsync              |
+| `tests/`                | Test code                       | Rw mount (develop), copied otherwise | VCS Tracked                     | Rsync              |
 
 ## Configuration Files
 
-### ★ Note On Configuration Changes 
+### ★ Note On Configuration Changes
 
 - Rebuild and restart container after modifying requirement files i.e., `dna build && dna down && dna up`
 - Restart container after modifying entrypoints i.e., `dna down && dna up`
-
 
 ### Environment Files
 

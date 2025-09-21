@@ -57,6 +57,7 @@ USER ${DN_PROJECT_USER:?err}
 ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR ${DN_PROJECT_PATH:?'Required DN environment variable is empty or not set'}
+COPY --chown=${DN_PROJECT_USER} . ${DN_PROJECT_PATH:?err}/
 
 RUN <<EOF
     test -x "${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.init.bash" || exit 1

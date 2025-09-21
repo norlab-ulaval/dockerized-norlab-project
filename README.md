@@ -216,7 +216,7 @@ your-project-repository/
   ├── artifact/                       ← Runtime produced data (mounted rw, vcs ignored)
   ├── data/
   │   ├── external_data/              ← Non-tracked data not required by src/tests code logic (mounted rw, vcs ignored)
-  │   ├── repository_data/            ← Data that are required by the src/test code logic (mounted rw)
+  │   ├── repository_data/            ← Data that are required by the src/test code logic (mounted rw in develop, copied otherwise)
   │   └── shared_data/                ← Placeholder directory replaced by an optional local data volume (mounted ro, vcs ignored)
   ├── src/                            <- Your repository source code (mounted/copied)
   ├── tests/                          <- Your repository test code (mounted/copied)
