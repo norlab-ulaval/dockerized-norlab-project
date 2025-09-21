@@ -69,7 +69,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV DNA_PYTEST_CI_RUN=true
 
 WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
-#COPY --chown=${DN_PROJECT_USER} ../../ ${DN_PROJECT_PATH:?err}/
 COPY --chown=${DN_PROJECT_USER} . ${DN_PROJECT_PATH:?err}/
 
 # Note: Run tests in docker run native to assess deployment related potential problem.
