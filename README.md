@@ -43,6 +43,14 @@ continuous integration, slurm job experimentation, and release publishing.
 <img alt="GitHub Release" src="https://img.shields.io/github/v/release/norlab-ulaval/dockerized-norlab-project?include_prereleases">
 <a href="http://132.203.26.125:8111"><img alt="Static Badge" src="https://img.shields.io/badge/JetBrains%20TeamCity-CI-green?style=plastic&logo=teamcity"></a>
 
+TEST
+
+<img src="http://132.203.26.125:8111/app/rest/builds/buildType:id:DockerizedNorlabProject_ScheduledBuildAndTest/statusIcon.svg" alt="TeamCity build status">
+
+![TeamCity build status](http://132.203.26.125:8111/app/rest/builds/buildType:id:DockerizedNorlabProject_ScheduledBuildAndTest/statusIcon.svg)
+
+TEST END
+
 [//]: # (Dockerhub image badge)
 [//]: # (TODO: Un-comment the next line if you have docker images on dockerhub)
 [//]: # (TODO: Change "norlabulaval/libpointmatcher" in both url to "your-dockerhub-domain/your-image-name")
