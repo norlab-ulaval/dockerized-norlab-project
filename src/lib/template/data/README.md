@@ -28,13 +28,13 @@ and trained model.
 
 ## Data and Artifact Directory Properties Summary
 
-| Directory               | Purpose                         | Docker Mount Behavior   | Version Control System Behavior | Remote Development |
-|-------------------------|---------------------------------|-------------------------|---------------------------------|--------------------|
-| `artifact/`             | Runtime data (i.e., output)     | Persistent volume mount | VCS Ignored                     | Rsync              |
-| `data/`                 | Input Data                      |                         |                                 |                    |
-| `data/external_data/`   | External data                   | Read-and-write mount    | VCS Ignored                     | Rsync              |
-| `data/repository_data/` | Source/tests code required data | Read-and-write mount    | VCS Tracked                     | Rsync              |
-| `data/shared_data/`     | External data                   | Read-only mount         | VCS Ignored                     | Local only         |
+| Directory               | Purpose                         | Docker Mount Behavior                | Version Control System Behavior | Remote Development |
+|-------------------------|---------------------------------|--------------------------------------|---------------------------------|--------------------|
+| `artifact/`             | Runtime data (i.e., output)     | Read-and-write (rw) mount            | VCS Ignored                     | Rsync              |
+| `data/`                 | Input Data                      |                                      |                                 |                    |
+| `data/external_data/`   | External data                   | Rw mount                             | VCS Ignored                     | Rsync              |
+| `data/repository_data/` | Source/tests code required data | Rw mount (develop), copied otherwise | VCS Tracked                     | Rsync              |
+| `data/shared_data/`     | External data                   | Read-only (ro) mount                 | VCS Ignored                     | Local only         |
 
 ## See Also
 

@@ -1,4 +1,4 @@
-# coding=utf-8
+#!/usr/bin/env python3
 
 import pytest
 import os
@@ -37,14 +37,3 @@ def test_ROS_environment_variable_are_sourced():
     assert os.getenv("ROS_ROOT") is not None
     assert os.getenv("ROS_DISTRO") is not None
     assert os.getenv("PYTHONPATH") is not None
-
-
-# # ToDo: assessment >> maybe require '.env.dn_expose_IamRedLeader' be sourced
-# #       in Dockerfile.ci-tests.native
-# @pytest.mark.skipif(
-#     (os.getenv("DISPLAY") is None),
-#     reason="No display available",
-# )
-# def test_display_forwarding_environment_variable_are_sourced():
-#     assert os.getenv("LIBGL_ALWAYS_INDIRECT") is not None
-#     assert os.getenv("QT_X11_NO_MITSHM") is not None

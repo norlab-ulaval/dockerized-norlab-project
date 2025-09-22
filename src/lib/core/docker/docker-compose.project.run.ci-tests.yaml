@@ -47,16 +47,3 @@ services:
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
     runtime: ${DN_DOCKER_RUNTIME:-runc}
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
-      # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
-      - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw
-      # ....Add host volume you want to mount into the container...................................
-      - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/:rw
-      - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
-      - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
-      - ${SUPER_PROJECT_ROOT}/data/repository_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/repository_data/:rw
-      - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro

@@ -233,7 +233,7 @@ function dna::run_command() {
         # (temporary hack) ToDo: NMO-692 feat: add a build ci-tests option to run.ci_tests.bash
         build_all_flag=()
         build_all_flag+=(--service-names "project-core-pre,project-core-user,project-core,project-ci-tests")
-        build_all_flag+=(-- --no-cache)
+        #build_all_flag+=(-- --no-cache)
         dna::build_services "${build_all_flag[@]}"
         dna::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?

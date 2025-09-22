@@ -4,12 +4,13 @@
 Data required by source code or tests code logic.
 
 ## Use cases 
-Tests releated data, demo related data, benchmarking releated data.
+Data used for integration tests, benchmarking data, demo data published with a release, ...
 
 ## Properties
 - Vcs tracked data
 - Rsync to remote host
-- Docker read-and-write volume
+- Docker read-and-write volume in develop, copied otherwise 
+- Its the only data directory available both at build time and runtime
 
 ## Notes
 
