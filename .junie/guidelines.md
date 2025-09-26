@@ -2,6 +2,7 @@
 
 dockerized-norlab-project guidelines and instructions
 
+
 ## Repository Description
 
 _Dockerized-NorLab project application (DNA)_ is the user side companion
@@ -11,15 +12,31 @@ manage Dockerized-NorLab (DN) container lifecycle providing functionality for ro
 testing, continuous integration, slurm job experimentation, and release publishing.
 Refer to the repository [README.md](../README.md) for more details.
 
+
 ## Repository Guidelines Instructions
 
 1. First, review and learn _A2G Framework Guidelines_ specified in
-  `.junie/ai_agent_guidelines/guidelines.a2g_framework.md`.
+   `.junie/ai_agent_guidelines/guidelines.a2g_framework.md`.
 2. Then review the remaining repository guidelines below.
+3. **AI agents must follow the mandatory compliance requirements specified below.**
 
-## Prime directive:
+
+## Prime directive
 
 Always comply with _A2G Framework Guidelines_, _Repository Guidelines_ and _AI operator_ instructions.
+
+
+## AI Agent Compliance Requirements
+
+All AI agents must:
+
+1. **Always** review A2G guidelines before starting any task
+2. **Always** follow A2G file placement decision tree
+3. **Always** check workflow mode in `.junie/a2g_config.yml`
+4. **Always** apply A2G task verb interpretation protocols
+
+See A2G general guidelines for complete procedures and requirements.
+
 
 ## Repository Organization
 
@@ -43,10 +60,12 @@ Always comply with _A2G Framework Guidelines_, _Repository Guidelines_ and _AI o
   `dockerized-norlab-project-mock` is a mock of how a user would install and uses DNA. We refer to this as a "super
   project" or the "user side."
 
+
 ## Repository Terminology
 
 - DNA: Is the acronym for _Dockerized-NorLab project application_
 - DN: Is the acronym for _Dockerized-NorLab_
+
 
 ## Repository Specific Additional Guidelines
 
