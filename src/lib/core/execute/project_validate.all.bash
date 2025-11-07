@@ -88,14 +88,14 @@ function dna::project_validate_all() {
   for each_compose in "${config_test_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a add_fct_flag=()
-    add_fct_flag+=("--override-build-cmd" "config")
-    add_fct_flag+=("--file" "${each_compose}")
+    add_fct_flag+=(--docker-cmd config)
+    add_fct_flag+=(--file "${each_compose}")
     declare -a config_flag=()
-    config_flag+=("--" "--dry-run")
+    config_flag+=(-- --dry-run)
     if [[ "${each_compose}" =~ .*".build.native.yaml" ]]; then
       dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".build.multiarch.yaml" ]]; then
-      add_fct_flag+=("--multiarch")
+      add_fct_flag+=(--multiarch)
       dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
     elif [[ "${each_compose}" =~ .*".run.slurm.yaml" ]]; then
       dna::excute_compose "${add_fct_flag[@]}" "${config_flag[@]}"
@@ -129,10 +129,10 @@ function dna::project_validate_all() {
   for each_compose in "${dryrun_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a add_fct_flag=()
-    add_fct_flag+=("--file" "${each_compose}")
+    add_fct_flag+=(--file "${each_compose}")
     add_fct_flag+=(--msg-line-level "${MSG_LINE_CHAR_BUILDER_LVL2}")
     declare -a build_flag=()
-    build_flag+=("--" "--dry-run")
+    build_flag+=(-- --dry-run)
 
     if [[ "${each_compose}" =~ .*".multiarch.yaml" ]]; then
       dna::build_services_multiarch "${add_fct_flag[@]}" "${build_flag[@]}"

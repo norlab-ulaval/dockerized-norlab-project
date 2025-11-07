@@ -135,14 +135,14 @@ function dna::build_services() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  build_docker_flag+=("${remaining_args[@]}")
+  build_docker_flag+=( --with-dependencies "${remaining_args[@]}")
 
   # ====Begin======================================================================================
 
   # ....Fetch service list.........................................................................
   if [[ "${services_names[0]}" == "none" ]]; then
     # shellcheck disable=SC2207
-    services_names=($(docker compose -f "${compose_path}/${the_compose_file}" config --services --no-interpolate))
+    services_names=($(dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd config -- --services --no-interpolate))
   fi
 
   n2st::print_msg "Building the following services"

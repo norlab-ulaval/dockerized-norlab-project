@@ -17,7 +17,6 @@ function dna::down_command() {
 
   # ....Begin......................................................................................
   n2st::print_msg "Stoping container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-  # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   n2st::set_which_architecture_and_os
   n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
@@ -39,7 +38,7 @@ function dna::down_command() {
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
-  docker compose -f "${compose_path}/${the_compose_file}" down "${remaining_args[@]}"
+  dna::excute_compose --verbosity 1 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd down -- "${remaining_args[@]}"
   exit_code=$?
 
   # ....Teardown...................................................................................

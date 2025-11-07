@@ -121,6 +121,8 @@ teardown() {
 }
 
 @test "assess execute with \"bash $TESTED_FILE\" › expect fail" {
+  # Note: This test is very slow sometime for unknown reason ⚠️
+
   run bash "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}"
 
   assert_failure

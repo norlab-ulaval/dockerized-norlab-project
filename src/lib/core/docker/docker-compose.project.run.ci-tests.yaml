@@ -1,9 +1,21 @@
 
 services:
 
+  project-develop:
+    extends:
+      service: project-develop
+      file: docker-compose.project.run.main.yaml
+
+  project-deploy:
+    extends:
+      service: project-deploy
+      file: docker-compose.project.run.main.yaml
+
   project-ci-tests:
+    extends:
+      service: project-ci-tests
+      file: docker-compose.project.run.main.yaml
     pull_policy: never # (Priority) ToDo: validate >> pull_policy: never
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
     environment:
       # -----------
       PYTHONUNBUFFERED: 0 # Slightly faster
@@ -47,3 +59,8 @@ services:
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
     runtime: ${DN_DOCKER_RUNTIME:-runc}
+
+  project-slurm:
+    extends:
+      service: project-slurm
+      file: docker-compose.project.run.main.yaml

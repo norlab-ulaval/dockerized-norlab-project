@@ -70,7 +70,7 @@ function dna::run_slurm_teardown_callback() {
   local the_compose_file=docker-compose.project.run.slurm.yaml
   local running_container_ids
   source "${DNA_LIB_PATH:?err}/core/utils/load_super_project_config.bash"
-  running_container_ids=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
+  running_container_ids=$(dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd ps -- --quiet --all --orphans=false)
   if [[ -n ${running_container_ids} ]]; then
     for each_id in "${running_container_ids[@]}"; do
       if [[ "${container_id}" == "${each_id}" ]]; then
@@ -220,7 +220,9 @@ function dna::run_slurm() {
   # ....Run container on MAMBA/SLURM...............................................................
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
-  compose_flags=("-f" "${compose_file_path}")
+  # shellcheck disable=SC2207
+  compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration" "${compose_file}" ) )
+  compose_flags=("-f" "${compose_file_path}" "${compose_override[@]}")
 
   declare -a docker_run=()
   docker_run+=("run" "--rm")

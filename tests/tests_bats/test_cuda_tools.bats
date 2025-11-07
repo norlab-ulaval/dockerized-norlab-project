@@ -55,7 +55,7 @@ setup_file() {
 setup() {
   # Source the import_dna_lib.bash to load N2ST and DNA libraries
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
-  
+
   # Source the file under test
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" || exit 1
   
@@ -69,7 +69,13 @@ setup() {
     # Suppress output during tests
     return 0
   }
-  export -f n2st::print_msg
+
+  # Mock dna::generate_super_project_compose_override_files_flags to suppress debug output during tests
+  function dna::generate_super_project_compose_override_files_flags() {
+    # Suppress output during tests
+    return 0
+  }
+  export -f dna::generate_super_project_compose_override_files_flags
 }
 
 # ====Teardown=====================================================================================

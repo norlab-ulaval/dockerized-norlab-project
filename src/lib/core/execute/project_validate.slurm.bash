@@ -108,7 +108,7 @@ function dna::project_validate_slurm() {
   for each_compose in "${config_test_compose_file_list[@]}"; do
     n2st::print_formated_script_header "Test ${MSG_DIMMED_FORMAT}${each_compose}${MSG_END_FORMAT} config" "\\" "${line_style}"
     declare -a add_fct_flag=()
-    add_fct_flag+=("--override-build-cmd" "config")
+    add_fct_flag+=("--docker-cmd" "config")
     add_fct_flag+=("--file" "${each_compose}")
     declare -a config_flag=()
     config_flag+=("--" "--dry-run")

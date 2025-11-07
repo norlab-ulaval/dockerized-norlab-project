@@ -101,7 +101,7 @@ $ dna version --config-scheme
 2
 $ cd dockerized-norlab-project/.dockerized_norlab
 $ cat .env.dockerized-norlab-project-mock | grep DNA_CONFIG_SCHEME_VERSION
-DNA_CONFIG_SCHEME_VERSION=2
+DNA_CONFIG_SCHEME_VERSION=3
 ```
 Note: Under the hood, that's one of the check performed by the command `dna project sanity`.
 

@@ -67,7 +67,7 @@ function dna::run_ci_tests() {
   docker_run_flag+=("${docker_run_args[@]}")
   docker_run_flag+=("${the_service}")
   docker_run_flag+=("${the_command[@]}")
-  dna::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "--" "${docker_run_flag[@]}"
+  dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${compose_file}" --docker-cmd run -- "${docker_run_flag[@]}"
   exit_code=$?
 
   if [[ ${exit_code} != 0 ]]; then

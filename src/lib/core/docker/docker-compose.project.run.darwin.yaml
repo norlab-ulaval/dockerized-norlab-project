@@ -1,65 +1,63 @@
+# ===============================================================================================
+#
+# Docker compose project run version for running on Apple M1 computer
+#
+# ===============================================================================================
+
+x-darwin-common: &darwin-common
+  entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
+  container_name: ${DN_CONTAINER_NAME:?err}
+  environment:
+    # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+    # DN_HOST: 'darwin/arm64'
+    DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
+    DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
+    DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
+    DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-false}
+    IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
+    NVIDIA_VISIBLE_DEVICES: void
+    NVIDIA_DRIVER_CAPABILITIES:
+    DISPLAY: ${DN_DISPLAY:-${DISPLAY:-""}}
+    QT_X11_NO_MITSHM: 1
+    XAUTHORITY: /tmp/.docker.xauth
+    TMP_TEST_OVERRIDE: false
+  env_file:
+    - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
+      required: true
+    - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
+      required: true
+    - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal.local
+      required: false
+    - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
+      required: true
+    - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
+      required: false
+  tty: true
+  stdin_open: true
+  privileged: false
+  security_opt:
+    - seccomp=unconfined
+    - apparmor=unconfined
+  cap_add:
+    - SYS_PTRACE
+  # Note: Port mapping on macosx is incompatible with network_mode: host
+  network_mode: bridge
+  ports:
+    - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh non-interactive-ros2
+    - ${DN_GDB_SERVER_PORT:-7777}:${DN_GDB_SERVER_PORT:-7777} # gdbserver
+  pid: host
+  ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
+  init: true  # Propagate exit code (See remark in task NMO-266)
+  runtime: ${DN_DOCKER_RUNTIME:-runc}
+  hostname: ${DN_DARWIN_HOSTNAME}
 
 services:
 
-  # ===============================================================================================
-  #
-  # Docker compose project run version for running on Apple M1 computer
-  #
-  # ===============================================================================================
-
-  project-core:
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core:${PROJECT_TAG:?err}
-    entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
-    container_name: ${DN_CONTAINER_NAME:?err}
-    environment:
-      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
-      # DN_HOST: 'darwin/arm64'
-      DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
-      DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
-      DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
-      DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-false}
-      IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
-      NVIDIA_VISIBLE_DEVICES: void
-      NVIDIA_DRIVER_CAPABILITIES:
-      DISPLAY: ${DN_DISPLAY:-${DISPLAY:-""}}
-      QT_X11_NO_MITSHM: 1
-      XAUTHORITY: /tmp/.docker.xauth
-    env_file:
-      - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
-        required: true
-      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal
-        required: true
-      - path: ${DNA_ROOT:?err}/src/lib/core/docker/.env.dna-internal.local
-        required: false
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env
-        required: true
-      - path: ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/.env.local
-        required: false
-    tty: true
-    stdin_open: true
-    privileged: false
-    security_opt:
-      - seccomp=unconfined
-      - apparmor=unconfined
-    cap_add:
-      - SYS_PTRACE
-    # Note: Port mapping on macosx is incompatible with network_mode: host
-    network_mode: bridge
-    ports:
-      - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh non-interactive-ros2
-      - ${DN_GDB_SERVER_PORT:-7777}:${DN_GDB_SERVER_PORT:-7777} # gdbserver
-      - ${DN_TENSORBOARD:-6006}:${DN_TENSORBOARD:-6006} # tensorboard
-      - ${DN_OPTUNA_DASHBOARD:-8888}:${DN_OPTUNA_DASHBOARD:-8888} # optuna-dashboard
-    pid: host
-    ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
-    init: true  # Propagate exit code (See remark in task NMO-266)
-    runtime: ${DN_DOCKER_RUNTIME:-runc}
-    hostname: ${DN_DARWIN_HOSTNAME}
-
   project-develop:
     extends:
-      service: project-core
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
+      service: project-develop
+      file: docker-compose.project.run.main.yaml
+    <<: *darwin-common
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -73,12 +71,11 @@ services:
       - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
       - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro
 
-
-
   project-deploy:
     extends:
-      service: project-core
-    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
+      service: project-deploy
+      file: docker-compose.project.run.main.yaml
+    <<: *darwin-common
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -89,3 +86,13 @@ services:
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
       - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
       - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro
+
+  project-ci-tests:
+    extends:
+      service: project-ci-tests
+      file: docker-compose.project.run.main.yaml
+
+  project-slurm:
+    extends:
+      service: project-slurm
+      file: docker-compose.project.run.main.yaml

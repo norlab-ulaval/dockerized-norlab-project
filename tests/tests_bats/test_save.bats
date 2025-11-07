@@ -130,7 +130,7 @@ export PROJECT_TAG="latest"
 export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/test/test-project.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNA_CONFIG_SCHEME_VERSION=2
+export DNA_CONFIG_SCHEME_VERSION=3
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF

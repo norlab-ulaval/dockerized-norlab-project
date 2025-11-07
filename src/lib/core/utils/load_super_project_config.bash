@@ -371,6 +371,52 @@ function dna::check_offline_deploy_service_discovery() {
     return 0
 }
 
+#==================================================================================================
+# Generates Docker Compose override file flags for a given compose file. Scan the COMPOSE_FILE_PATH
+# directory and seek for a "docker-compose.global.override.yaml" and a COMPOSE_FILE variation with
+# a ".override.yaml" post-fix instead of ".yaml".
+#
+# Usage:
+#   $ dna::generate_super_project_compose_override_files_flags COMPOSE_FILE_PATH COMPOSE_FILE
+#
+# Example:
+#   $ override_flags=$(dna::generate_super_project_compose_override_files_flags "services/api" "docker-compose.yaml")
+#   $ docker-compose -f services/api/docker-compose.yaml ${override_flags} up
+#   $ echo "${override_flags[*]}"
+#   -f services/api/docker-compose.global.override.yaml -f services/api/docker-compose.override.yaml
+#
+# Positional arguments:
+#   COMPOSE_FILE_PATH: Path relative to SUPER_PROJECT_ROOT where the compose file is located
+#   COMPOSE_FILE: Name of the compose file (e.g., docker-compose.yaml)
+#
+# Globals:
+#   Read SUPER_PROJECT_ROOT: Root directory of the super project
+#
+# Outputs:
+#   Writes to stdout: Space-separated list of -f flags for override files
+#
+# Returns:
+#   0: Always returns success
+#
+#==================================================================================================
+# (NICE TO HAVE) ToDo: unit-tests (ref task NMO-683), indirectly tested for now
+function dna::generate_super_project_compose_override_files_flags() {
+  local compose_file_path=$1
+  local compose_file=$2
+  local compose_global_override_path="${SUPER_PROJECT_ROOT:?err}/${compose_file_path}/docker-compose.global.override.yaml"
+  local compose_override_path="${SUPER_PROJECT_ROOT:?err}/${compose_file_path}/${compose_file/.yaml/.override.yaml}"
+  declare -a compose_override=()
+
+  if [[ -f ${compose_global_override_path} ]]; then
+    compose_override+=( -f "${compose_global_override_path}" )
+  fi
+  if [[ -f ${compose_override_path} ]]; then
+    compose_override+=( -f "${compose_override_path}" )
+  fi
+  echo "${compose_override[*]}"
+  return 0
+}
+
 # ::::Main:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dna_error_prefix="\033[1;31m[dna error]\033[0m"
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

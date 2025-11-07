@@ -14,13 +14,15 @@ DOCUMENTATION_DNA_EXECUTE_COMPOSE=$(
 #   $ bash execute_compose.bash [OPTIONS] [--] [<any-docker-flag>]
 #
 # Options:
-#   --override-build-cmd <docker_cmd>      To override the docker command
+#   --docker-cmd <docker_cmd>      To override the docker command
 #                                           (defaul: 'build')
 #   -f | --file "compose.yaml"             To override the docker compose file
 #                                           (default: "docker-compose.project.build.native.yaml")
 #   --compose-path "/path/to/compose/dir"  To override the compose file directory
 #   --multiarch
 #   --buildx-builder-name "name"           Default to "local-builder-multiarch-virtual"
+#   -v | --verbosity 3                     The level of verbosity, 0=None, 1=minimal, 2=minimal lines or 2=verbose
+#                                           (default: 3)
 #   --msg-line-level CHAR                  Set consol horizontal line character when used as a fct
 #   -h | --help
 #
@@ -35,7 +37,7 @@ DOCUMENTATION_DNA_EXECUTE_COMPOSE=$(
 EOF
 )
 
-# (CRITICAL) ToDo: unit-test
+# (CRITICAL) ToDo: unit-test, indirectly tested for now
 
 # ....Functions....................................................................................
 function dna::excute_compose() {
@@ -46,14 +48,16 @@ function dna::excute_compose() {
 
   # ....Set env variables (pre cli)................................................................
   local remaining_args=()
-  local docker_command_w_flags=()
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
   local the_compose_file="docker-compose.project.build.native.yaml"
   local multiarch=false
   local default_buildx_builder_name="local-builder-multiarch-virtual"
   local override_buildx_builder_name
-  local msg_line_level="${MSG_LINE_CHAR_BUILDER_LVL2}"
+  local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
   local line_style="${MSG_LINE_STYLE_LVL2}"
+  local verbosity=2
+  local dna_override_buildx=false
+  declare -a docker_command_w_flags=()
 
   # Note: The env var docker_cmd is required for using the script with 'push' or 'config' docker cmd
   local docker_cmd=build
@@ -73,9 +77,9 @@ function dna::excute_compose() {
   while [ $# -gt 0 ]; do
 
     case $1 in
-    --override-build-cmd)
+    --docker-cmd)
       docker_cmd="${2}"
-      shift # Remove argument (--override-build-cmd)
+      shift # Remove argument (--docker-cmd)
       shift # Remove argument value
       ;;
     -f | --file)
@@ -98,8 +102,13 @@ function dna::excute_compose() {
       shift # Remove argument value
       ;;
     --msg-line-level)
-      msg_line_level="${2}"
+      line_format="${2}"
       shift # Remove argument (--msg-line-level)
+      shift # Remove argument value CHAR
+      ;;
+    -v | --verbosity)
+      verbosity="${2}"
+      shift # Remove argument (-v | --verbosity)
       shift # Remove argument value CHAR
       ;;
     -h | --help)
@@ -121,110 +130,152 @@ function dna::excute_compose() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  docker_command_w_flags=("${docker_cmd}" "${remaining_args[@]}")
-  local dna_override_buildx=false
 
   # ====Begin======================================================================================
-  n2st::print_formated_script_header "dna::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${msg_line_level}" "${line_style}"
-
-  n2st::set_is_teamcity_run_environment_variable
-  n2st::set_which_architecture_and_os
-  n2st::print_msg "Host os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
-  n2st::print_msg "Multiarch build: ${multiarch}"
-  if [[ ${IS_TEAMCITY_RUN} == true ]]; then
-    n2st::print_msg "Is TeamCity CI/CD run: ${IS_TEAMCITY_RUN} ${TC_VERSION}"
+  if [[ ${verbosity} -eq 3 ]]; then
+    n2st::print_formated_script_header "dna::excute_compose ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${line_format}" "${line_style}"
   fi
 
-  if [[ -n ${override_buildx_builder_name} ]]; then
-    export BUILDX_BUILDER="${override_buildx_builder_name}"
-  elif [[ -z ${BUILDX_BUILDER} ]]; then
-    if [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == false ]]; then
-      # Note: Default to 'default' buildx builder (imply native host aarch) so that the build img
-      # be available in the local image store and that run executed via `up_and_attach.bash` doesn't
-      # require pulling built img from dockerhub.
-      if [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-        # Note: Do nothing since the new macOs docker context/builder behavior produce error when
-        # setting BUILDX_BUILDER to desktop-linux/default. See issue NMO-742 for details.
-        :
-      elif [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
-        # ToDo: assess if its now the same behavior as with MacOsX (ref task NMO-742)
+  if [[ ${docker_cmd} == "build" ]]; then
+    n2st::set_is_teamcity_run_environment_variable
+    n2st::set_which_architecture_and_os
+    if [[ ${verbosity} -ge 3 ]]; then
+      n2st::print_msg "Host os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
+      n2st::print_msg "Multiarch build: ${multiarch}"
+      if [[ ${IS_TEAMCITY_RUN} == true ]]; then
+        n2st::print_msg "Is TeamCity CI/CD run: ${IS_TEAMCITY_RUN} ${TC_VERSION}"
+      fi
+    fi
+
+    if [[ -n ${override_buildx_builder_name} ]]; then
+      export BUILDX_BUILDER="${override_buildx_builder_name}"
+    elif [[ -z ${BUILDX_BUILDER} ]]; then
+      if [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == false ]]; then
+        # Note: Default to 'default' buildx builder (imply native host aarch) so that the build img
+        # be available in the local image store and that run executed via `up_and_attach.bash` doesn't
+        # require pulling built img from dockerhub.
+        if [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
+          # Note: Do nothing since the new macOs docker context/builder behavior produce error when
+          # setting BUILDX_BUILDER to desktop-linux/default. See issue NMO-742 for details.
+          :
+        elif [[ $IMAGE_ARCH_AND_OS == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
+          # ToDo: assess if its now the same behavior as with MacOsX (ref task NMO-742)
+          export BUILDX_BUILDER=default
+          dna_override_buildx=true
+        fi
+      elif [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == true ]]; then
+        if [[ $(docker info -f '{{ .DriverStatus }}') =~ .*"driver-type io.containerd.snapshotter".* ]]; then
+          # Case containered snapshotter enableb
+          export BUILDX_BUILDER=default
+          if [[ ${verbosity} -ge 2 ]]; then
+            n2st::print_msg_warning "Containerd snapshoter enable, setting env var BUILDX_BUILDER=$BUILDX_BUILDER for $(basename "${BASH_SOURCE[1]}") execution."
+          fi
+        else
+          CURRENT_BUILDX_BUILDER=$(docker buildx inspect | grep -i -m 1 -e Name: | sed "s/^Name:[[:space:]]*//")
+          if [[ ${verbosity} -ge 1 ]]; then
+            n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
+          fi
+          if [[ "$CURRENT_BUILDX_BUILDER" =~ ^(desktop-linux|default)$ ]]; then
+            # Case containered snapshotter disableb and the docker builder is set to default i.e., non-multiarch capable
+            if [[ ${verbosity} -ge 3 ]]; then
+              n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "${BASH_SOURCE[1]}") execution."
+            fi
+            # Set builder for local execution
+            if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
+              if [[ ${verbosity} -ge 3 ]]; then
+                n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create a new one..."
+              fi
+              local dimmed_style
+              local resset_style
+              dimmed_style=$(tput dim)
+              resset_style=$(tput sgr0)
+              {
+                if [[ ${verbosity} -ge 2 ]]; then
+                  n2st::draw_horizontal_line_across_the_terminal_window "."
+                fi
+                source "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error "Failed to re-create docker buildx builder ${default_buildx_builder_name}!"
+                if [[ ${verbosity} -ge 2 ]]; then
+                  n2st::draw_horizontal_line_across_the_terminal_window "."
+                  echo
+                fi
+              } | sed "s/.*/${dimmed_style}&${resset_style}/"
+              if [[ ${verbosity} -ge 1 ]]; then
+                n2st::print_msg_done "New builder ${MSG_DIMMED_FORMAT}${default_buildx_builder_name}${MSG_END_FORMAT} created successfully."
+              fi
+            fi
+
+            export BUILDX_BUILDER="${default_buildx_builder_name}"
+          else
+            if [[ ${verbosity} -ge 1 ]]; then
+              n2st::print_msg "Current builder ${CURRENT_BUILDX_BUILDER} is non-default -> dna assume that you know what you are know doing."
+            fi
+            :
+          fi
+        fi
+
+        dna_override_buildx=true
+
+      elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == false ]]; then
+        # Case TC native-architecture: Run build on native single arch builder. Required for build.all.bash
         export BUILDX_BUILDER=default
         dna_override_buildx=true
+      elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == true ]]; then
+        # Case TC multi-architecture: Run build on muti-arch builder. Required for build.all.multiarch.bash
+        # Pass as TC is responsible for setting the buildx builder
+        :
       fi
-    elif [[ ${IS_TEAMCITY_RUN} == false ]] && [[ ${multiarch} == true ]]; then
-      if [[ $(docker info -f '{{ .DriverStatus }}') =~ .*"driver-type io.containerd.snapshotter".* ]]; then
-        # Case containered snapshotter enableb
-        export BUILDX_BUILDER=default
-        n2st::print_msg_warning "Containerd snapshoter enable, setting env var BUILDX_BUILDER=$BUILDX_BUILDER for $(basename "${BASH_SOURCE[1]}") execution."
+    fi
+
+    # Note: The 'docker buildx inspect --bootstrap name' is to force builder initialisation
+    if ! docker buildx inspect --bootstrap "${BUILDX_BUILDER}" &> /dev/null; then
+      if [[ ${verbosity} -ge 1 ]]; then
+        n2st::print_msg_error "Can't find the selected docker buildx builder ${MSG_DIMMED_FORMAT}${BUILDX_BUILDER}${MSG_END_FORMAT}.
+  Please investigate available ones and set explicitly using the following commands
+
+    Check available builders: ${MSG_DIMMED_FORMAT}$ docker buildx ls${MSG_END_FORMAT}
+    Optiona 1) Manualy override builder: ${MSG_DIMMED_FORMAT}$ export BUILDX_BUILDER=<the-builder-name>${MSG_END_FORMAT}
+    Optiona 2) Set builder via buildx command: ${MSG_DIMMED_FORMAT}$ docker buildx use <the-builder-name>${MSG_END_FORMAT}
+
+  Exiting now!
+  "
+      fi
+      return 1
+    fi
+    if [[ ${verbosity} -ge 1 ]]; then
+      if [[ -n ${BUILDX_BUILDER} ]]; then
+        n2st::print_msg "BUILDX_BUILDER set to ${BUILDX_BUILDER}"
       else
-        CURRENT_BUILDX_BUILDER=$(docker buildx inspect | grep -i -m 1 -e Name: | sed "s/^Name:[[:space:]]*//")
-        n2st::print_msg "Current buildx builder: ${CURRENT_BUILDX_BUILDER}"
-        if [[ "$CURRENT_BUILDX_BUILDER" =~ ^(desktop-linux|default)$ ]]; then
-          # Case containered snapshotter disableb and the docker builder is set to default i.e., non-multiarch capable
-          n2st::print_msg_warning "Setting env var BUILDX_BUILDER=${default_buildx_builder_name:?err} for $(basename "${BASH_SOURCE[1]}") execution."
-          # Set builder for local execution
-          if ! docker buildx inspect --bootstrap "${default_buildx_builder_name}" &> /dev/null ; then
-            n2st::print_msg "Can't find docker buildx builder ${default_buildx_builder_name}, create a new one..."
-            local dimmed_style
-            local resset_style
-            dimmed_style=$(tput dim)
-            resset_style=$(tput sgr0)
-            {
-              n2st::draw_horizontal_line_across_the_terminal_window "."
-              source "${DNA_ROOT:?err}/src/lib/core/utils/buildx_builder.bash" "${default_buildx_builder_name}" || n2st::print_msg_error "Failed to re-create docker buildx builder ${default_buildx_builder_name}!"
-              n2st::draw_horizontal_line_across_the_terminal_window "."
-              echo
-            } | sed "s/.*/${dimmed_style}&${resset_style}/"
-            n2st::print_msg_done "New builder ${MSG_DIMMED_FORMAT}${default_buildx_builder_name}${MSG_END_FORMAT} created successfully."
-          fi
-
-          export BUILDX_BUILDER="${default_buildx_builder_name}"
-        else
-          n2st::print_msg "Current builder ${CURRENT_BUILDX_BUILDER} is non-default -> dna assume that you know what you are know doing."
-          :
-        fi
+        n2st::print_msg "No buildx builder override."
       fi
-
-      dna_override_buildx=true
-
-    elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == false ]]; then
-      # Case TC native-architecture: Run build on native single arch builder. Required for build.all.bash
-      export BUILDX_BUILDER=default
-      dna_override_buildx=true
-    elif [[ ${IS_TEAMCITY_RUN} == true ]] && [[ ${multiarch} == true ]]; then
-      # Case TC multi-architecture: Run build on muti-arch builder. Required for build.all.multiarch.bash
-      # Pass as TC is responsible for setting the buildx builder
-      :
     fi
   fi
 
-  # Note: The 'docker buildx inspect --bootstrap name' is to force builder initialisation
-  if ! docker buildx inspect --bootstrap "${BUILDX_BUILDER}" &> /dev/null; then
-    n2st::print_msg_error "Can't find the selected docker buildx builder ${MSG_DIMMED_FORMAT}${BUILDX_BUILDER}${MSG_END_FORMAT}.
-Please investigate available ones and set explicitly using the following commands
-
-  Check available builders: ${MSG_DIMMED_FORMAT}$ docker buildx ls${MSG_END_FORMAT}
-  Optiona 1) Manualy override builder: ${MSG_DIMMED_FORMAT}$ export BUILDX_BUILDER=<the-builder-name>${MSG_END_FORMAT}
-  Optiona 2) Set builder via buildx command: ${MSG_DIMMED_FORMAT}$ docker buildx use <the-builder-name>${MSG_END_FORMAT}
-
-Exiting now!
-"
-    return 1
-  fi
-  if [[ -n ${BUILDX_BUILDER} ]]; then
-    n2st::print_msg "BUILDX_BUILDER set to ${BUILDX_BUILDER}"
-  else
-    n2st::print_msg "No buildx builder override."
-  fi
-
   # ....Execute....................................................................................
+  if [[ ${DNA_DEBUG} == true ]]; then
+    #docker_command_w_flags+=( --debug )
+    docker_command_w_flags+=( --log-level debug )
+  fi
+  docker_command_w_flags+=( -f "${compose_path}/${the_compose_file}")
+
+  # shellcheck disable=SC2207
+  compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration" "${compose_file}" ) )
+  docker_command_w_flags+=("${compose_override[@]}")
+  docker_command_w_flags+=("${docker_cmd}" "${remaining_args[@]}")
+
   # (Priority) ToDo: validate >> changes to next bloc ↓↓ does'nt break TeamCity build
-  local docker_cmd_str="${MSG_DIMMED_FORMAT}docker compose --file ${compose_path}/${the_compose_file} ${docker_command_w_flags[*]}${MSG_END_FORMAT}"
-  n2st::print_msg "Execute ${docker_cmd_str}\n"
-  n2st::teamcity_service_msg_blockOpened "$ docker compose --file ${compose_path}/${the_compose_file} ${docker_command_w_flags[*]}"
+  local docker_cmd_str="${MSG_DIMMED_FORMAT}docker compose ${docker_command_w_flags[*]}${MSG_END_FORMAT}"
+  if [[ ${verbosity} -ge 1 ]]; then
+    n2st::print_msg "Execute ${docker_cmd_str}"
+  fi
+
+  if [[ ${verbosity} -eq 3 ]]; then
+    n2st::teamcity_service_msg_blockOpened "$ docker compose ${docker_command_w_flags[*]}"
+  elif [[ ${verbosity} -eq 2 ]]; then
+    n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
+  fi
 
   # Refactor using "n2st::show_and_execute_docker" (See ref NMO-575)
-  docker compose --file "${compose_path}/${the_compose_file}" "${docker_command_w_flags[@]}"
+  docker compose "${docker_command_w_flags[@]}"
   local docker_exit_code=$?
   # Ref on docker exit codes: https://komodor.com/learn/exit-codes-in-containers-and-kubernetes-the-complete-guide/
 
@@ -232,16 +283,20 @@ Exiting now!
     unset BUILDX_BUILDER
   fi
 
-  n2st::teamcity_service_msg_blockClosed
-  echo
-  if [[ ${docker_exit_code} == 0 ]]; then
-    n2st::print_msg_done "Completed ${docker_cmd_str} succesfuly 👍"
-  else
-    n2st::print_msg_error "Completed ${docker_cmd_str} with error ⚠️ "
+  if [[ ${verbosity} -eq 3 ]]; then
+    n2st::teamcity_service_msg_blockClosed
+    echo
+    if [[ ${docker_exit_code} == 0 ]]; then
+      n2st::print_msg_done "Completed ${docker_cmd_str} succesfuly 👍"
+    else
+      n2st::print_msg_error "Completed ${docker_cmd_str} with error ⚠️ "
+    fi
   fi
 
   # ....Teardown...................................................................................
-  n2st::print_formated_script_footer "dna::excute_compose" "${msg_line_level}" "${line_style}"
+  if [[ ${verbosity} -eq 3 ]]; then
+    n2st::print_formated_script_footer "dna::excute_compose" "${line_format}" "${line_style}"
+  fi
   cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error" && exit 1; }
   return ${docker_exit_code}
 }

@@ -1,0 +1,21 @@
+services:
+
+  project-develop:
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
+    profiles:
+      - develop
+
+  project-deploy:
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-deploy:${PROJECT_TAG:?err}
+    profiles:
+      - deploy
+
+  project-ci-tests:
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-ci-tests:${PROJECT_TAG:?err}
+    profiles:
+      - ci-tests
+
+  project-slurm:
+    image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-slurm:${PROJECT_TAG:?err}
+    profiles:
+      - slurm
