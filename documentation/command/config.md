@@ -268,7 +268,7 @@ services:
     image: project/develop:latest
     build:
       context: .
-      dockerfile: .dockerized_norlab/configuration/Dockerfile
+      dockerfile: .dockerized_norlab/configuration/Dockerfile.project-core-user
       target: develop-stage
     environment:
       - ROS_DISTRO=humble

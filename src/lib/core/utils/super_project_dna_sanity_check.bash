@@ -112,7 +112,7 @@ function dna::check_project_configuration() {
   test -f ".env.dna" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || dna::print_msg_error_and_return "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.local' file is not installed as required!"
-  test -f "Dockerfile" || dna::print_msg_error_and_return "The '${test_dir_path}/Dockerfile' file is not installed as required!"
+  test -f "Dockerfile.project-core-user" || dna::print_msg_error_and_return "The '${test_dir_path}/Dockerfile.project-core-user' file is not installed as required!"
 }
 
 function dna::check_project_entrypoints() {

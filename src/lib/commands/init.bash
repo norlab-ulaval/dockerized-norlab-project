@@ -223,7 +223,7 @@ ${MSG_DIMMED_FORMAT}
      │   ├── configuration/                       ← Main configuration files
      │   │   ├── project_entrypoints/             ← Container startup scripts
      │   │   ├── project_requirements/            ← Dependency specifications
-     │   │   ├── Dockerfile                       ← Container build instructions
+     │   │   ├── Dockerfile.project-core-user          ← Container build instructions
      │   │   ├── .env.dna                         ← DNA-specific env variables
      │   │   ├── .env                             ← Project-specific env variables
      │   │   ├── .env.local                       ← Local env variables overrides

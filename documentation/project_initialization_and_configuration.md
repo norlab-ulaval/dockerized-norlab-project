@@ -60,7 +60,7 @@ your-project-repository/
 │   ├── configuration/                  ← Main configuration files
 │   │   ├── project_entrypoints/        ← Container startup scripts
 │   │   ├── project_requirements/       ← Dependency specifications
-│   │   ├── Dockerfile                  ← Container build instructions
+│   │   ├── Dockerfile.project-core-user     ← Container build instructions
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
 │   │   ├── .env.local                  ← Local env variables overrides
@@ -191,7 +191,7 @@ VERBOSE_LOGGING=true
 
 There is three method for configuring container in DNA. In execution order:
 
-1. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for
+1. using the `Dockerfile.project-core-user` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for
    details)
 2. using shell script file `shell.requirements-dna.bash`
 3. via `pip` using python requirement file `python.requirements-dna.txt`
@@ -237,7 +237,7 @@ Specify DNA container specific shell dependencies in
 
 #### Dockerfile Customization
 
-The generated `.dockerized_norlab/configuration/Dockerfile` can be customized for your specific needs.
+The generated `.dockerized_norlab/configuration/Dockerfile.project-core-user` can be customized for your specific needs.
 Use cases:
 
 - leveraging the [Docker build cache](https://docs.docker.com/build/cache/) layer mechanism for minimizing build time;

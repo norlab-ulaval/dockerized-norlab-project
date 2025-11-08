@@ -63,7 +63,7 @@ services:
       service: project-core-pre
     build:
       context: ${SUPER_PROJECT_ROOT:?err}
-      dockerfile: ".dockerized_norlab/configuration/Dockerfile"
+      dockerfile: ".dockerized_norlab/configuration/Dockerfile.project-core-user"
       args:
         BASE_IMAGE: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-core-pre
         BASE_IMAGE_TAG: ${PROJECT_TAG:?err}

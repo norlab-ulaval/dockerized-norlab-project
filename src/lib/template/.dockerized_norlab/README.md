@@ -11,7 +11,7 @@ Check [DNA documentation](https://github.com/norlab-ulaval/dockerized-norlab-pro
    - Customize files in `project_requirements/`;
    - Customize files in `project_entrypoints/`. Add
       project-specific container runtime logic;
-   - Customize `Dockerfile` to fit your need. It should work out of the box for most use cases;
+   - Customize `Dockerfile.project-core-user` to fit your need. It should work out of the box for most use cases;
    - Check `.dockerized_norlab/configuration/README.md` for more details.
 2. From your project `root`, execute the following
    ```shell

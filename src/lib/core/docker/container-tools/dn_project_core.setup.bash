@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================================================
 # Dockerized-NorLab project-core image setup script i.e., user configuration install steps.
-# Is executed by '.dockerized_norlab/configuration/Dockerfile' in a DN project image
+# Is executed by '.dockerized_norlab/configuration/Dockerfile.project-core-user' in a DN project image
 #
 # Usage:
 #   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_core.setup.bash
