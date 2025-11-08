@@ -36,7 +36,7 @@ DOCUMENTATION_BUFFER_UP=$( cat <<'EOF'
 #   $ dna up --workdir "/" -- bash -c 'tree -L 1 -a $(pwd)'
 #
 # Notes:
-#   • spin a specific service from 'docker-compose.project.run.<DEVICE>.yaml'.
+#   • spin a specific service from 'docker-compose.run.<DEVICE>.yaml'.
 #   • device and architecture specific docker-compose config are automaticaly
 #     selected at runtime.
 #   • service(s) are started in daemon mode so that when you exit the attached

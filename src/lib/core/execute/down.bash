@@ -27,11 +27,11 @@ function dna::down_command() {
   compose_path=".dockerized_norlab/configuration"
 
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then
-    the_compose_file=docker-compose.project.run.jetson.yaml
+    the_compose_file=docker-compose.run.jetson.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-    the_compose_file=docker-compose.project.run.darwin.yaml
+    the_compose_file=docker-compose.run.darwin.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
-    the_compose_file=docker-compose.project.run.linux-x86.yaml
+    the_compose_file=docker-compose.run.linux-x86.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else

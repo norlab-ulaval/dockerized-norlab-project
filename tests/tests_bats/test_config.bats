@@ -64,13 +64,13 @@ return 0
 EOF
 
   # Create mock docker compose files
-  for compose_file in "docker-compose.project.build.native.yaml" \
-                      "docker-compose.project.build.multiarch.yaml" \
-                      "docker-compose.project.run.darwin.yaml" \
-                      "docker-compose.project.run.linux-x86.yaml" \
-                      "docker-compose.project.run.jetson.yaml" \
-                      "docker-compose.project.run.ci-tests.yaml" \
-                      "docker-compose.project.run.slurm.yaml"; do
+  for compose_file in "docker-compose.build.native.yaml" \
+                      "docker-compose.build.multiarch.yaml" \
+                      "docker-compose.run.darwin.yaml" \
+                      "docker-compose.run.linux-x86.yaml" \
+                      "docker-compose.run.jetson.yaml" \
+                      "docker-compose.run.ci-tests.yaml" \
+                      "docker-compose.run.slurm.yaml"; do
     cat > "${MOCK_DNA_DIR}/src/lib/core/docker/${compose_file}" << 'EOF'
 version: '3.8'
 services:
@@ -220,7 +220,7 @@ teardown_file() {
 
 @test "dna::config_command build-core › expect native build config with correct services" {
   # Test case: When config command is called with build-core mode, it should use native build config with core services
-  # Expected behavior: Uses docker-compose.project.build.native.yaml with project-core-pre, project-core-user, project-core services
+  # Expected behavior: Uses docker-compose.build.native.yaml with project-core-pre, project-core-user, project-core services
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command build-core"
 
   # Should succeed
@@ -230,16 +230,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build-core mode configuration from docker-compose.project.build.native.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build-core mode configuration from docker-compose.build.native.yaml"
 
   # Should call docker compose config with correct file and services
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml config"
   assert_output --partial "project-core-pre project-core-user project-core"
 }
 
 @test "dna::config_command build-core-ma › expect multiarch build config with correct services" {
   # Test case: When config command is called with build-core-ma mode, it should use multiarch build config with core services
-  # Expected behavior: Uses docker-compose.project.build.multiarch.yaml with project-core-pre, project-core-user, project-core services
+  # Expected behavior: Uses docker-compose.build.multiarch.yaml with project-core-pre, project-core-user, project-core services
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command build-core-ma"
 
   # Should succeed
@@ -249,16 +249,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build-core-ma mode configuration from docker-compose.project.build.multiarch.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build-core-ma mode configuration from docker-compose.build.multiarch.yaml"
 
   # Should call docker compose config with correct file and services
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.multiarch.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.multiarch.yaml config"
   assert_output --partial "project-core-pre project-core-user project-core"
 }
 
 @test "dna::config_command build › expect native build config for all services" {
   # Test case: When config command is called with build mode, it should use native build config for all services
-  # Expected behavior: Uses docker-compose.project.build.native.yaml for all services
+  # Expected behavior: Uses docker-compose.build.native.yaml for all services
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command build"
 
   # Should succeed
@@ -268,15 +268,15 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.project.build.native.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.build.native.yaml"
 
   # Should call docker compose config with correct file
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml config"
 }
 
 @test "dna::config_command build-ma › expect multiarch build config for all services" {
   # Test case: When config command is called with build-ma mode, it should use multiarch build config for all services
-  # Expected behavior: Uses docker-compose.project.build.multiarch.yaml for all services
+  # Expected behavior: Uses docker-compose.build.multiarch.yaml for all services
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command build-ma"
 
   # Should succeed
@@ -286,17 +286,17 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build-ma mode configuration from docker-compose.project.build.multiarch.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build-ma mode configuration from docker-compose.build.multiarch.yaml"
 
   # Should call docker compose config with correct file
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.multiarch.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.multiarch.yaml config"
 }
 
 # ....Development mode tests with platforms.......................................................
 
 @test "dna::config_command dev › expect linux development config by default" {
   # Test case: When config command is called with dev mode without platform, it should use linux config
-  # Expected behavior: Uses docker-compose.project.run.linux-x86.yaml with project-develop service
+  # Expected behavior: Uses docker-compose.run.linux-x86.yaml with project-develop service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command dev"
 
   # Should succeed
@@ -306,16 +306,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.project.run.linux-x86.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.run.linux-x86.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.linux-x86.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.linux-x86.yaml config"
   assert_output --partial "project-develop"
 }
 
 @test "dna::config_command dev darwin › expect darwin development config" {
   # Test case: When config command is called with dev mode and darwin platform, it should use darwin config
-  # Expected behavior: Uses docker-compose.project.run.darwin.yaml with project-develop service
+  # Expected behavior: Uses docker-compose.run.darwin.yaml with project-develop service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command dev darwin"
 
   # Should succeed
@@ -325,16 +325,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.project.run.darwin.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.run.darwin.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.darwin.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.darwin.yaml config"
   assert_output --partial "project-develop"
 }
 
 @test "dna::config_command dev linux › expect linux development config" {
   # Test case: When config command is called with dev mode and linux platform, it should use linux config
-  # Expected behavior: Uses docker-compose.project.run.linux-x86.yaml with project-develop service
+  # Expected behavior: Uses docker-compose.run.linux-x86.yaml with project-develop service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command dev linux"
 
   # Should succeed
@@ -344,16 +344,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.project.run.linux-x86.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.run.linux-x86.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.linux-x86.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.linux-x86.yaml config"
   assert_output --partial "project-develop"
 }
 
 @test "dna::config_command dev jetson › expect jetson development config" {
   # Test case: When config command is called with dev mode and jetson platform, it should use jetson config
-  # Expected behavior: Uses docker-compose.project.run.jetson.yaml with project-develop service
+  # Expected behavior: Uses docker-compose.run.jetson.yaml with project-develop service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command dev jetson"
 
   # Should succeed
@@ -363,10 +363,10 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.project.run.jetson.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing dev mode configuration from docker-compose.run.jetson.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.jetson.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.jetson.yaml config"
   assert_output --partial "project-develop"
 }
 
@@ -374,7 +374,7 @@ teardown_file() {
 
 @test "dna::config_command deploy › expect linux deployment config by default" {
   # Test case: When config command is called with deploy mode without platform, it should use linux config
-  # Expected behavior: Uses docker-compose.project.run.linux-x86.yaml with project-deploy service
+  # Expected behavior: Uses docker-compose.run.linux-x86.yaml with project-deploy service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command deploy"
 
   # Should succeed
@@ -384,16 +384,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing deploy mode configuration from docker-compose.project.run.linux-x86.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing deploy mode configuration from docker-compose.run.linux-x86.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.linux-x86.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.linux-x86.yaml config"
   assert_output --partial "project-deploy"
 }
 
 @test "dna::config_command deploy darwin › expect darwin deployment config" {
   # Test case: When config command is called with deploy mode and darwin platform, it should use darwin config
-  # Expected behavior: Uses docker-compose.project.run.darwin.yaml with project-deploy service
+  # Expected behavior: Uses docker-compose.run.darwin.yaml with project-deploy service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command deploy darwin"
 
   # Should succeed
@@ -403,16 +403,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing deploy mode configuration from docker-compose.project.run.darwin.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing deploy mode configuration from docker-compose.run.darwin.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.darwin.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.darwin.yaml config"
   assert_output --partial "project-deploy"
 }
 
 @test "dna::config_command deploy jetson › expect jetson deployment config" {
   # Test case: When config command is called with deploy mode and jetson platform, it should use jetson config
-  # Expected behavior: Uses docker-compose.project.run.jetson.yaml with project-deploy service
+  # Expected behavior: Uses docker-compose.run.jetson.yaml with project-deploy service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command deploy jetson"
 
   # Should succeed
@@ -422,10 +422,10 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing deploy mode configuration from docker-compose.project.run.jetson.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing deploy mode configuration from docker-compose.run.jetson.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.jetson.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.jetson.yaml config"
   assert_output --partial "project-deploy"
 }
 
@@ -433,7 +433,7 @@ teardown_file() {
 
 @test "dna::config_command ci-tests › expect ci-tests configuration" {
   # Test case: When config command is called with ci-tests mode, it should use ci-tests config
-  # Expected behavior: Uses docker-compose.project.run.ci-tests.yaml with project-ci-tests service
+  # Expected behavior: Uses docker-compose.run.ci-tests.yaml with project-ci-tests service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command ci-tests"
 
   # Should succeed
@@ -443,16 +443,16 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing ci-tests mode configuration from docker-compose.project.run.ci-tests.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing ci-tests mode configuration from docker-compose.run.ci-tests.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.ci-tests.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.ci-tests.yaml config"
   assert_output --partial "project-ci-tests"
 }
 
 @test "dna::config_command slurm › expect slurm configuration" {
   # Test case: When config command is called with slurm mode, it should use slurm config
-  # Expected behavior: Uses docker-compose.project.run.slurm.yaml with project-slurm service
+  # Expected behavior: Uses docker-compose.run.slurm.yaml with project-slurm service
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/config.bash && dna::config_command slurm"
 
   # Should succeed
@@ -462,10 +462,10 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing slurm mode configuration from docker-compose.project.run.slurm.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing slurm mode configuration from docker-compose.run.slurm.yaml"
 
   # Should call docker compose config with correct file and service
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.run.slurm.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.run.slurm.yaml config"
   assert_output --partial "project-slurm"
 }
 
@@ -498,10 +498,10 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.project.build.native.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.build.native.yaml"
 
   # Should call docker buildx bake instead of compose config
-  assert_output --partial "Mock docker command called with args: buildx bake --file docker-compose.project.build.native.yaml --print"
+  assert_output --partial "Mock docker command called with args: buildx bake --file docker-compose.build.native.yaml --print"
 }
 
 @test "dna::config_command dev --bake › expect warning about pointless bake with non-build mode" {
@@ -531,10 +531,10 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.project.build.native.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.build.native.yaml"
 
   # Should call docker compose build --print
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml build --print"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml build --print"
 }
 
 @test "dna::config_command deploy --compose-to-bake › expect warning about pointless compose-to-bake with non-build mode" {
@@ -567,7 +567,7 @@ teardown_file() {
   refute_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration"
 
   # Should call docker compose config
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml config"
 }
 
 @test "dna::config_command build -q › expect no dna messages, only docker command output" {
@@ -585,7 +585,7 @@ teardown_file() {
   refute_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration"
 
   # Should call docker compose config
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml config"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml config"
 }
 
 # ....Docker flags passthrough tests..............................................................
@@ -602,10 +602,10 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.project.build.native.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.build.native.yaml"
 
   # Should call docker compose config with additional flags
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml config --services"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml config --services"
 }
 
 @test "dna::config_command build --no-interpolate › expect docker flags passed through without separator" {
@@ -620,8 +620,8 @@ teardown_file() {
   assert_output --partial "Mock load_super_project_config.bash loaded"
 
   # Should show configuration message
-  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.project.build.native.yaml"
+  assert_output --partial "Mock n2st::print_msg called with args: Showing build mode configuration from docker-compose.build.native.yaml"
 
   # Should call docker compose config with additional flags
-  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.project.build.native.yaml config --no-interpolate"
+  assert_output --partial "Mock docker command called with args: compose --file ${DNA_LIB_PATH}/core/docker/docker-compose.build.native.yaml config --no-interpolate"
 }

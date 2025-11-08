@@ -17,7 +17,7 @@ DOCUMENTATION_DNA_EXECUTE_COMPOSE=$(
 #   --docker-cmd <docker_cmd>      To override the docker command
 #                                           (defaul: 'build')
 #   -f | --file "compose.yaml"             To override the docker compose file
-#                                           (default: "docker-compose.project.build.native.yaml")
+#                                           (default: "docker-compose.build.native.yaml")
 #   --compose-path "/path/to/compose/dir"  To override the compose file directory
 #   --multiarch
 #   --buildx-builder-name "name"           Default to "local-builder-multiarch-virtual"
@@ -49,7 +49,7 @@ function dna::excute_compose() {
   # ....Set env variables (pre cli)................................................................
   local remaining_args=()
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  local the_compose_file="docker-compose.project.build.native.yaml"
+  local the_compose_file="docker-compose.build.native.yaml"
   local multiarch=false
   local default_buildx_builder_name="local-builder-multiarch-virtual"
   local override_buildx_builder_name

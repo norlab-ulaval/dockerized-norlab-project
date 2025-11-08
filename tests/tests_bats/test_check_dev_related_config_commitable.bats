@@ -136,40 +136,40 @@ This entry is required, MAKE SURE ITS SET TO THE EXPECTED VALUE for PUSH TO CI B
 # ====Test casses==================================================================================
 
 # ....docker-compose tests.........................................................................
-@test "check dev configs are muted in docker-compose.project.build.native.yaml › expect pass" {
-  helper::setup_compose_related_tests "docker-compose.project.build.native.yaml" "${TESTED_FILE_PATH}"
-  assert_file_exist "docker-compose.project.build.native.yaml"
-  assert_file_not_contains "docker-compose.project.build.native.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+@test "check dev configs are muted in docker-compose.build.native.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.build.native.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.build.native.yaml"
+  assert_file_not_contains "docker-compose.build.native.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
-@test "check dev configs are muted in docker-compose.project.run.darwin.yaml › expect pass" {
-  helper::setup_compose_related_tests "docker-compose.project.run.darwin.yaml" "${TESTED_FILE_PATH}"
-  assert_file_exist "docker-compose.project.run.darwin.yaml"
-  assert_file_not_contains "docker-compose.project.run.darwin.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+@test "check dev configs are muted in docker-compose.run.darwin.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.run.darwin.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.run.darwin.yaml"
+  assert_file_not_contains "docker-compose.run.darwin.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
-@test "check dev configs are muted in docker-compose.project.run.jetson.yaml › expect pass" {
-  helper::setup_compose_related_tests "docker-compose.project.run.jetson.yaml" "${TESTED_FILE_PATH}"
-  assert_file_exist "docker-compose.project.run.jetson.yaml"
-  assert_file_not_contains "docker-compose.project.run.jetson.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+@test "check dev configs are muted in docker-compose.run.jetson.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.run.jetson.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.run.jetson.yaml"
+  assert_file_not_contains "docker-compose.run.jetson.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
-@test "check dev configs are muted in docker-compose.project.run.linux-x86.yaml › expect pass" {
-  helper::setup_compose_related_tests "docker-compose.project.run.linux-x86.yaml" "${TESTED_FILE_PATH}"
-  assert_file_exist "docker-compose.project.run.linux-x86.yaml"
-  assert_file_not_contains "docker-compose.project.run.linux-x86.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+@test "check dev configs are muted in docker-compose.run.linux-x86.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.run.linux-x86.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.run.linux-x86.yaml"
+  assert_file_not_contains "docker-compose.run.linux-x86.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
-@test "check dev configs are muted in docker-compose.project.run.slurm.yaml › expect pass" {
-  helper::setup_compose_related_tests "docker-compose.project.run.slurm.yaml" "${TESTED_FILE_PATH}"
-  assert_file_exist "docker-compose.project.run.slurm.yaml"
-  assert_file_not_contains "docker-compose.project.run.slurm.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+@test "check dev configs are muted in docker-compose.run.slurm.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.run.slurm.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.run.slurm.yaml"
+  assert_file_not_contains "docker-compose.run.slurm.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
-@test "check dev configs are muted in docker-compose.project.run.ci-tests.yaml › expect pass" {
-  helper::setup_compose_related_tests "docker-compose.project.run.ci-tests.yaml" "${TESTED_FILE_PATH}"
-  assert_file_exist "docker-compose.project.run.ci-tests.yaml"
-  assert_file_not_contains "docker-compose.project.run.ci-tests.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
+@test "check dev configs are muted in docker-compose.run.ci-tests.yaml › expect pass" {
+  helper::setup_compose_related_tests "docker-compose.run.ci-tests.yaml" "${TESTED_FILE_PATH}"
+  assert_file_exist "docker-compose.run.ci-tests.yaml"
+  assert_file_not_contains "docker-compose.run.ci-tests.yaml" "DN_ENTRYPOINT_TRACE_EXECUTION: true"
 }
 
 # ....dotenv tests.................................................................................

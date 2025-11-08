@@ -2,7 +2,7 @@
 DOCUMENTATION_BUILD_DEPLOY=$(
                               cat << 'EOF'
 # =================================================================================================
-# Build deploy images specified in docker-compose.project.build.native.yaml
+# Build deploy images specified in docker-compose.build.native.yaml
 #
 # Usage:
 #   $ bash build.deploy.bash [--push] [<any-build.all-argument>] [--] [<any-docker-flag>]

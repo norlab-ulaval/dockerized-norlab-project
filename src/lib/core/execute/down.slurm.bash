@@ -25,7 +25,7 @@ function dna::down_slurm() {
 
   # ....Device specific config.......................................................................
   compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  the_compose_file=docker-compose.project.run.slurm.yaml
+  the_compose_file=docker-compose.run.slurm.yaml
 
   container_id=$(dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd ps -- --quiet --all --orphans=false)
   if [[ -n ${container_id} ]]; then

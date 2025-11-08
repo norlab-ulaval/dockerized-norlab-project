@@ -1,38 +1,17 @@
 # =================================================================================================
-# Docker compose project run version for running on an x86 linux workstation
-# Requirements:
-#   1. Nvidia driver are installed. See https://www.nvidia.com/Download/index.aspx
-#   2. Install nvidia-container-toolkit.
-#       See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
-#   3. Setup GPU access during build
-#       See https://saturncloud.io/blog/how-to-use-gpu-from-a-docker-container-a-guide-for-data-scientists-and-software-engineers
-#         at section "utilizing-a-gpu-during-docker-build"
-#       i.e. $ vim /etc/docker/daemon.json
-#             {
-#               "runtimes": {
-#                 "nvidia": {
-#                   "path": "/usr/bin/nvidia-container-runtime",
-#                   "runtimeArgs": []
-#                 }
-#               }
-#               "default-runtime": "nvidia",
-#             }
-#            $ systemctl restart docker
 #
-#        If you want to launch containers without accessing the NVIDIA runtime, you’ll have to specify it when running the
-#         container using the --runtime flag (for example: docker run --runtime=runc ...)
-#
-# Ref Nvidia container toolkit:
-#   - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
+# Docker compose project run version for running on Jetson devices
 #
 # =================================================================================================
-x-linux-x86-common: &linux-x86-common
+
+x-jetson-common: &jetson-common
   entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
   container_name: ${DN_CONTAINER_NAME:?err}
   environment:
     # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
-    # DN_HOST: 'linux/x86'
+    # DN_HOST: 'l4t/arm64'
     DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
+    DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
     DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
     DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-false}
     IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
@@ -58,7 +37,7 @@ x-linux-x86-common: &linux-x86-common
   stdin_open: true
   devices:
     #- /dev/input/js0
-    # ....From jetson-container run.sh...........................................................
+    # ....From jetson-container run.sh....
     - /dev/snd
     - /dev/bus/usb
   privileged: false
@@ -68,6 +47,10 @@ x-linux-x86-common: &linux-x86-common
   cap_add:
     - SYS_PTRACE
     - SYS_NICE
+  ulimits: # Real-Time related: See https://github.com/2b-t/docker-realtime?tab=readme-ov-file
+    rtprio: 99
+    rttime: -1 # corresponds to 'unlimited'
+    memlock: 8428281856
   network_mode: host    # allow the container to have full access to the host’s networking system
   pid: host
   ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
@@ -79,8 +62,8 @@ services:
   project-develop:
     extends:
       service: project-develop
-      file: docker-compose.project.run.main.yaml
-    <<: *linux-x86-common
+      file: docker-compose.run.main.yaml
+    <<: *jetson-common
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -94,12 +77,17 @@ services:
       - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
       - ${SUPER_PROJECT_ROOT}/data/repository_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/repository_data/:rw
       - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro
+      # ....From jetson-container run.sh....
+      - /tmp/argus_socket:/tmp/argus_socket
+      - /etc/enctune.conf:/etc/enctune.conf
+      - /etc/nv_tegra_release:/etc/nv_tegra_release
+      - /tmp/nv_jetson_model:/tmp/nv_jetson_model
 
   project-deploy:
     extends:
       service: project-deploy
-      file: docker-compose.project.run.main.yaml
-    <<: *linux-x86-common
+      file: docker-compose.run.main.yaml
+    <<: *jetson-common
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -110,14 +98,18 @@ services:
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
       - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
       - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro
+      # ....From jetson-container run.sh....
+      - /tmp/argus_socket:/tmp/argus_socket
+      - /etc/enctune.conf:/etc/enctune.conf
+      - /etc/nv_tegra_release:/etc/nv_tegra_release
+      - /tmp/nv_jetson_model:/tmp/nv_jetson_model
 
   project-ci-tests:
     extends:
       service: project-ci-tests
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml
 
   project-slurm:
     extends:
       service: project-slurm
-      file: docker-compose.project.run.main.yaml
-
+      file: docker-compose.run.main.yaml

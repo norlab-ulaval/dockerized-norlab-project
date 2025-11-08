@@ -4,17 +4,17 @@ services:
   project-develop:
     extends:
       service: project-develop
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml
 
   project-deploy:
     extends:
       service: project-deploy
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml
 
   project-ci-tests:
     extends:
       service: project-ci-tests
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml
     pull_policy: never # (Priority) ToDo: validate >> pull_policy: never
     environment:
       # -----------
@@ -63,4 +63,4 @@ services:
   project-slurm:
     extends:
       service: project-slurm
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml

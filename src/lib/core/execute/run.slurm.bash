@@ -2,7 +2,7 @@
 DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # =================================================================================================
 # Convenient script for building and running container specified in
-# docker-compose.project.run.slurm.yaml and docker-compose.project.build.native.yaml.
+# docker-compose.run.slurm.yaml and docker-compose.build.native.yaml.
 # Handle stoping the container in case the slurm command `scancel` is issued.
 #
 # Usage:
@@ -67,7 +67,7 @@ function dna::run_slurm_teardown_callback() {
     n2st::print_msg_error "Container exited with error ${exit_code}"
   fi
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  local the_compose_file=docker-compose.project.run.slurm.yaml
+  local the_compose_file=docker-compose.run.slurm.yaml
   local running_container_ids
   source "${DNA_LIB_PATH:?err}/core/utils/load_super_project_config.bash"
   running_container_ids=$(dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd ps -- --quiet --all --orphans=false)
@@ -180,7 +180,7 @@ function dna::run_slurm() {
 
   # ....Set env variables (post cli)...............................................................
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  local compose_file="docker-compose.project.run.slurm.yaml"
+  local compose_file="docker-compose.run.slurm.yaml"
   local compose_file_path=${compose_path}/${compose_file}
   local the_service="project-slurm"
 

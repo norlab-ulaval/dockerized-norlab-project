@@ -1,26 +1,48 @@
-# ===============================================================================================
+# =================================================================================================
+# Docker compose project run version for running on an x86 linux workstation
+# Requirements:
+#   1. Nvidia driver are installed. See https://www.nvidia.com/Download/index.aspx
+#   2. Install nvidia-container-toolkit.
+#       See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+#   3. Setup GPU access during build
+#       See https://saturncloud.io/blog/how-to-use-gpu-from-a-docker-container-a-guide-for-data-scientists-and-software-engineers
+#         at section "utilizing-a-gpu-during-docker-build"
+#       i.e. $ vim /etc/docker/daemon.json
+#             {
+#               "runtimes": {
+#                 "nvidia": {
+#                   "path": "/usr/bin/nvidia-container-runtime",
+#                   "runtimeArgs": []
+#                 }
+#               }
+#               "default-runtime": "nvidia",
+#             }
+#            $ systemctl restart docker
 #
-# Docker compose project run version for running on Apple M1 computer
+#        If you want to launch containers without accessing the NVIDIA runtime, you’ll have to specify it when running the
+#         container using the --runtime flag (for example: docker run --runtime=runc ...)
 #
-# ===============================================================================================
-
-x-darwin-common: &darwin-common
+# Ref Nvidia container toolkit:
+#   - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
+#
+# =================================================================================================
+x-linux-x86-common: &linux-x86-common
   entrypoint: [] # Overide project-develop entrypoint as it will be started by up_and_attach.bash
   container_name: ${DN_CONTAINER_NAME:?err}
   environment:
     # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
-    # DN_HOST: 'darwin/arm64'
+    # DN_HOST: 'linux/x86'
     DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
-    DN_PROJECT_USER: ${DN_PROJECT_USER:?err}
     DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
     DN_ACTIVATE_POWERLINE_PROMT: ${DN_ACTIVATE_POWERLINE_PROMT:-false}
     IS_TEAMCITY_RUN: ${IS_TEAMCITY_RUN:-false}
-    NVIDIA_VISIBLE_DEVICES: void
-    NVIDIA_DRIVER_CAPABILITIES:
-    DISPLAY: ${DN_DISPLAY:-${DISPLAY:-""}}
+    NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-void}
+    #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#environment-variables-oci-spec
+    NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-}
+    #     see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
+    DISPLAY: ${DISPLAY:-":0"}
     QT_X11_NO_MITSHM: 1
     XAUTHORITY: /tmp/.docker.xauth
-    TMP_TEST_OVERRIDE: false
   env_file:
     - path: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/.env.dna
       required: true
@@ -34,48 +56,50 @@ x-darwin-common: &darwin-common
       required: false
   tty: true
   stdin_open: true
+  devices:
+    #- /dev/input/js0
+    # ....From jetson-container run.sh...........................................................
+    - /dev/snd
+    - /dev/bus/usb
   privileged: false
   security_opt:
     - seccomp=unconfined
     - apparmor=unconfined
   cap_add:
     - SYS_PTRACE
-  # Note: Port mapping on macosx is incompatible with network_mode: host
-  network_mode: bridge
-  ports:
-    - ${DN_SSH_SERVER_PORT:-2222}:${DN_SSH_SERVER_PORT:-2222} # ssh non-interactive-ros2
-    - ${DN_GDB_SERVER_PORT:-7777}:${DN_GDB_SERVER_PORT:-7777} # gdbserver
+    - SYS_NICE
+  network_mode: host    # allow the container to have full access to the host’s networking system
   pid: host
   ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
   init: true  # Propagate exit code (See remark in task NMO-266)
   runtime: ${DN_DOCKER_RUNTIME:-runc}
-  hostname: ${DN_DARWIN_HOSTNAME}
 
 services:
 
   project-develop:
     extends:
       service: project-develop
-      file: docker-compose.project.run.main.yaml
-    <<: *darwin-common
+      file: docker-compose.run.main.yaml
+    <<: *linux-x86-common
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw # Share system folder
-      # ....Add host volume you want to mount into the container...................................
+      # ....Dockerized-NorLab-project internal. ...................................................
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro
       - ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw
       # ....Add host volume you want to mount into the container...................................
       - ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/:rw
       - ${SUPER_PROJECT_ROOT}/artifact/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/artifact/:rw
       - ${SUPER_PROJECT_ROOT}/data/external_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/external_data/:rw
+      - ${SUPER_PROJECT_ROOT}/data/repository_data/:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/repository_data/:rw
       - ${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:/ros2_ws/src/${DN_PROJECT_GIT_NAME}/data/shared_data/:ro
 
   project-deploy:
     extends:
       service: project-deploy
-      file: docker-compose.project.run.main.yaml
-    <<: *darwin-common
+      file: docker-compose.run.main.yaml
+    <<: *linux-x86-common
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -90,9 +114,10 @@ services:
   project-ci-tests:
     extends:
       service: project-ci-tests
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml
 
   project-slurm:
     extends:
       service: project-slurm
-      file: docker-compose.project.run.main.yaml
+      file: docker-compose.run.main.yaml
+

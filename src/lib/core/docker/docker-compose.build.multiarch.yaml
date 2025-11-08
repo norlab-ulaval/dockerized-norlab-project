@@ -3,7 +3,7 @@ services:
   project-core-pre:
     extends:
       service: project-core-pre
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       platforms:
         - "linux/amd64"
@@ -13,7 +13,7 @@ services:
   project-core-user:
     extends:
       service: project-core-user
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       platforms:
         - "linux/amd64"
@@ -22,7 +22,7 @@ services:
   project-core:
     extends:
       service: project-core
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       platforms:
         - "linux/amd64"
@@ -31,7 +31,7 @@ services:
   project-develop:
     extends:
       service: project-develop
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       platforms:
         - "linux/amd64"
@@ -42,7 +42,7 @@ services:
   project-deploy:
     extends:
       service: project-deploy
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       platforms:
         - "linux/amd64"
@@ -53,7 +53,7 @@ services:
   project-ci-tests:
     extends:
       service: project-ci-tests
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       dockerfile: ${DNA_ROOT:?err}/src/lib/core/docker/Dockerfile.ci-tests.multiarch
       platforms:
@@ -65,7 +65,7 @@ services:
   project-slurm:
     extends:
       service: project-slurm
-      file: docker-compose.project.build.native.yaml
+      file: docker-compose.build.native.yaml
     build:
       platforms:
         - "linux/arm64"
@@ -76,7 +76,7 @@ services:
   #  project-release:
   #    extends:
   #      service: project-deploy
-  #      file: docker-compose.project.build.native.yaml
+  #      file: docker-compose.build.native.yaml
   #    build:
   #      platforms:
   #        - "linux/arm64"

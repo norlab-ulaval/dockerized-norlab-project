@@ -3,7 +3,7 @@
 #
 # (NICE TO HAVE) inprogress: RLRP-395 chore: add cadence support to dev workflow
 #
-# The following docker run command was generated from `docker-compose.project.run.slurm.yaml`
+# The following docker run command was generated from `docker-compose.run.slurm.yaml`
 # via `https://www.decomposerize.com`.
 #
 #

@@ -3,7 +3,7 @@
 DOCUMENTATION_PROJECT_VALIDATE_ALL=$( cat <<'EOF'
 # =================================================================================================
 # Convenient script for testing config and dry-run build slurm images specified
-# in docker-compose.project.build.native.yaml and docker-compose.project.build.multiarch.yaml
+# in docker-compose.build.native.yaml and docker-compose.build.multiarch.yaml
 #
 # Usage:
 #   $ bash project_validate.slurm.bash [OPTIONS] ["<slurm/job/dir/path>"]
@@ -90,12 +90,12 @@ function dna::project_validate_slurm() {
   # ....Config test..................................................................................
   n2st::print_msg "Begin config test"
 
-  config_test_compose_file_list=( "docker-compose.project.build.native.yaml" )
+  config_test_compose_file_list=( "docker-compose.build.native.yaml" )
   if [[ ${include_multiarch} == true ]]; then
-    config_test_compose_file_list+=( "docker-compose.project.build.multiarch.yaml" )
+    config_test_compose_file_list+=( "docker-compose.build.multiarch.yaml" )
   fi
   config_test_compose_file_list+=(
-    "docker-compose.project.run.slurm.yaml"
+    "docker-compose.run.slurm.yaml"
   )
 
   n2st::print_msg "Will config test the following compose files:"
@@ -131,9 +131,9 @@ function dna::project_validate_slurm() {
   # ....Dry-run build test...........................................................................
   n2st::print_formated_script_header "build in dry-run mode testing" "${line_format}" "${line_style}"
 
-  dryrun_compose_file_list=( "docker-compose.project.build.native.yaml" )
+  dryrun_compose_file_list=( "docker-compose.build.native.yaml" )
   if [[ ${include_multiarch} == true ]]; then
-    dryrun_compose_file_list+=( "docker-compose.project.build.multiarch.yaml" )
+    dryrun_compose_file_list+=( "docker-compose.build.multiarch.yaml" )
   fi
 
   n2st::print_msg "Will dry-run build the following compose files:"

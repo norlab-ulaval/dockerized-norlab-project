@@ -128,44 +128,44 @@ function dna::config_command() {
     if [[ "${mode}" =~ ^(build-core|build-core-ma)$ ]]; then
         services+=(project-core-pre project-core-user project-core)
         if [[ "${mode}" == build-core ]]; then
-          compose_file="docker-compose.project.build.native.yaml"
+          compose_file="docker-compose.build.native.yaml"
         elif [[ "${mode}" == build-core-ma ]]; then
-          compose_file="docker-compose.project.build.multiarch.yaml"
+          compose_file="docker-compose.build.multiarch.yaml"
         fi
     elif [[ "${mode}" =~ ^(build|build-ma)$ ]]; then
         if [[ "${mode}" == build ]]; then
-          compose_file="docker-compose.project.build.native.yaml"
+          compose_file="docker-compose.build.native.yaml"
         elif [[ "${mode}" == build-ma ]]; then
-          compose_file="docker-compose.project.build.multiarch.yaml"
+          compose_file="docker-compose.build.multiarch.yaml"
         fi
     elif [[ "${mode}" == dev ]]; then
         services+=(project-develop)
         if [[ "${platform}" == darwin ]]; then
-            compose_file="docker-compose.project.run.darwin.yaml"
+            compose_file="docker-compose.run.darwin.yaml"
         elif [[ "${platform}" == jetson ]]; then
-            compose_file="docker-compose.project.run.jetson.yaml"
+            compose_file="docker-compose.run.jetson.yaml"
         else
-            compose_file="docker-compose.project.run.linux-x86.yaml"
+            compose_file="docker-compose.run.linux-x86.yaml"
         fi
     elif [[ "${mode}" == deploy ]]; then
         services+=(project-deploy)
         if [[ "${platform}" == darwin ]]; then
-            compose_file="docker-compose.project.run.darwin.yaml"
+            compose_file="docker-compose.run.darwin.yaml"
         elif [[ "${platform}" == jetson ]]; then
-            compose_file="docker-compose.project.run.jetson.yaml"
+            compose_file="docker-compose.run.jetson.yaml"
         else
-            compose_file="docker-compose.project.run.linux-x86.yaml"
+            compose_file="docker-compose.run.linux-x86.yaml"
         fi
     elif [[ "${mode}" == ci-tests ]]; then
         services+=(project-ci-tests)
-        compose_file="docker-compose.project.run.ci-tests.yaml"
+        compose_file="docker-compose.run.ci-tests.yaml"
     elif [[ "${mode}" == slurm ]]; then
         services+=(project-slurm)
-        compose_file="docker-compose.project.run.slurm.yaml"
+        compose_file="docker-compose.run.slurm.yaml"
     elif [[ "${mode}" == release ]]; then
         n2st::print_msg_warning "Command ${MSG_DIMMED_FORMAT}dna config release${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
         services+=(project-release)
-        compose_file="docker-compose.project.build.multiarch.yaml"
+        compose_file="docker-compose.build.multiarch.yaml"
     fi
 
     # shellcheck disable=SC2207

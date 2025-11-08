@@ -140,7 +140,7 @@ function dna::setup_dockerized_norlab_project() {
   #     'dn_entrypoint.attach.bash'.
   #   - Be advised that 'project-develop' container mount this directory as a volume to prevent
   #     image rebuilding each time its content is modified (See the 'services.volumes' key in
-  #     'docker-compose.project.run.*.yaml').
+  #     'docker-compose.run.*.yaml').
   #   - However, 'project-deploy' and 'project-release' containers copy this directory and its
   #     contents in the image at build time to ensure portability.
   #

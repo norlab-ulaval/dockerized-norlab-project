@@ -2,7 +2,7 @@
 
 DOCUMENTATION_BUFFER_RUN_CI_TESTS=$( cat <<'EOF'
 # =================================================================================================
-# Run continuous integration tests container specified in docker-compose.project.build.native.yaml.
+# Run continuous integration tests container specified in docker-compose.build.native.yaml.
 # Require executing `build.ci_tests.bash` first.
 #
 # Usage:
@@ -52,7 +52,7 @@ function dna::run_ci_tests() {
 
   # ....Set env variables (post cli)...............................................................
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  local compose_file="docker-compose.project.run.ci-tests.yaml"
+  local compose_file="docker-compose.run.ci-tests.yaml"
   local the_service="project-ci-tests"
 
   # ....Set GPU capabilities.......................................................................

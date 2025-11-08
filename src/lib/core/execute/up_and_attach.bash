@@ -1,7 +1,7 @@
 #!/bin/bash
 DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 # =================================================================================================
-# Convenient script for spinning a specific service from 'docker-compose.project.run.<DEVICE>.yaml'
+# Convenient script for spinning a specific service from 'docker-compose.run.<DEVICE>.yaml'
 # Under the hood, start the service in detach mode and attach to it so that you can close
 # the terminal and it will keep running in the background.
 #
@@ -152,14 +152,14 @@ function dna::up_and_attach() {
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
 
     if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then
-      compose_file=docker-compose.project.run.jetson.yaml
+      compose_file=docker-compose.run.jetson.yaml
 
       # copy file showing which Jetson board is running for mountinf as a volume in docker-compose
       # Source https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
       cat /proc/device-tree/model > /tmp/nv_jetson_model
 
     elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
-      compose_file=docker-compose.project.run.linux-x86.yaml
+      compose_file=docker-compose.run.linux-x86.yaml
     fi
 
     if [[ ${IS_TEAMCITY_RUN} == false ]]; then
@@ -207,7 +207,7 @@ function dna::up_and_attach() {
     fi
 
   elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-    compose_file=docker-compose.project.run.darwin.yaml
+    compose_file=docker-compose.run.darwin.yaml
 
     # Enable IGLX for X11 forwarding with OpenGL support
     # To test X11 forwarding with OpenGL, run in the container

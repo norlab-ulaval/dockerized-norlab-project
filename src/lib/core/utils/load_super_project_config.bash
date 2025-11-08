@@ -164,7 +164,7 @@ function dna::load_super_project_configurations() {
     source "${dna_internal_local}" || return 1
     set +o allexport
   else
-    # Note: Dotenv file .env.dna-internal.local is required by docker-compose.project.[build|run].*.yaml files
+    # Note: Dotenv file .env.dna-internal.local is required by docker-compose.[build|run].*.yaml files
     cat > "${dna_internal_local}" << EOF
 # =================================================================================================
 # Set Dockerized-NorLab project application (DNA) internal environment variable LOCALY.
