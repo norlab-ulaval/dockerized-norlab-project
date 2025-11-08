@@ -28,9 +28,9 @@ ENV DN_PROJECT_PATH=${DN_DEV_WORKSPACE:?'Build argument needs to be set and non-
 ENV PATH=${DN_PROJECT_PATH}${PATH:+:${PATH}}
 
 # ====Copy init and setup files====================================================================
-COPY .dockerized_norlab/configuration/project_requirements/shell.requirements-dna.bash /shell.requirements-dna.bash
-COPY .dockerized_norlab/configuration/project_requirements/python.requirements-dna.txt /python.requirements-dna.txt
-COPY .dockerized_norlab/configuration/project_entrypoints /project_entrypoints
+COPY .dockerized_norlab/configuration/build_stage/shell.requirements-dna.bash /shell.requirements-dna.bash
+COPY .dockerized_norlab/configuration/build_stage/python.requirements-dna.txt /python.requirements-dna.txt
+COPY .dockerized_norlab/configuration/entrypoints /entrypoints
 COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_core_init.bash
 COPY --from=context-dna-lib-container-tools . /dna-lib-container-tools/
 

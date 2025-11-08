@@ -3,7 +3,7 @@
 # This is the Dockerfile.ci-tests.native entrypoint and the test script run by Dockerfile.ci-tests.multiarch
 #
 # Will execute every tests in
-# `.dockerized_norlab/configuration/project_entrypoints/project-ci-tests/test_jobs`
+# `.dockerized_norlab/configuration/entrypoints/project-ci-tests/test_jobs`
 # directory that follow the patern `run_ci_tests.*.bash`.
 #
 # Usage:
@@ -50,23 +50,23 @@ fi
 test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
 # Add the DN-project path to python path if missing (see header Notes).
-source /dna-lib-container-tools/project_entrypoints/dn_entrypoint_pythonpath_checks.bash "${DN_PROJECT_PATH:?err}/src"
+source /dna-lib-container-tools/entrypoints/dn_entrypoint_pythonpath_checks.bash "${DN_PROJECT_PATH:?err}/src"
 
 # ====DNA-project user defined logic===============================================================
 
 # ....Execute DN-project user callback.............................................................
 # Sanity check
-test -d "/project_entrypoints" || n2st::print_msg_error_and_exit "Dir /project_entrypoints is unreachable"
-test -d "/project_entrypoints/project-ci-tests" || n2st::print_msg_error_and_exit "Dir /project_entrypoints/project-ci-tests is unreachable"
+test -d "/entrypoints" || n2st::print_msg_error_and_exit "Dir /entrypoints is unreachable"
+test -d "/entrypoints/project-ci-tests" || n2st::print_msg_error_and_exit "Dir /entrypoints/project-ci-tests is unreachable"
 
-if [[ -f /project_entrypoints/dn_entrypoint.global.init.callback.bash ]]; then
-  source /project_entrypoints/dn_entrypoint.global.init.callback.bash || exit 1
+if [[ -f /entrypoints/dn_entrypoint.global.init.callback.bash ]]; then
+  source /entrypoints/dn_entrypoint.global.init.callback.bash || exit 1
 else
   n2st::print_msg_warning "dn_entrypoint.global.init.callback.bash unavailable"
 fi
 
-if [[ -f /project_entrypoints/project-ci-tests/dn_entrypoint.init.callback.bash ]]; then
-  source /project_entrypoints/project-ci-tests/dn_entrypoint.init.callback.bash || exit 1
+if [[ -f /entrypoints/project-ci-tests/dn_entrypoint.init.callback.bash ]]; then
+  source /entrypoints/project-ci-tests/dn_entrypoint.init.callback.bash || exit 1
 else
   n2st::print_msg_warning "project-ci-tests/dn_entrypoint.init.callback.bash unavailable"
 fi
@@ -78,7 +78,7 @@ echo -e "DN container ${DN_CONTAINER_NAME:?err} test environment"
 echo -e "Pytest tests will follow"
 echo
 echo
-tree -L 2 "${DN_PROJECT_PATH}/.dockerized_norlab/configuration/project_entrypoints/project-ci-tests"
+tree -L 2 "${DN_PROJECT_PATH}/.dockerized_norlab/configuration/entrypoints/project-ci-tests"
 tree -L 3 "$DN_PROJECT_PATH"
 echo
 echo

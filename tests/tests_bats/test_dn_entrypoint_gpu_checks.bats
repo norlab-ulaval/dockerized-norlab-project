@@ -44,7 +44,7 @@ fi
 # ====Tests file configuration=====================================================================
 
 TESTED_FILE="dn_entrypoint_gpu_checks.bash"
-TESTED_FILE_PATH="src/lib/core/docker/container-tools/project_entrypoints"
+TESTED_FILE_PATH="src/lib/core/docker/container-tools/entrypoints"
 
 # Executed once before starting the first test (valide for all test in that file)
 setup_file() {

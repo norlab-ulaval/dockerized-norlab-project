@@ -57,7 +57,7 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   n2st::print_msg "Checking project configuration..."
   dna::check_project_configuration || return 1
   n2st::print_msg "Checking project entrypoints..."
-  dna::check_project_entrypoints || return 1
+  dna::check_entrypoints || return 1
 
   # ....check .gitignore files entries.............................................................
   n2st::print_msg "Checking gitignore..."
@@ -107,16 +107,16 @@ function dna::check_dockerized_project_configuration_dir_structure() {
 function dna::check_project_configuration() {
   test_dir_path=".dockerized_norlab/configuration"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
-  test -d "project_requirements/" || dna::print_msg_error_and_return "The '${test_dir_path}/project_requirements/' directory is not installed as required!"
-  test -d "project_entrypoints/" || dna::print_msg_error_and_return "The '${test_dir_path}/project_entrypoints/' directory is not installed as required!"
+  test -d "build_stage/" || dna::print_msg_error_and_return "The '${test_dir_path}/build_stage/' directory is not installed as required!"
+  test -d "entrypoints/" || dna::print_msg_error_and_return "The '${test_dir_path}/entrypoints/' directory is not installed as required!"
   test -f ".env.dna" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || dna::print_msg_error_and_return "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.local' file is not installed as required!"
   test -f "Dockerfile.project-core-user" || dna::print_msg_error_and_return "The '${test_dir_path}/Dockerfile.project-core-user' file is not installed as required!"
 }
 
-function dna::check_project_entrypoints() {
-  test_dir_path=".dockerized_norlab/configuration/project_entrypoints"
+function dna::check_entrypoints() {
+  test_dir_path=".dockerized_norlab/configuration/entrypoints"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
   test -d "project-ci-tests/" || dna::print_msg_error_and_return "The '${test_dir_path}/project-ci-tests/' directory is not installed as required!"
   test -d "project-ci-tests/test_jobs/" || dna::print_msg_error_and_return "The '${test_dir_path}/project-ci-tests/test_jobs/' directory is not installed as required!"

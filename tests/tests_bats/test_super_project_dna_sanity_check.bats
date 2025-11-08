@@ -184,8 +184,8 @@ teardown_file() {
   assert_success
 }
 
-@test "dna::check_project_configuration › expect fail with missing project_requirements directory" {
-  # Test case: When project_requirements directory is missing, the function should fail
+@test "dna::check_project_configuration › expect fail with missing build_stage directory" {
+  # Test case: When build_stage directory is missing, the function should fail
   # Create a temporary directory with an incomplete structure
   mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration"
 
@@ -195,27 +195,27 @@ teardown_file() {
 
   run dna::check_project_configuration
   assert_failure
-  assert_output --partial "The '.dockerized_norlab/configuration/project_requirements/' directory is not installed"
+  assert_output --partial "The '.dockerized_norlab/configuration/build_stage/' directory is not installed"
 }
 
-@test "dna::check_project_entrypoints › expect pass with valid entrypoints" {
+@test "dna::check_entrypoints › expect pass with valid entrypoints" {
   # Test case: When the project entrypoints are valid, the function should pass
-  run dna::check_project_entrypoints
+  run dna::check_entrypoints
   assert_success
 }
 
-@test "dna::check_project_entrypoints › expect fail with missing project-ci-tests directory" {
+@test "dna::check_entrypoints › expect fail with missing project-ci-tests directory" {
   # Test case: When project-ci-tests directory is missing, the function should fail
   # Create a temporary directory with an incomplete structure
-  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/project_entrypoints"
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/entrypoints"
 
   # Set up environment for the test
   export SUPER_PROJECT_ROOT="${TEST_TEMP_DIR}"
   cd "${TEST_TEMP_DIR}" || exit 1
 
-  run dna::check_project_entrypoints
+  run dna::check_entrypoints
   assert_failure
-  assert_output --partial "The '.dockerized_norlab/configuration/project_entrypoints/project-ci-tests/' directory is not installed"
+  assert_output --partial "The '.dockerized_norlab/configuration/entrypoints/project-ci-tests/' directory is not installed"
 }
 
 @test "dna::check_gitignore › expect pass with valid gitignore entries" {

@@ -5,7 +5,7 @@
 #   - cleanup byte-compiled files to prevent execution bug
 #
 # Usage:
-#   $ bash dn_entrypoint.python.bash [<any-python-arg>]
+#   $ bash dn_entrypoint.init.bash [<any-python-arg>]
 #
 # Globals:
 #   Read DN_PROJECT_PATH
@@ -32,7 +32,7 @@ pyclean "${DN_PROJECT_PATH}"
 
 # ....Load library.................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
-  echo -e "\033[1;33m[DN trace]\033[0m Execute dn_entrypoint.python.bash"
+  echo -e "\033[1;33m[DN trace]\033[0m Execute project-slurm/dn_entrypoint.init.bash"
 fi
 
 if [[ $- == *i* ]]; then
@@ -49,16 +49,31 @@ fi
 test -n "$( declare -f n2st::print_msg )" || { echo -e "\033[1;31m[DN error]\033[0m The N2ST lib is not loaded!" 1>&2 && exit 1; }
 
 # Add the DN-project path to python path if missing (see header Notes).
-source /dna-lib-container-tools/project_entrypoints/dn_entrypoint_pythonpath_checks.bash "${DN_PROJECT_PATH:?err}/src"
+source /dna-lib-container-tools/entrypoints/dn_entrypoint_pythonpath_checks.bash "${DN_PROJECT_PATH:?err}/src"
 
-# ....source ROS2 environment variables............................................................
-#dn::source_ros2_underlay_only
-#dn::source_ros2_overlay_only
-dn::source_ros2
+# ====DNA-project user defined logic===============================================================
+
+# ....Execute DN-project user callback.............................................................
+# Sanity check
+test -d "/entrypoints" || n2st::print_msg_error_and_exit "Dir /entrypoints is unreachable"
+test -d "/entrypoints/project-slurm" || n2st::print_msg_error_and_exit "Dir /entrypoints/project-slurm is unreachable"
+
+if [[ -f /entrypoints/dn_entrypoint.global.init.callback.bash ]]; then
+  source /entrypoints/dn_entrypoint.global.init.callback.bash || exit 1
+else
+  n2st::print_msg_warning "dn_entrypoint.global.init.callback.bash unavailable"
+fi
+
+if [[ -f /entrypoints/project-slurm/dn_entrypoint.init.callback.bash ]]; then
+  source /entrypoints/project-slurm/dn_entrypoint.init.callback.bash || exit 1
+else
+  n2st::print_msg_warning "project-slurm/dn_entrypoint.init.callback.bash unavailable"
+fi
 
 # ====Execute python command=======================================================================
+cd "${DN_PROJECT_PATH}/src" || exit 1
 python3 "$@" || exit 1
 
 # ....Release......................................................................................
-n2st::print_msg_done "dn_entrypoint.python.bash done!"
+n2st::print_msg_done "project-slurm/dn_entrypoint.init.bash done!"
 exit 0

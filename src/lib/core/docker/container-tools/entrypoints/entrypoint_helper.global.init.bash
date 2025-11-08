@@ -7,8 +7,8 @@
 # Helper script should be called in that order in dn_entrypoint.global.init.callback.bash:
 #
 #  # ....DNA-project internal logic................................................................
-#  source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.common.bash || exit 1
-#  source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.global.init.bash || exit 1
+#  source /dna-lib-container-tools/entrypoints/entrypoint_helper.global.common.bash || exit 1
+#  source /dna-lib-container-tools/entrypoints/entrypoint_helper.global.init.bash || exit 1
 #
 # =================================================================================================
 
@@ -21,7 +21,7 @@ function dna::show_container_dn_related_tree() {
   tree -L 2 -a -I .git /dockerized-norlab
   tree -L 2 -a /home/redleader
   tree -L 2 -a /opt
-  tree -L 2 -a /project_entrypoints
+  tree -L 2 -a /entrypoints
   tree -L 2 -a /ros2_ws
   tree -L 1 -a /
   echo "DN_PROJECT_PATH: ${DN_PROJECT_PATH:?err}"

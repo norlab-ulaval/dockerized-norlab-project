@@ -58,8 +58,8 @@ After running `dna init`, your project will have the following structure:
 your-project-repository/
 ├── .dockerized_norlab/                 ← DNA configuration directory
 │   ├── configuration/                  ← Main configuration files
-│   │   ├── project_entrypoints/        ← Container startup scripts
-│   │   ├── project_requirements/       ← Dependency specifications
+│   │   ├── entrypoints/        ← Container startup scripts
+│   │   ├── build_stage/       ← Dependency specifications
 │   │   ├── Dockerfile.project-core-user     ← Container build instructions
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
@@ -202,7 +202,7 @@ You can use all three in combinaison if necessary.
 #### Specifying Python Requirements
 
 Specify DNA container specific Python dependencies in
-`.dockerized_norlab/configuration/project_requirements/python.requirements-dna.txt`:
+`.dockerized_norlab/configuration/build_stage/python.requirements-dna.txt`:
 
 Example:
 
@@ -231,7 +231,7 @@ Documentation
 #### Shell Requirements
 
 Specify DNA container specific shell dependencies in
-`.dockerized_norlab/configuration/project_requirements/shell.requirements-dna.bash` as if it is a instalation script.
+`.dockerized_norlab/configuration/build_stage/shell.requirements-dna.bash` as if it is a instalation script.
 
 ### Docker Configuration
 
@@ -266,7 +266,7 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 
 #### Project Entrypoints
 
-Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker
+Files in `.dockerized_norlab/configuration/entrypoints` are customizable callback script executed by the docker
 container entrypoint. Each one of them serve different purposes:
 
 - `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm)

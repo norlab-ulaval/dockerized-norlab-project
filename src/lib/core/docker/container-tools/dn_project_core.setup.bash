@@ -135,7 +135,7 @@ function dna::setup_dockerized_norlab_project() {
 
   # ....Entrypoint related setup...................................................................
   # Notes:
-  #   - All files from 'configuration/project_entrypoints/' directory that follow the pattern
+  #   - All files from 'configuration/entrypoints/' directory that follow the pattern
   #     'dn_entrypoint.*.callback.bash' are required by DN scripts 'dn_entrypoint.init.bash' and
   #     'dn_entrypoint.attach.bash'.
   #   - Be advised that 'project-develop' container mount this directory as a volume to prevent
@@ -145,7 +145,7 @@ function dna::setup_dockerized_norlab_project() {
   #     contents in the image at build time to ensure portability.
   #
   n2st::print_msg "Entrypoint related setup..."
-  cd /project_entrypoints || return 1
+  cd /entrypoints || return 1
   {
     test -d project-ci-tests/ && \
     test -d project-ci-tests/test_jobs && \
@@ -170,7 +170,7 @@ function dna::setup_dockerized_norlab_project() {
     chmod +x "${each_file}"
   done
 
-  chmod +x /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash
+  chmod +x /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash
 
   # ....Hack.......................................................................................
   # For Matplotlib default backend (QtAgg) when python script are launched from terminal

@@ -131,7 +131,7 @@ function dna::test_host_gpu_to_container_torch_compatibility() {
 #  docker_cmd+=("--name" "${DN_CONTAINER_NAME:?err}-gpu-test-${BASHPID:-$$}")
   docker_cmd+=("--entrypoint" "/bin/bash -c")
   docker_cmd+=("${the_service}")
-  docker_cmd+=("/dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash '${host_gpu_arch}'")
+  docker_cmd+=("/dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash '${host_gpu_arch}'")
 
   # shellcheck disable=SC2207
   compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration" "${compose_file}" ) )

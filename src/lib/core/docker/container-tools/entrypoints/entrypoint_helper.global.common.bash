@@ -3,7 +3,7 @@
 # Helper script executed by both "dn_entrypoint.globals.*.callback.bash".
 #
 # Usage:
-#   source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash
+#   source /dna-lib-container-tools/entrypoints/entrypoint_helper.common.bash
 #
 # Globals:
 #   Read/write all environment variable exposed in DN at runtime
@@ -28,7 +28,7 @@ if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then
 fi
 
 # ....DNA-project internal logic...................................................................
-source /dna-lib-container-tools/project_entrypoints/entrypoint_helper.common.bash || exit 1
+source /dna-lib-container-tools/entrypoints/entrypoint_helper.common.bash || exit 1
 
 # ....ROS2 logic...................................................................................
 if [[ -n "${ROS_DISTRO}" ]]; then

@@ -4,7 +4,7 @@
 # Tests PYTHONPATH for a specific path, add it if missing
 #
 # Usage example:
-#   $ source /dna-lib-container-tools/project_entrypoints/dn_entrypoint_pythonpath_checks.bash "TARGET_PATH"
+#   $ source /dna-lib-container-tools/entrypoints/dn_entrypoint_pythonpath_checks.bash "TARGET_PATH"
 #
 # Arguments:
 #   TARGET_PATH     The path to check (can be relative)
