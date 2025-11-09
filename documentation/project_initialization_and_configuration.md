@@ -58,9 +58,8 @@ After running `dna init`, your project will have the following structure:
 your-project-repository/
 ├── .dockerized_norlab/                 ← DNA configuration directory
 │   ├── configuration/                  ← Main configuration files
-│   │   ├── entrypoints/        ← Container startup scripts
-│   │   ├── build_stage/       ← Dependency specifications
-│   │   ├── Dockerfile.project-core-user     ← Container build instructions
+│   │   ├── entrypoints/                ← Container startup scripts
+│   │   ├── build_stage/                ← Dependency specifications
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
 │   │   ├── .env.local                  ← Local env variables overrides
@@ -237,7 +236,7 @@ Specify DNA container specific shell dependencies in
 
 #### Dockerfile Customization
 
-The generated `.dockerized_norlab/configuration/Dockerfile.project-core-user` can be customized for your specific needs.
+The generated `.dockerized_norlab/configuration/build_stage/Dockerfile.project-core-user` can be customized for your specific needs.
 Use cases:
 
 - leveraging the [Docker build cache](https://docs.docker.com/build/cache/) layer mechanism for minimizing build time;

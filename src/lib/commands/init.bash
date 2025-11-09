@@ -221,9 +221,8 @@ ${MSG_DIMMED_FORMAT}
      ${repo_top_dir_name}/
      ├── .dockerized_norlab/                      ← DNA configuration directory
      │   ├── configuration/                       ← Main configuration files
-     │   │   ├── entrypoints/             ← Container startup scripts
-     │   │   ├── build_stage/            ← Dependency specifications
-     │   │   ├── Dockerfile.project-core-user          ← Container build instructions
+     │   │   ├── entrypoints/                     ← Container startup scripts
+     │   │   ├── build_stage/                     ← Dependency specifications
      │   │   ├── .env.dna                         ← DNA-specific env variables
      │   │   ├── .env                             ← Project-specific env variables
      │   │   ├── .env.local                       ← Local env variables overrides

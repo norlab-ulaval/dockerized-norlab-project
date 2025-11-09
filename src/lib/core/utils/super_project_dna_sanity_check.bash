@@ -112,7 +112,14 @@ function dna::check_project_configuration() {
   test -f ".env.dna" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || dna::print_msg_error_and_return "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.local' file is not installed as required!"
+}
+
+function dna::check_build_stage() {
+  test_dir_path=".dockerized_norlab/configuration/build_stage"
+  cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
   test -f "Dockerfile.project-core-user" || dna::print_msg_error_and_return "The '${test_dir_path}/Dockerfile.project-core-user' file is not installed as required!"
+  test -f "python.requirements-dna.txt" || dna::print_msg_error_and_return "The '${test_dir_path}/python.requirements-dna.txt' file is not installed as required!"
+  test -f "shell.requirements-dna.bash" || dna::print_msg_error_and_return "The '${test_dir_path}/shell.requirements-dna.bash' file is not installed as required!"
 }
 
 function dna::check_entrypoints() {
