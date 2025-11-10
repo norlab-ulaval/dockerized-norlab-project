@@ -17,7 +17,6 @@ function dna::down_command() {
 
   # ....Begin......................................................................................
   n2st::print_msg "Stoping container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-  # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   n2st::set_which_architecture_and_os
   n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
@@ -28,18 +27,18 @@ function dna::down_command() {
   compose_path=".dockerized_norlab/configuration"
 
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then
-    the_compose_file=docker-compose.project.run.jetson.yaml
+    the_compose_file=docker-compose.run.jetson.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-    the_compose_file=docker-compose.project.run.darwin.yaml
+    the_compose_file=docker-compose.run.darwin.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
-    the_compose_file=docker-compose.project.run.linux-x86.yaml
+    the_compose_file=docker-compose.run.linux-x86.yaml
   elif [[ $IMAGE_ARCH_AND_OS == 'linux/arm64' ]]; then
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}linux/arm64${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   else
     n2st::print_msg_error_and_exit "Support for current host os/aarch ${MSG_DIMMED_FORMAT}$(uname -m)/$(uname)${MSG_END_FORMAT} not implemented yet!  Feel free to open a feature request on ${MSG_DIMMED_FORMAT}${DNA_GIT_REMOTE_URL}/issues${MSG_END_FORMAT}. Will work on it ASP."
   fi
 
-  docker compose -f "${compose_path}/${the_compose_file}" down "${remaining_args[@]}"
+  dna::excute_compose --verbosity 1 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd down -- "${remaining_args[@]}"
   exit_code=$?
 
   # ....Teardown...................................................................................

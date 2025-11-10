@@ -17,7 +17,6 @@ function dna::down_slurm() {
 
   # ....Begin......................................................................................
   n2st::print_msg "Stoping container on device ${MSG_DIMMED_FORMAT}$(hostname -s)${MSG_END_FORMAT}"
-  # n2st::print_formated_script_header "$(basename $0) ${MSG_END_FORMAT}on device ${MSG_DIMMED_FORMAT}$(hostname -s)" "${MSG_LINE_CHAR_BUILDER_LVL2}"
 
   n2st::set_which_architecture_and_os
   n2st::print_msg "Current os/architecture: ${IMAGE_ARCH_AND_OS:?err}"
@@ -26,9 +25,9 @@ function dna::down_slurm() {
 
   # ....Device specific config.......................................................................
   compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  the_compose_file=docker-compose.project.run.slurm.yaml
+  the_compose_file=docker-compose.run.slurm.yaml
 
-  container_id=$(docker compose -f "${compose_path}/${the_compose_file}" ps --quiet --all --orphans=false)
+  container_id=$(dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd ps -- --quiet --all --orphans=false)
   if [[ -n ${container_id} ]]; then
     echo
     echo "Compose project project-slurm running service(s) container_id:"

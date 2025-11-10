@@ -1,7 +1,7 @@
 #!/bin/bash
 # =================================================================================================
 # Dockerized-NorLab project-core image setup script i.e., user configuration install steps.
-# Is executed by '.dockerized_norlab/configuration/Dockerfile' in a DN project image
+# Is executed by '.dockerized_norlab/configuration/build_stage/Dockerfile.project-core-user' in a DN project image
 #
 # Usage:
 #   source /dockerized-norlab/dockerized-norlab-images/container-tools/dn_project_core.setup.bash
@@ -135,17 +135,17 @@ function dna::setup_dockerized_norlab_project() {
 
   # ....Entrypoint related setup...................................................................
   # Notes:
-  #   - All files from 'configuration/project_entrypoints/' directory that follow the pattern
+  #   - All files from 'configuration/entrypoints/' directory that follow the pattern
   #     'dn_entrypoint.*.callback.bash' are required by DN scripts 'dn_entrypoint.init.bash' and
   #     'dn_entrypoint.attach.bash'.
   #   - Be advised that 'project-develop' container mount this directory as a volume to prevent
   #     image rebuilding each time its content is modified (See the 'services.volumes' key in
-  #     'docker-compose.project.run.*.yaml').
+  #     'docker-compose.run.*.yaml').
   #   - However, 'project-deploy' and 'project-release' containers copy this directory and its
   #     contents in the image at build time to ensure portability.
   #
   n2st::print_msg "Entrypoint related setup..."
-  cd /project_entrypoints || return 1
+  cd /entrypoints || return 1
   {
     test -d project-ci-tests/ && \
     test -d project-ci-tests/test_jobs && \
@@ -170,7 +170,7 @@ function dna::setup_dockerized_norlab_project() {
     chmod +x "${each_file}"
   done
 
-  chmod +x /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash
+  chmod +x /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash
 
   # ....Hack.......................................................................................
   # For Matplotlib default backend (QtAgg) when python script are launched from terminal

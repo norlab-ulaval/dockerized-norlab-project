@@ -47,7 +47,7 @@ When you run `dna init`, the command will:
 
 3. **Setup configuration files**: Create and configure:
    - Environment files (`.env`, `.env.dna`, `.env.local`)
-   - Docker configuration (`Dockerfile`)
+   - Docker configuration (`Dockerfile.project-core-user`)
    - Project-specific requirements and entrypoints
    - Container runtime configurations
 

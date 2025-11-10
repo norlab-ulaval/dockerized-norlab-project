@@ -44,20 +44,27 @@ Dockerized-NorLab-Porject require that the super project be under version contro
   fi
 
   # ....check super project directory structure....................................................
+  n2st::print_msg "Checking super-project dir structure..."
   dna::check_super_project_dir_structure || return 1
 
   # ....Check dna compatibility....................................................................
+  n2st::print_msg "Checking configuration scheme compatibility..."
   dna::check_config_scheme_compatibility || return 1
 
   # ....check .dockerized_norlab directory structure.......................................
+  n2st::print_msg "Checking dockerized project configuration directory structure..."
   dna::check_dockerized_project_configuration_dir_structure || return 1
+  n2st::print_msg "Checking project configuration..."
   dna::check_project_configuration || return 1
-  dna::check_project_entrypoints || return 1
+  n2st::print_msg "Checking project entrypoints..."
+  dna::check_entrypoints || return 1
 
   # ....check .gitignore files entries.............................................................
+  n2st::print_msg "Checking gitignore..."
   dna::check_gitignore || return 1
 
   # ....check .dockerignore files entries..........................................................
+  n2st::print_msg "Checking dockerignore..."
   dna::check_dockerignore || return 1
 
   #  ....Teardown...................................................................................
@@ -78,7 +85,7 @@ function dna::check_config_scheme_compatibility() {
 function dna::check_super_project_dir_structure() {
   test -d ".dockerized_norlab" || dna::print_msg_error_and_return "'.dockerized_norlab' is not installed at super-project repository root as required!"
   test -d "artifact/" || dna::print_msg_error_and_return "The 'artifact' directory is not installed at super-project repository root as required!"
-  test -d "artifact/optuna_storage/" || dna::print_msg_error_and_return "The 'optuna_storage' directory is not installed in the super-project 'artifact/' directory as required!"
+  test -d "artifact/optuna_storage/" || n2st::print_msg_warning "The 'optuna_storage' directory is not installed in the super-project 'artifact/' directory as recommended!"
   test -d "data/" || dna::print_msg_error_and_return "The 'data' directory is not installed at super-project repository root as required!"
   test -d "data/external_data/" || dna::print_msg_error_and_return "The 'external_data' directory is not installed in super-project repository data directory as required!"
   test -d "data/repository_data/" || dna::print_msg_error_and_return "The 'repository_data' directory is not installed in super-project repository data directory as required!"
@@ -100,16 +107,23 @@ function dna::check_dockerized_project_configuration_dir_structure() {
 function dna::check_project_configuration() {
   test_dir_path=".dockerized_norlab/configuration"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
-  test -d "project_requirements/" || dna::print_msg_error_and_return "The '${test_dir_path}/project_requirements/' directory is not installed as required!"
-  test -d "project_entrypoints/" || dna::print_msg_error_and_return "The '${test_dir_path}/project_entrypoints/' directory is not installed as required!"
+  test -d "build_stage/" || dna::print_msg_error_and_return "The '${test_dir_path}/build_stage/' directory is not installed as required!"
+  test -d "entrypoints/" || dna::print_msg_error_and_return "The '${test_dir_path}/entrypoints/' directory is not installed as required!"
   test -f ".env.dna" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || dna::print_msg_error_and_return "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.local' file is not installed as required!"
-  test -f "Dockerfile" || dna::print_msg_error_and_return "The '${test_dir_path}/Dockerfile' file is not installed as required!"
 }
 
-function dna::check_project_entrypoints() {
-  test_dir_path=".dockerized_norlab/configuration/project_entrypoints"
+function dna::check_build_stage() {
+  test_dir_path=".dockerized_norlab/configuration/build_stage"
+  cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
+  test -f "Dockerfile.project-core-user" || dna::print_msg_error_and_return "The '${test_dir_path}/Dockerfile.project-core-user' file is not installed as required!"
+  test -f "python.requirements-dna.txt" || dna::print_msg_error_and_return "The '${test_dir_path}/python.requirements-dna.txt' file is not installed as required!"
+  test -f "shell.requirements-dna.bash" || dna::print_msg_error_and_return "The '${test_dir_path}/shell.requirements-dna.bash' file is not installed as required!"
+}
+
+function dna::check_entrypoints() {
+  test_dir_path=".dockerized_norlab/configuration/entrypoints"
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
   test -d "project-ci-tests/" || dna::print_msg_error_and_return "The '${test_dir_path}/project-ci-tests/' directory is not installed as required!"
   test -d "project-ci-tests/test_jobs/" || dna::print_msg_error_and_return "The '${test_dir_path}/project-ci-tests/test_jobs/' directory is not installed as required!"

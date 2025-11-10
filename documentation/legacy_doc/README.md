@@ -5,10 +5,10 @@ Reference: https://github.com/norlab-ulaval/dockerized-norlab-project.git
 
 1. Setup/validate `.dockerized_norlab/configuration/` files: 
    - Setup dotenv files: `.env`, `.env.dna` and `.env.local`;
-   - Customize files in `project_requirements/`;
-   - Customize files in `project_entrypoints/`. Add
+   - Customize files in `build_stage/`;
+   - Customize files in `entrypoints/`. Add
       project-specific container runtime logic;
-   - Customize `Dockerfile` to fit your need. It should work out of the box for most use cases;
+   - Customize `Dockerfile.project-core-user` to fit your need. It should work out of the box for most use cases;
    - Check `.dockerized_norlab/configuration/README.md` for more details.
 2. From your project `root`, execute the following
    ```shell

@@ -1,0 +1,21 @@
+
+# services:
+#
+#   project-develop:
+#     labels:
+#       norlab.dockerized-norlab.project.service: "develop override"
+#
+#   project-deploy:
+#     labels:
+#       norlab.dockerized-norlab.project.service: "deploy override"
+#
+#
+#   project-ci-tests:
+#     labels:
+#       norlab.dockerized-norlab.project.service: "ci-tests override"
+#
+#
+#   project-slurm:
+#     labels:
+#       norlab.dockerized-norlab.project.service: "slurm override"
+#

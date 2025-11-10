@@ -8,10 +8,11 @@ Check [DNA documentation](https://github.com/norlab-ulaval/dockerized-norlab-pro
 
 1. Setup/validate `.dockerized_norlab/configuration/` files: 
    - Setup dotenv files: `.env`, `.env.dna` and `.env.local`;
-   - Customize files in `project_requirements/`;
-   - Customize files in `project_entrypoints/`. Add
-      project-specific container runtime logic;
-   - Customize `Dockerfile` to fit your need. It should work out of the box for most use cases;
+   - Customize files in `build_stage/`;
+     - `Dockerfile.project-core-user` should work out of the box for most use cases but it can be customized to take advantage of the Docker cache layer mechanism and the Docker multi-stage build feature;
+     - Use `python.requirements-dna.txt` for python packages that you want in the container e.g., package that are not used for release, pinned version for development, jupyter server related. Remark that `python.requirements-dna.txt` can be used simultaniously with a project root level `requirements.txt` file or a `pyproject.toml`;
+     - Use `shell.requirements-dna.bash` for installing dependencies from a shell;
+   - Customize files in `entrypoints/`. Add project-specific container runtime logic;
    - Check `.dockerized_norlab/configuration/README.md` for more details.
 2. From your project `root`, execute the following
    ```shell
@@ -27,3 +28,4 @@ Check [DNA documentation](https://github.com/norlab-ulaval/dockerized-norlab-pro
    # When your done, execute 
    dna down
    ```
+

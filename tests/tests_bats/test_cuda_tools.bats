@@ -55,7 +55,7 @@ setup_file() {
 setup() {
   # Source the import_dna_lib.bash to load N2ST and DNA libraries
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/import_dna_lib.bash" || exit 1
-  
+
   # Source the file under test
   source "${BATS_DOCKER_WORKDIR}/${TESTED_FILE_PATH}/${TESTED_FILE}" || exit 1
   
@@ -69,7 +69,13 @@ setup() {
     # Suppress output during tests
     return 0
   }
-  export -f n2st::print_msg
+
+  # Mock dna::generate_super_project_compose_override_files_flags to suppress debug output during tests
+  function dna::generate_super_project_compose_override_files_flags() {
+    # Suppress output during tests
+    return 0
+  }
+  export -f dna::generate_super_project_compose_override_files_flags
 }
 
 # ====Teardown=====================================================================================
@@ -207,7 +213,7 @@ echo "DOCKER_COMPOSE_ARGS: $*" > /tmp/docker_compose_call.log
 if [[ "$1" == "compose" ]]; then
   # Validate the command structure if validation parameters are provided
   if [[ -n "$EXPECTED_COMPOSE_PATH" && -n "$EXPECTED_COMPOSE_FILE" && -n "$EXPECTED_SERVICE" && -n "$EXPECTED_HOST_GPU_ARCH" ]]; then
-    expected_cmd="compose -f ${EXPECTED_COMPOSE_PATH}/${EXPECTED_COMPOSE_FILE} run --rm --entrypoint /bin/bash -c ${EXPECTED_SERVICE} /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash '${EXPECTED_HOST_GPU_ARCH}'"
+    expected_cmd="compose -f ${EXPECTED_COMPOSE_PATH}/${EXPECTED_COMPOSE_FILE} run --rm --entrypoint /bin/bash -c ${EXPECTED_SERVICE} /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash '${EXPECTED_HOST_GPU_ARCH}'"
 
     # Log the expected command for debugging
     echo "EXPECTED_CMD: $expected_cmd" >> /tmp/docker_compose_call.log
@@ -219,7 +225,7 @@ if [[ "$1" == "compose" ]]; then
        [[ "$*" == *"--entrypoint"* ]] && \
        [[ "$*" == *"/bin/bash -c"* ]] && \
        [[ "$*" == *"${EXPECTED_SERVICE}"* ]] && \
-       [[ "$*" == *"/dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"* ]] && \
+       [[ "$*" == *"/dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash"* ]] && \
        [[ "$*" == *"'${EXPECTED_HOST_GPU_ARCH}'"* ]]; then
       echo "VALIDATION: PASSED" >> /tmp/docker_compose_call.log
       echo "$RETURN_VALUE"
@@ -420,7 +426,7 @@ EOF
   # Verify the docker compose command was called with correct arguments
   run cat /tmp/docker_compose_call.log
   assert_success
-  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
+  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "VALIDATION: PASSED"
 }
 
@@ -434,7 +440,7 @@ EOF
   # Verify the docker compose command was called with correct arguments
   run cat /tmp/docker_compose_call.log
   assert_success
-  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
+  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "VALIDATION: PASSED"
 }
 
@@ -448,7 +454,7 @@ EOF
   # Verify the docker compose command was called with correct arguments
   run cat /tmp/docker_compose_call.log
   assert_success
-  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
+  assert_line --partial "DOCKER_COMPOSE_ARGS: compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "VALIDATION: PASSED"
 }
 
@@ -462,7 +468,7 @@ EOF
   # Verify the complete command structure as specified in the issue
   run cat /tmp/docker_compose_call.log #>&3
   assert_success
-  assert_line --partial "compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/project_entrypoints/dn_entrypoint_gpu_checks.bash"
+  assert_line --partial "compose -f /tmp/docker-compose.yml run --rm --entrypoint /bin/bash -c gpu-service /dna-lib-container-tools/entrypoints/dn_entrypoint_gpu_checks.bash"
   assert_line --partial "'sm_75'"
   assert_line --partial "VALIDATION: PASSED"
 }

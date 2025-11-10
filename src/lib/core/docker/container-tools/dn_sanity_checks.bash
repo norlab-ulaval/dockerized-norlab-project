@@ -42,7 +42,7 @@ function dna::user_and_dir_content_sanity_check() {
     echo
     tree -aguL 3 /dna-lib-container-tools
     echo
-    tree -aguL 3 /project_entrypoints
+    tree -aguL 3 /entrypoints
     echo
     echo -e "${MSG_WARNING_FORMAT}[DN ${executed_at} debug]${MSG_END_FORMAT} Users configuration sanity check..."
     echo

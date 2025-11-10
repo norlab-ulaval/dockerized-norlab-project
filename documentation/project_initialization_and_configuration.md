@@ -58,9 +58,9 @@ After running `dna init`, your project will have the following structure:
 your-project-repository/
 ├── .dockerized_norlab/                 ← DNA configuration directory
 │   ├── configuration/                  ← Main configuration files
-│   │   ├── project_entrypoints/        ← Container startup scripts
-│   │   ├── project_requirements/       ← Dependency specifications
-│   │   ├── Dockerfile                  ← Container build instructions
+│   │   ├── build_stage/                ← Dependency specifications
+│   │   ├── entrypoints/                ← Container startup scripts
+│   │   ├── overrides/                  ← Optional docker-compose overrides
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
 │   │   ├── .env.local                  ← Local env variables overrides
@@ -191,7 +191,7 @@ VERBOSE_LOGGING=true
 
 There is three method for configuring container in DNA. In execution order:
 
-1. using the `Dockerfile` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for
+1. using the `Dockerfile.project-core-user` stage `user-project-custom-steps` (see [Docker Configuration](#docker-configuration) for
    details)
 2. using shell script file `shell.requirements-dna.bash`
 3. via `pip` using python requirement file `python.requirements-dna.txt`
@@ -202,7 +202,7 @@ You can use all three in combinaison if necessary.
 #### Specifying Python Requirements
 
 Specify DNA container specific Python dependencies in
-`.dockerized_norlab/configuration/project_requirements/python.requirements-dna.txt`:
+`.dockerized_norlab/configuration/build_stage/python.requirements-dna.txt`:
 
 Example:
 
@@ -231,13 +231,13 @@ Documentation
 #### Shell Requirements
 
 Specify DNA container specific shell dependencies in
-`.dockerized_norlab/configuration/project_requirements/shell.requirements-dna.bash` as if it is a instalation script.
+`.dockerized_norlab/configuration/build_stage/shell.requirements-dna.bash` as if it is a instalation script.
 
 ### Docker Configuration
 
 #### Dockerfile Customization
 
-The generated `.dockerized_norlab/configuration/Dockerfile` can be customized for your specific needs.
+The generated `.dockerized_norlab/configuration/build_stage/Dockerfile.project-core-user` can be customized for your specific needs.
 Use cases:
 
 - leveraging the [Docker build cache](https://docs.docker.com/build/cache/) layer mechanism for minimizing build time;
@@ -266,7 +266,7 @@ WORKDIR ${DN_PROJECT_PATH:?'environment variable is not set'}
 
 #### Project Entrypoints
 
-Files in `.dockerized_norlab/configuration/project_entrypoints` are customizable callback script executed by the docker
+Files in `.dockerized_norlab/configuration/entrypoints` are customizable callback script executed by the docker
 container entrypoint. Each one of them serve different purposes:
 
 - `dn_entrypoint.global.*.callback.bash` are executed in all mode (develop, deploy, ci-tests and slurm)

@@ -124,10 +124,7 @@ function dna::run_any() {
   docker_run_flag+=("${the_service}")
   docker_run_flag+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
   docker_run_flag+=("${docker_run_cmd_and_args[@]}")
-#  dna::excute_compose "--override-build-cmd" "run" "-f" "${compose_file}" "${docker_run_flag[@]}"
-  n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker compose -f ${compose_path}/${the_compose_file} run ${docker_run_flag[*]}${MSG_END_FORMAT}"
-  n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
-  docker compose "-f" "${compose_path}/${compose_file}" run "${docker_run_flag[@]}"
+  dna::excute_compose --verbosity 2 --compose-path "${compose_path}" -f "${compose_file}" --docker-cmd run -- "${docker_run_flag[@]}"
   exit_code=$?
 
   # ....Teardown...................................................................................

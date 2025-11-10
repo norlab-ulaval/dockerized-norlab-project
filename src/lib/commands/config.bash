@@ -121,65 +121,69 @@ function dna::config_command() {
     # Determine which compose file to use
     local compose_file=""
     local services=()
+
     declare -a docker_command
 
 
     if [[ "${mode}" =~ ^(build-core|build-core-ma)$ ]]; then
         services+=(project-core-pre project-core-user project-core)
         if [[ "${mode}" == build-core ]]; then
-          compose_file="docker-compose.project.build.native.yaml"
+          compose_file="docker-compose.build.native.yaml"
         elif [[ "${mode}" == build-core-ma ]]; then
-          compose_file="docker-compose.project.build.multiarch.yaml"
+          compose_file="docker-compose.build.multiarch.yaml"
         fi
     elif [[ "${mode}" =~ ^(build|build-ma)$ ]]; then
         if [[ "${mode}" == build ]]; then
-          compose_file="docker-compose.project.build.native.yaml"
+          compose_file="docker-compose.build.native.yaml"
         elif [[ "${mode}" == build-ma ]]; then
-          compose_file="docker-compose.project.build.multiarch.yaml"
+          compose_file="docker-compose.build.multiarch.yaml"
         fi
     elif [[ "${mode}" == dev ]]; then
         services+=(project-develop)
         if [[ "${platform}" == darwin ]]; then
-            compose_file="docker-compose.project.run.darwin.yaml"
+            compose_file="docker-compose.run.darwin.yaml"
         elif [[ "${platform}" == jetson ]]; then
-            compose_file="docker-compose.project.run.jetson.yaml"
+            compose_file="docker-compose.run.jetson.yaml"
         else
-            compose_file="docker-compose.project.run.linux-x86.yaml"
+            compose_file="docker-compose.run.linux-x86.yaml"
         fi
     elif [[ "${mode}" == deploy ]]; then
         services+=(project-deploy)
         if [[ "${platform}" == darwin ]]; then
-            compose_file="docker-compose.project.run.darwin.yaml"
+            compose_file="docker-compose.run.darwin.yaml"
         elif [[ "${platform}" == jetson ]]; then
-            compose_file="docker-compose.project.run.jetson.yaml"
+            compose_file="docker-compose.run.jetson.yaml"
         else
-            compose_file="docker-compose.project.run.linux-x86.yaml"
+            compose_file="docker-compose.run.linux-x86.yaml"
         fi
     elif [[ "${mode}" == ci-tests ]]; then
         services+=(project-ci-tests)
-        compose_file="docker-compose.project.run.ci-tests.yaml"
+        compose_file="docker-compose.run.ci-tests.yaml"
     elif [[ "${mode}" == slurm ]]; then
         services+=(project-slurm)
-        compose_file="docker-compose.project.run.slurm.yaml"
+        compose_file="docker-compose.run.slurm.yaml"
     elif [[ "${mode}" == release ]]; then
         n2st::print_msg_warning "Command ${MSG_DIMMED_FORMAT}dna config release${MSG_END_FORMAT} is not released yet, stay tuned!\n" && exit 0 # (CRITICAL) ToDo: on task end >> delete this line <--
         services+=(project-release)
-        compose_file="docker-compose.project.build.multiarch.yaml"
+        compose_file="docker-compose.build.multiarch.yaml"
     fi
+
+    # shellcheck disable=SC2207
+    compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration/overrides" "${compose_file}" ) )
 
     if [[ ${docker_cmd} == bake ]]; then
       if [[ ${mode} =~ ^(dev|deploy|ci-tests|slurm|release) ]]; then
         n2st::print_msg_warning "Using ${MSG_DIMMED_FORMAT}--bake${MSG_END_FORMAT} flag with non-build mode ${MSG_DIMMED_FORMAT}${mode}${MSG_END_FORMAT} is pointless. Bake only handle the ${MSG_DIMMED_FORMAT}build${MSG_END_FORMAT} attribute in compose config file." && return 0
       fi
       cd "${DNA_LIB_PATH}/core/docker/" || return 1
-      docker_command=(buildx bake --file "${compose_file}" --print)
+      docker_command=(buildx bake --file "${compose_file}" "${compose_override[@]}" --print)
     elif [[ ${docker_cmd} == config ]]; then
-      docker_command=(compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" config)
+      docker_command=(compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" "${compose_override[@]}" config)
     elif [[ ${docker_cmd} == build ]]; then
       if [[ ${mode} =~ ^(dev|deploy|ci-tests|slurm|release) ]]; then
         n2st::print_msg_warning "Using ${MSG_DIMMED_FORMAT}--compose-to-bake${MSG_END_FORMAT} flag with non-build mode ${MSG_DIMMED_FORMAT}${mode}${MSG_END_FORMAT} is pointless. Bake only handle the ${MSG_DIMMED_FORMAT}build${MSG_END_FORMAT} attribute in compose config file." && return 0
       fi
-      docker_command=(compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" build --print)
+      docker_command=(compose --file "${DNA_LIB_PATH}/core/docker/${compose_file}" "${compose_override[@]}" build --print)
     fi
 
     # Execute docker-compose config command

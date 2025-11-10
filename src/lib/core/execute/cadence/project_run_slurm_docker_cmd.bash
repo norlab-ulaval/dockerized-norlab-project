@@ -3,7 +3,7 @@
 #
 # (NICE TO HAVE) inprogress: RLRP-395 chore: add cadence support to dev workflow
 #
-# The following docker run command was generated from `docker-compose.project.run.slurm.yaml`
+# The following docker run command was generated from `docker-compose.run.slurm.yaml`
 # via `https://www.decomposerize.com`.
 #
 #
@@ -25,7 +25,7 @@ docker run \
   -v /etc/localtime:/etc/localtime:ro \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   -v /tmp/.docker.xauth:/tmp/.docker.xauth:rw \
-  -v ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/project_entrypoints/:/project_entrypoints/:ro \
+  -v ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro \
   -v ${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw \
   -v ${SUPER_PROJECT_ROOT}/:/ros2_ws/src/"${DN_PROJECT_GIT_NAME:?err}"/:rw \
   -v ${SUPER_PROJECT_ROOT}/artifact:/ros2_ws/src/"${DN_PROJECT_GIT_NAME:?err}"/artifact/:rw \

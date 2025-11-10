@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Build continuous integration test image specified in docker-compose.project.build.multiarch.yaml
+# Build continuous integration test image specified in docker-compose.build.multiarch.yaml
 # and execute tests on both x86 and arm64 architecture.
 #
 # Usage:

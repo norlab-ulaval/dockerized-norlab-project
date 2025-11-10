@@ -1,7 +1,7 @@
 #!/bin/bash
 DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 # =================================================================================================
-# Convenient script for spinning a specific service from 'docker-compose.project.run.<DEVICE>.yaml'
+# Convenient script for spinning a specific service from 'docker-compose.run.<DEVICE>.yaml'
 # Under the hood, start the service in detach mode and attach to it so that you can close
 # the terminal and it will keep running in the background.
 #
@@ -32,9 +32,7 @@ DOCUMENTATION_UP_AND_ATTACH=$( cat <<'EOF'
 # =================================================================================================
 EOF
 )
-# (Priority) ToDo: unit-test of flag option
-# (Priority) ToDo: NMO-375 refactor: run and attach logic using 'RedLeader-research-codebase' implemention
-# ToDo: refactor using Dockerized-NorLab scripts (ref task NMO-375)
+# (Priority) ToDo: extend unit-test of flag options
 # ToDo: see newly added implementation in dockerized-norlab-scripts/build_script/dn_run_a_service.bash (ref task NMO-375)
 
 function show_help() {
@@ -60,8 +58,6 @@ function dna::up_and_attach() {
   local the_service=develop
   local no_attach=false
   local no_up=false
-  local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
-  local line_style="${MSG_LINE_STYLE_LVL2}"
 
   # Note prevent double bash invocation logic (non-interactive -> interactive) when running entrypoint in up&attach
 #  interactive_login=("-e" "BASH_ENV")
@@ -120,7 +116,7 @@ function dna::up_and_attach() {
   # ....Set env variables (post cli)...............................................................
   declare -a docker_exec_cmd_and_args=("${remaining_args[@]:-"bash"}")
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  local the_compose_file=""
+  local compose_file=""
   local display_device=""
   declare -i up_exit_code=0
   declare -i exec_exit_code=0
@@ -156,14 +152,14 @@ function dna::up_and_attach() {
   if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]] || [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
 
     if [[ ${IMAGE_ARCH_AND_OS:?err} == 'l4t/arm64' ]]; then
-      the_compose_file=docker-compose.project.run.jetson.yaml
+      compose_file=docker-compose.run.jetson.yaml
 
       # copy file showing which Jetson board is running for mountinf as a volume in docker-compose
       # Source https://github.com/dusty-nv/jetson-containers/blob/master/run.sh
       cat /proc/device-tree/model > /tmp/nv_jetson_model
 
     elif [[ $IMAGE_ARCH_AND_OS == 'linux/x86' ]]; then
-      the_compose_file=docker-compose.project.run.linux-x86.yaml
+      compose_file=docker-compose.run.linux-x86.yaml
     fi
 
     if [[ ${IS_TEAMCITY_RUN} == false ]]; then
@@ -211,7 +207,7 @@ function dna::up_and_attach() {
     fi
 
   elif [[ $IMAGE_ARCH_AND_OS == 'darwin/arm64' ]]; then
-    the_compose_file=docker-compose.project.run.darwin.yaml
+    compose_file=docker-compose.run.darwin.yaml
 
     # Enable IGLX for X11 forwarding with OpenGL support
     # To test X11 forwarding with OpenGL, run in the container
@@ -233,7 +229,7 @@ function dna::up_and_attach() {
   fi
 
   # ....Set GPU capabilities.......................................................................
-  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${the_compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failed!"
+  dna::configure_gpu_capabilities "${IMAGE_ARCH_AND_OS}" "${compose_path}" "${compose_file}" "${the_service}" || n2st::print_msg_error_and_exit "dna::configure_gpu_capabilities failed!"
   test -n "${NVIDIA_VISIBLE_DEVICES:?'Env variable need to be set and non-empty.'}"
   test -n "${NVIDIA_DRIVER_CAPABILITIES}" # Might be empty or unset -> default driver capability: utility, compute
   test -n "${DN_DOCKER_RUNTIME:?'Env variable need to be set and non-empty.'}"
@@ -242,7 +238,7 @@ function dna::up_and_attach() {
   # ....Start docker container.....................................................................
   if [[ ${no_up} == true ]] && [[ ${no_attach} == true ]]; then
     # No up and no attach logic completed --> exit script
-    export _NO_UP_COMPOSE_FILE="${the_compose_file}"
+    export _NO_UP_COMPOSE_FILE="${compose_file}"
     export _NO_UP_SERVICE="${the_service}"
     return 0
   elif [[ ${no_up} != true ]]; then
@@ -250,7 +246,7 @@ function dna::up_and_attach() {
   fi
 
 
-  if [[ $(docker compose -f "${compose_path}/${the_compose_file}" ps --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME:?err} ${the_service} running" ]]; then
+  if [[ $(dna::excute_compose  --verbosity 0 --docker-cmd ps --compose-path "${compose_path}" -f "${compose_file}" -- --format "{{.Name}} {{.Service}} {{.State}}") == "${DN_CONTAINER_NAME:?err} ${the_service} running" ]]; then
 
     if [[ ${no_up} != true ]]; then
       n2st::print_msg "Service ${MSG_DIMMED_FORMAT}${the_service}${MSG_END_FORMAT} is already running"
@@ -263,40 +259,27 @@ function dna::up_and_attach() {
       :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-      declare -a docker_flags=()
-      if [[ ${DNA_DEBUG} == true ]]; then
-        #docker_flags+=("--debug")
-        docker_flags+=("--log-level" "debug")
-      fi
-      declare -a docker_exec_no_up=("exec")
+      declare -a docker_exec_no_up=()
 #      docker_exec_no_up+=("${interactive_login[@]}")
       docker_exec_no_up+=("${docker_compose_exec_flag[@]}")
       docker_exec_no_up+=("${the_service}")
       docker_exec_no_up+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.attach.bash")
       docker_exec_no_up+=("${docker_exec_cmd_and_args[@]}")
-      n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose -f ${compose_path}/${the_compose_file} ${docker_exec_no_up[*]}${MSG_END_FORMAT}"
-      n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
-      docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_exec_no_up[@]}"
+      dna::excute_compose --verbosity 2 --compose-path "${compose_path}" -f "${compose_file}" --docker-cmd exec -- "${docker_exec_no_up[@]}"
       exec_exit_code=$?
     fi
 
   elif [[ ${no_up} != true ]]; then
 
     # . . Launch service as a daemon. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-    declare -a docker_flags=()
-    if [[ ${DNA_DEBUG} == true ]]; then
-      #docker_flags+=("--debug")
-      docker_flags+=("--log-level" "debug")
-    fi
-    declare -a docker_up=("up" "--detach" "--wait")
-    #  docker_up+=("--build")
+    declare -a docker_up=()
+    docker_up+=(--detach --wait)
     docker_up+=("${the_service}")
-    n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose ${docker_up[*]}${MSG_END_FORMAT}"
-    docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_up[@]}"
+    dna::excute_compose --verbosity 1 --compose-path "${compose_path}" -f "${compose_file}" --docker-cmd up -- "${docker_up[@]}"
     up_exit_code=$?
 
     local dn_ssh_server_port=${DN_SSH_SERVER_PORT:-2222}
-    # (Priority) ToDo: validate >> next bloc ↓↓
+    # (Nice to have) ToDo: validate >> next bloc ↓↓
     n2st::print_msg "Updating ssh key [localhost]:${dn_ssh_server_port}"
     bash -c "ssh-keygen -R [localhost]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
     bash -c "ssh-keygen -R [127.0.0.1]:${dn_ssh_server_port} >/dev/null 2>/dev/null"
@@ -305,9 +288,6 @@ function dna::up_and_attach() {
       n2st::print_msg "Current container on host..."
       docker container ls -a
       echo
-      #n2st::print_msg "Inspect docker compose configuration for service ${the_service}..."
-      #docker compose -f "${compose_path}/${the_compose_file}" config --dry-run "${the_service}"
-      #echo
       n2st::print_msg "Pre-exec stage environment variables...
       NVIDIA_VISIBLE_DEVICES: $NVIDIA_VISIBLE_DEVICES
       NVIDIA_DRIVER_CAPABILITIES: $NVIDIA_DRIVER_CAPABILITIES
@@ -328,21 +308,14 @@ function dna::up_and_attach() {
       :
     else
       # . . Attach to service. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-      declare -a docker_flags=()
-      if [[ ${DNA_DEBUG} == true ]]; then
-        #docker_flags+=("--debug")
-        docker_flags+=("--log-level" "debug")
-      fi
-      declare -a docker_exec=("exec")
+      declare -a docker_exec=()
 #      docker_exec+=("${interactive_login[@]}")
       docker_exec+=("${docker_compose_exec_flag[@]}")
       docker_exec+=("${the_service}")
       # Note: The init entrypoint is executed here on purpose, not at docker compose up.
       docker_exec+=("/dockerized-norlab/project/${the_service}/dn_entrypoint.init.bash")
       docker_exec+=("${docker_exec_cmd_and_args[@]}")
-      n2st::print_msg "Execute ${MSG_DIMMED_FORMAT}docker ${docker_flags[*]} compose -f ${compose_path}/${the_compose_file} ${docker_exec[*]}${MSG_END_FORMAT}"
-      n2st::draw_horizontal_line_across_the_terminal_window "${line_format}" "${line_style}"
-      docker "${docker_flags[@]}" compose -f "${compose_path}/${the_compose_file}" "${docker_exec[@]}"
+      dna::excute_compose --verbosity 2 --compose-path "${compose_path}" -f "${compose_file}" --docker-cmd exec -- "${docker_exec[@]}"
       exec_exit_code=$?
     fi
   elif [[ ${no_up} == true ]]; then

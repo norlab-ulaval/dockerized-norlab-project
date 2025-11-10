@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Build continuous integration tests images specified in docker-compose.project.build.native.yaml.
+# Build continuous integration tests images specified in docker-compose.build.native.yaml.
 # Use in conjonction with `run.ci_tests.bash`.
 #
 # Usage:

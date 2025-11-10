@@ -1,6 +1,6 @@
 #!/bin/bash
 # =================================================================================================
-# Build develop images specified in docker-compose.project.build.native.yaml
+# Build develop images specified in docker-compose.build.native.yaml
 #
 # Remark:
 #   Develop images are build localy and are single architecture so they are not pushed to dockerhub

@@ -17,7 +17,7 @@
 # =================================================================================================
 
 # docker compose -f "${compose_path}/${the_compose_file}" config --services
-if [[ "$1" == "compose" && "$2" == "-f" && "$3" =~ 'docker-compose.project.build' && "$4" == config && "$5" == --services ]]; then
+if [[ "$1" == "compose" && "$2" == "-f" && "$3" =~ 'docker-compose.build' && "$4" == config && "$5" == --services ]]; then
   echo "project-core-pre project-core-user project-core project-develop project-deploy project-ci-tests project-slurm"
 elif [[ "$1" == "image" && "$2" == "ls" ]]; then
   echo "test-image-deploy.latest"

@@ -158,7 +158,7 @@ sudo systemctl enable docker
 **Solution**: Install Homebrew or MacPorts manually before running DNA installation.
 
 #### "Base image not found"
-**Solution**: Use pre-built images or modify Dockerfile to use locally available base images.
+**Solution**: Use pre-built images or modify `Dockerfile.project-core-user` to use locally available base images.
 
 ### Verification Commands
 

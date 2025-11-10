@@ -15,7 +15,7 @@ DOCUMENTATION_BUILD_ALL=$(
 #   --service-names "<name1>,<name2>"     Override the list of build services.
 #                                         Must be a comma separated string of service name.
 #   -f | --file "compose.yaml"            Override the docker compose file
-#                                         (default: "docker-compose.project.build.native.yaml")
+#                                         (default: "docker-compose.build.native.yaml")
 #   --multiarch                           Build in multi-architecture mode
 #   --force-push-project-core             Pull/push from/to Dockerhub sequentialy
 #                                          (instead of building images from the local image store).
@@ -66,7 +66,7 @@ function dna::build_services() {
   local target_release_branch
   local force_push_project_core=false
   local compose_path="${DNA_ROOT:?err}/src/lib/core/docker"
-  local the_compose_file="docker-compose.project.build.native.yaml"
+  local the_compose_file="docker-compose.build.native.yaml"
   local msg_line_level="${MSG_LINE_CHAR_BUILDER_LVL1}"
   local line_style="${MSG_LINE_STYLE_LVL2}"
 
@@ -135,14 +135,14 @@ function dna::build_services() {
   done
 
   # ....Set env variables (post cli)...............................................................
-  build_docker_flag+=("${remaining_args[@]}")
+  build_docker_flag+=( --with-dependencies "${remaining_args[@]}")
 
   # ====Begin======================================================================================
 
   # ....Fetch service list.........................................................................
   if [[ "${services_names[0]}" == "none" ]]; then
     # shellcheck disable=SC2207
-    services_names=($(docker compose -f "${compose_path}/${the_compose_file}" config --services --no-interpolate))
+    services_names=($(dna::excute_compose --verbosity 0 --compose-path "${compose_path}" -f "${the_compose_file}" --docker-cmd config -- --services --no-interpolate))
   fi
 
   n2st::print_msg "Building the following services"

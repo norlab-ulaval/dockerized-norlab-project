@@ -2,7 +2,7 @@
 DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
   cat <<'EOF'
 # =================================================================================================
-# Build all images specified in docker-compose.project.build.multiarch.yaml
+# Build all images specified in docker-compose.build.multiarch.yaml
 # i.e. pull/push from/to dockerhub sequentialy.
 # Usage:
 #   $ bash build.all.multiarch.bash [<any-arguments>] [--] [<any-docker-flag>]
@@ -14,7 +14,7 @@ DOCUMENTATION_BUILD_ALL_MULTIARCH=$(
 #                                          (instead of building images from the local image store).
 #                                         Require a docker hub account.
 #   -f | --file "compose.yaml"            To override the docker compose file
-#                                          (default: "docker-compose.project.build.multiarch.yaml")
+#                                          (default: "docker-compose.build.multiarch.yaml")
 #   -h | --help
 #
 # Positional argument:
@@ -44,7 +44,7 @@ function dna::build_services_multiarch() {
   declare -a dna_build_all_args=()
   declare -a remaining_args=()
   local force_push_project_core=false
-  local the_compose_file="docker-compose.project.build.multiarch.yaml"
+  local the_compose_file="docker-compose.build.multiarch.yaml"
 
   # ....cli........................................................................................
   function show_help() {
