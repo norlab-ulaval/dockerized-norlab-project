@@ -258,7 +258,7 @@ function dna::excute_compose() {
   docker_command_w_flags+=( -f "${compose_path}/${the_compose_file}")
 
   # shellcheck disable=SC2207
-  compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration" "${compose_file}" ) )
+  compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration/overrides" "${compose_file}" ) )
   docker_command_w_flags+=("${compose_override[@]}")
   docker_command_w_flags+=("${docker_cmd}" "${remaining_args[@]}")
 

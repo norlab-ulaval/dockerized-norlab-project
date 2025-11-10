@@ -169,7 +169,7 @@ function dna::config_command() {
     fi
 
     # shellcheck disable=SC2207
-    compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration" "${compose_file}" ) )
+    compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration/overrides" "${compose_file}" ) )
 
     if [[ ${docker_cmd} == bake ]]; then
       if [[ ${mode} =~ ^(dev|deploy|ci-tests|slurm|release) ]]; then

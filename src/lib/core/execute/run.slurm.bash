@@ -221,7 +221,7 @@ function dna::run_slurm() {
   cd "${SUPER_PROJECT_ROOT:?err}" || exit 1
 
   # shellcheck disable=SC2207
-  compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration" "${compose_file}" ) )
+  compose_override=($( dna::generate_super_project_compose_override_files_flags ".dockerized_norlab/configuration/overrides" "${compose_file}" ) )
   compose_flags=("-f" "${compose_file_path}" "${compose_override[@]}")
 
   declare -a docker_run=()

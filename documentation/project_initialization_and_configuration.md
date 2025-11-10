@@ -58,8 +58,9 @@ After running `dna init`, your project will have the following structure:
 your-project-repository/
 ├── .dockerized_norlab/                 ← DNA configuration directory
 │   ├── configuration/                  ← Main configuration files
-│   │   ├── entrypoints/                ← Container startup scripts
 │   │   ├── build_stage/                ← Dependency specifications
+│   │   ├── entrypoints/                ← Container startup scripts
+│   │   ├── overrides/                  ← Optional docker-compose overrides
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
 │   │   ├── .env.local                  ← Local env variables overrides
