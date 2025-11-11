@@ -3,6 +3,19 @@
 Is AI ignored
 
 ```markdown
+
+# Tasks
+
+1. Analyze codebase thoroughly to understand what it is about.
+2. Considering TODO, update if relevant the `README.md` and documentations in `documentation/` directory.
+3. Review all documentations:
+   1. Review the `README.md` updated version and make sure it aligns with the codebase;
+   2. Review the newly created documentation and make sure it aligns with the codebase;
+   3. If not, repeat from **Task step 2** and keep repeating until all condition are met.
+
+```
+
+```markdown
 # First time Junie run 
 Study the guidelines at `.junie/guidelines.md` thoroughly.
 Provide a comprehensive summary of all guidelines studied.
