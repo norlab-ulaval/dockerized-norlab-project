@@ -613,6 +613,8 @@ teardown_file() {
   assert_output --partial "data/shared_data/*"
   assert_output --partial "!artifact/**/README.md"
   assert_output --partial "!data/**/README.md"
+  assert_output --partial "**/secrets/*"
+  assert_output --partial "*.secret"
 }
 
 @test "dna::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {
@@ -747,6 +749,9 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/example_app.py"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
 
+  assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/secrets"
+  assert_file_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
   # Cleanup ok
   assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/dn_container_env_variable/"
   assert_file_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/dn_container_env_variable/README.md"
@@ -772,6 +777,9 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/data/shared_data/README.md"
   assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab"
 
+  assert_dir_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/secrets"
+  assert_file_exist "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
   # Verify ownership
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/artifact/README.md"
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/README.md"
@@ -779,6 +787,7 @@ teardown_file() {
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/repository_data/README.md"
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/data/shared_data/README.md"
   assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/.dockerized_norlab"
+  assert_file_owner "$(whoami)" "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
 
   # Verify permission
   echo "Permissions:
@@ -794,6 +803,7 @@ teardown_file() {
   assert_file_permission 644 "${TEST_EMPTY_REPO}/data/external_data/README.md"
   assert_file_permission 644 "${TEST_EMPTY_REPO}/data/repository_data/README.md"
   assert_file_permission 644 "${TEST_EMPTY_REPO}/data/shared_data/README.md"
+  assert_file_permission 644 "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
   assert_file_permission 755 "${TEST_EMPTY_REPO}/.dockerized_norlab"
 
 }

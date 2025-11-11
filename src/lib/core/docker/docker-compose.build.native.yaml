@@ -101,6 +101,8 @@ services:
         DN_SSH_SERVER_USER: ${DN_SSH_SERVER_USER:-dna-non-interactive-ros2}
         DN_SSH_SERVER_PORT: ${DN_SSH_SERVER_PORT:-2222}
         DN_GDB_SERVER_PORT: ${DN_GDB_SERVER_PORT:-7777}
+      secrets:
+        - dna_ssh_password
     pull_policy: build # Execute the `build` attribute over pulling the `image` attribute
     image: ${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-develop:${PROJECT_TAG:?err}
     depends_on:
@@ -158,3 +160,7 @@ services:
     runtime: nvidia
     depends_on:
       - project-core
+
+secrets:
+  dna_ssh_password:
+    file: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt

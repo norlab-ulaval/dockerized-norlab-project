@@ -61,6 +61,7 @@ your-project-repository/
 │   │   ├── build_stage/                ← Dependency specifications
 │   │   ├── entrypoints/                ← Container startup scripts
 │   │   ├── overrides/                  ← Optional docker-compose overrides
+│   │   ├── secrets/                    ← sensitive information
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
 │   │   ├── .env.local                  ← Local env variables overrides

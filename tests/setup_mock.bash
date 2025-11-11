@@ -44,6 +44,15 @@ function dna::setup_mock() {
     echo
   fi
 
+  # ....Mock secret...............................................................................
+  # Create secrets directory (if it does not exist)
+  local secret_dir="${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.dockerized_norlab/configuration/secrets/"
+  mkdir -p "${secret_dir}"
+  # Generate one strong password for Phase 1
+  openssl rand -base64 32 > "${secret_dir}/dna_ssh_password.txt"
+  # Secure the secret
+  chmod 600 "${secret_dir}/dna_ssh_password.txt"
+
   # ....Sanity check...............................................................................
   test -d "${DNA_ROOT}/utilities/tmp" || n2st::print_msg_error_and_exit "The directory ${DNA_ROOT}/utilities/tmp is unreachable"
   test -d "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.git" \
