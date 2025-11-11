@@ -27,12 +27,12 @@
 <br>
 
 [//]: # ( ==== Description =========================================== ) 
-**The user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main) image builder.**
+**A containerized workflow tailor-made for robotic research.**<br>
 
-It provides a containerized workflow tailor-made for robotic research.<br>
 Dockerized-NorLab project application (DNA) manage Dockerized-NorLab (DN) container lifecycle<br>
 providing functionality for robotic software development, deployment, testing,<br>
-continuous integration, slurm job experimentation, and release publishing. 
+continuous integration, slurm job experimentation, and release publishing.<br> <br> 
+DNA is the user side companion of [Dockerized-NorLab (DN)](https://github.com/norlab-ulaval/dockerized-norlab/tree/main) image builder<br> which produces multi‑arch, GPU‑enabled, ROS2‑ready base images consumed by DNA.<br>
 
 <br>
 
@@ -77,6 +77,7 @@ Maintainer <a href="https://redleader962.github.io">Luc Coupal</a>
 - **Robotic Software System ([ROS2](https://github.com/ros2)) ready**: Ready to roll, out of the box.
 - **GPU acceleration**: Provides GPU support through [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) for both `l4t/arm64` and `linux/x86` platforms.
 - **Transparent configuration**: Makes project configuration easy while keeping [Docker](https://docs.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) logic transparent and accessible.
+- **Rootless enough**: The stack is designed to run containers as a non‑root user inside the container, but it does not target Docker’s full “rootless mode” (rootless daemon/user‑namespaces) since it need to support robotic related capabilities such as GPU, host networking/IPC/PID, that typically require a rootful Docker engine.
 
 [//]: # (</details>)
 
