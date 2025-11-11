@@ -1,0 +1,12 @@
+# =================================================================================================
+#
+# Docker compose project RUN OVERRIDE, version for running on Slurm enabled server
+# (both arm64 and x86 architecture)
+#
+# =================================================================================================
+
+# services:
+#
+#   project-slurm:
+#     labels:
+#       norlab.dockerized-norlab.project.service: "slurm override"

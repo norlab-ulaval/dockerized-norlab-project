@@ -1,6 +1,6 @@
 # =================================================================================================
 #
-# Docker compose project GLOBAL OVERRIDE. Will apply to both build time and runtime commands.
+# Docker compose project RUN OVERRIDE, version for running on Apple Silicone computer (arm64)
 #
 # =================================================================================================
 
@@ -13,14 +13,3 @@
 #   project-deploy:
 #     labels:
 #       norlab.dockerized-norlab.project.service: "deploy override"
-#
-#
-#   project-ci-tests:
-#     labels:
-#       norlab.dockerized-norlab.project.service: "ci-tests override"
-#
-#
-#   project-slurm:
-#     labels:
-#       norlab.dockerized-norlab.project.service: "slurm override"
-#
