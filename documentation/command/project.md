@@ -5,7 +5,7 @@ Super project DNA configuration management commands.
 ## Synopsis
 
 ```bash
-dna project [validate|sanity|dotenv] [OPTIONS]
+dna project [validate|sanity|init_secrets|dotenv] [OPTIONS]
 ```
 
 ## Description
@@ -18,6 +18,7 @@ The `dna project` command provides utilities for managing and validating DNA pro
 |------------|-------------|
 | `validate` | Validate super project setup and Docker configurations |
 | `sanity` | Validate super project setup |
+| `init_secrets` | Initialize DNA secrets for the super project |
 | `dotenv` | Show consolidated and interpolated dotenv config files |
 
 ## Options
@@ -44,6 +45,9 @@ dna project validate [OPTIONS]
 | `--include-multiarch` | Include multi-architecture image validation |
 | `--help`, `-h` | Show help message |
 
+#### Notes
+- When using `--slurm`, you may optionally provide the SLURM job directory path as a positional argument. If omitted, it defaults to `slurm_jobs/`.
+
 #### What it does
 1. **Configuration validation**: Checks docker-compose files with variable interpolation
 2. **Build validation**: Executes build in dry-run mode for each service
@@ -64,6 +68,38 @@ dna project sanity [OPTIONS]
 |--------|-------------|
 | `--help`, `-h` | Show help message |
 
+### init_secrets
+
+Initialize DNA secrets for the super project.
+
+Generates a strong password at `.dockerized_norlab/configuration/secrets/dna_ssh_password.txt` and ensures it is secured with the correct file ownership and permissions. If the secrets file already exists, it is left unchanged unless the `--override` flag is provided. The command also appends a `**/secrets/*` rule to the super project's `.gitignore` to prevent accidental commits of secrets (added only once).
+
+#### Synopsis
+```bash
+dna project init_secrets [OPTIONS]
+```
+
+#### Options
+| Option | Description |
+|--------|-------------|
+| `--override` | Generate a new strong password even if the file already exists (overwrites) |
+| `--help`, `-h` | Show help message |
+
+#### Notes
+- Secret file path: `.dockerized_norlab/configuration/secrets/dna_ssh_password.txt`
+- The secret is a random 32-byte base64 string generated with `openssl rand -base64 32`
+- File permissions are validated via DNA's `validate_file_ownership_and_permissions`
+- A `**/secrets/*` entry is added to the repository's `.gitignore` if not already present
+
+#### Examples
+```bash
+# Initialize secrets (create file if missing)
+dna project init_secrets
+
+# Force regeneration of the secret
+dna project init_secrets --override
+```
+
 ### dotenv
 
 Show consolidated and interpolated dotenv configuration files.
@@ -82,6 +118,11 @@ dna project dotenv [OPTIONS]
 - **Environment file precedence**: Shows how variables are resolved
 - **Variable interpolation**: Displays final values after substitution
 - **Configuration sources**: Shows which files contribute to final configuration
+- **Grouped output**:
+  - DNA/DN variables: `DN_*`, `DNA_*`
+  - Project variables: `PROJECT_*`, `SUPER_*`
+  - Norlab Build System (NBS): `NBS_*`
+  - Norlab Shell Script Tools (N2ST): `N2ST_*`
 
 ## Examples
 
