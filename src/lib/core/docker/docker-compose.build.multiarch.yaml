@@ -83,3 +83,7 @@ services:
   #        - "linux/amd64"
   #    depends_on:
   #      - project-core
+
+secrets:
+  dna_ssh_password:
+    file: ${SUPER_PROJECT_ROOT:?err}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt

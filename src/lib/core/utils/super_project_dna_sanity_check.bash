@@ -112,6 +112,9 @@ function dna::check_project_configuration() {
   test -f ".env.dna" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || dna::print_msg_error_and_return "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.local' file is not installed as required!"
+
+  test -d "secrets/" || dna::print_msg_error_and_return "The '${test_dir_path}/secrets/' directory is not installed as required! Execute ${MSG_DIMMED_FORMAT}$ dna project init_secrets${MSG_END_FORMAT} to fix this issue. Update the generated password at your convenience."
+  test -f "secrets/dna_ssh_password.txt" || dna::print_msg_error_and_return "The '${test_dir_path}/secrets/dna_ssh_password.txt' file is not installed as required! Execute ${MSG_DIMMED_FORMAT}$ dna project init_secrets${MSG_END_FORMAT} to fix this issue. Update the generated password at your convenience."
 }
 
 function dna::check_build_stage() {
@@ -172,6 +175,11 @@ function dna::check_gitignore() {
   # Check required entry: !data/**/README.md
   if ! grep --silent -E "^\!data\/\*\*\/README\.md$" ".gitignore"; then
     dna::print_msg_error_and_return "The line '!data/**/README.md' is not present in .gitignore as required!"
+  fi
+
+  # Check required entry: **/secrets/*
+  if ! grep --silent -E "^\*\*\/secrets\/\*$" ".gitignore"; then
+    dna::print_msg_error_and_return "The line '**/secrets/*' is not present in .gitignore as required!"
   fi
 
 }

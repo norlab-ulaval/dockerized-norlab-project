@@ -224,6 +224,7 @@ ${MSG_DIMMED_FORMAT}
      │   │   ├── build_stage/                     ← Dependency specifications
      │   │   ├── entrypoints/                     ← Container startup scripts
      │   │   ├── overrides/                       ← Optional docker-compose overrides
+     │   │   ├── secrets/                         ← sensitive information
      │   │   ├── .env.dna                         ← DNA-specific env variables
      │   │   ├── .env                             ← Project-specific env variables
      │   │   ├── .env.local                       ← Local env variables overrides
@@ -280,6 +281,14 @@ ${MSG_END_FORMAT}"
     dna::portable_copy "${DNA_LIB_PATH}/template/.dockerized_norlab/" .dockerized_norlab "${super_project_root}" || return 1
 
     cd "${super_project_root}/.dockerized_norlab" || return 1
+
+    # Create secrets directory and file
+    local secret_dir="configuration/secrets"
+    mkdir -p "${secret_dir}"
+    # Generate one strong password for Phase 1
+    openssl rand -base64 32 > "${secret_dir}/dna_ssh_password.txt"
+    # Secure the secret
+    dna::validate_file_ownership_and_permissions "${secret_dir}/dna_ssh_password.txt" "${super_project_root}" || return 1
 
     # Rename the super project DNA meta .env file
     mv -f "${super_project_root}/.dockerized_norlab/.env.PLACEHOLDER_SUPER_PROJECT_NAME" ".env.${super_project_name}" || return 1
@@ -389,6 +398,9 @@ data/shared_data/*
 # directory exist in vcs
 !artifact/**/README.md
 !data/**/README.md
+
+# DNA docker secrets
+**/secrets/*
 
 # ====Dockerized-NorLab(recommended)===============================================================
 **/slurm_jobs/*.out

@@ -138,6 +138,9 @@ function dna::build_services() {
   build_docker_flag+=( --with-dependencies "${remaining_args[@]}")
 
   # ====Begin======================================================================================
+  # ....Pre-condition..............................................................................
+  test -f "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt" || dna::print_msg_error_and_return "The '${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt' file is not installed as required! Execute ${MSG_DIMMED_FORMAT}$ dna project init_secrets${MSG_END_FORMAT} to fix this issue. Update the generated password at your convenience."
+
 
   # ....Fetch service list.........................................................................
   if [[ "${services_names[0]}" == "none" ]]; then

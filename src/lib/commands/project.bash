@@ -11,6 +11,7 @@ DOCUMENTATION_BUFFER_PROJECT=$( cat <<'EOF'
 # Commands:
 #   validate               Validate super project '.dockerized_norlab' configurations
 #   sanity                 Validate super project setup
+#   init_secrets           Initialize dna secrets
 #   dotenv                 Show consolidated and interpolated dotenv config files
 #
 # Options:
@@ -59,6 +60,24 @@ DOCUMENTATION_BUFFER_PROJECT_SANITY=$( cat <<'EOF'
 EOF
 )
 
+DOCUMENTATION_BUFFER_PROJECT_INIT_SECRETS=$( cat <<'EOF'
+# =================================================================================================
+# Initialize super project DNA secrets.
+#
+# Generate a new strong password at secrets/dna_ssh_password.txt and update git ignore.
+# Leave unchange if file already exist unless the --override flag is used.
+#
+# Usage:
+#   $ dna project init_secrets [OPTIONS]
+#
+# Options:
+#   --override             Generate a strong password and override secrets/dna_ssh_password.txt
+#   --help, -h             Show this help message
+#
+# =================================================================================================
+EOF
+)
+
 DOCUMENTATION_BUFFER_PROJECT_DOTENV=$( cat <<'EOF'
 # =================================================================================================
 # Show consolidated and interpolated dotenv config files
@@ -87,6 +106,7 @@ function dna::project_validate_command() {
     local remaining_args=()
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
+    declare -i fct_exit_code
 
 
     # ....cli......................................................................................
@@ -147,6 +167,7 @@ function dna::project_sanity_command() {
     local remaining_args=()
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
+    declare -i fct_exit_code
 
 
     # ....cli......................................................................................
@@ -176,6 +197,72 @@ function dna::project_sanity_command() {
     n2st::print_msg "Validating super project setup..."
     dna::super_project_dna_sanity_check "${remaining_args[@]}"
     fct_exit_code=$?
+
+    n2st::print_formated_script_footer "${header_footer_name}" "${line_format}" "${line_style}"
+    return $fct_exit_code
+}
+
+function dna::project_init_secrets_command() {
+    local remaining_args=()
+    local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
+    local line_style="${MSG_LINE_STYLE_LVL2}"
+    local override=false
+    declare -i fct_exit_code
+
+
+    # ....cli......................................................................................
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --override)
+                override=true
+                shift
+                ;;
+            --help|-h)
+                dna::command_help_menu "${DOCUMENTATION_BUFFER_PROJECT_INIT_SECRETS:?err}"
+                exit 0
+                ;;
+            *)
+                remaining_args+=("$@")
+                break
+                ;;
+        esac
+    done
+
+    header_footer_name="project secrets initialization procedure"
+    n2st::print_formated_script_header "${header_footer_name}" "${line_format}" "${line_style}"
+
+    # ....Load dependencies........................................................................
+    source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNA_LIB_PATH}/commands/init.bash" || exit 1
+
+    # ....Begin....................................................................................
+
+    n2st::print_msg "Setup super project secrets..."
+    # Create secrets directory (if it does not exist)
+    local secret_dir="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/secrets"
+    mkdir -p "${secret_dir}"
+    if [[ ${override} == true ]] || [[ ! -f "${secret_dir}/dna_ssh_password.txt" ]]; then
+      # Generate strong password
+      openssl rand -base64 32 > "${secret_dir}/dna_ssh_password.txt"
+      fct_exit_code=$?
+      if [[ ${fct_exit_code} -eq 0 ]]; then
+        n2st::print_msg "New strong password generated in ${MSG_DIMMED_FORMAT}${secret_dir}/dna_ssh_password.txt${MSG_END_FORMAT}"
+      fi
+      # Secure the secret
+      dna::validate_file_ownership_and_permissions "${secret_dir}/dna_ssh_password.txt" "${SUPER_PROJECT_ROOT}" || return 1
+    else
+        n2st::print_msg "Secret already exist at ${MSG_DIMMED_FORMAT}${secret_dir}/dna_ssh_password.txt${MSG_END_FORMAT}. Change it manualy or use the ${MSG_DIMMED_FORMAT}--override${MSG_END_FORMAT} flag to generate a new strong password."
+    fi
+
+    # shellcheck disable=SC2063
+    if [[ -z $(cat "${SUPER_PROJECT_ROOT}/.gitignore" | grep "**/secrets/*") ]]; then
+      (
+        echo ""
+        echo "# DNA docker secrets"
+        echo "**/secrets/*"
+        echo ""
+      ) >> "${SUPER_PROJECT_ROOT}/.gitignore"
+    fi
 
     n2st::print_formated_script_footer "${header_footer_name}" "${line_format}" "${line_style}"
     return $fct_exit_code

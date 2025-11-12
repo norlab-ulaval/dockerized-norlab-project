@@ -61,6 +61,7 @@ your-project-repository/
 │   │   ├── build_stage/                ← Dependency specifications
 │   │   ├── entrypoints/                ← Container startup scripts
 │   │   ├── overrides/                  ← Optional docker-compose overrides
+│   │   ├── secrets/                    ← sensitive information
 │   │   ├── .env.dna                    ← DNA-specific env variables
 │   │   ├── .env                        ← Project-specific env variables
 │   │   ├── .env.local                  ← Local env variables overrides
@@ -150,6 +151,20 @@ Many DNA container can mount that same target path at the same time.
 
 - Rebuild and restart container after modifying requirement files i.e., `dna build && dna down && dna up`
 - Restart container after modifying entrypoints i.e., `dna down && dna up`
+
+### Secrets
+
+Sensitive values used by DNA are stored under the super project directory at:
+
+- `.dockerized_norlab/configuration/secrets/`
+- Default secret file: `.dockerized_norlab/configuration/secrets/dna_ssh_password.txt`
+
+Notes:
+- A strong password is generated automatically during `dna init`.
+- You can (re)generate this secret at any time with `dna project init_secrets`.
+- Use `dna project init_secrets --override` to force regeneration even if the file already exists.
+- DNA ensures proper file ownership and permissions for the secret file.
+- The repository `.gitignore` is automatically updated to include `**/secrets/*` to prevent accidental commits (added only once).
 
 ### Environment Files
 

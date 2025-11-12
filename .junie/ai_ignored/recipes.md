@@ -30,7 +30,6 @@ Given your study of the guidelines at `.junie/guidelines.md`, analyse the super 
 2. TODO
 
 # Instructions
-- Always comply with `.junie/guidelines.md` guidelines.
 - Execute all tests before submitting.
 ```
 
@@ -64,6 +63,5 @@ Consider the technical implication for python, c++, ROS2 and shell scripting dev
 4. Check if any Markdown documentation at `documentation/` need to be updated.
 
 # Instructions
-- Always comply with `.junie/guidelines.md` guidelines.
 - Execute all unit-tests and all integration tests before submitting.
 ```
