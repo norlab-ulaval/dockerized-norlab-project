@@ -205,6 +205,10 @@ function dna::entrypoint() {
                   dna::project_sanity_command "$@"
                   exit $?
                   ;;
+              init_secrets)
+                  dna::project_init_secrets_command "$@"
+                  exit $?
+                  ;;
               dotenv)
                   dna::project_dotenv_command "$@"
                   exit $?

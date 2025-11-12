@@ -54,12 +54,16 @@ setup_file() {
   # Create mock functions directory in the temporary directory
   mkdir -p "${MOCK_DNA_DIR}/src/lib/core/execute/"
   mkdir -p "${MOCK_DNA_DIR}/src/lib/core/utils/"
+  mkdir -p "${MOCK_DNA_DIR}/src/lib/commands/"
 
   # Create mock functions for dependencies
   cat > "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash" << 'EOF'
 #!/bin/bash
 # Mock load_super_project_config.bash
 echo "Mock load_super_project_config.bash loaded"
+
+export SUPER_PROJECT_ROOT="${MOCK_PROJECT_PATH}"
+
 return 0
 EOF
 
@@ -68,6 +72,15 @@ EOF
 # Mock build.all.bash
 function dna::build_services() {
   echo "Mock dna::build_services called with args: $*"
+  return 0
+}
+EOF
+
+  cat > "${MOCK_DNA_DIR}/src/lib/commands/init.bash" << 'EOF'
+#!/bin/bash
+# Mock build.all.bash
+function dna::validate_file_ownership_and_permissions() {
+  echo "Mock dna::validate_file_ownership_and_permissions called with args: $*"
   return 0
 }
 EOF
@@ -189,6 +202,7 @@ setup() {
 # ....Teardown.....................................................................................
 teardown() {
   bats_print_run_env_variable_on_error
+  rm -rf "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
 }
 
 teardown_file() {
@@ -316,6 +330,144 @@ teardown_file() {
   assert_output --partial "Validating slurm configuration..."
   assert_output --partial "Mock dna::project_validate_slurm called with args: --include-multiarch /path/to/slurm/jobs"
   assert_output --partial "Mock n2st::print_formated_script_footer called with args: project validate procedure"
+}
+
+
+@test "dna::project_init_secrets_command with --help › expect help menu" {
+  # Test case: When project initialize secret command is called with --help, it should show the help menu
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_init_secrets_command --help"
+
+  # Should succeed
+  assert_success
+
+  # Should output the help menu
+  assert_output --partial "Mock dna::command_help_menu called with args:"
+}
+
+@test "dna::project_init_secrets_command with -h › expect help menu" {
+  # Test case: When project initialize secret command is called with -h, it should show the help menu
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_init_secrets_command -h"
+
+  # Should succeed
+  assert_success
+
+  # Should output the help menu
+  assert_output --partial "Mock dna::command_help_menu called with args:"
+}
+
+
+@test "dna::project_init_secrets_command with no arguments › expect default behavior" {
+  # Test case: When project init secrets command is called without arguments, it should initialize super project secrets
+
+  #tree -aL 1 "${MOCK_PROJECT_PATH}/" >&3
+  #tree -aL 3 "${MOCK_PROJECT_PATH}/.dockerized_norlab/" >&3
+
+  # ....Setup......................................................................................
+  rm -rf "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  mv "${MOCK_PROJECT_PATH}/.gitignore" "${MOCK_PROJECT_PATH}/.gitignore_tmp"
+  rm -f "${MOCK_PROJECT_PATH}/.gitignore"
+  touch "${MOCK_PROJECT_PATH}/.gitignore"
+
+  # ....Pre-condition..............................................................................
+  assert_file_exist "${MOCK_PROJECT_PATH}/.gitignore"
+  assert_dir_not_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  assert_file_not_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
+  # ....Begin......................................................................................
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_init_secrets_command"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project secrets initialization procedure"
+  assert_output --partial "Setup super project secrets..."
+  assert_output --partial "New strong password generated in"
+
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  assert_file_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
+  #cat "${MOCK_PROJECT_PATH}/.gitignore" >&3
+  assert_file_contains "${MOCK_PROJECT_PATH}/.gitignore" "^\*\*\/secrets\/\*"
+
+  # ....Teardown...................................................................................
+  mv -f "${MOCK_PROJECT_PATH}/.gitignore_tmp" "${MOCK_PROJECT_PATH}/.gitignore"
+}
+
+@test "dna::project_init_secrets_command case secret exist › expect skip" {
+  # Test case: When project init secrets command is called and secrets already exist, no new
+  # password should be generated unless the --override flag is used
+
+  #tree -aL 1 "${MOCK_PROJECT_PATH}/" >&3
+  #tree -aL 3 "${MOCK_PROJECT_PATH}/.dockerized_norlab/" >&3
+
+  # ....Setup......................................................................................
+  mv "${MOCK_PROJECT_PATH}/.gitignore" "${MOCK_PROJECT_PATH}/.gitignore_tmp"
+  rm -f "${MOCK_PROJECT_PATH}/.gitignore"
+  touch "${MOCK_PROJECT_PATH}/.gitignore"
+  cat > "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt" << EOF
+mock_passw
+EOF
+
+  # ....Pre-condition..............................................................................
+  assert_file_exist "${MOCK_PROJECT_PATH}/.gitignore"
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  assert_file_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
+  # ....Begin......................................................................................
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_init_secrets_command"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project secrets initialization procedure"
+  assert_output --partial "Setup super project secrets..."
+  assert_output --partial "Secret already exist at"
+
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  assert_file_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
+  #cat "${MOCK_PROJECT_PATH}/.gitignore" >&3
+  assert_file_contains "${MOCK_PROJECT_PATH}/.gitignore" "^\*\*\/secrets\/\*"
+
+  # ....Teardown...................................................................................
+  mv -f "${MOCK_PROJECT_PATH}/.gitignore_tmp" "${MOCK_PROJECT_PATH}/.gitignore"
+}
+
+@test "dna::project_init_secrets_command with override flag › expect generate new pass and override" {
+  # Test case: When project init secrets command is called with the --override, it should override
+  # existing super project secrets with a new strong password (assume secrets already initialize)
+
+  #tree -aL 1 "${MOCK_PROJECT_PATH}/" >&3
+  #tree -aL 3 "${MOCK_PROJECT_PATH}/.dockerized_norlab/" >&3
+
+  # ....Setup......................................................................................
+  touch "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+  cat > "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt" << EOF
+mock_passw
+EOF
+
+  # ....Pre-condition..............................................................................
+  assert_file_exist "${MOCK_PROJECT_PATH}/.gitignore"
+  assert_file_contains "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt" "mock_passw"
+
+  # ....Begin......................................................................................
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/project.bash && dna::project_init_secrets_command --override"
+
+  # Should succeed
+  assert_success
+
+  # Should output the expected message
+  assert_output --partial "Mock n2st::print_formated_script_header called with args: project secrets initialization procedure"
+  assert_output --partial "Setup super project secrets..."
+  assert_output --partial "New strong password generated in"
+
+  assert_dir_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  assert_file_exist "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt"
+
+  #cat "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt" >&3
+  assert_file_not_contains "${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets/dna_ssh_password.txt" "mock_passw"
 }
 
 @test "dna::project_sanity_command with no arguments › expect default behavior" {
