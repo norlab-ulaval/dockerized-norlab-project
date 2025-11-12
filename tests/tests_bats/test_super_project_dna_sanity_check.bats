@@ -50,6 +50,15 @@ setup_file() {
   # This is the path to the mock super project (the user side)
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
+  # Create secrets directory (if it does not exist)
+  local secret_dir="${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
+  mkdir -p "${secret_dir}"
+  # Generate one strong password for Phase 1
+  openssl rand -base64 32 > "${secret_dir}/dna_ssh_password.txt"
+  fct_exit_code=$?
+  # Secure the secret
+  chmod 644 "${secret_dir}/dna_ssh_password.txt"
+
 #  tree -L 3 -a "${MOCK_PROJECT_PATH}" >&3
 #  cat "${MOCK_PROJECT_PATH}/.git" >&3
 

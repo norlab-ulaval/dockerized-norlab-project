@@ -46,7 +46,7 @@ function dna::setup_mock() {
 
   # ....Mock secret...............................................................................
   # Create secrets directory (if it does not exist)
-  local secret_dir="${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.dockerized_norlab/configuration/secrets/"
+  local secret_dir="${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.dockerized_norlab/configuration/secrets"
   mkdir -p "${secret_dir}"
   # Generate one strong password for Phase 1
   openssl rand -base64 32 > "${secret_dir}/dna_ssh_password.txt"

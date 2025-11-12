@@ -109,11 +109,12 @@ function dna::check_project_configuration() {
   cd "${SUPER_PROJECT_ROOT}/${test_dir_path}" || return 1
   test -d "build_stage/" || dna::print_msg_error_and_return "The '${test_dir_path}/build_stage/' directory is not installed as required!"
   test -d "entrypoints/" || dna::print_msg_error_and_return "The '${test_dir_path}/entrypoints/' directory is not installed as required!"
-  test -d "secrets/" || dna::print_msg_error_and_return "The '${test_dir_path}/secrets/' directory is not installed as required!"
-  test -f "secrets/dna_ssh_password.txt" || dna::print_msg_error_and_return "The '${test_dir_path}/secrets/dna_ssh_password.txt' file is not installed as required!"
   test -f ".env.dna" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.dna' file is not installed as required!"
   test -f ".env" || dna::print_msg_error_and_return "The '${test_dir_path}/.env' file is not installed as required!"
   test -f ".env.local" || dna::print_msg_error_and_return "The '${test_dir_path}/.env.local' file is not installed as required!"
+
+  test -d "secrets/" || dna::print_msg_error_and_return "The '${test_dir_path}/secrets/' directory is not installed as required! Execute ${MSG_DIMMED_FORMAT}$ dna project init_secrets${MSG_END_FORMAT} to fix this issue. Update the generated password at your convenience."
+  test -f "secrets/dna_ssh_password.txt" || dna::print_msg_error_and_return "The '${test_dir_path}/secrets/dna_ssh_password.txt' file is not installed as required! Execute ${MSG_DIMMED_FORMAT}$ dna project init_secrets${MSG_END_FORMAT} to fix this issue. Update the generated password at your convenience."
 }
 
 function dna::check_build_stage() {
@@ -179,11 +180,6 @@ function dna::check_gitignore() {
   # Check required entry: **/secrets/*
   if ! grep --silent -E "^\*\*\/secrets\/\*$" ".gitignore"; then
     dna::print_msg_error_and_return "The line '**/secrets/*' is not present in .gitignore as required!"
-  fi
-
-  # Check required entry: *.secret
-  if ! grep --silent -E "^\*\.secret$" ".gitignore"; then
-    dna::print_msg_error_and_return "The line '*.secret' is not present in .gitignore as required!"
   fi
 
 }

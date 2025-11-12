@@ -614,7 +614,6 @@ teardown_file() {
   assert_output --partial "!artifact/**/README.md"
   assert_output --partial "!data/**/README.md"
   assert_output --partial "**/secrets/*"
-  assert_output --partial "*.secret"
 }
 
 @test "dna::init_command tests for .dockerignore setup when it doesn't exist › expect .dockerignore created from template" {

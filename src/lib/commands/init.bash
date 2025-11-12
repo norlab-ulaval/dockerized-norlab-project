@@ -399,9 +399,8 @@ data/shared_data/*
 !artifact/**/README.md
 !data/**/README.md
 
-# Docker secrets
+# DNA docker secrets
 **/secrets/*
-*.secret
 
 # ====Dockerized-NorLab(recommended)===============================================================
 **/slurm_jobs/*.out
