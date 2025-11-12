@@ -12,7 +12,7 @@ dna config [OPTIONS] MODE [--] [DOCKER_CONFIG_FLAGS|DOCKER_BAKE_FLAGS]
 
 The `dna config` command displays the resolved Docker Compose configuration for different DNA modes and platforms. This is useful for debugging configuration issues, understanding service definitions, and validating environment variable interpolation.
 
-The command uses `docker compose config` or `docker buildx bake` under the hood and can consume their respective option flags.
+The command uses `docker compose config` or `docker buildx bake` under the hood and can consume their respective option flags. It automatically includes any user override files discovered under `.dockerized_norlab/configuration/overrides/` (global and per‑compose overrides). See also: [Compose Overrides & Orchestration](../compose_overrides_and_orchestration.md).
 
 ### Features
 - **Multiple output formats**: Docker Compose YAML, Docker Buildx Bake JSON

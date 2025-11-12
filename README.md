@@ -270,6 +270,7 @@ dna down
 
 - **[Installation Guide](documentation/install.md)** - Detailed installation instructions for all supported platforms
 - **[Project Initialization & Configuration](documentation/project_initialization_and_configuration.md)** - Complete guide to setting up and configuring DNA projects
+- **[Compose Overrides & Orchestration](documentation/compose_overrides_and_orchestration.md)** - How DNA discovers and applies Docker Compose override files, with simple recipes
 - **[Offline Installation Guide](documentation/offline_installation.md)** - Complete guide for installing DNA in environments without internet connectivity
 - **[IDE Integration](documentation/ide_integration.md)** - Setup instructions for development environments and IDEs
 

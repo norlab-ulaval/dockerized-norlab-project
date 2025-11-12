@@ -235,6 +235,24 @@ Specify DNA container specific shell dependencies in
 
 ### Docker Configuration
 
+#### Compose Overrides
+
+DNA supports user-level Docker Compose overrides that are automatically discovered from your project at runtime. Place optional files under `.dockerized_norlab/configuration/overrides/`:
+
+- `docker-compose.global.override.yaml` — applied to all modes
+- `<base-compose-file>.override.yaml` — applied only when that base file is used (e.g., `docker-compose.run.linux-x86.override.yaml`)
+
+To preview the fully merged configuration with your overrides, use:
+
+```bash
+dna config MODE [PLATFORMS]
+
+# Example
+dna config dev jetson
+```
+
+For details and simple recipes, see: [Compose Overrides & Orchestration](compose_overrides_and_orchestration.md).
+
 #### Dockerfile Customization
 
 The generated `.dockerized_norlab/configuration/build_stage/Dockerfile.project-core-user` can be customized for your specific needs.
