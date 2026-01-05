@@ -24,7 +24,6 @@ services:
       # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
       # DN_HOST: 'linux/x86'
       DN_HOST: ${IMAGE_ARCH_AND_OS:?err}
-      DN_HOST_GPU_ARCHITECTURE: ${DN_HOST_GPU_ARCHITECTURE:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
       DN_ACTIVATE_POWERLINE_PROMT: false
       DN_ENTRYPOINT_TRACE_EXECUTION: ${DN_ENTRYPOINT_TRACE_EXECUTION:-false}
