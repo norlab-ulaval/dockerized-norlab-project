@@ -72,4 +72,7 @@ services:
     pid: host
     ipc: host   # see comment  https://stable-baselines3.readthedocs.io/en/master/guide/install.html#run-the-images-cpu-gpu
     init: true  # Propagate exit code (See remark in task NMO-266)
+    # Note: runtime is only used for Docker-based slurm (e.g. Mamba server).
+    # Apptainer-based HPC servers (Valeria, Compute Canada) use standalone exec scripts
+    # and never go through docker-compose — see 'dna run slurm --generate-apptainer'.
     runtime: ${DN_DOCKER_RUNTIME:-runc}

@@ -167,6 +167,9 @@ Run automated CI tests in isolated, reproducible environments. Perfect for valid
 **🧪 SLURM Job Experiment**  
 Execute compute-intensive robotic algorithms and simulations on SLURM-managed clusters with consistent containerized environments.
 
+**📦 Apptainer / HPC Support**  
+Deploy slurm jobs on HPC servers using Apptainer (e.g., Ulaval Valeria, Compute Canada). DNA builds a `linux/amd64` Docker tar archive locally (macOS compatible) and generates standalone Apptainer exec scripts — `apptainer` is never executed locally. Supports Valeria and Compute Canada profiles.
+
 **◐ Multi-Platform Support**  
 Work seamlessly across different operating systems and architectures:
 - `l4t/arm64` (NVIDIA Jetson platforms)
@@ -261,6 +264,7 @@ dna down
   - [dna run](documentation/command/run.md) - Run commands in containers
   - [dna project](documentation/command/project.md) - Super project commands
   - [dna save](documentation/command/save.md) - Save Docker images for offline use
+  - [Apptainer / HPC Workflow](documentation/command/apptainer.md) - Deploy slurm jobs on Apptainer HPC servers
   - [dna load](documentation/command/load.md) - Load Docker images from files
   - [dna config](documentation/command/config.md) - Show configuration
   - [dna version](documentation/command/version.md) - Show DNA version

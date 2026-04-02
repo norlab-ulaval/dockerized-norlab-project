@@ -17,13 +17,14 @@ The `dna save` command creates portable archives containing Docker images and ne
 | Argument | Description |
 |----------|-------------|
 | `DIRPATH` | Directory path where to save the image archive |
-| `SERVICE` | Service to save (`develop` or `deploy`) |
+| `SERVICE` | Service to save (`develop`, `deploy`, or `slurm` with `--apptainer`) |
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
 | `--help`, `-h` | Show help message and exit |
+| `--apptainer <profile>` | Generate Apptainer artifacts for HPC (slurm service only). Creates `build_sif.sh` helper and Apptainer metadata. `<profile>` selects `.env.<profile>` configuration (e.g., `valeria`, `compute_canada`). **Does not execute `apptainer` locally** (macOS compatible). |
 
 ## Services
 
@@ -31,6 +32,7 @@ The `dna save` command creates portable archives containing Docker images and ne
 |---------|-------------|----------|
 | `develop` | Development service | Docker image only (assumes project is cloned on target) |
 | `deploy` | Deployment service | Full project structure for self-contained deployment |
+| `slurm` | HPC Apptainer service (requires `--apptainer`) | Docker tar archive + `build_sif.sh` for HPC conversion |
 
 ## Output Structure
 
@@ -274,6 +276,22 @@ tar -czf my-project-deploy.tar.gz dna-save-deploy-*
 - **Clean up regularly**: Remove old save directories to save space
 - **Compress for transfer**: Use tar/gzip for network transfer
 - **Parallel operations**: Save multiple services simultaneously if needed
+
+## Apptainer / HPC Workflow
+
+For HPC servers using Apptainer (Valeria, Compute Canada), use `--apptainer <profile>` with `SERVICE=slurm`:
+
+```bash
+# Save slurm image with Apptainer artifacts
+dna save --apptainer valeria /output/dir slurm
+```
+
+This generates:
+- `<project>-slurm.<tag>.tar` — Docker tar archive compatible with Apptainer's `docker-archive:` bootstrap
+- `build_sif.sh` — Helper script to run on HPC: `apptainer build <name>.sif docker-archive:<name>.tar`
+- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM=linux/amd64`, `SIF_BUILD_CMD`
+
+See [Apptainer / HPC Workflow](apptainer.md) for the complete guide.
 
 ## See Also
 

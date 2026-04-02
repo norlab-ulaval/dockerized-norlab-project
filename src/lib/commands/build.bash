@@ -16,6 +16,11 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   --save DIRPATH                Save built image to directory (develop or deploy services only)
 #   --push                        Push image to Dockerhub (deploy services only,
 #                                  requires Docker Hub authentication)
+#   --apptainer <profile>         Build linux/amd64 tar archive and generate build_sif.sh helper
+#                                  for HPC Apptainer workflow (slurm service only).
+#                                  <profile> selects .env.<profile> server configuration
+#                                  e.g., dna build slurm --apptainer valeria
+#                                  Note: apptainer is NOT executed locally (macOS compatible)
 #   --help, -h                    Show this help message
 #
 #
@@ -99,6 +104,7 @@ function dna::build_command() {
     local service=""
     local push_deploy=false
     local save_dirpath=""
+    local apptainer_profile=""
     local remaining_args=()
     local original_command="$*"
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
@@ -130,6 +136,14 @@ function dna::build_command() {
                     return 1
                 fi
                 save_dirpath="$2"
+                shift 2
+                ;;
+            --apptainer)
+                if [[ -z "$2" ]]; then
+                    dna::illegal_command_msg "build" "${original_command}" "The --apptainer flag requires a <profile> argument (e.g., valeria, compute_canada, mamba).\n"
+                    return 1
+                fi
+                apptainer_profile="$2"
                 shift 2
                 ;;
             --help|-h)
@@ -254,11 +268,23 @@ ${MSG_END_FORMAT}
       fi
     fi
 
+    if [[ -n "${apptainer_profile}" ]]; then
+      if [[ "${service}" != "slurm" ]]; then
+        dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--apptainer${MSG_END_FORMAT} flag can only be used with SERVICE=slurm.\n"
+        return 1
+      fi
+    fi
+
     # ....Load dependencies........................................................................
     source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.deploy.bash" || return 1
+    if [[ -n "${apptainer_profile}" ]]; then
+      source "${DNA_LIB_PATH}/core/utils/apptainer_tools.bash" || return 1
+      # Override DN_PROJECT_USER with the HPC server username from the profile env file
+      dna::load_apptainer_profile_env "${apptainer_profile}" || return 1
+    fi
 
     # ....Docker Hub login check..................................................................
     # Check if Docker Hub login is required and user is logged in
@@ -348,6 +374,43 @@ ${MSG_END_FORMAT}
             n2st::print_msg_error "Failed to save image"
             return 1
         }
+    fi
+
+    # ....Post-build apptainer artifacts if requested..............................................
+    if [[ -n "${apptainer_profile}" && $fct_exit_code -eq 0 ]]; then
+        n2st::print_msg "Generating Apptainer artifacts for profile: ${apptainer_profile}"
+        dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
+
+        # Save slurm image as linux/amd64 tar archive
+        local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer"
+        mkdir -p "${apptainer_save_dir}" || {
+            n2st::print_msg_error "Failed to create apptainer artifact directory: ${apptainer_save_dir}"
+            return 1
+        }
+
+        local tar_filename="${DN_PROJECT_IMAGE_NAME:?err}-slurm.${PROJECT_TAG:?err}.tar"
+        local sif_name="${DN_PROJECT_IMAGE_NAME}-slurm.sif"
+        local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG}"
+
+        n2st::print_msg "Saving Docker image as tar archive (linux/amd64 compatible): ${tar_filename}"
+        docker image save --output "${apptainer_save_dir}/${tar_filename}" "${image_name}" || {
+            n2st::print_msg_error "Failed to save Docker image tar archive"
+            return 1
+        }
+
+        dna::generate_apptainer_build_sif_script \
+            "${tar_filename}" \
+            "${sif_name}" \
+            "${apptainer_save_dir}" || {
+            n2st::print_msg_error "Failed to generate build_sif.sh"
+            return 1
+        }
+
+        n2st::print_msg_done "Apptainer artifacts saved to: ${apptainer_save_dir}"
+        n2st::print_msg "Next steps:
+  1. Transfer to HPC: rsync -av ${apptainer_save_dir}/ user@hpc:/path/to/project/artifact/apptainer/
+  2. Build SIF on HPC: bash build_sif.sh
+  3. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
     fi
 
     # ....Teardown.................................................................................

@@ -306,6 +306,14 @@ ${MSG_END_FORMAT}"
       n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX" "${super_project_acronym}" ".env.dna"
     } || return 1
 
+    # Replace placeholders in HPC server profile dotenv files
+    local hpc_profile_file
+    for hpc_profile_file in hpc_server_profile/.env.valeria hpc_server_profile/.env.compute_canada hpc_server_profile/.env.mamba; do
+      if [[ -f "${hpc_profile_file}" ]]; then
+        n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${super_project_name}" "${hpc_profile_file}" || return 1
+      fi
+    done
+
     # Replace placeholders in the DNA readme file
     cd "${super_project_root}/.dockerized_norlab/" || return 1
     {
@@ -352,6 +360,15 @@ ${MSG_END_FORMAT}"
     dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
 
     dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/" slurm_jobs/ "${super_project_root}" || return 1
+    # Replace placeholders in Apptainer slurm job templates
+    local super_project_image_name
+    super_project_image_name="$(echo "${super_project_name}" | tr '[:upper:]' '[:lower:]')"
+    local slurm_template_file
+    for slurm_template_file in slurm_jobs/slurm_job.apptainer.*.bash; do
+      if [[ -f "${slurm_template_file}" ]]; then
+        n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${super_project_image_name}" "${slurm_template_file}" || return 1
+      fi
+    done
 
     if [[ ! -f "src/README.md" ]]; then
       dna::portable_copy "${DNA_LIB_PATH}/template/src/README.md" src/ "${super_project_root}" || return 1
