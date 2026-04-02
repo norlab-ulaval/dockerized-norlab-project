@@ -279,7 +279,7 @@ tar -czf my-project-deploy.tar.gz dna-save-deploy-*
 
 ## Apptainer / HPC Workflow
 
-For HPC servers using Apptainer (Valeria, Compute Canada), use `--apptainer <profile>` with `SERVICE=slurm`:
+For HPC servers using Apptainer (Valeria, Compute Canada, Mamba), use `--apptainer <profile>` with `SERVICE=slurm`:
 
 ```bash
 # Save slurm image with Apptainer artifacts
@@ -291,7 +291,10 @@ This generates:
 - `build_sif.sh` — Helper script to run on HPC: `apptainer build <name>.sif docker-archive:<name>.tar`
 - `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM=linux/amd64`, `SIF_BUILD_CMD`
 
-See [Apptainer / HPC Workflow](apptainer.md) for the complete guide.
+The saved tar archive is one part of the Apptainer pipeline. After saving, use `dna run slurm --ga`
+to generate run scripts, or use the slurm job templates (`slurm_job.apptainer.<profile>.template.bash`)
+for production job submission. See [Apptainer / HPC Workflow](apptainer.md) for the complete guide
+and the [three pipeline artifacts](apptainer.md#understanding-the-apptainer-pipeline-artifacts).
 
 ## See Also
 

@@ -323,16 +323,24 @@ dna run slurm ${SLURM_JOB_ID} -- python3 experiment.py \
 
 ## Apptainer / HPC Workflow
 
-For HPC servers using Apptainer (Valeria, Compute Canada), `dna run slurm <sjob-id> --generate-apptainer <profile>` (or `--ga`)
+For HPC servers using Apptainer (Valeria, Compute Canada, Mamba), `dna run slurm <sjob-id> --generate-apptainer <profile>` (or `--ga`)
 **generates** a standalone run script — it never executes `apptainer` locally (macOS compatible).
+
+The generated run script is a **convenience/automation** tool for quick one-off runs.
+For production jobs, use the **slurm job templates** (`slurm_job.apptainer.<profile>.template.bash`)
+which include `#SBATCH` directives and setup/teardown hooks — submit via `sbatch` on the HPC server.
+Both artifacts source the same HPC profile dotenv (`.env.<profile>`) and use the same `apptainer exec` flags.
 
 | HPC Server | Profile | Method |
 |------------|---------|--------|
-| NorLab Mamba | _(none)_ | `dna run slurm` directly (Docker) |
+| NorLab Mamba | _(none)_ | `dna run slurm` directly (Docker workflow) |
+| NorLab Mamba | `mamba` | `dna run slurm --ga mamba` → generated standalone script (Apptainer workflow) |
 | Ulaval Valeria | `valeria` | `dna run slurm --ga valeria` → generated standalone script |
 | Compute Canada | `compute_canada` | `dna run slurm --ga compute_canada` → generated standalone script |
 
-See [Apptainer / HPC Workflow](apptainer.md) for the complete guide.
+> **Note:** Mamba supports both Docker and Apptainer workflows. See [Apptainer / HPC Workflow](apptainer.md) for details.
+
+See [Apptainer / HPC Workflow](apptainer.md) for the complete guide including the [three pipeline artifacts](apptainer.md#understanding-the-apptainer-pipeline-artifacts).
 
 ## See Also
 

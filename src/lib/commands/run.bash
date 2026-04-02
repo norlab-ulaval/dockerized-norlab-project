@@ -106,7 +106,7 @@ DOCUMENTATION_RUN_SLURM_APPTAINER_CMD=$( cat <<'EOF'
 #   - Apptainer is Linux-only and NOT supported on macOS.
 #   - Generated scripts are self-contained (no DNA dependency on the HPC server).
 #   - Supported HPC server archetypes:
-#       Mamba (NorLab): Docker runtime, DNA available on server → use 'dna run slurm'
+#       Mamba (NorLab): Docker + Apptainer runtime → use 'dna run slurm' (Docker) or --ga mamba (Apptainer)
 #       Valeria:        Apptainer runtime, no DNA on server  → use generated standalone script
 #       Compute Canada: Apptainer runtime, no DNA on server  → use generated standalone script
 #

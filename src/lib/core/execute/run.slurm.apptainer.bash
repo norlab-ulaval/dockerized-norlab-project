@@ -8,7 +8,7 @@ DOCUMENTATION_RUN_SLURM_APPTAINER=$( cat <<'EOF'
 #   - This script GENERATES the apptainer exec command/script — it does NOT execute 'apptainer'.
 #   - Generated scripts are self-contained (no DNA dependency on the HPC server).
 #   - Supported HPC server archetypes:
-#       Mamba (NorLab): Docker runtime, DNA available on server → use existing dna run slurm
+#       Mamba (NorLab): Docker + Apptainer runtime → use 'dna run slurm' (Docker) or --ga mamba (Apptainer)
 #       Valeria:        Apptainer runtime, no DNA on server  → use generated standalone script
 #       Compute Canada: Apptainer runtime, no DNA on server  → use generated standalone script
 #
