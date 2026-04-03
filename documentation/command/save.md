@@ -289,7 +289,10 @@ dna save --apptainer valeria /output/dir slurm
 This generates:
 - `<project>-slurm.<tag>.tar` — Docker tar archive compatible with Apptainer's `docker-archive:` bootstrap
 - `build_sif.sh` — Helper script to run on HPC: `apptainer build <name>.sif docker-archive:<name>.tar`
-- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM=linux/amd64`, `SIF_BUILD_CMD`
+- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM` (from HPC profile, default: `linux/amd64`), `SIF_BUILD_CMD`
+
+> ℹ️ Platform is enforced from the HPC profile's `APPTAINER_TARGET_PLATFORM` variable via
+> `DOCKER_DEFAULT_PLATFORM`, ensuring cross-architecture builds on Apple Silicon Macs.
 
 The saved tar archive is one part of the Apptainer pipeline. After saving, use `dna run slurm --ga`
 to generate run scripts, or use the slurm job templates (`slurm_job.apptainer.<profile>.template.bash`)

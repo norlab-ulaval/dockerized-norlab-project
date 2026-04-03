@@ -91,13 +91,25 @@ fi
 job_setup_callback
 trap job_teardown_callback EXIT
 
+# ====Apptainer compatibility======================================================================
+echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
+
+# ====GPU configuration============================================================================
+NV_FLAG=""
+if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
+    NV_FLAG="--nv"
+fi
+
 # ====Launch Apptainer slurm job===================================================================
 echo "[info] Launching Apptainer slurm job: SJOB_ID=${SJOB_ID}"
 echo "[info] SIF: ${SIF_PATH}"
 echo "[info] Python args: ${python_arguments[*]}"
 
 apptainer exec \
-    --nv \
+    --no-eval \
+    --cleanenv \
+    --no-home \
+    ${NV_FLAG} \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw" \
@@ -105,6 +117,11 @@ apptainer exec \
     --bind "${SUPER_PROJECT_ROOT}/data/external_data/:${DN_PROJECT_PATH}/data/external_data/:rw" \
     --bind "${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:${DN_PROJECT_PATH}/data/shared_data/:ro" \
     --env-file "${PROFILE_ENV_FILE}" \
+    --env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
+    --env SLURM_JOB_ID="${SLURM_JOB_ID}" \
+    --env SLURM_TMPDIR="${SLURM_TMPDIR}" \
+    --env SLURM_JOB_NAME="${SLURM_JOB_NAME}" \
+    --env SLURM_NODELIST="${SLURM_NODELIST}" \
     --pwd "${DN_PROJECT_PATH}/src" \
     --writable-tmpfs \
     "${SIF_PATH}" \

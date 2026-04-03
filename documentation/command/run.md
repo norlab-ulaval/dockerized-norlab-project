@@ -329,7 +329,10 @@ For HPC servers using Apptainer (Valeria, Compute Canada, Mamba), `dna run slurm
 The generated run script is a **convenience/automation** tool for quick one-off runs.
 For production jobs, use the **slurm job templates** (`slurm_job.apptainer.<profile>.template.bash`)
 which include `#SBATCH` directives and setup/teardown hooks — submit via `sbatch` on the HPC server.
-Both artifacts source the same HPC profile dotenv (`.env.<profile>`) and use the same `apptainer exec` flags.
+Both artifacts source the same HPC profile dotenv (`.env.<profile>`) and use the same `apptainer exec` flags
+(including `--no-eval`, `--cleanenv`, `--no-home`, conditional `--nv`, and dynamic SLURM `--env` passthrough).
+
+> ℹ️ **Requires Apptainer ≥ 1.1.0** on the HPC server. See [Apptainer Exec Flags](apptainer.md#apptainer-exec-flags) for details.
 
 | HPC Server | Profile | Method |
 |------------|---------|--------|

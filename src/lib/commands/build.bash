@@ -284,6 +284,9 @@ ${MSG_END_FORMAT}
       source "${DNA_LIB_PATH}/core/utils/apptainer_tools.bash" || return 1
       # Override DN_PROJECT_USER with the HPC server username from the profile env file
       dna::load_apptainer_profile_env "${apptainer_profile}" || return 1
+      # Enforce target platform for cross-architecture build (e.g., arm64 Mac → amd64 HPC)
+      export DOCKER_DEFAULT_PLATFORM="${APPTAINER_TARGET_PLATFORM:-linux/amd64}"
+      n2st::print_msg "Enforcing build platform: ${DOCKER_DEFAULT_PLATFORM} (from profile: ${apptainer_profile})"
     fi
 
     # ....Docker Hub login check..................................................................

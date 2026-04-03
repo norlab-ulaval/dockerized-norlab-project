@@ -124,6 +124,9 @@ function dna::save_command() {
         source "${DNA_LIB_PATH}/core/utils/apptainer_tools.bash" || return 1
         # Override DN_PROJECT_USER with the HPC server username from the profile env file
         dna::load_apptainer_profile_env "${apptainer_profile}" || return 1
+        # Enforce target platform for cross-architecture save (e.g., arm64 Mac → amd64 HPC)
+        export DOCKER_DEFAULT_PLATFORM="${APPTAINER_TARGET_PLATFORM:-linux/amd64}"
+        n2st::print_msg "Enforcing save platform: ${DOCKER_DEFAULT_PLATFORM} (from profile: ${apptainer_profile})"
     fi
 
     # ....Validate dirpath.........................................................................
@@ -258,7 +261,7 @@ EOF
 
 # Apptainer Information
 APPTAINER_PROFILE=${apptainer_profile}
-APPTAINER_TARGET_PLATFORM=linux/amd64
+APPTAINER_TARGET_PLATFORM=${APPTAINER_TARGET_PLATFORM:-linux/amd64}
 DN_PROJECT_USER=${DN_PROJECT_USER:-unknown}
 SIF_NAME=${sif_name}
 SIF_BUILD_CMD=apptainer build ${sif_name} docker-archive:${tar_filename:?err}

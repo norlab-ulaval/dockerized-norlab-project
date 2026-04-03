@@ -147,6 +147,9 @@ function dna::generate_apptainer_build_sif_script() {
 # =================================================================================================
 set -e
 
+# ====Apptainer compatibility======================================================================
+echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
+
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
 TAR_FILE="\${SCRIPT_DIR}/${tar_filename}"
@@ -201,8 +204,18 @@ function dna::get_apptainer_slurm_exec_flags() {
 
   declare -a flags=()
 
-  # GPU support (equivalent to runtime: nvidia in compose)
-  flags+=("    --nv \\")
+  # Disable shell evaluation of environment variables (match Docker/OCI behavior)
+  flags+=("    --no-eval \\")
+  # Clean environment to prevent host env leakage (match Docker isolation behavior)
+  flags+=("    --cleanenv \\")
+  # Prevent $HOME auto-mount (avoids pip --user package conflicts from host)
+  flags+=("    --no-home \\")
+
+  # GPU support — conditional on profile configuration
+  # Equivalent to runtime: nvidia in docker-compose (Docker path)
+  if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
+    flags+=("    --nv \\")
+  fi
 
   # Bind mounts (from docker-compose.run.slurm.yaml volumes, minus X11/display)
   flags+=("    --bind /etc/localtime:/etc/localtime:ro \\")
@@ -212,8 +225,17 @@ function dna::get_apptainer_slurm_exec_flags() {
   flags+=("    --bind ${super_project_root}/data/external_data/:${dn_project_path}/data/external_data/:rw \\")
   flags+=("    --bind ${shared_data_path}:${dn_project_path}/data/shared_data/:ro \\")
 
-  # Environment file (profile-specific HPC configuration)
+  # Environment file — passes all static config vars from HPC profile
+  # (DN_PROJECT_USER, DN_HOST, IS_SLURM_RUN, DN_ENTRYPOINT_TRACE_EXECUTION, etc.)
   flags+=("    --env-file ${profile_env_file} \\")
+
+  # Dynamic runtime env vars — Slurm-assigned, not known at config time
+  # These MUST be passed via --env because they are set by the SLURM scheduler at job runtime
+  flags+=("    --env CUDA_VISIBLE_DEVICES=\${CUDA_VISIBLE_DEVICES} \\")
+  flags+=("    --env SLURM_JOB_ID=\${SLURM_JOB_ID} \\")
+  flags+=("    --env SLURM_TMPDIR=\${SLURM_TMPDIR} \\")
+  flags+=("    --env SLURM_JOB_NAME=\${SLURM_JOB_NAME} \\")
+  flags+=("    --env SLURM_NODELIST=\${SLURM_NODELIST} \\")
 
   # Working directory (matches Dockerfile WORKDIR / entrypoint cd)
   flags+=("    --pwd ${dn_project_path}/src \\")
@@ -294,6 +316,9 @@ function dna::generate_apptainer_run_script() {
 #
 # =================================================================================================
 set -e
+
+# ====Apptainer compatibility======================================================================
+echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
 # ====Configuration================================================================================
 SJOB_ID="${sjob_id}"

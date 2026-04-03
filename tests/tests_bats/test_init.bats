@@ -467,6 +467,13 @@ teardown_file() {
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "dockerized-norlab-project-mock-EMPTY"
   assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "dockerized-norlab-project-mock-EMPTY"
+  # Check HPC profile dotenv files contain APPTAINER_ENABLE_GPU and APPTAINER_TARGET_PLATFORM
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_ENABLE_GPU=true"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_TARGET_PLATFORM=linux/amd64"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_ENABLE_GPU=true"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_TARGET_PLATFORM=linux/amd64"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_ENABLE_GPU=true"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_TARGET_PLATFORM=linux/amd64"
   # Check Apptainer slurm job templates for DN_PROJECT_IMAGE_NAME placeholder replacement
   assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.valeria.template.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.valeria.template.bash" "dockerized-norlab-project-mock-empty"

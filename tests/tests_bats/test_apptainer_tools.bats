@@ -224,6 +224,72 @@ teardown_file() {
   refute_output --partial ".X11-unix"
 }
 
+@test "dna::get_apptainer_slurm_exec_flags › output contains --no-eval flag" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+  "
+  assert_success
+  assert_output --partial "--no-eval"
+}
+
+@test "dna::get_apptainer_slurm_exec_flags › output contains --cleanenv flag" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+  "
+  assert_success
+  assert_output --partial "--cleanenv"
+}
+
+@test "dna::get_apptainer_slurm_exec_flags › output contains --no-home flag" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+  "
+  assert_success
+  assert_output --partial "--no-home"
+}
+
+@test "dna::get_apptainer_slurm_exec_flags with APPTAINER_ENABLE_GPU=true › output contains --nv" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export APPTAINER_ENABLE_GPU=true
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+  "
+  assert_success
+  assert_output --partial "--nv"
+}
+
+@test "dna::get_apptainer_slurm_exec_flags with APPTAINER_ENABLE_GPU=false › output does NOT contain --nv" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export APPTAINER_ENABLE_GPU=false
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+  "
+  assert_success
+  refute_output --partial "--nv"
+}
+
+@test "dna::get_apptainer_slurm_exec_flags › output contains dynamic SLURM --env vars" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+  "
+  assert_success
+  assert_output --partial "--env CUDA_VISIBLE_DEVICES="
+  assert_output --partial "--env SLURM_JOB_ID="
+  assert_output --partial "--env SLURM_TMPDIR="
+  assert_output --partial "--env SLURM_JOB_NAME="
+  assert_output --partial "--env SLURM_NODELIST="
+}
+
 # ====Tests: dna::generate_apptainer_run_script===================================================
 
 @test "dna::generate_apptainer_run_script › creates run script file" {
@@ -335,6 +401,48 @@ teardown_file() {
   "
 
   assert_file_executable "${output_dir}/run_apptainer_NMO-001.sh"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_run_script › generated script contains Apptainer version warning" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    export DN_PROJECT_IMAGE_NAME='test-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_run_script \
+      'NMO-001' \
+      'valeria' \
+      'artifact/apptainer/test-project-slurm.sif' \
+      '${output_dir}' \
+      'launcher/train.py'
+  "
+
+  run grep "Apptainer >= 1.1.0" "${output_dir}/run_apptainer_NMO-001.sh"
+  assert_success
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › build_sif.sh contains Apptainer version warning" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run grep "Apptainer >= 1.1.0" "${output_dir}/build_sif.sh"
+  assert_success
 
   rm -rf "${output_dir}"
 }

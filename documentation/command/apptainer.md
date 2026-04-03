@@ -37,7 +37,10 @@ dna run slurm --ga <profile>            →  (transfer run script)
 | Location | Requirement |
 |----------|-------------|
 | Local (macOS) | Docker, DNA installed |
-| HPC server | Apptainer installed, project files transferred |
+| HPC server | **Apptainer ≥ 1.1.0** installed, project files transferred |
+
+> ℹ️ Apptainer ≥ 1.1.0 is required for `--no-eval`, `--cleanenv`, and `--env-file` comment
+> handling. Generated scripts and slurm job templates print an informational warning at startup.
 
 ## Quick Start
 
@@ -220,6 +223,8 @@ Profile env files serve a dual purpose:
 | `DN_PROJECT_USER` | Build time | **Required.** HPC server username — baked into the Docker image so the container user matches the Apptainer host user. |
 | `DN_PROJECT_PATH` | Runtime | Path to the project **inside the container** (auto-set by `dna init` from `DN_PROJECT_GIT_NAME`) |
 | `DN_HOST` | Build time | Target platform (`linux/x86`) |
+| `APPTAINER_TARGET_PLATFORM` | Build time | Docker build platform (default: `linux/amd64`). Sets `DOCKER_DEFAULT_PLATFORM` during `dna build slurm --apptainer` to enforce cross-architecture builds on Apple Silicon Macs. |
+| `APPTAINER_ENABLE_GPU` | Runtime | Set to `true` to enable GPU support (`--nv` flag), or `false` for CPU-only jobs. Default: `true`. |
 | `APPTAINER_CACHEDIR` | Runtime | Apptainer cache directory on HPC |
 | `APPTAINER_TMPDIR` | Runtime | Apptainer temp directory (set to `$SLURM_TMPDIR` in SBATCH script) |
 
@@ -236,14 +241,37 @@ All templates are **standalone** — they do not require DNA on the HPC server.
 They source the same HPC profile dotenv file (`.env.<profile>`) as the `--ga` generated scripts
 and use the same `apptainer exec` flags. See [Understanding the Apptainer Pipeline Artifacts](#understanding-the-apptainer-pipeline-artifacts) for details.
 
+## Apptainer Exec Flags
+
+DNA generates `apptainer exec` commands with the following hardening flags (based on the
+[Apptainer docs](https://apptainer.org/docs/user/latest/docker_and_oci.html)):
+
+| Flag | Purpose |
+|------|--------|
+| `--no-eval` | Disables shell evaluation of environment variables, matching Docker/OCI behavior. Prevents `$(...)` and backtick expansion in `ENV` values. |
+| `--cleanenv` | Blocks host environment variables from leaking into the container (e.g., `PYTHONPATH`, `LD_LIBRARY_PATH` from HPC module systems). Static config is passed via `--env-file`. |
+| `--no-home` | Prevents `$HOME` auto-mount, avoiding conflicts with `pip install --user` packages on the HPC host (`~/.local/lib/python*/`). |
+| `--nv` | _(conditional)_ Enables NVIDIA GPU support. Controlled by `APPTAINER_ENABLE_GPU` in the HPC profile. Set to `false` for CPU-only jobs. |
+| `--env-file` | Passes static environment variables from the HPC profile dotenv file. |
+| `--env` | Passes dynamic SLURM runtime variables: `CUDA_VISIBLE_DEVICES`, `SLURM_JOB_ID`, `SLURM_TMPDIR`, `SLURM_JOB_NAME`, `SLURM_NODELIST`. |
+| `--writable-tmpfs` | Creates a temporary writable overlay for SIF (read-only SquashFS). |
+| `--bind` | Bind-mounts host directories into the container (volumes from docker-compose, minus X11). |
+| `--pwd` | Sets container working directory. |
+
+> **Environment variable strategy:** Static configuration (from `docker-compose.run.slurm.yaml`
+> `environment:` block) is consolidated in the HPC profile dotenv file and passed via `--env-file`.
+> Only truly dynamic SLURM-assigned variables (not known at config time) use `--env` flags.
+> If you need `$HOME` access inside the container, add `--bind $HOME:$HOME` in the slurm job template's
+> `job_setup_callback` or customize the `apptainer exec` command.
+
 ## Docker ↔ Apptainer Feature Mapping
 
 | Docker Compose | Apptainer | Notes |
 |----------------|-----------|-------|
 | `image:` | SIF from `apptainer build ... docker-archive:<tar>` | Built from DNA tar archive |
 | `volumes:` | `--bind /host:/container[:ro\|:rw]` | Direct mapping |
-| `environment:` | `--env KEY=VAL` or `--env-file` | Direct mapping |
-| `runtime: nvidia` | `--nv` | GPU support |
+| `environment:` | `--env-file` (static) + `--env` (dynamic SLURM) | Two-tier strategy |
+| `runtime: nvidia` | `--nv` (conditional on `APPTAINER_ENABLE_GPU`) | GPU support |
 | `network_mode: host` | Default in Apptainer | No flag needed |
 | `pid: host` | Default in Apptainer | No flag needed |
 | `ipc: host` | Default in Apptainer | No flag needed |
@@ -251,6 +279,9 @@ and use the same `apptainer exec` flags. See [Understanding the Apptainer Pipeli
 | `WORKDIR` | `--pwd /path` | Explicit flag |
 | `USER` | Host UID/GID (automatic) | Apptainer maps calling user |
 | `/tmp/numba_cache` writes | `--writable-tmpfs` | SIF is read-only |
+| _(no equivalent)_ | `--no-eval` | Prevent ENV shell evaluation |
+| _(no equivalent)_ | `--cleanenv` | Prevent host env leakage |
+| _(no equivalent)_ | `--no-home` | Prevent `$HOME` auto-mount |
 
 ## Known Limitations and Workarounds
 

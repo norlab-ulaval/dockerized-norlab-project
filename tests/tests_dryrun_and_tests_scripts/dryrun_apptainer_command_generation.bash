@@ -104,6 +104,15 @@ echo ""
 echo ">>> Test 5: dna::get_apptainer_slurm_exec_flags"
 FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif")
 
+if ! echo "${FLAGS}" | grep -q -- "--no-eval"; then
+  echo "    FAIL: Missing --no-eval flag" >&2; exit 1
+fi
+if ! echo "${FLAGS}" | grep -q -- "--cleanenv"; then
+  echo "    FAIL: Missing --cleanenv flag" >&2; exit 1
+fi
+if ! echo "${FLAGS}" | grep -q -- "--no-home"; then
+  echo "    FAIL: Missing --no-home flag" >&2; exit 1
+fi
 if ! echo "${FLAGS}" | grep -q -- "--nv"; then
   echo "    FAIL: Missing --nv flag" >&2; exit 1
 fi
@@ -113,13 +122,19 @@ fi
 if ! echo "${FLAGS}" | grep -q -- "--env-file"; then
   echo "    FAIL: Missing --env-file flag" >&2; exit 1
 fi
+if ! echo "${FLAGS}" | grep -q -- "--env CUDA_VISIBLE_DEVICES="; then
+  echo "    FAIL: Missing --env CUDA_VISIBLE_DEVICES" >&2; exit 1
+fi
+if ! echo "${FLAGS}" | grep -q -- "--env SLURM_JOB_ID="; then
+  echo "    FAIL: Missing --env SLURM_JOB_ID" >&2; exit 1
+fi
 if ! echo "${FLAGS}" | grep -q -- "--writable-tmpfs"; then
   echo "    FAIL: Missing --writable-tmpfs flag" >&2; exit 1
 fi
 if echo "${FLAGS}" | grep -q ".X11-unix"; then
   echo "    FAIL: X11 bind mount should NOT be present for HPC" >&2; exit 1
 fi
-echo "    PASS: exec flags contain expected Apptainer flags and no X11 mounts"
+echo "    PASS: exec flags contain expected Apptainer flags (--no-eval, --cleanenv, --no-home, --nv, --env, --env-file) and no X11 mounts"
 
 # ....Test 4: generate_apptainer_run_script..............................................
 echo ""
@@ -143,7 +158,10 @@ fi
 if ! grep -q "launcher/train.py" "${TEMP_DIR}/run_apptainer_NMO-001.sh"; then
   echo "    FAIL: Missing python args in run script" >&2; exit 1
 fi
-echo "    PASS: run_apptainer_NMO-001.sh created with correct content"
+if ! grep -q "Apptainer >= 1.1.0" "${TEMP_DIR}/run_apptainer_NMO-001.sh"; then
+  echo "    FAIL: Missing Apptainer version warning in run script" >&2; exit 1
+fi
+echo "    PASS: run_apptainer_NMO-001.sh created with correct content and version warning"
 
 # ....Test 5: print_apptainer_exec_command output.........................................
 echo ""
@@ -169,6 +187,25 @@ if ! echo "${CCFLAGS}" | grep -q ".env.compute_canada"; then
   echo "    FAIL: Missing .env.compute_canada in flags" >&2; exit 1
 fi
 echo "    PASS: compute_canada profile uses correct env file"
+
+# ....Test 7: APPTAINER_ENABLE_GPU=false disables --nv......................................
+echo ""
+echo ">>> Test 9: APPTAINER_ENABLE_GPU=false disables --nv flag"
+export APPTAINER_ENABLE_GPU=false
+GPU_OFF_FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif")
+if echo "${GPU_OFF_FLAGS}" | grep -q -- "--nv"; then
+  echo "    FAIL: --nv flag should NOT be present when APPTAINER_ENABLE_GPU=false" >&2; exit 1
+fi
+echo "    PASS: --nv flag correctly omitted when APPTAINER_ENABLE_GPU=false"
+unset APPTAINER_ENABLE_GPU
+
+# ....Test 8: build_sif.sh contains version warning........................................
+echo ""
+echo ">>> Test 10: build_sif.sh contains Apptainer version warning"
+if ! grep -q "Apptainer >= 1.1.0" "${TEMP_DIR}/build_sif.sh"; then
+  echo "    FAIL: Missing Apptainer version warning in build_sif.sh" >&2; exit 1
+fi
+echo "    PASS: build_sif.sh contains Apptainer version warning"
 
 echo ""
 echo "========================================================"
