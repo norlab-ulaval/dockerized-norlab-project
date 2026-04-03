@@ -1,0 +1,73 @@
+# =================================================================================================
+# Minimal mock of the DNA slurm Docker image for Apptainer pipeline testing.
+#
+# Simulates the essential structure of Dockerfile.run-slurm output without requiring
+# the full DN base image or build infrastructure. Used to create a test tar archive
+# that Apptainer converts to SIF for integration testing.
+#
+# Mirrors these key aspects of the real slurm image:
+#   - DN_PROJECT_USER, DN_PROJECT_PATH, DN_PROJECT_GIT_NAME environment variables
+#   - Entrypoint at /dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash
+#   - WORKDIR at DN_PROJECT_PATH/src
+#   - NUMBA_CACHE_DIR at /tmp/numba_cache
+#   - Apptainer compatibility LABELs
+#
+# Usage (built automatically by the test orchestrator):
+#   $ docker build -f Dockerfile.mock-slurm-image -t dna-mock-slurm .
+#   $ docker save dna-mock-slurm -o mock-slurm.tar
+#
+# =================================================================================================
+FROM --platform=linux/amd64 ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install minimal dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bash \
+        python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ====Simulate DN environment variables============================================================
+ENV DN_PROJECT_USER=testuser
+ENV DN_PROJECT_UID=1000
+ENV DN_PROJECT_GID=1000
+ENV DN_PROJECT_PATH=/ros2_ws/src/mock-project
+ENV DN_PROJECT_GIT_NAME=mock-project
+ENV DN_PROJECT_GIT_DOMAIN=github.com
+ENV DN_PROJECT_SERVICE=project-slurm
+ENV DN_PROJECT_SERVICE_DIR=/dockerized-norlab/project/project-slurm
+ENV IS_SLURM_RUN=true
+ENV NUMBA_CACHE_DIR=/tmp/numba_cache
+
+# ====Create user and directory structure==========================================================
+RUN useradd -m -s /bin/bash -u 1000 testuser && \
+    mkdir -p "${DN_PROJECT_SERVICE_DIR}" && \
+    mkdir -p "${DN_PROJECT_PATH}/src" && \
+    mkdir -p "${DN_PROJECT_PATH}/artifact" && \
+    mkdir -p "${DN_PROJECT_PATH}/data/external_data" && \
+    mkdir -p "${DN_PROJECT_PATH}/data/shared_data" && \
+    mkdir -p /tmp/numba_cache && \
+    chmod 777 /tmp/numba_cache && \
+    mkdir -p /entrypoints/project-slurm && \
+    mkdir -p /dn_container_env_variable
+
+# ====Install mock entrypoint=====================================================================
+COPY mock_entrypoint.bash "${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.init.bash"
+RUN chmod +x "${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.init.bash"
+
+# ====Create a test python script==================================================================
+COPY test_apptainer_env.py "${DN_PROJECT_PATH}/src/test_apptainer_env.py"
+
+# ====Set ownership================================================================================
+RUN chown -R testuser:testuser "${DN_PROJECT_PATH}" "${DN_PROJECT_SERVICE_DIR}" /entrypoints /dn_container_env_variable
+
+WORKDIR ${DN_PROJECT_PATH}/src
+USER testuser
+
+# ====Apptainer compatibility labels===============================================================
+LABEL dna.apptainer.compatible="true"
+LABEL dna.apptainer.entrypoint="/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash"
+LABEL dna.apptainer.target.platform="linux/amd64"
+
+ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash" ]
+CMD [ "-c", "print('>>>Hello-slurm-mock')" ]

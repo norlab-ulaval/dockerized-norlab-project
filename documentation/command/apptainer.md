@@ -307,3 +307,25 @@ typically have no display server.
 ### `cap_add: SYS_PTRACE, SYS_NICE`
 These capabilities may require HPC admin to configure `allow setuid = yes` in
 `apptainer.conf`. Check with your HPC support team.
+
+## Testing
+
+### Containerized Apptainer Integration Tests
+
+DNA includes a containerized test suite that validates the full Apptainer pipeline
+using real Apptainer inside a Docker container (Apptainer-in-Docker). This enables
+end-to-end testing on macOS without requiring Apptainer installed locally.
+
+```bash
+# Run all containerized Apptainer tests
+bash tests/tests_containerized_apptainer/run_containerized_apptainer_tests.bash
+```
+
+The test suite validates:
+- Full `tar → SIF` conversion via `build_sif.sh`
+- All DNA Apptainer exec flags (`--cleanenv`, `--no-eval`, `--no-home`, `--env-file`, etc.)
+- Generated run scripts from `dna run slurm --ga`
+- All `slurm_job.apptainer.*.template.bash` templates (valeria, compute_canada, mamba)
+- Entrypoint runtime detection (`DNA_RUNTIME=apptainer`)
+
+See `tests/tests_containerized_apptainer/README.md` for details.
