@@ -136,10 +136,13 @@ function dna::project_validate_command() {
 
     # ....Load dependencies........................................................................
     source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
+    source "${DNA_LIB_PATH}/core/utils/patch_helper.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.multiarch.bash" || return 1
 
     # ....Begin....................................................................................
+    # Trigger patching if configuration scheme is outdated
+    dna::patch_check_and_run || n2st::print_msg_warning "Be advised, configuration scheme patching failed. Continue anyway"
     # Add --include-multiarch to remaining_args if set
     if [[ "${include_multiarch}" == true ]]; then
         remaining_args=("--include-multiarch" "${remaining_args[@]}")

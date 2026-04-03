@@ -15,6 +15,7 @@ Complete guide to setting up and configuring DNA projects for containerized robo
 - [Customization Examples](#customization-examples)
 - [Best Practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
+- [Configuration Scheme Patching](#configuration-scheme-patching)
 
 ## Overview
 
@@ -426,3 +427,39 @@ dna project sanity
 - [Command Reference](dna.md)
 - [Installation Guide](install.md)
 - [IDE Integration](ide_integration.md)
+
+## Configuration Scheme Patching
+
+As DNA evolves, the required configuration structure (the "configuration scheme") of your super project may change. To make these updates easy and less error-prone, DNA includes an automatic configuration scheme patching mechanism.
+
+### How it Works
+
+1. **Version Check**: Every time you run a `dna` command (except for help, version, or update), DNA compares your super project's `DNA_CONFIG_SCHEME_VERSION` (found in `.dockerized_norlab/.env.your-project-name`) with the current `DNA_RELEASE_CONFIG_SCHEME_VERSION` of the DNA tool itself.
+2. **Trigger**: If your project's version is older than the tool's version, a patching process is triggered.
+3. **Sequential Patches**: DNA will apply all necessary patches sequentially (e.g., from v2 to v3, then v3 to v4) until your project is up-to-date.
+4. **User Confirmation**: For each missing file or directory identified by a patch script, DNA will ask for your permission before adding it.
+5. **Reporting**: After each patch, DNA reports which files or directories were added to your project.
+
+### Manual Trigger
+
+You can also manually trigger the configuration scheme check by running:
+
+```bash
+dna project sanity
+```
+
+### For Developers: Creating a New Patch
+
+When you introduce changes to DNA that require updates to the super project configuration (e.g., a new required directory or a new template file), you should:
+
+1. **Increment the Version**: Increment`DNA_RELEASE_CONFIG_SCHEME_VERSION` in `.env.dockerized-norlab-project`.
+2. **Create a Patch Script**: Create a new script named `config_scheme_<FROM>to<TO>.bash` in `src/lib/core/patches/`.
+3. **Use the Template**: Base your script on `src/lib/core/patches/config_scheme_patch_template.bash`.
+4. **Define the Logic**: Use the provided helper functions to add missing resources:
+    - `dna::patch_add_file_if_missing <template_source> <target_dest> <description>`: Adds a file from DNA templates to the super project.
+    - `dna::patch_add_directory_if_missing <template_source> <target_dest> <description>`: Adds a directory from DNA templates to the super project.
+    - `dna::patch_add_content_if_missing <target_file> <search_string> <content_to_add> <description>`: Appends content to a file if it doesn't already contain the search string.
+    - `dna::patch_modify_content <target_file> <search_pattern> <replace_pattern> <description>`: Modifies file content using a search and replace pattern (powered by `sed`).
+
+The `template_source` path is relative to `src/lib/template/`.
+The `target_dest` and `target_file` paths are relative to the super project root.

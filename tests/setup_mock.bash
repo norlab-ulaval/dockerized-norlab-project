@@ -34,6 +34,19 @@ function dna::setup_mock() {
     "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" \
     || n2st::print_msg_error_and_exit "Could not clone dockerized-norlab-project-mock"
 
+  # ....Update mock project configuration scheme version to match DNA..............................
+  local current_scheme_version
+  current_scheme_version=$(grep "DNA_RELEASE_CONFIG_SCHEME_VERSION=" "${DNA_ROOT}/.env.dockerized-norlab-project" | cut -d'=' -f2)
+  
+  local mock_env_file="${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock/.dockerized_norlab/.env.dockerized-norlab-project-mock"
+  if [[ -f "${mock_env_file}" ]]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i "" "s/DNA_CONFIG_SCHEME_VERSION=.*/DNA_CONFIG_SCHEME_VERSION=${current_scheme_version}/" "${mock_env_file}"
+    else
+      sed -i "s/DNA_CONFIG_SCHEME_VERSION=.*/DNA_CONFIG_SCHEME_VERSION=${current_scheme_version}/" "${mock_env_file}"
+    fi
+  fi
+
   if [[ ${DNA_DEBUG} == true ]]; then
     cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" || exit 1
     #git status

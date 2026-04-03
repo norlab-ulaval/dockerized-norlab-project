@@ -49,6 +49,9 @@ setup_file() {
       apt-get install --yes rsync
 
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
+  
+  local current_scheme_version
+  current_scheme_version=$(grep "DNA_RELEASE_CONFIG_SCHEME_VERSION=" "${BATS_DOCKER_WORKDIR}/.env.dockerized-norlab-project" | cut -d'=' -f2)
   # Mock repo dockerized-norlab-project-mock-EMPTY is cloned in setup()
 
   # Create temporary directory for tests
@@ -63,17 +66,22 @@ setup_file() {
 
   mkdir -p "${MOCK_DNA_DIR}/src/lib/core"
   cp -r "${BATS_DOCKER_WORKDIR}/src/lib/core/utils" "${MOCK_DNA_DIR}/src/lib/core/"
+  
+  # Ensure file_tools.bash and patch_helper.bash are available
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/file_tools.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/patch_helper.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   mkdir -p "${MOCK_DNA_DIR}/src/bin"
   cat > "${MOCK_DNA_DIR}/src/bin/dna" << 'EOF'
 #!/bin/bash
 if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
-  DNA_RELEASE_CONFIG_SCHEME_VERSION=3
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
   echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
 else
   exit 1
 fi
 EOF
+  sed -i "s/REPLACE_WITH_SCHEME_VERSION/${current_scheme_version}/" "${MOCK_DNA_DIR}/src/bin/dna"
   # Make the dna script executable
   chmod +x "${MOCK_DNA_DIR}/src/bin/dna"
 
@@ -91,15 +99,19 @@ export MSG_END_FORMAT=""
 # Set up environment variables
 export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
 export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNA_ROOT="${MOCK_DNA_DIR}"
-export DNA_PATH="${MOCK_DNA_DIR}/src/bin"
-export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_ROOT="REPLACE_WITH_MOCK_DNA_DIR"
+export DNA_PATH="REPLACE_WITH_MOCK_DNA_DIR/src/bin"
+export DNA_LIB_PATH="REPLACE_WITH_MOCK_DNA_DIR/src/lib"
 export DNA_HUMAN_NAME="Dockerized-NorLab project application"
-export DNA_RELEASE_CONFIG_SCHEME_VERSION=3
+export DNA_RELEASE_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
 export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project"
 
-export N2ST_PATH="${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
+export N2ST_PATH="REPLACE_WITH_BATS_DOCKER_WORKDIR/utilities/norlab-shell-script-tools"
 source "${N2ST_PATH}/import_norlab_shell_script_tools_lib.bash"
+
+# Source real file tools and patch helper
+source "${DNA_LIB_PATH}/core/utils/file_tools.bash"
+source "${DNA_LIB_PATH}/core/utils/patch_helper.bash"
 
 # ....Mock dependencies loading test functions.....................................................
 function dna::import_lib_and_dependencies() {
@@ -159,10 +171,14 @@ export DN_PROJECT_HUB="norlabulaval"
 export PROJECT_TAG="latest"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNA_CONFIG_SCHEME_VERSION=3
+export DNA_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
+  sed -i "s|REPLACE_WITH_MOCK_DNA_DIR|${MOCK_DNA_DIR}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s|REPLACE_WITH_SCHEME_VERSION|${current_scheme_version}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s|REPLACE_WITH_BATS_DOCKER_WORKDIR|${BATS_DOCKER_WORKDIR}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s|REPLACE_WITH_SCHEME_VERSION|${current_scheme_version}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash"
 }
 
 setup() {

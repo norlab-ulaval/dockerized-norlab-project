@@ -48,6 +48,9 @@ setup_file() {
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
 
+  local current_scheme_version
+  current_scheme_version=$(grep "DNA_RELEASE_CONFIG_SCHEME_VERSION=" "${BATS_DOCKER_WORKDIR}/.env.dockerized-norlab-project" | cut -d'=' -f2)
+
   # Create temporary directory for tests
   export MOCK_DNA_DIR=$(temp_make)
 
@@ -68,11 +71,11 @@ export MSG_END_FORMAT=""
 # Set up environment variables
 export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
 export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNA_ROOT="${MOCK_DNA_DIR}"
-export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_ROOT="REPLACE_WITH_MOCK_DNA_DIR"
+export DNA_LIB_PATH="REPLACE_WITH_MOCK_DNA_DIR/src/lib"
 export DNA_HUMAN_NAME="Dockerized-NorLab project application"
 export DNA_VERSION="1.0.0"
-export DNA_RELEASE_CONFIG_SCHEME_VERSION=3
+export DNA_RELEASE_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
 export N2ST_VERSION="2.0.0"
 export NBS_VERSION="3.0.0"
 export IMAGE_ARCH_AND_OS="linux/amd64"
@@ -177,6 +180,8 @@ done
 # Print a message to indicate that the mock import_dna_lib.bash has been loaded
 echo "[dna done] Mock import_dna_lib.bash and its librairies loaded"
 EOF
+  sed -i "s|REPLACE_WITH_MOCK_DNA_DIR|${MOCK_DNA_DIR}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s/REPLACE_WITH_SCHEME_VERSION/${current_scheme_version}/" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
 }
 
 setup() {

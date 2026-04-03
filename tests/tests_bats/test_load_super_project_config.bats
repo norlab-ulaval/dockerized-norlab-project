@@ -122,7 +122,11 @@ teardown() {
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
   assert_equal "${DN_PROJECT_USER}" 'root'
-  assert_equal "${DNA_CONFIG_SCHEME_VERSION}" 3
+
+  # Retrieve current DNA_RELEASE_CONFIG_SCHEME_VERSION
+  source "${BATS_DOCKER_WORKDIR}/load_repo_main_dotenv.bash"
+  assert_equal "${DNA_CONFIG_SCHEME_VERSION}" "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
+
   assert_equal "${MOCK_TEST_WAS_LOADED}" 1
   assert_equal "${HYDRA_FULL_ERROR}" 1
 

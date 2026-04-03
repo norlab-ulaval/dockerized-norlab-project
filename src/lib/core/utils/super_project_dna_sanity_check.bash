@@ -77,8 +77,10 @@ Dockerized-NorLab-Porject require that the super project be under version contro
 function dna::check_config_scheme_compatibility() {
     declare -i dna_config_scheme
     dna_config_scheme=$("${DNA_PATH:?err}/dna" version --config-scheme)
-    if [[ ${DNA_CONFIG_SCHEME_VERSION:?err} -ne dna_config_scheme ]]; then
-      dna::print_msg_error_and_return "Super project dna config schemme ${MSG_EMPH_FORMAT}${DNA_CONFIG_SCHEME_VERSION}${MSG_END_FORMAT} does not match current dna config scheme version ${MSG_EMPH_FORMAT}${dna_config_scheme}${MSG_END_FORMAT}. Either downgrade DNA version or update super project dna configuration."
+    if [[ ${DNA_CONFIG_SCHEME_VERSION:?err} -lt dna_config_scheme ]]; then
+      dna::patch_check_and_run
+    elif [[ ${DNA_CONFIG_SCHEME_VERSION:?err} -gt dna_config_scheme ]]; then
+      dna::print_msg_error_and_return "Super project dna config scheme ${MSG_EMPH_FORMAT}${DNA_CONFIG_SCHEME_VERSION}${MSG_END_FORMAT} is newer than current dna config scheme version ${MSG_EMPH_FORMAT}${dna_config_scheme}${MSG_END_FORMAT}. Please update DNA to a compatible version."
     fi
 }
 
