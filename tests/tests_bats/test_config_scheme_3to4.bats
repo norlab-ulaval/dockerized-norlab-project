@@ -93,6 +93,47 @@ teardown() {
   done
 }
 
+@test "config_scheme_3to4.bash › should update slurm_job.dryrun.bash with new content when pre-existing" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
+  export DNA_CONFIG_SCHEME_VERSION=3
+
+  # Pre-create slurm_job.dryrun.bash with old v3 content
+  mkdir -p "${TEST_TEMP_DIR}/slurm_jobs"
+  cat > "${TEST_TEMP_DIR}/slurm_jobs/slurm_job.dryrun.bash" << 'EOF'
+#!/bin/bash
+function dna::job_teardown_callback() {
+  local exit_code=$?
+  # Note: Command 'dna run slurm' already handle stoping the container in case the slurm command
+  # TODO: Add any instruction that should be executed after 'dna run slurm' exit.
+  #  `scancel` is issued.
+  exit ${exit_code:-1}
+}
+# TODO: Set SJOB_ID
+SJOB_ID="default"
+# TODO: Set python module to launch
+hydra_flags+=("launcher/example_app_hparm_optim.py")
+EOF
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  target_file="${TEST_TEMP_DIR}/slurm_jobs/slurm_job.dryrun.bash"
+  assert_file_exist "${target_file}"
+
+  # SJOB_ID should be updated to 'dryrun'
+  run grep 'SJOB_ID="dryrun"' "${target_file}"
+  assert_success
+
+  # Old SJOB_ID="default" should be gone
+  run grep 'SJOB_ID="default"' "${target_file}"
+  assert_failure
+
+  # TODO comments should be removed
+  run grep '# TODO:' "${target_file}"
+  assert_failure
+}
+
 @test "config_scheme_3to4.bash › should replace PLACEHOLDER_DN_PROJECT_GIT_NAME in pre-existing HPC server profile files" {
   export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
   export DNA_CONFIG_SCHEME_VERSION=3

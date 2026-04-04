@@ -6,7 +6,7 @@
 # - --apptainer flag requires a profile argument
 # - --apptainer flag only valid with SERVICE=slurm
 # - slurm service requires --apptainer flag
-# - save with --apptainer generates build_sif.sh
+# - save with --apptainer generates dna_tar_to_apptainer_sif_converter.sh
 # - save with --apptainer updates metadata with Apptainer info
 # - save with --apptainer validates profile env file exists
 #
@@ -100,10 +100,10 @@ function dna::generate_apptainer_build_sif_script() {
   local tar_filename="$1"
   local sif_name="$2"
   local output_dir="$3"
-  echo "#!/bin/bash" > "${output_dir}/build_sif.sh"
-  echo "apptainer build ${sif_name} docker-archive:${tar_filename}" >> "${output_dir}/build_sif.sh"
-  chmod +x "${output_dir}/build_sif.sh"
-  echo "DONE: Generated ${output_dir}/build_sif.sh"
+  echo "#!/bin/bash" > "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  echo "apptainer build ${sif_name} docker-archive:${tar_filename}" >> "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  chmod +x "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  echo "DONE: Generated ${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   return 0
 }
 function dna::load_apptainer_profile_env() {
@@ -219,14 +219,14 @@ teardown_file() {
   assert_success
 }
 
-@test "dna::save_command --apptainer valeria slurm › creates build_sif.sh" {
+@test "dna::save_command --apptainer valeria slurm › creates dna_tar_to_apptainer_sif_converter.sh" {
   bash -c "
     source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
     dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
   "
-  run find "${MOCK_SAVE_DIR}" -name "build_sif.sh"
+  run find "${MOCK_SAVE_DIR}" -name "dna_tar_to_apptainer_sif_converter.sh"
   assert_success
-  assert_output --partial "build_sif.sh"
+  assert_output --partial "dna_tar_to_apptainer_sif_converter.sh"
 }
 
 @test "dna::save_command --apptainer valeria slurm › metadata contains APPTAINER_PROFILE" {

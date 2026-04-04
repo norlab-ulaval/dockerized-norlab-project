@@ -193,7 +193,7 @@ function dna::run_slurm_apptainer() {
     n2st::print_msg_done "Apptainer run script generated: ${generated_script}"
     echo ""
     n2st::print_msg "Next steps:
-  1. Ensure SIF exists on HPC (build with bash build_sif.sh if needed)
+  1. Ensure SIF exists on HPC (build with bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh if needed)
   2. Transfer script to HPC: scp ${generated_script} user@hpc:/path/to/project/
   3. Submit job on HPC: sbatch slurm_job.apptainer.${apptainer_profile}.template.bash
      Or run directly: bash $(basename "${generated_script}")"

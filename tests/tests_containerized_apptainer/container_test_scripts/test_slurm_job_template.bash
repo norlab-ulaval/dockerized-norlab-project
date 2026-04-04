@@ -21,7 +21,7 @@ set -e
 
 echo "--- Test: Slurm job template execution ---"
 
-TEMPLATE_DIR="${DNA_SRC_LIB}/template/slurm_jobs"
+TEMPLATE_DIR="${DNA_SRC_LIB}/template/slurm_jobs/template"
 
 # ====Verify prerequisites=========================================================================
 if [[ ! -f "${SIF_PATH}" ]]; then
@@ -78,7 +78,7 @@ PROFILES=("valeria" "compute_canada" "mamba")
 TEMPLATE_PASS_COUNT=0
 
 for profile in "${PROFILES[@]}"; do
-  TEMPLATE_FILE="${TEMPLATE_DIR}/slurm_job.apptainer.${profile}.template.bash"
+  TEMPLATE_FILE="${TEMPLATE_DIR}/slurm_job.SJOB_ID.apptainer.${profile}.bash"
 
   if [[ ! -f "${TEMPLATE_FILE}" ]]; then
     echo "[FAIL] Template not found: ${TEMPLATE_FILE}" >&2
@@ -144,8 +144,8 @@ for profile in "${PROFILES[@]}"; do
     exit 1
   fi
 
-  if ! grep -q "APPTAINER_ENABLE_GPU" "${TEMPLATE_FILE}"; then
-    echo "[FAIL] Template missing APPTAINER_ENABLE_GPU conditional" >&2
+  if ! grep -q -- "--nv" "${TEMPLATE_FILE}"; then
+    echo "[FAIL] Template missing --nv GPU flag" >&2
     exit 1
   fi
 

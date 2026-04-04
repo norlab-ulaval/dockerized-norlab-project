@@ -15,21 +15,24 @@ Both share the same build step and HPC profile configuration, but differ in how 
 
 ### Use Case 1 — SBATCH Template Workflow
 
-Submit jobs using the `slurm_job_<SJOB_ID>.apptainer.<profile>.bash` script (copied and renamed
+Submit jobs using the `slurm_job.<SJOB_ID>.apptainer.<profile>.bash` script (copied and renamed
 from `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash` added by `dna init`). You edit the
 copy directly (set `SJOB_ID`, `python_arguments`, callbacks) and submit it with `sbatch`. This is
 the primary workflow for recurring, configurable jobs.
 
 ```
  [Local]  1. dna build slurm --apptainer <profile>
-             → builds Docker image, saves tar archive, generates build_sif.sh
- [Local]  2. Copy slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash → slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash
+             → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
+ [Local]  2. Copy slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash → slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
              → set SJOB_ID, python_arguments, and optional callbacks
- [Local]  3. Transfer to HPC: artifact/apptainer/, slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash, .dockerized_norlab/
-             → use your preferred method (e.g., rsync, scp, sftp)
- [HPC]    4. bash artifact/apptainer/build_sif.sh
-             → converts tar archive to SIF image
- [HPC]    5. sbatch slurm_job_<SJOB_ID>.apptainer.<profile>.bash
+ [Local]  3. Transfer to HPC (use your preferred method, e.g., rsync, scp, sftp):
+               artifact/apptainer/, slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash,
+               .dockerized_norlab/,
+               data/external_data/, data/repository_data/
+               (data/shared_data/ is optional)
+ [HPC]    4. bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+             → sets up project directory structure, converts tar archive to SIF image
+ [HPC]    5. from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
 ```
 
 ### Use Case 2 — Generated Script Workflow
@@ -40,13 +43,16 @@ from the CLI. No SLURM directives or callbacks. Useful for quick one-off runs or
 
 ```
  [Local]  1. dna build slurm --apptainer <profile>
-             → builds Docker image, saves tar archive, generates build_sif.sh
+             → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
  [Local]  2. dna run slurm <sjob-id> --ga <profile> -- <args>
              → generates artifact/apptainer/run_apptainer_<sjob-id>.sh (does NOT execute)
- [Local]  3. Transfer to HPC: artifact/apptainer/, .dockerized_norlab/
-             → use your preferred method (e.g., rsync, scp, sftp)
- [HPC]    4. bash artifact/apptainer/build_sif.sh
-             → converts tar archive to SIF image
+ [Local]  3. Transfer to HPC (use your preferred method, e.g., rsync, scp, sftp):
+               artifact/apptainer/,
+               .dockerized_norlab/,
+               data/external_data/, data/repository_data/
+               (data/shared_data/ is optional)
+ [HPC]    4. bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+             → sets up project directory structure, converts tar archive to SIF image
  [HPC]    5. bash artifact/apptainer/run_apptainer_<sjob-id>.sh
 ```
 
@@ -103,7 +109,7 @@ from the super project's git remote URL. No manual editing is required for this 
 
 ## Use Case 1 — SBATCH Template Workflow
 
-Use the `slurm_job_<SJOB_ID>.apptainer.<profile>.bash` script (copied and renamed from
+Use the `slurm_job.<SJOB_ID>.apptainer.<profile>.bash` script (copied and renamed from
 `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash` added by `dna init`) to submit recurring,
 configurable jobs via `sbatch`. You edit `SJOB_ID`, `python_arguments`, and the optional
 setup/teardown callbacks directly in the script.
@@ -117,38 +123,43 @@ dna build slurm --apptainer valeria
 This:
 - Builds the slurm Docker image
 - Saves it as a `linux/amd64` tar archive to `artifact/apptainer/`
-- Generates `artifact/apptainer/build_sif.sh` (run on HPC to convert tar → SIF)
+- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to set up directory structure and convert tar → SIF)
 
 ### Step 2 — Edit the slurm job template
 
 Copy and rename the template, then edit it locally:
 ```bash
-cp slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash
+cp slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
 ```
-Edit `slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash`:
+Edit `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash`:
 - Set `SJOB_ID` (recommend using an issue tracker ID)
 - Set `python_arguments` (your Python module and its arguments)
 - Optionally update `job_setup_callback()` / `job_teardown_callback()`
 
 ### Step 3 — Transfer to HPC
 
-Transfer the following files/directories to your project root on the HPC server using your preferred method (e.g., rsync, scp, sftp):
-- `artifact/apptainer/`
-- `slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash`
-- `.dockerized_norlab/`
+Transfer the following files/directories to your super-project root on the HPC server using your preferred method (e.g., rsync, scp, sftp):
+- `artifact/apptainer/` — tar archive + `dna_tar_to_apptainer_sif_converter.sh`
+- `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash` — the sbatch script
+- `.dockerized_norlab/` — DNA configuration directory
+- `data/external_data/` — non-tracked external data (if applicable)
+- `data/repository_data/` — data required by src/test code logic (if applicable)
+- `data/shared_data/` — optional; may be replaced by a local data volume on the HPC server
 
 ### Step 4 — Build SIF on HPC server
 
 ```bash
-# On the HPC server:
-bash artifact/apptainer/build_sif.sh
+# On the HPC server (from super-project root):
+bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
 ```
+
+This script sets up the expected super-project directory structure and converts the tar archive to a SIF image.
 
 ### Step 5 — Submit the slurm job
 
 ```bash
-# On the HPC server:
-sbatch slurm_job_<SJOB_ID>.apptainer.<profile>.bash
+# On the HPC server (from super-project root):
+sbatch slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
 ```
 
 ---
@@ -168,7 +179,7 @@ dna build slurm --apptainer valeria
 This:
 - Builds the slurm Docker image
 - Saves it as a `linux/amd64` tar archive to `artifact/apptainer/`
-- Generates `artifact/apptainer/build_sif.sh` (run on HPC to convert tar → SIF)
+- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to set up directory structure and convert tar → SIF)
 
 ### Step 2 — Generate the Apptainer run script
 
@@ -187,16 +198,21 @@ dna run slurm <sjob-id> --ga valeria --print-only -- launcher/train.py
 
 ### Step 3 — Transfer to HPC
 
-Transfer the following files/directories to your project root on the HPC server using your preferred method (e.g., rsync, scp, sftp):
-- `artifact/apptainer/`
-- `.dockerized_norlab/`
+Transfer the following files/directories to your super-project root on the HPC server using your preferred method (e.g., rsync, scp, sftp):
+- `artifact/apptainer/` — tar archive + `dna_tar_to_apptainer_sif_converter.sh` + generated run script
+- `.dockerized_norlab/` — DNA configuration directory
+- `data/external_data/` — non-tracked external data (if applicable)
+- `data/repository_data/` — data required by src/test code logic (if applicable)
+- `data/shared_data/` — optional; may be replaced by a local data volume on the HPC server
 
 ### Step 4 — Build SIF on HPC server
 
 ```bash
-# On the HPC server:
-bash artifact/apptainer/build_sif.sh
+# On the HPC server (from super-project root):
+bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
 ```
+
+This script sets up the expected super-project directory structure and converts the tar archive to a SIF image.
 
 ### Step 5 — Run the generated script
 
@@ -213,9 +229,9 @@ the same HPC profile dotenv configuration:
 ```
 HPC Profile Dotenv (.env.<profile>)
         │
-        ├──── sourced by ──── Slurm Job Script (slurm_job_<SJOB_ID>.apptainer.<profile>.bash)
+        ├──── sourced by ──── Slurm Job Script (slurm_job.<SJOB_ID>.apptainer.<profile>.bash)
         │                         │
-        │                         └── user edits TODO markers, submits via: sbatch slurm_job_<SJOB_ID>.apptainer.<profile>.bash
+        │                         └── user edits TODO markers, submits via: sbatch slurm_job.<SJOB_ID>.apptainer.<profile>.bash
         │
         └──── sourced by ──── Generated Run Script (run_apptainer_<sjob_id>.sh)
                                   │
@@ -234,7 +250,7 @@ by both the slurm job templates and generated run scripts).
 ### 2. Slurm Job Scripts (user-editable sbatch scripts)
 
 **Template location (in super project):** `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash`
-**Working copy location:** `slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash` (user-renamed copy)
+**Working copy location:** `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash` (user-renamed copy)
 
 Standalone SLURM sbatch scripts added to the user's project by `dna init` under `slurm_jobs/template/`.
 They include `#SBATCH` directives, `job_setup_callback()` / `job_teardown_callback()` hooks, and `TODO`
@@ -256,7 +272,7 @@ one-off runs or CI pipelines.
 | **Customization** | User edits `SJOB_ID`, `python_arguments`, callbacks | Pre-baked from CLI args |
 | **SLURM directives** | Yes (`#SBATCH --gres`, `--time`, etc.) | No |
 | **Setup/teardown hooks** | Yes | No |
-| **How to run** | `sbatch slurm_job_<SJOB_ID>.apptainer.<profile>.bash` | `bash run_apptainer_<sjob_id>.sh` |
+| **How to run** | `sbatch slurm_job.<SJOB_ID>.apptainer.<profile>.bash` | `bash run_apptainer_<sjob_id>.sh` |
 | **Created by** | `dna init` (copied to project) | `dna run slurm --ga` (generated on demand) |
 
 ## CLI Reference
@@ -269,11 +285,11 @@ dna build slurm --apptainer <profile>
 
 | Option | Description |
 |--------|-------------|
-| `--apptainer <profile>` | Build slurm image and save as `linux/amd64` tar archive. Generates `build_sif.sh`. |
+| `--apptainer <profile>` | Build slurm image and save as `linux/amd64` tar archive. Generates `dna_tar_to_apptainer_sif_converter.sh`. |
 
 Output files in `artifact/apptainer/`:
 - `<project>-slurm.<tag>.tar` — Docker tar archive (Apptainer `docker-archive:` compatible)
-- `build_sif.sh` — Helper script to run on HPC: `apptainer build <name>.sif docker-archive:<name>.tar`
+- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: sets up directory structure + `apptainer build <name>.sif docker-archive:<name>.tar`
 
 ### `dna save --apptainer <profile> DIRPATH slurm`
 
@@ -321,7 +337,7 @@ Profile env files serve a dual purpose:
 ## Slurm Job Templates
 
 Templates are located in `slurm_jobs/template/` in the super project (added by `dna init`).
-Copy and rename to `slurm_jobs/slurm_job_<SJOB_ID>.apptainer.<profile>.bash` before editing.
+Copy and rename to `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash` before editing.
 
 | Template file | Profile | Description |
 |---------------|---------|-------------|
@@ -415,7 +431,7 @@ bash tests/tests_containerized_apptainer/run_containerized_apptainer_tests.bash
 ```
 
 The test suite validates:
-- Full `tar → SIF` conversion via `build_sif.sh`
+- Full `tar → SIF` conversion via `dna_tar_to_apptainer_sif_converter.sh`
 - All DNA Apptainer exec flags (`--cleanenv`, `--no-eval`, `--no-home`, `--env-file`, etc.)
 - Generated run scripts from `dna run slurm --ga`
 - All `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.*.bash` scripts (valeria, compute_canada, mamba)

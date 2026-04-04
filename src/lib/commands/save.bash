@@ -11,7 +11,7 @@ DOCUMENTATION_BUFFER_SAVE=$( cat <<'EOF'
 # Options:
 #   --help, -h                    Show this help message
 #   --apptainer <profile>         Also generate Apptainer artifacts (slurm service only):
-#                                   - build_sif.sh helper script (run on HPC to convert tar→SIF)
+#                                   - dna_tar_to_apptainer_sif_converter.sh helper script (run on HPC to convert tar→SIF)
 #                                   - Apptainer metadata in meta.txt
 #                                 <profile> selects .env.<profile> server configuration
 #                                 e.g., dna save --apptainer valeria DIRPATH slurm
@@ -25,7 +25,7 @@ DOCUMENTATION_BUFFER_SAVE=$( cat <<'EOF'
 #   - Creates a portable archive containing the Docker image and necessary files
 #   - For deploy service: includes full project structure for self-contained deployment
 #   - For develop service: includes only the Docker image (assumes project is cloned on target)
-#   - For slurm + --apptainer: saves tar archive and generates build_sif.sh for HPC conversion
+#   - For slurm + --apptainer: saves tar archive and generates dna_tar_to_apptainer_sif_converter.sh for HPC conversion
 #   - Output directory follows pattern: dna-save-<SERVICE>-<REPO_NAME>-<timestamp>
 #
 # =================================================================================================
@@ -175,10 +175,10 @@ function dna::save_command() {
             "${tar_filename}" \
             "${sif_name}" \
             "${save_dir_path}" || {
-            n2st::print_msg_error "Failed to generate build_sif.sh"
+            n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"
             return 1
         }
-        n2st::print_msg_done "Apptainer build_sif.sh generated in: ${save_dir_path}"
+        n2st::print_msg_done "Apptainer dna_tar_to_apptainer_sif_converter.sh generated in: ${save_dir_path}"
     fi
 
     # For deploy service, copy project structure

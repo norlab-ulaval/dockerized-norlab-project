@@ -16,7 +16,7 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   --save DIRPATH                Save built image to directory (develop or deploy services only)
 #   --push                        Push image to Dockerhub (deploy services only,
 #                                  requires Docker Hub authentication)
-#   --apptainer <profile>         Build linux/amd64 tar archive and generate build_sif.sh helper
+#   --apptainer <profile>         Build linux/amd64 tar archive and generate dna_tar_to_apptainer_sif_converter.sh helper
 #                                  for HPC Apptainer workflow (slurm service only).
 #                                  <profile> selects .env.<profile> server configuration
 #                                  e.g., dna build slurm --apptainer valeria
@@ -405,14 +405,14 @@ ${MSG_END_FORMAT}
             "${tar_filename}" \
             "${sif_name}" \
             "${apptainer_save_dir}" || {
-            n2st::print_msg_error "Failed to generate build_sif.sh"
+            n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"
             return 1
         }
 
         n2st::print_msg_done "Apptainer artifacts saved to: ${apptainer_save_dir}"
         n2st::print_msg "Next steps:
-  1. Transfer to HPC: rsync -av ${apptainer_save_dir}/ user@hpc:/path/to/project/artifact/apptainer/
-  2. Build SIF on HPC: bash build_sif.sh
+  1. Transfer to HPC: artifact/apptainer/ (use your preferred method, e.g., rsync, scp, sftp)
+  2. Build SIF on HPC: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
   3. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
     fi
 

@@ -9,7 +9,7 @@ Since Apptainer is Linux-only and DNA targets macOS hosts, these tests run insid
 Linux Docker container with Apptainer installed. They validate the **full pipeline**:
 
 ```
-Docker tar archive → build_sif.sh → SIF file → apptainer exec (with DNA flags)
+Docker tar archive → dna_tar_to_apptainer_sif_converter.sh → SIF file → apptainer exec (with DNA flags)
 ```
 
 #### Prerequisites
@@ -33,7 +33,7 @@ bash tests/tests_containerized_apptainer/run_containerized_apptainer_tests.bash 
 
 | Test Script | What It Validates |
 |---|---|
-| `test_pipeline_tar_to_sif.bash` | Full tar → SIF conversion via DNA's `build_sif.sh`, SIF label inspection, basic exec |
+| `test_pipeline_tar_to_sif.bash` | Full tar → SIF conversion via DNA's `dna_tar_to_apptainer_sif_converter.sh`, SIF label inspection, basic exec |
 | `test_apptainer_exec_flags.bash` | DNA flags with real Apptainer: `--cleanenv`, `--env-file`, `--env`, `--no-home`, `--writable-tmpfs`, `--bind`, `--pwd` |
 | `test_generated_run_script.bash` | `dna run slurm --ga` output: script generation, structure, execution, env pass-through |
 | `test_slurm_job_template.bash` | `slurm_job.apptainer.*.template.bash` for all profiles: structure, adapted execution, env vars |

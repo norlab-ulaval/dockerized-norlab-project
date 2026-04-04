@@ -77,7 +77,7 @@ else
   echo "    PASS: Correctly failed for nonexistent profile"
 fi
 
-# ....Test 2: generate_apptainer_build_sif_script.........................................
+# ....Test 2: generate_apptainer_build_sif_script (generates dna_tar_to_apptainer_sif_converter.sh)...
 echo ""
 echo ">>> Test 4: dna::generate_apptainer_build_sif_script"
 dna::generate_apptainer_build_sif_script \
@@ -85,19 +85,19 @@ dna::generate_apptainer_build_sif_script \
   "my-project-slurm.sif" \
   "${TEMP_DIR}"
 
-if [[ ! -f "${TEMP_DIR}/build_sif.sh" ]]; then
-  echo "    FAIL: build_sif.sh not created" >&2
+if [[ ! -f "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh" ]]; then
+  echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh not created" >&2
   exit 1
 fi
-if ! grep -q "apptainer build" "${TEMP_DIR}/build_sif.sh"; then
-  echo "    FAIL: build_sif.sh missing 'apptainer build'" >&2
+if ! grep -q "apptainer build" "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh missing 'apptainer build'" >&2
   exit 1
 fi
-if ! grep -q "docker-archive:" "${TEMP_DIR}/build_sif.sh"; then
-  echo "    FAIL: build_sif.sh missing 'docker-archive:'" >&2
+if ! grep -q "docker-archive:" "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh missing 'docker-archive:'" >&2
   exit 1
 fi
-echo "    PASS: build_sif.sh created with correct content"
+echo "    PASS: dna_tar_to_apptainer_sif_converter.sh created with correct content"
 
 # ....Test 3: get_apptainer_slurm_exec_flags..............................................
 echo ""
@@ -188,24 +188,24 @@ if ! echo "${CCFLAGS}" | grep -q ".env.compute_canada"; then
 fi
 echo "    PASS: compute_canada profile uses correct env file"
 
-# ....Test 7: APPTAINER_ENABLE_GPU=false disables --nv......................................
+# ....Test 7: APPTAINER_ENABLE_GPU is ignored, --nv always included.......................
 echo ""
-echo ">>> Test 9: APPTAINER_ENABLE_GPU=false disables --nv flag"
+echo ">>> Test 9: APPTAINER_ENABLE_GPU is ignored (--nv always unconditionally included)"
 export APPTAINER_ENABLE_GPU=false
 GPU_OFF_FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif")
-if echo "${GPU_OFF_FLAGS}" | grep -q -- "--nv"; then
-  echo "    FAIL: --nv flag should NOT be present when APPTAINER_ENABLE_GPU=false" >&2; exit 1
+if ! echo "${GPU_OFF_FLAGS}" | grep -q -- "--nv"; then
+  echo "    FAIL: --nv flag should always be present (APPTAINER_ENABLE_GPU is no longer used)" >&2; exit 1
 fi
-echo "    PASS: --nv flag correctly omitted when APPTAINER_ENABLE_GPU=false"
+echo "    PASS: --nv flag unconditionally included (APPTAINER_ENABLE_GPU env var is ignored)"
 unset APPTAINER_ENABLE_GPU
 
-# ....Test 8: build_sif.sh contains version warning........................................
+# ....Test 8: dna_tar_to_apptainer_sif_converter.sh contains version warning................
 echo ""
-echo ">>> Test 10: build_sif.sh contains Apptainer version warning"
-if ! grep -q "Apptainer >= 1.1.0" "${TEMP_DIR}/build_sif.sh"; then
-  echo "    FAIL: Missing Apptainer version warning in build_sif.sh" >&2; exit 1
+echo ">>> Test 10: dna_tar_to_apptainer_sif_converter.sh contains Apptainer version warning"
+if ! grep -q "Apptainer >= 1.1.0" "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "    FAIL: Missing Apptainer version warning in dna_tar_to_apptainer_sif_converter.sh" >&2; exit 1
 fi
-echo "    PASS: build_sif.sh contains Apptainer version warning"
+echo "    PASS: dna_tar_to_apptainer_sif_converter.sh contains Apptainer version warning"
 
 echo ""
 echo "========================================================"

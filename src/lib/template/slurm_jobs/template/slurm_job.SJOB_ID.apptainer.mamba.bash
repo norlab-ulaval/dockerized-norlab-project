@@ -20,16 +20,19 @@
 # Workflow (Apptainer):
 #   Local (macOS):
 #     1. Build:    dna build slurm --apptainer mamba
-#                  → builds Docker image, saves tar archive, generates build_sif.sh
+#                  → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
 #     2. Edit:     Set SJOB_ID and python_arguments in this script
-#     3. Transfer: artifact/apptainer/, slurm_jobs/slurm_job_<SJOB_ID>.apptainer.mamba.bash, .dockerized_norlab/
-#                  (use your preferred method, e.g., rsync, scp, sftp)
+#     3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
+#                  artifact/apptainer/, slurm_jobs/slurm_job.<SJOB_ID>.apptainer.mamba.bash,
+#                  .dockerized_norlab/,
+#                  data/external_data/, data/repository_data/
+#                  (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
 #   On Mamba:
-#     4. Build SIF: bash artifact/apptainer/build_sif.sh
-#     5. Submit:    sbatch slurm_job_<SJOB_ID>.apptainer.mamba.bash
+#     4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+#     5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<SJOB_ID>.apptainer.mamba.bash
 #
 # Usage:
-#   $ sbatch slurm_job_<SJOB_ID>.apptainer.mamba.bash
+#   $ sbatch slurm_job.<SJOB_ID>.apptainer.mamba.bash
 #
 # =================================================================================================
 declare -x SJOB_ID
@@ -81,7 +84,7 @@ export APPTAINER_TMPDIR
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then
   echo "[error] SIF file not found: ${SIF_PATH}" 1>&2
-  echo "[hint] Build it with: bash artifact/apptainer/build_sif.sh" 1>&2
+  echo "[hint] Build it with: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh" 1>&2
   exit 1
 fi
 

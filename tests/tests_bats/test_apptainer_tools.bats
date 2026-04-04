@@ -4,7 +4,7 @@
 #
 # Test cases:
 # - dna::check_apptainer_profile_env_file validation
-# - dna::generate_apptainer_build_sif_script generation
+# - dna::generate_apptainer_build_sif_script (dna_tar_to_apptainer_sif_converter.sh) generation
 # - dna::get_apptainer_slurm_exec_flags output
 # - dna::generate_apptainer_run_script generation
 # - dna::print_apptainer_exec_command output
@@ -113,7 +113,7 @@ teardown_file() {
 
 # ====Tests: dna::generate_apptainer_build_sif_script=============================================
 
-@test "dna::generate_apptainer_build_sif_script › creates build_sif.sh" {
+@test "dna::generate_apptainer_build_sif_script › creates dna_tar_to_apptainer_sif_converter.sh" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -126,12 +126,12 @@ teardown_file() {
       '${output_dir}'
   "
   assert_success
-  assert_file_exists "${output_dir}/build_sif.sh"
+  assert_file_exists "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
 
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › build_sif.sh contains apptainer build command" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains apptainer build command" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -144,14 +144,14 @@ teardown_file() {
       '${output_dir}'
   "
 
-  run grep "apptainer build" "${output_dir}/build_sif.sh"
+  run grep "apptainer build" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
   assert_output --partial "docker-archive:"
 
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › build_sif.sh is executable" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh is executable" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -164,7 +164,7 @@ teardown_file() {
       '${output_dir}'
   "
 
-  assert_file_executable "${output_dir}/build_sif.sh"
+  assert_file_executable "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
 
   rm -rf "${output_dir}"
 }
@@ -254,10 +254,9 @@ teardown_file() {
   assert_output --partial "--no-home"
 }
 
-@test "dna::get_apptainer_slurm_exec_flags with APPTAINER_ENABLE_GPU=true › output contains --nv" {
+@test "dna::get_apptainer_slurm_exec_flags › --nv flag is always unconditionally included" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
-    export APPTAINER_ENABLE_GPU=true
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
   "
@@ -265,7 +264,7 @@ teardown_file() {
   assert_output --partial "--nv"
 }
 
-@test "dna::get_apptainer_slurm_exec_flags with APPTAINER_ENABLE_GPU=false › output does NOT contain --nv" {
+@test "dna::get_apptainer_slurm_exec_flags › APPTAINER_ENABLE_GPU env var is ignored (--nv always included)" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export APPTAINER_ENABLE_GPU=false
@@ -273,7 +272,8 @@ teardown_file() {
     dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
   "
   assert_success
-  refute_output --partial "--nv"
+  # --nv is unconditional; APPTAINER_ENABLE_GPU is no longer used
+  assert_output --partial "--nv"
 }
 
 @test "dna::get_apptainer_slurm_exec_flags › output contains dynamic SLURM --env vars" {
@@ -428,7 +428,7 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › build_sif.sh contains Apptainer version warning" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains Apptainer version warning" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -441,7 +441,7 @@ teardown_file() {
       '${output_dir}'
   "
 
-  run grep "Apptainer >= 1.1.0" "${output_dir}/build_sif.sh"
+  run grep "Apptainer >= 1.1.0" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
 
   rm -rf "${output_dir}"

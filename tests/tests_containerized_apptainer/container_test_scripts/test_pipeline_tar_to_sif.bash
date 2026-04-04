@@ -2,9 +2,9 @@
 # =================================================================================================
 # Test: Full pipeline — Docker tar archive → Apptainer SIF conversion.
 #
-# Validates the DNA build_sif.sh helper script by:
-#   1. Using the DNA function to generate build_sif.sh
-#   2. Running build_sif.sh to convert the mock slurm tar to SIF
+# Validates the DNA dna_tar_to_apptainer_sif_converter.sh helper script by:
+#   1. Using the DNA function to generate dna_tar_to_apptainer_sif_converter.sh
+#   2. Running dna_tar_to_apptainer_sif_converter.sh to convert the mock slurm tar to SIF
 #   3. Verifying the SIF file is valid via 'apptainer inspect'
 #
 # Environment (inherited from run_all_container_tests.bash):
@@ -29,9 +29,9 @@ if [[ ! -f "${TAR_PATH}" ]]; then
 fi
 echo "[info] Mock slurm tar found: ${TAR_PATH} ($(du -h "${TAR_PATH}" | cut -f1))"
 
-# ====Test A: Generate build_sif.sh using DNA function============================================
+# ====Test A: Generate dna_tar_to_apptainer_sif_converter.sh using DNA function==================
 echo ""
-echo ">>> Test A: Generate build_sif.sh via dna::generate_apptainer_build_sif_script"
+echo ">>> Test A: Generate dna_tar_to_apptainer_sif_converter.sh via dna::generate_apptainer_build_sif_script"
 
 # Source mock n2st functions (required by apptainer_tools.bash)
 function n2st::print_msg() { echo "[MSG] $*"; }
@@ -45,42 +45,42 @@ export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 # Source apptainer_tools
 source "${DNA_SRC_LIB}/core/utils/apptainer_tools.bash"
 
-# Generate build_sif.sh
+# Generate dna_tar_to_apptainer_sif_converter.sh
 dna::generate_apptainer_build_sif_script \
   "${MOCK_SLURM_TAR}" \
   "${SIF_NAME}" \
   "${SIF_DIR}"
 
-if [[ ! -f "${SIF_DIR}/build_sif.sh" ]]; then
-  echo "[FAIL] build_sif.sh was not created" >&2
+if [[ ! -f "${SIF_DIR}/dna_tar_to_apptainer_sif_converter.sh" ]]; then
+  echo "[FAIL] dna_tar_to_apptainer_sif_converter.sh was not created" >&2
   exit 1
 fi
-echo "    PASS: build_sif.sh generated at ${SIF_DIR}/build_sif.sh"
+echo "    PASS: dna_tar_to_apptainer_sif_converter.sh generated at ${SIF_DIR}/dna_tar_to_apptainer_sif_converter.sh"
 
-# Verify build_sif.sh content
-if ! grep -q "apptainer build" "${SIF_DIR}/build_sif.sh"; then
-  echo "[FAIL] build_sif.sh missing 'apptainer build' command" >&2
+# Verify dna_tar_to_apptainer_sif_converter.sh content
+if ! grep -q "apptainer build" "${SIF_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "[FAIL] dna_tar_to_apptainer_sif_converter.sh missing 'apptainer build' command" >&2
   exit 1
 fi
-if ! grep -q "docker-archive:" "${SIF_DIR}/build_sif.sh"; then
-  echo "[FAIL] build_sif.sh missing 'docker-archive:' reference" >&2
+if ! grep -q "docker-archive:" "${SIF_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "[FAIL] dna_tar_to_apptainer_sif_converter.sh missing 'docker-archive:' reference" >&2
   exit 1
 fi
-if ! grep -q "Apptainer >= 1.1.0" "${SIF_DIR}/build_sif.sh"; then
-  echo "[FAIL] build_sif.sh missing version warning" >&2
+if ! grep -q "Apptainer >= 1.1.0" "${SIF_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "[FAIL] dna_tar_to_apptainer_sif_converter.sh missing version warning" >&2
   exit 1
 fi
-echo "    PASS: build_sif.sh content verified"
+echo "    PASS: dna_tar_to_apptainer_sif_converter.sh content verified"
 
-# ====Test B: Execute build_sif.sh to convert tar → SIF==========================================
+# ====Test B: Execute dna_tar_to_apptainer_sif_converter.sh to convert tar → SIF================
 echo ""
-echo ">>> Test B: Execute build_sif.sh (tar → SIF conversion)"
+echo ">>> Test B: Execute dna_tar_to_apptainer_sif_converter.sh (tar → SIF conversion)"
 
 # Remove any existing SIF from previous runs
 rm -f "${SIF_PATH}"
 
 cd "${SIF_DIR}"
-bash build_sif.sh
+bash dna_tar_to_apptainer_sif_converter.sh
 
 if [[ ! -f "${SIF_PATH}" ]]; then
   echo "[FAIL] SIF file not created: ${SIF_PATH}" >&2

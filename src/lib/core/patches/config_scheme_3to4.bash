@@ -52,4 +52,27 @@ done
 unset slurm_job_templates
 unset target_file
 
+# Update slurm_job.dryrun.bash: fix SJOB_ID and remove TODO comments (only if file exists)
+if [[ -f "${SUPER_PROJECT_ROOT}/slurm_jobs/slurm_job.dryrun.bash" ]]; then
+  dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
+    'SJOB_ID="default"' \
+    'SJOB_ID="dryrun"' \
+    "Fix SJOB_ID from 'default' to 'dryrun' in slurm_job.dryrun.bash"
+
+  dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
+    '# TODO: Set SJOB_ID' \
+    '' \
+    "Remove 'TODO: Set SJOB_ID' comment from slurm_job.dryrun.bash"
+
+  dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
+    "  # TODO: Add any instruction that should be executed after 'dna run slurm' exit." \
+    "  # Add any instruction that should be executed after 'dna run slurm' exit." \
+    "Remove TODO comment from job_teardown_callback in slurm_job.dryrun.bash"
+
+  dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
+    '# TODO: Set python module to launch' \
+    '' \
+    "Remove 'TODO: Set python module to launch' comment from slurm_job.dryrun.bash"
+fi
+
 # ==== Patch logic ends here ====
