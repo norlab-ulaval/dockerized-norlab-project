@@ -111,6 +111,7 @@ if [[ "${SKIP_BUILD}" == "false" ]]; then
     "${DOCKER_BUILD_OPTS[@]}" \
     -f "${SCRIPT_DIR}/Dockerfile.apptainer-test-env" \
     -t "${APPTAINER_TEST_ENV_IMAGE}" \
+    --load \
     "${SCRIPT_DIR}"
 
   echo "    DONE: ${APPTAINER_TEST_ENV_IMAGE} built successfully"
@@ -128,6 +129,7 @@ if [[ "${SKIP_BUILD}" == "false" ]]; then
     "${DOCKER_BUILD_OPTS[@]}" \
     -f "${SCRIPT_DIR}/Dockerfile.mock-slurm-image" \
     -t "${MOCK_SLURM_IMAGE}" \
+    --load \
     "${SCRIPT_DIR}"
 
   mkdir -p "${ARTIFACTS_DIR}"
