@@ -14,11 +14,25 @@ dna::patch_add_directory_if_missing ".dockerized_norlab/configuration/hpc_server
 dna::patch_add_directory_if_missing ".dockerized_norlab/configuration/overrides" ".dockerized_norlab/configuration/overrides" "Docker Compose override configurations"
 
 # Add new slurm job templates
-dna::patch_add_file_if_missing "slurm_jobs/slurm_job.apptainer.compute_canada.template.bash" "slurm_jobs/slurm_job.apptainer.compute_canada.template.bash" "Compute Canada Apptainer slurm job template"
-dna::patch_add_file_if_missing "slurm_jobs/slurm_job.apptainer.hpc_hydra.template.bash" "slurm_jobs/slurm_job.apptainer.hpc_hydra.template.bash" "HPC Hydra Apptainer slurm job template"
-dna::patch_add_file_if_missing "slurm_jobs/slurm_job.apptainer.mamba.template.bash" "slurm_jobs/slurm_job.apptainer.mamba.template.bash" "Mamba Apptainer slurm job template"
-dna::patch_add_file_if_missing "slurm_jobs/slurm_job.apptainer.valeria.template.bash" "slurm_jobs/slurm_job.apptainer.valeria.template.bash" "Valeria Apptainer slurm job template"
-dna::patch_add_file_if_missing "slurm_jobs/slurm_job.hydra.template.bash" "slurm_jobs/slurm_job.hydra.template.bash" "Hydra slurm job template"
-dna::patch_add_file_if_missing "slurm_jobs/slurm_job.hydra_hparam_optim.template.bash" "slurm_jobs/slurm_job.hydra_hparam_optim.template.bash" "Hydra hparam optimization slurm job template"
+slurm_job_templates=(
+  "slurm_jobs/slurm_job.apptainer.compute_canada.template.bash"
+  "slurm_jobs/slurm_job.apptainer.hpc_hydra.template.bash"
+  "slurm_jobs/slurm_job.apptainer.mamba.template.bash"
+  "slurm_jobs/slurm_job.apptainer.valeria.template.bash"
+  "slurm_jobs/slurm_job.hydra.template.bash"
+  "slurm_jobs/slurm_job.hydra_hparam_optim.template.bash"
+)
+
+for template in "${slurm_job_templates[@]}"; do
+  if dna::patch_add_file_if_missing "${template}" "${template}" "Slurm job template: $(basename "${template}")"; then
+    # Replace placeholder in the newly added template
+    target_file="${SUPER_PROJECT_ROOT}/${template}"
+    if [[ -f "${target_file}" ]]; then
+      n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${SUPER_PROJECT_REPO_NAME}" "${target_file}"
+    fi
+  fi
+done
+unset slurm_job_templates
+unset target_file
 
 # ==== Patch logic ends here ====
