@@ -9,7 +9,7 @@
 #
 docker run \
   --net host \
-  -e DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-slurm${SJOB_ID}" \
+  -e DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-slurm${DNA_SJOB_NAME}" \
   -e DN_ENTRYPOINT_TRACE_EXECUTION=false \
   -e DN_PROJECT_USER="${DN_PROJECT_USER:?err}" \
   -e DN_ACTIVATE_POWERLINE_PROMT=true \

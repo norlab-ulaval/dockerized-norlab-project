@@ -14,7 +14,7 @@
 #   $ bash slurm_job.dryrun.bash [<any-dna-argument>]
 #
 # =================================================================================================
-declare -x SJOB_ID
+declare -x DNA_SJOB_NAME
 declare -a dna_run_slurm_flags=()
 declare -a hydra_flags=()
 
@@ -36,9 +36,9 @@ function dna::job_teardown_callback() {
 }
 
 # ....Set job name.................................................................................
-SJOB_ID="dryrun"
+DNA_SJOB_NAME="dryrun"
 # Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an SJOB_ID.
+#  and use its issue ID as an DNA_SJOB_NAME.
 
 # ....Hydra app module.............................................................................
 hydra_flags+=("launcher/example_app_hparm_optim.py")
@@ -64,10 +64,10 @@ dna_run_slurm_flags+=("--hydra-dry-run")
 dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
 dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
 dna_run_slurm_flags+=("$@")
-export SJOB_ID
+export DNA_SJOB_NAME
 dna::job_setup_callback
 trap dna::job_teardown_callback EXIT
 
 # ====Launch slurm job=============================================================================
-dna run slurm "${SJOB_ID:?err}" "${dna_run_slurm_flags[@]}" "${hydra_flags[@]}"
+dna run slurm "${DNA_SJOB_NAME:?err}" "${dna_run_slurm_flags[@]}" "${hydra_flags[@]}"
 

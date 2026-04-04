@@ -61,7 +61,7 @@ function adapt_template_for_test() {
     echo ""
     echo "# Override python_arguments for test"
     echo "python_arguments=(\"test_apptainer_env.py\")"
-    echo "SJOB_ID=\"99999\""
+    echo "DNA_SJOB_NAME=\"99999\""
     echo ""
     # Extract the core logic from the template:
     # - Skip SBATCH lines and the original path/SIF_PATH definitions
@@ -78,7 +78,7 @@ PROFILES=("valeria" "compute_canada" "mamba")
 TEMPLATE_PASS_COUNT=0
 
 for profile in "${PROFILES[@]}"; do
-  TEMPLATE_FILE="${TEMPLATE_DIR}/slurm_job.SJOB_ID.apptainer.${profile}.bash"
+  TEMPLATE_FILE="${TEMPLATE_DIR}/slurm_job.DNA_SJOB_NAME.apptainer.${profile}.bash"
 
   if [[ ! -f "${TEMPLATE_FILE}" ]]; then
     echo "[FAIL] Template not found: ${TEMPLATE_FILE}" >&2

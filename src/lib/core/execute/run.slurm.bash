@@ -32,7 +32,7 @@ DOCUMENTATION_RUN_SLURM=$( cat <<'EOF'
 # Globals:
 #   read DNA_ROOT
 #   read SUPER_PROJECT_ROOT
-#   write SJOB_ID
+#   write DNA_SJOB_NAME
 #   write IS_SLURM_RUN
 #
 # =================================================================================================
@@ -43,7 +43,7 @@ EOF
 
 # ....Script setup.................................................................................
 # Exported env var
-declare -x SJOB_ID
+declare -x DNA_SJOB_NAME
 declare -x IS_SLURM_RUN
 
 pushd "$(pwd)" >/dev/null || exit 1
@@ -92,8 +92,8 @@ function dna::run_slurm() {
   tmp_cwd=$(pwd)
 
   # Positional argument
-  SJOB_ID="$1"
-  shift # Remove SJOB_ID argument value
+  DNA_SJOB_NAME="$1"
+  shift # Remove DNA_SJOB_NAME argument value
 
   # ....Pre-condition..............................................................................
 
@@ -113,7 +113,7 @@ function dna::run_slurm() {
   dry_run_slurm_job=false
   docker_run_args=()
 
-  if [[ "${SJOB_ID}" == "--help"  ]] || [[ "${SJOB_ID}" == "-h"  ]]; then
+  if [[ "${DNA_SJOB_NAME}" == "--help"  ]] || [[ "${DNA_SJOB_NAME}" == "-h"  ]]; then
     dna::show_help
     exit
   fi
@@ -175,7 +175,7 @@ function dna::run_slurm() {
 
   # ....Sanity check...............................................................................
 
-  test -n "${SJOB_ID}" || n2st::print_msg_error_and_exit "Missing sjob-id mandatory positional argument!"
+  test -n "${DNA_SJOB_NAME}" || n2st::print_msg_error_and_exit "Missing sjob-id mandatory positional argument!"
   test -n "${python_arg[0]}" || n2st::print_msg_error_and_exit "Missing <any-python-arg> mandatory positional argument!"
 
   # ....Set env variables (post cli)...............................................................
@@ -212,7 +212,7 @@ function dna::run_slurm() {
   test -n "${DN_HOST_GPU_ARCHITECTURE:?'Env variable need to be set and non-empty.'}"
 
   # ....Set environment variable for compose project...............................................
-  export SJOB_ID
+  export DNA_SJOB_NAME
 
   # (☕minor) ToDo: validate deleting env var IS_SLURM_RUN -> its not used
   export IS_SLURM_RUN=true
@@ -227,7 +227,7 @@ function dna::run_slurm() {
   declare -a docker_run=()
   docker_run+=("run" "--rm")
   docker_run+=("${docker_run_args[@]}")
-  docker_run+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${SJOB_ID}")
+  docker_run+=("--name=${DN_CONTAINER_NAME:?err}-slurm-${DNA_SJOB_NAME}")
   #docker_run+=("--service-ports") # Publish compose service ports (Mute if collision with host)
 
   if [[ ${dry_run_slurm_job} == true ]]; then

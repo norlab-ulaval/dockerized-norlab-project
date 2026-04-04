@@ -21,11 +21,11 @@ def hyperparam_opt_pipeline(cfg: omegaconf.DictConfig) -> Tuple[float, ...]:
     # .... Overriding cfg for multirun ............................................................
     omegaconf.OmegaConf.update(cfg, "simulation_mode.rendering", "headless_fast", merge=False)
 
-    sjob_id = os.getenv("SJOB_ID")
-    if sjob_id:
-        assert sjob_id == cfg.hparam_optimizer.sjob_id, (
+    dna_sjob_name = os.getenv("DNA_SJOB_NAME")
+    if dna_sjob_name:
+        assert dna_sjob_name == cfg.hparam_optimizer.dna_sjob_name, (
             f"Missconfiguration: slurm_job.*.bash "
-            f"SJOB_ID={sjob_id} != cfg.hparam_optimizer.sjob_id={cfg.hparam_optimizer.sjob_id}"
+            f"DNA_SJOB_NAME={dna_sjob_name} != cfg.hparam_optimizer.dna_sjob_name={cfg.hparam_optimizer.dna_sjob_name}"
         )
 
     # .... Execute multirun .......................................................................

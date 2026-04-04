@@ -66,8 +66,8 @@ teardown() {
   
   # Verify slurm job templates directory and files
   assert_dir_exist "${TEST_TEMP_DIR}/slurm_jobs/template"
-  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash"
-  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.SJOB_ID.hydra.bash"
+  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash"
+  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
   
   # Verify version update
   run grep "DNA_CONFIG_SCHEME_VERSION=4" "${TEST_TEMP_DIR}/.dockerized_norlab/.env.test-project"
@@ -108,8 +108,8 @@ function dna::job_teardown_callback() {
   #  `scancel` is issued.
   exit ${exit_code:-1}
 }
-# TODO: Set SJOB_ID
-SJOB_ID="default"
+# TODO: Set DNA_SJOB_NAME
+DNA_SJOB_NAME="default"
 # TODO: Set python module to launch
 hydra_flags+=("launcher/example_app_hparm_optim.py")
 EOF
@@ -121,12 +121,12 @@ EOF
   target_file="${TEST_TEMP_DIR}/slurm_jobs/slurm_job.dryrun.bash"
   assert_file_exist "${target_file}"
 
-  # SJOB_ID should be updated to 'dryrun'
-  run grep 'SJOB_ID="dryrun"' "${target_file}"
+  # DNA_SJOB_NAME should be updated to 'dryrun'
+  run grep 'DNA_SJOB_NAME="dryrun"' "${target_file}"
   assert_success
 
-  # Old SJOB_ID="default" should be gone
-  run grep 'SJOB_ID="default"' "${target_file}"
+  # Old DNA_SJOB_NAME="default" should be gone
+  run grep 'DNA_SJOB_NAME="default"' "${target_file}"
   assert_failure
 
   # TODO comments should be removed

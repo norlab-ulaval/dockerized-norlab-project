@@ -15,24 +15,24 @@ Both share the same build step and HPC profile configuration, but differ in how 
 
 ### Use Case 1 — SBATCH Template Workflow
 
-Submit jobs using the `slurm_job.<SJOB_ID>.apptainer.<profile>.bash` script (copied and renamed
-from `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash` added by `dna init`). You edit the
-copy directly (set `SJOB_ID`, `python_arguments`, callbacks) and submit it with `sbatch`. This is
+Submit jobs using the `slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` script (copied and renamed
+from `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash` added by `dna init`). You edit the
+copy directly (set `DNA_SJOB_NAME`, `python_arguments`, callbacks) and submit it with `sbatch`. This is
 the primary workflow for recurring, configurable jobs.
 
 ```
  [Local]  1. dna build slurm --apptainer <profile>
              → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
- [Local]  2. Copy slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash → slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
-             → set SJOB_ID, python_arguments, and optional callbacks
+ [Local]  2. Copy slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash → slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
+             → set DNA_SJOB_NAME, python_arguments, and optional callbacks
  [Local]  3. Transfer to HPC (use your preferred method, e.g., rsync, scp, sftp):
-               artifact/apptainer/, slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash,
+               artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash,
                .dockerized_norlab/,
                data/external_data/, data/repository_data/
                (data/shared_data/ is optional)
  [HPC]    4. bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
              → sets up project directory structure, converts tar archive to SIF image
- [HPC]    5. from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
+ [HPC]    5. from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
 ```
 
 ### Use Case 2 — Generated Script Workflow
@@ -109,9 +109,9 @@ from the super project's git remote URL. No manual editing is required for this 
 
 ## Use Case 1 — SBATCH Template Workflow
 
-Use the `slurm_job.<SJOB_ID>.apptainer.<profile>.bash` script (copied and renamed from
-`slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash` added by `dna init`) to submit recurring,
-configurable jobs via `sbatch`. You edit `SJOB_ID`, `python_arguments`, and the optional
+Use the `slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` script (copied and renamed from
+`slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash` added by `dna init`) to submit recurring,
+configurable jobs via `sbatch`. You edit `DNA_SJOB_NAME`, `python_arguments`, and the optional
 setup/teardown callbacks directly in the script.
 
 ### Step 1 — Build locally (cross-platform for HPC target)
@@ -129,10 +129,10 @@ This:
 
 Copy and rename the template, then edit it locally:
 ```bash
-cp slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
+cp slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
 ```
-Edit `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash`:
-- Set `SJOB_ID` (recommend using an issue tracker ID)
+Edit `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash`:
+- Set `DNA_SJOB_NAME` (recommend using an issue tracker ID)
 - Set `python_arguments` (your Python module and its arguments)
 - Optionally update `job_setup_callback()` / `job_teardown_callback()`
 
@@ -140,7 +140,7 @@ Edit `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash`:
 
 Transfer the following files/directories to your super-project root on the HPC server using your preferred method (e.g., rsync, scp, sftp):
 - `artifact/apptainer/` — tar archive + `dna_tar_to_apptainer_sif_converter.sh`
-- `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash` — the sbatch script
+- `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` — the sbatch script
 - `.dockerized_norlab/` — DNA configuration directory
 - `data/external_data/` — non-tracked external data (if applicable)
 - `data/repository_data/` — data required by src/test code logic (if applicable)
@@ -159,7 +159,7 @@ This script sets up the expected super-project directory structure and converts 
 
 ```bash
 # On the HPC server (from super-project root):
-sbatch slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash
+sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
 ```
 
 ---
@@ -229,11 +229,11 @@ the same HPC profile dotenv configuration:
 ```
 HPC Profile Dotenv (.env.<profile>)
         │
-        ├──── sourced by ──── Slurm Job Script (slurm_job.<SJOB_ID>.apptainer.<profile>.bash)
+        ├──── sourced by ──── Slurm Job Script (slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash)
         │                         │
-        │                         └── user edits TODO markers, submits via: sbatch slurm_job.<SJOB_ID>.apptainer.<profile>.bash
+        │                         └── user edits TODO markers, submits via: sbatch slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
         │
-        └──── sourced by ──── Generated Run Script (run_apptainer_<sjob_id>.sh)
+        └──── sourced by ──── Generated Run Script (run_apptainer_<dna_sjob_name>.sh)
                                   │
                                   └── auto-generated by: dna run slurm <sjob-id> --ga <profile> -- <args>
 ```
@@ -249,17 +249,17 @@ by both the slurm job templates and generated run scripts).
 
 ### 2. Slurm Job Scripts (user-editable sbatch scripts)
 
-**Template location (in super project):** `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.<profile>.bash`
-**Working copy location:** `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash` (user-renamed copy)
+**Template location (in super project):** `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash`
+**Working copy location:** `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` (user-renamed copy)
 
 Standalone SLURM sbatch scripts added to the user's project by `dna init` under `slurm_jobs/template/`.
 They include `#SBATCH` directives, `job_setup_callback()` / `job_teardown_callback()` hooks, and `TODO`
-markers for `SJOB_ID` and `python_arguments`. The user copies and renames the template, edits it, and
+markers for `DNA_SJOB_NAME` and `python_arguments`. The user copies and renames the template, edits it, and
 submits via `sbatch`. These are the **primary way to submit jobs** on the HPC server.
 
 ### 3. `dna run slurm --ga` Output (auto-generated run scripts)
 
-**Location:** Generated at `artifact/apptainer/run_apptainer_<sjob_id>.sh`
+**Location:** Generated at `artifact/apptainer/run_apptainer_<dna_sjob_name>.sh`
 
 Simpler, auto-generated scripts produced by `dna run slurm <sjob-id> --ga <profile> -- <args>`.
 They source the same HPC profile dotenv and use the same `apptainer exec` flags, but have
@@ -269,10 +269,10 @@ one-off runs or CI pipelines.
 | Aspect | Slurm Job Template | `--ga` Generated Script |
 |---|---|---|
 | **Purpose** | Full sbatch job with SLURM directives | Minimal run-only script |
-| **Customization** | User edits `SJOB_ID`, `python_arguments`, callbacks | Pre-baked from CLI args |
+| **Customization** | User edits `DNA_SJOB_NAME`, `python_arguments`, callbacks | Pre-baked from CLI args |
 | **SLURM directives** | Yes (`#SBATCH --gres`, `--time`, etc.) | No |
 | **Setup/teardown hooks** | Yes | No |
-| **How to run** | `sbatch slurm_job.<SJOB_ID>.apptainer.<profile>.bash` | `bash run_apptainer_<sjob_id>.sh` |
+| **How to run** | `sbatch slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` | `bash run_apptainer_<dna_sjob_name>.sh` |
 | **Created by** | `dna init` (copied to project) | `dna run slurm --ga` (generated on demand) |
 
 ## CLI Reference
@@ -337,14 +337,14 @@ Profile env files serve a dual purpose:
 ## Slurm Job Templates
 
 Templates are located in `slurm_jobs/template/` in the super project (added by `dna init`).
-Copy and rename to `slurm_jobs/slurm_job.<SJOB_ID>.apptainer.<profile>.bash` before editing.
+Copy and rename to `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` before editing.
 
 | Template file | Profile | Description |
 |---------------|---------|-------------|
-| `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.valeria.bash` | `valeria` | Valeria HPC standalone job |
-| `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash` | `compute_canada` | Compute Canada standalone job |
-| `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.mamba.bash` | `mamba` | Mamba HPC standalone job (Apptainer workflow) |
-| `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.hpc_hydra.bash` | any | Hydra-based standalone job |
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash` | `valeria` | Valeria HPC standalone job |
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash` | `compute_canada` | Compute Canada standalone job |
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash` | `mamba` | Mamba HPC standalone job (Apptainer workflow) |
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash` | any | Hydra-based standalone job |
 
 All templates are **standalone** — they do not require DNA on the HPC server.
 They source the same HPC profile dotenv file (`.env.<profile>`) as the `--ga` generated scripts
@@ -434,7 +434,7 @@ The test suite validates:
 - Full `tar → SIF` conversion via `dna_tar_to_apptainer_sif_converter.sh`
 - All DNA Apptainer exec flags (`--cleanenv`, `--no-eval`, `--no-home`, `--env-file`, etc.)
 - Generated run scripts from `dna run slurm --ga`
-- All `slurm_jobs/template/slurm_job.SJOB_ID.apptainer.*.bash` scripts (valeria, compute_canada, mamba)
+- All `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.*.bash` scripts (valeria, compute_canada, mamba)
 - Entrypoint runtime detection (`DNA_RUNTIME=apptainer`)
 
 See `tests/tests_containerized_apptainer/README.md` for details.

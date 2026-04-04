@@ -270,7 +270,7 @@ ${MSG_END_FORMAT}"
     local super_project_image_name
     super_project_image_name="$(echo "${super_project_name}" | tr '[:upper:]' '[:lower:]')"
     local slurm_template_file
-    for slurm_template_file in slurm_jobs/template/slurm_job.SJOB_ID.apptainer.*.bash; do
+    for slurm_template_file in slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.*.bash; do
       if [[ -f "${slurm_template_file}" ]]; then
         n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${super_project_image_name}" "${slurm_template_file}" || return 1
       fi

@@ -254,12 +254,12 @@ function dna::run_command() {
                 service="slurm"
                 service_set+=1
                 shift
-                # Positional argument: consume next arg as SJOB_ID only if it's not a flag or --
+                # Positional argument: consume next arg as DNA_SJOB_NAME only if it's not a flag or --
                 if [[ -n "$1" && "$1" != "--" && "$1" != -* ]]; then
-                    local SJOB_ID="$1"
+                    local DNA_SJOB_NAME="$1"
                     shift
                 else
-                    local SJOB_ID=""
+                    local DNA_SJOB_NAME=""
                 fi
                 ;;
             deploy)
@@ -339,10 +339,10 @@ function dna::run_command() {
         if [[ -n "${apptainer_profile}" ]]; then
             n2st::print_msg "Generating Apptainer slurm artifacts (profile: ${apptainer_profile})..."
             dna::load_super_project_configurations
-            dna::run_slurm_apptainer "$SJOB_ID" --apptainer "${apptainer_profile}" "${remaining_args[@]}"
+            dna::run_slurm_apptainer "$DNA_SJOB_NAME" --apptainer "${apptainer_profile}" "${remaining_args[@]}"
         else
             n2st::print_msg "Running slurm containers..."
-            dna::run_slurm "$SJOB_ID" "${remaining_args[@]}"
+            dna::run_slurm "$DNA_SJOB_NAME" "${remaining_args[@]}"
         fi
         fct_exit_code=$?
     elif [[ "${service}" == "develop" ]]; then

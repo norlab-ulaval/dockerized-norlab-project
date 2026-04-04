@@ -25,7 +25,7 @@ set -e
 echo "--- Test: Generated run script execution ---"
 
 PROFILE="valeria"
-SJOB_ID="TEST-001"
+DNA_SJOB_NAME="TEST-001"
 OUTPUT_DIR="${MOCK_PROJECT_ROOT}/artifact/apptainer"
 
 # ====Setup========================================================================================
@@ -54,13 +54,13 @@ echo ""
 echo ">>> Test A: Generate run script via dna::generate_apptainer_run_script"
 
 SCRIPT_OUTPUT=$(dna::generate_apptainer_run_script \
-  "${SJOB_ID}" \
+  "${DNA_SJOB_NAME}" \
   "${PROFILE}" \
   "${SIF_PATH}" \
   "${OUTPUT_DIR}" \
   "test_apptainer_env.py")
 
-RUN_SCRIPT="${OUTPUT_DIR}/run_apptainer_${SJOB_ID}.sh"
+RUN_SCRIPT="${OUTPUT_DIR}/run_apptainer_${DNA_SJOB_NAME}.sh"
 
 if [[ ! -f "${RUN_SCRIPT}" ]]; then
   echo "[FAIL] Run script not created: ${RUN_SCRIPT}" >&2

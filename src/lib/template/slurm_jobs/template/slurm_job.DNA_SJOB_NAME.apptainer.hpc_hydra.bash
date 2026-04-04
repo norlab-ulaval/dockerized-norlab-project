@@ -14,21 +14,21 @@
 #   Local (macOS):
 #     1. Build:    dna build slurm --apptainer <profile>
 #                  → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
-#     2. Edit:     Set SJOB_ID and hydra_flags in this script
+#     2. Edit:     Set DNA_SJOB_NAME and hydra_flags in this script
 #     3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                  artifact/apptainer/, slurm_jobs/slurm_job.<SJOB_ID>.apptainer.hpc_hydra.bash,
+#                  artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.hpc_hydra.bash,
 #                  .dockerized_norlab/,
 #                  data/external_data/, data/repository_data/
 #                  (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
 #   On HPC:
 #     4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
-#     5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<SJOB_ID>.apptainer.hpc_hydra.bash
+#     5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.hpc_hydra.bash
 #
 # Usage:
-#   $ sbatch slurm_job.<SJOB_ID>.apptainer.hpc_hydra.bash
+#   $ sbatch slurm_job.<DNA_SJOB_NAME>.apptainer.hpc_hydra.bash
 #
 # =================================================================================================
-declare -x SJOB_ID
+declare -x DNA_SJOB_NAME
 declare -a hydra_flags=()
 
 # ====Setup========================================================================================
@@ -46,10 +46,10 @@ function job_teardown_callback() {
 }
 
 # ....Set job name.................................................................................
-# TODO: Set SJOB_ID
-SJOB_ID="default"
+# TODO: Set DNA_SJOB_NAME
+DNA_SJOB_NAME="default"
 # Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an SJOB_ID.
+#  and use its issue ID as an DNA_SJOB_NAME.
 
 # ....Hydra app module.............................................................................
 # TODO: Set python module to launch
@@ -72,7 +72,7 @@ SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PR
 PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.${HPC_PROFILE}"
 
 # ====DNA internal=================================================================================
-export SJOB_ID
+export DNA_SJOB_NAME
 
 # Source HPC-specific env (sets DN_PROJECT_PATH, DN_PROJECT_USER, etc.)
 # shellcheck source=/dev/null
@@ -103,7 +103,7 @@ trap job_teardown_callback EXIT
 echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
 # ====Launch Apptainer slurm job===================================================================
-echo "[info] Launching Apptainer Hydra slurm job: SJOB_ID=${SJOB_ID}"
+echo "[info] Launching Apptainer Hydra slurm job: DNA_SJOB_NAME=${DNA_SJOB_NAME}"
 echo "[info] SIF: ${SIF_PATH}"
 echo "[info] Hydra flags: ${hydra_flags[*]}"
 

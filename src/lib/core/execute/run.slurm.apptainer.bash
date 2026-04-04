@@ -76,10 +76,10 @@ function dna::run_slurm_apptainer() {
   tmp_cwd=$(pwd)
 
   # Positional argument
-  local SJOB_ID="$1"
+  local DNA_SJOB_NAME="$1"
   shift
 
-  if [[ "${SJOB_ID}" == "--help" ]] || [[ "${SJOB_ID}" == "-h" ]]; then
+  if [[ "${DNA_SJOB_NAME}" == "--help" ]] || [[ "${DNA_SJOB_NAME}" == "-h" ]]; then
     dna::show_help_apptainer
     return 0
   fi
@@ -136,7 +136,7 @@ function dna::run_slurm_apptainer() {
   done
 
   # ....Sanity checks..............................................................................
-  test -n "${SJOB_ID}" || { n2st::print_msg_error "Missing sjob-id mandatory positional argument!"; return 1; }
+  test -n "${DNA_SJOB_NAME}" || { n2st::print_msg_error "Missing sjob-id mandatory positional argument!"; return 1; }
   test -n "${apptainer_profile}" || { n2st::print_msg_error "Missing --apptainer <profile> flag!"; return 1; }
   test -n "${python_arg[0]}" || { n2st::print_msg_error "Missing <python-args> mandatory positional argument!"; return 1; }
 
@@ -165,7 +165,7 @@ function dna::run_slurm_apptainer() {
 
   # ====Begin======================================================================================
   n2st::print_msg "Generating Apptainer run artifacts for profile: ${apptainer_profile}"
-  n2st::print_msg "  SJOB_ID: ${SJOB_ID}"
+  n2st::print_msg "  DNA_SJOB_NAME: ${DNA_SJOB_NAME}"
   n2st::print_msg "  SIF path (on HPC): ${sif_path}"
   n2st::print_msg "  Python args: ${python_arg[*]}"
 
@@ -181,7 +181,7 @@ function dna::run_slurm_apptainer() {
     # ....Script generation mode: write standalone run script....................................
     local generated_script
     generated_script=$(dna::generate_apptainer_run_script \
-      "${SJOB_ID}" \
+      "${DNA_SJOB_NAME}" \
       "${apptainer_profile}" \
       "${sif_path}" \
       "${output_dir}" \

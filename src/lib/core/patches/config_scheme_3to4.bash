@@ -31,13 +31,13 @@ unset target_file
 dna::patch_add_directory_if_missing "slurm_jobs/template" "slurm_jobs/template" "Slurm job templates directory"
 
 slurm_job_templates=(
-  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash"
-  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.hpc_hydra.bash"
-  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.mamba.bash"
-  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.valeria.bash"
-  "slurm_jobs/template/slurm_job.SJOB_ID.hydra.bash"
-  "slurm_jobs/template/slurm_job.SJOB_ID.hydra_hparam_optim.bash"
-  "slurm_jobs/template/slurm_job.SJOB_ID.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
 )
 
 for template in "${slurm_job_templates[@]}"; do
@@ -52,17 +52,17 @@ done
 unset slurm_job_templates
 unset target_file
 
-# Update slurm_job.dryrun.bash: fix SJOB_ID and remove TODO comments (only if file exists)
+# Update slurm_job.dryrun.bash: fix DNA_SJOB_NAME and remove TODO comments (only if file exists)
 if [[ -f "${SUPER_PROJECT_ROOT}/slurm_jobs/slurm_job.dryrun.bash" ]]; then
   dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
-    'SJOB_ID="default"' \
-    'SJOB_ID="dryrun"' \
-    "Fix SJOB_ID from 'default' to 'dryrun' in slurm_job.dryrun.bash"
+    'DNA_SJOB_NAME="default"' \
+    'DNA_SJOB_NAME="dryrun"' \
+    "Fix DNA_SJOB_NAME from 'default' to 'dryrun' in slurm_job.dryrun.bash"
 
   dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
-    '# TODO: Set SJOB_ID' \
+    '# TODO: Set DNA_SJOB_NAME' \
     '' \
-    "Remove 'TODO: Set SJOB_ID' comment from slurm_job.dryrun.bash"
+    "Remove 'TODO: Set DNA_SJOB_NAME' comment from slurm_job.dryrun.bash"
 
   dna::patch_modify_content "slurm_jobs/slurm_job.dryrun.bash" \
     "  # TODO: Add any instruction that should be executed after 'dna run slurm' exit." \
