@@ -12,6 +12,20 @@
 # Add new configuration directories for v4
 dna::patch_add_directory_if_missing ".dockerized_norlab/configuration/hpc_server_profile" ".dockerized_norlab/configuration/hpc_server_profile" "HPC server profile configurations"
 dna::patch_add_directory_if_missing ".dockerized_norlab/configuration/overrides" ".dockerized_norlab/configuration/overrides" "Docker Compose override configurations"
+# Replace placeholder in HPC server profile files
+hpc_profile_files=(
+  ".dockerized_norlab/configuration/hpc_server_profile/.env.valeria"
+  ".dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada"
+  ".dockerized_norlab/configuration/hpc_server_profile/.env.mamba"
+)
+for hpc_profile_file in "${hpc_profile_files[@]}"; do
+  target_file="${SUPER_PROJECT_ROOT}/${hpc_profile_file}"
+  if [[ -f "${target_file}" ]]; then
+    n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${SUPER_PROJECT_REPO_NAME}" "${target_file}"
+  fi
+done
+unset hpc_profile_files
+unset target_file
 
 # Add new slurm job templates
 slurm_job_templates=(

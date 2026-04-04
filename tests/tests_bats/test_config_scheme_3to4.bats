@@ -72,3 +72,47 @@ teardown() {
   run grep "DNA_CONFIG_SCHEME_VERSION=4" "${TEST_TEMP_DIR}/.dockerized_norlab/.env.test-project"
   assert_success
 }
+
+@test "config_scheme_3to4.bash › should replace PLACEHOLDER_DN_PROJECT_GIT_NAME in HPC server profile files" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
+  export DNA_CONFIG_SCHEME_VERSION=3
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  # Verify placeholder was replaced in all HPC server profile files
+  for hpc_profile_file in ".env.valeria" ".env.compute_canada" ".env.mamba"; do
+    target_file="${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/${hpc_profile_file}"
+    assert_file_exist "${target_file}"
+    run grep "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${target_file}"
+    assert_failure  # placeholder should NOT be present
+    run grep "DN_PROJECT_PATH=/ros2_ws/src/test-project" "${target_file}"
+    assert_success  # actual project name should be present
+  done
+}
+
+@test "config_scheme_3to4.bash › should replace PLACEHOLDER_DN_PROJECT_GIT_NAME in pre-existing HPC server profile files" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
+  export DNA_CONFIG_SCHEME_VERSION=3
+
+  # Pre-create HPC profile files with placeholder (simulating files already present before patch)
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile"
+  for hpc_profile_file in ".env.valeria" ".env.compute_canada" ".env.mamba"; do
+    echo "DN_PROJECT_PATH=/ros2_ws/src/PLACEHOLDER_DN_PROJECT_GIT_NAME" \
+      > "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/${hpc_profile_file}"
+  done
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  # Verify placeholder was replaced in all pre-existing HPC server profile files
+  for hpc_profile_file in ".env.valeria" ".env.compute_canada" ".env.mamba"; do
+    target_file="${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/${hpc_profile_file}"
+    run grep "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${target_file}"
+    assert_failure  # placeholder should NOT be present
+    run grep "DN_PROJECT_PATH=/ros2_ws/src/test-project" "${target_file}"
+    assert_success  # actual project name should be present
+  done
+}
