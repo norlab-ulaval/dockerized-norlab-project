@@ -216,18 +216,18 @@ dna init
 Which add a few directories to your project repository
 ```markup
 your-project-repository/
-  ├── .dockerized_norlab/             <- DNA configuration
-  ├── artifact/                       ← Runtime produced data (mounted rw, vcs ignored)
-  ├── data/
-  │   ├── external_data/              ← Non-tracked data not required by src/tests code logic (mounted rw, vcs ignored)
-  │   ├── repository_data/            ← Data that are required by the src/test code logic (mounted rw in develop, copied otherwise)
-  │   └── shared_data/                ← Placeholder directory replaced by an optional local data volume (mounted ro, vcs ignored)
-  ├── src/                            <- Your repository source code (mounted/copied)
-  ├── tests/                          <- Your repository test code (mounted/copied)
-  ...
-  ├── .dockerignore                   <- Specify files/dir that won't be copied in container on build
-  ├── .gitignore                      <- Specify files/dir to keep out of VCS
-  └── README.md                       <- Created if it did not already exist
+   ├── .dockerized_norlab/             ← DNA configuration
+   ├── artifact/                       ← Runtime produced data (mounted rw, vcs ignored)
+   ├── data/
+   │   ├── external_data/              ← Non-tracked data not required by src/tests code logic (mounted rw, vcs ignored)
+   │   ├── repository_data/            ← Data that are required by the src/test code logic (mounted rw in develop, copied otherwise)
+   │   └── shared_data/                ← Placeholder directory replaced by an optional local data volume (mounted ro, vcs ignored)
+   ├── src/                            ← Your repository source code (mounted/copied)
+   ├── tests/                          ← Your repository test code (mounted/copied)
+   ...
+   ├── .dockerignore                   ← Specify files/dir that won't be copied in container on build
+   ├── .gitignore                      ← Specify files/dir to keep out of VCS
+   └── README.md                       ← Created if it did not already exist
 ```
 Note: 
 - Existing file and directories with the same name will be safeguarded with the suffix `.old`, not overriden.

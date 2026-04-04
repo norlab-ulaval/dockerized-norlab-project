@@ -264,12 +264,13 @@ ${MSG_END_FORMAT}"
     dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher/" src/launcher/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
 
-    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/" slurm_jobs/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/slurm_job.dryrun.bash" slurm_jobs/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/template/" slurm_jobs/template/ "${super_project_root}" || return 1
     # Replace placeholders in Apptainer slurm job templates
     local super_project_image_name
     super_project_image_name="$(echo "${super_project_name}" | tr '[:upper:]' '[:lower:]')"
     local slurm_template_file
-    for slurm_template_file in slurm_jobs/slurm_job.apptainer.*.bash; do
+    for slurm_template_file in slurm_jobs/template/slurm_job.SJOB_ID.apptainer.*.bash; do
       if [[ -f "${slurm_template_file}" ]]; then
         n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${super_project_image_name}" "${slurm_template_file}" || return 1
       fi

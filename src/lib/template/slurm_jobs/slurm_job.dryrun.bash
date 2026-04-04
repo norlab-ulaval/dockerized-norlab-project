@@ -28,7 +28,7 @@ function dna::job_setup_callback() {
 # ....Custom teardown (optional)...................................................................
 function dna::job_teardown_callback() {
   local exit_code=$?
-  # TODO: Add any instruction that should be executed after 'dna run slurm' exit.
+  # Add any instruction that should be executed after 'dna run slurm' exit.
 
   # Note: Command 'dna run slurm' already handle stoping the container in case the slurm command
   #  `scancel` is issued.
@@ -36,13 +36,11 @@ function dna::job_teardown_callback() {
 }
 
 # ....Set job name.................................................................................
-# TODO: Set SJOB_ID
-SJOB_ID="default"
+SJOB_ID="dryrun"
 # Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
 #  and use its issue ID as an SJOB_ID.
 
 # ....Hydra app module.............................................................................
-# TODO: Set python module to launch
 hydra_flags+=("launcher/example_app_hparm_optim.py")
 # Note: assume container workdir is `<super-project>/src/`
 

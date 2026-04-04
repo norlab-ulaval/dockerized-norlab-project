@@ -3,31 +3,28 @@
 #SBATCH --cpus-per-task=12
 #SBATCH --time=7-00:00
 #SBATCH --output=out/%x-%j.out
+#SBATCH --account=PLACEHOLDER_ACCOUNT
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+# Note: Replace PLACEHOLDER_ACCOUNT with your Compute Canada allocation account (e.g., def-username)
 # =================================================================================================
-# Execute Apptainer slurm job on Mamba HPC server.
+# Execute Apptainer slurm job on Compute Canada (Digital Research Alliance of Canada) HPC server.
 #
-# Standalone script — does NOT require DNA to be installed on the Mamba server.
+# Standalone script — does NOT require DNA to be installed on Compute Canada servers.
 # The apptainer exec command is executed directly using the pre-built SIF file.
 #
-# About:
-#   Mamba supports BOTH Docker and Apptainer workflows:
-#     - Docker workflow:     dna build slurm → dna run slurm <sjob-id>
-#       DNA runs directly on Mamba. Docker manages the container lifecycle.
-#     - Apptainer workflow:  (this template) uses a pre-built SIF file.
-#       DNA does NOT need to be installed on Mamba for this path.
-#
-# Workflow (Apptainer):
+# Workflow:
 #   Local (macOS):
-#     1. Build:    dna build slurm --apptainer mamba
-#     2. Generate: dna run slurm <sjob-id> --generate-apptainer mamba <python-args>
-#     3. Transfer: rsync -av artifact/apptainer/ user@mamba:/path/to/project/artifact/apptainer/
-#   On Mamba:
+#     1. Build:    dna build slurm --apptainer compute_canada
+#                  → builds Docker image, saves tar archive, generates build_sif.sh
+#     2. Edit:     Set SJOB_ID and python_arguments in this script
+#     3. Transfer: artifact/apptainer/, slurm_jobs/slurm_job_<SJOB_ID>.apptainer.compute_canada.bash, .dockerized_norlab/
+#                  (use your preferred method, e.g., rsync, scp, sftp)
+#   On Compute Canada:
 #     4. Build SIF: bash artifact/apptainer/build_sif.sh
-#     5. Submit:    sbatch slurm_job.apptainer.mamba.template.bash
+#     5. Submit:    sbatch slurm_job_<SJOB_ID>.apptainer.compute_canada.bash
 #
 # Usage:
-#   $ sbatch slurm_job.apptainer.mamba.template.bash
+#   $ sbatch slurm_job_<SJOB_ID>.apptainer.compute_canada.bash
 #
 # =================================================================================================
 declare -x SJOB_ID
@@ -56,12 +53,12 @@ SJOB_ID="default"
 # ....Python module................................................................................
 # TODO: Set python module to launch
 python_arguments+=("launcher/example.py")
-# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.mamba: DN_PROJECT_PATH)
+# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.compute_canada: DN_PROJECT_PATH)
 
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
-PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba"
+PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada"
 
 # ====DNA internal=================================================================================
 export SJOB_ID
@@ -72,7 +69,8 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Mamba
+# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Compute Canada
+# (SLURM_TMPDIR is high-speed local storage allocated per job)
 APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
 export APPTAINER_TMPDIR
 
@@ -94,22 +92,18 @@ trap job_teardown_callback EXIT
 # ====Apptainer compatibility======================================================================
 echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
-# ====GPU configuration============================================================================
-NV_FLAG=""
-if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
-    NV_FLAG="--nv"
-fi
-
 # ====Launch Apptainer slurm job===================================================================
 echo "[info] Launching Apptainer slurm job: SJOB_ID=${SJOB_ID}"
 echo "[info] SIF: ${SIF_PATH}"
 echo "[info] Python args: ${python_arguments[*]}"
 
+# Note: --nv enables NVIDIA GPU access inside the container (equivalent to Docker's runtime: nvidia).
+#       Remove it for CPU-only jobs.
 apptainer exec \
     --no-eval \
     --cleanenv \
     --no-home \
-    ${NV_FLAG} \
+    --nv \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw" \

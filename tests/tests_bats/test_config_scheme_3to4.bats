@@ -64,9 +64,10 @@ teardown() {
   assert_file_exist "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada"
   assert_file_exist "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/overrides/docker-compose.global.override.yaml"
   
-  # Verify slurm job templates
-  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/slurm_job.apptainer.compute_canada.template.bash"
-  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/slurm_job.hydra.template.bash"
+  # Verify slurm job templates directory and files
+  assert_dir_exist "${TEST_TEMP_DIR}/slurm_jobs/template"
+  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash"
+  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.SJOB_ID.hydra.bash"
   
   # Verify version update
   run grep "DNA_CONFIG_SCHEME_VERSION=4" "${TEST_TEMP_DIR}/.dockerized_norlab/.env.test-project"

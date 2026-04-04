@@ -3,30 +3,30 @@
 #SBATCH --cpus-per-task=12
 #SBATCH --time=7-00:00
 #SBATCH --output=out/%x-%j.out
-#SBATCH --account=PLACEHOLDER_ACCOUNT
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
-# Note: Replace PLACEHOLDER_ACCOUNT with your Compute Canada allocation account (e.g., def-username)
 # =================================================================================================
-# Execute Apptainer slurm job on Compute Canada (Digital Research Alliance of Canada) HPC server.
+# Execute Hydra-based Apptainer slurm job on an HPC server (Valeria or Compute Canada).
 #
-# Standalone script — does NOT require DNA to be installed on Compute Canada servers.
+# Standalone script — does NOT require DNA to be installed on the HPC server.
 # The apptainer exec command is executed directly using the pre-built SIF file.
 #
 # Workflow:
 #   Local (macOS):
-#     1. Build:    dna build slurm --apptainer compute_canada
-#     2. Generate: dna run slurm <sjob-id> --generate-apptainer compute_canada <python-args>
-#     3. Transfer: rsync -av artifact/apptainer/ user@cedar.computecanada.ca:/scratch/<user>/<project>/artifact/apptainer/
-#   On Compute Canada:
+#     1. Build:    dna build slurm --apptainer <profile>
+#                  → builds Docker image, saves tar archive, generates build_sif.sh
+#     2. Edit:     Set SJOB_ID and hydra_flags in this script
+#     3. Transfer: artifact/apptainer/, slurm_jobs/slurm_job_<SJOB_ID>.apptainer.hpc_hydra.bash, .dockerized_norlab/
+#                  (use your preferred method, e.g., rsync, scp, sftp)
+#   On HPC:
 #     4. Build SIF: bash artifact/apptainer/build_sif.sh
-#     5. Submit:    sbatch slurm_job.apptainer.compute_canada.template.bash
+#     5. Submit:    sbatch slurm_job_<SJOB_ID>.apptainer.hpc_hydra.bash
 #
 # Usage:
-#   $ sbatch slurm_job.apptainer.compute_canada.template.bash
+#   $ sbatch slurm_job_<SJOB_ID>.apptainer.hpc_hydra.bash
 #
 # =================================================================================================
 declare -x SJOB_ID
-declare -a python_arguments=()
+declare -a hydra_flags=()
 
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
@@ -48,15 +48,25 @@ SJOB_ID="default"
 # Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
 #  and use its issue ID as an SJOB_ID.
 
-# ....Python module................................................................................
+# ....Hydra app module.............................................................................
 # TODO: Set python module to launch
-python_arguments+=("launcher/example.py")
-# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.compute_canada: DN_PROJECT_PATH)
+hydra_flags+=("launcher/example_app.py")
+# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in profile env: DN_PROJECT_PATH)
+
+# ....Optional hydra flags.........................................................................
+# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
+# --config-name,-cn : Overrides the config_name specified in hydra.main()
+# --config-dir,-cd : Adds an additional config dir to the config search path
+#hydra_flags+=("--config-path=")
+#hydra_flags+=("--config-dir=")
+#hydra_flags+=("--config-name=")
 
 # ....HPC server configuration.....................................................................
+# TODO: Set profile to 'valeria', 'compute_canada', or 'mamba'
+HPC_PROFILE="${HPC_PROFILE:-valeria}"
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
-PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada"
+PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.${HPC_PROFILE}"
 
 # ====DNA internal=================================================================================
 export SJOB_ID
@@ -67,8 +77,7 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Compute Canada
-# (SLURM_TMPDIR is high-speed local storage allocated per job)
+# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on HPC
 APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
 export APPTAINER_TMPDIR
 
@@ -90,22 +99,18 @@ trap job_teardown_callback EXIT
 # ====Apptainer compatibility======================================================================
 echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
-# ====GPU configuration============================================================================
-NV_FLAG=""
-if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
-    NV_FLAG="--nv"
-fi
-
 # ====Launch Apptainer slurm job===================================================================
-echo "[info] Launching Apptainer slurm job: SJOB_ID=${SJOB_ID}"
+echo "[info] Launching Apptainer Hydra slurm job: SJOB_ID=${SJOB_ID}"
 echo "[info] SIF: ${SIF_PATH}"
-echo "[info] Python args: ${python_arguments[*]}"
+echo "[info] Hydra flags: ${hydra_flags[*]}"
 
+# Note: --nv enables NVIDIA GPU access inside the container (equivalent to Docker's runtime: nvidia).
+#       Remove it for CPU-only jobs.
 apptainer exec \
     --no-eval \
     --cleanenv \
     --no-home \
-    ${NV_FLAG} \
+    --nv \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw" \
@@ -122,4 +127,4 @@ apptainer exec \
     --writable-tmpfs \
     "${SIF_PATH}" \
     /dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash \
-    "${python_arguments[@]}"
+    "${hydra_flags[@]}"

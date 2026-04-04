@@ -27,14 +27,17 @@ done
 unset hpc_profile_files
 unset target_file
 
-# Add new slurm job templates
+# Add new slurm job template directory and templates
+dna::patch_add_directory_if_missing "slurm_jobs/template" "slurm_jobs/template" "Slurm job templates directory"
+
 slurm_job_templates=(
-  "slurm_jobs/slurm_job.apptainer.compute_canada.template.bash"
-  "slurm_jobs/slurm_job.apptainer.hpc_hydra.template.bash"
-  "slurm_jobs/slurm_job.apptainer.mamba.template.bash"
-  "slurm_jobs/slurm_job.apptainer.valeria.template.bash"
-  "slurm_jobs/slurm_job.hydra.template.bash"
-  "slurm_jobs/slurm_job.hydra_hparam_optim.template.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.hpc_hydra.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.mamba.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.apptainer.valeria.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.hydra.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.hydra_hparam_optim.bash"
+  "slurm_jobs/template/slurm_job.SJOB_ID.bash"
 )
 
 for template in "${slurm_job_templates[@]}"; do

@@ -483,22 +483,22 @@ teardown_file() {
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "dockerized-norlab-project-mock-EMPTY"
   assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "dockerized-norlab-project-mock-EMPTY"
-  # Check HPC profile dotenv files contain APPTAINER_ENABLE_GPU and APPTAINER_TARGET_PLATFORM
-  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_ENABLE_GPU=true"
+  # Check HPC profile dotenv files contain APPTAINER_TARGET_PLATFORM (APPTAINER_ENABLE_GPU removed — GPU flag now hardcoded in sbatch scripts)
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_TARGET_PLATFORM=linux/amd64"
-  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_ENABLE_GPU=true"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_ENABLE_GPU"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_TARGET_PLATFORM=linux/amd64"
-  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_ENABLE_GPU=true"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_ENABLE_GPU"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_TARGET_PLATFORM=linux/amd64"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_ENABLE_GPU"
   # Check Apptainer slurm job templates for DN_PROJECT_IMAGE_NAME placeholder replacement
-  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.valeria.template.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
-  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.valeria.template.bash" "dockerized-norlab-project-mock-empty"
-  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.compute_canada.template.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
-  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.compute_canada.template.bash" "dockerized-norlab-project-mock-empty"
-  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.mamba.template.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
-  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.mamba.template.bash" "dockerized-norlab-project-mock-empty"
-  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.hpc_hydra.template.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
-  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.apptainer.hpc_hydra.template.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.valeria.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.valeria.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.compute_canada.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.mamba.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.mamba.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.hpc_hydra.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.apptainer.hpc_hydra.bash" "dockerized-norlab-project-mock-empty"
 }
 
 @test "dna::init_command tests for file/directory creation › expect required files/directories created" {
@@ -521,6 +521,7 @@ teardown_file() {
   assert_dir_exist "${TEST_EMPTY_REPO}/src/dna_example"
   assert_dir_exist "${TEST_EMPTY_REPO}/tests"
   assert_dir_exist "${TEST_EMPTY_REPO}/slurm_jobs"
+  assert_dir_exist "${TEST_EMPTY_REPO}/slurm_jobs/template"
 
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/configs/example_app_hparm_optim.yaml"
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/configs/hparam_optimization_base.yaml"
@@ -530,8 +531,8 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/src/dna_example/try_pytorch.py"
   assert_file_exist "${TEST_EMPTY_REPO}/src/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.dryrun.bash"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.hydra.template.bash"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.template.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.hydra.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.SJOB_ID.bash"
 
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.no_xdist.ini"

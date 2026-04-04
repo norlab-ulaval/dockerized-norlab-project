@@ -211,11 +211,10 @@ function dna::get_apptainer_slurm_exec_flags() {
   # Prevent $HOME auto-mount (avoids pip --user package conflicts from host)
   flags+=("    --no-home \\")
 
-  # GPU support — conditional on profile configuration
+  # GPU support — enables NVIDIA GPU access inside the container
   # Equivalent to runtime: nvidia in docker-compose (Docker path)
-  if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
-    flags+=("    --nv \\")
-  fi
+  # Remove this flag for CPU-only jobs
+  flags+=("    --nv \\")
 
   # Bind mounts (from docker-compose.run.slurm.yaml volumes, minus X11/display)
   flags+=("    --bind /etc/localtime:/etc/localtime:ro \\")

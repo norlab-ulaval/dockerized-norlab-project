@@ -5,26 +5,35 @@
 #SBATCH --output=out/%x-%j.out
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
 # =================================================================================================
-# Execute Hydra-based Apptainer slurm job on an HPC server (Valeria or Compute Canada).
+# Execute Apptainer slurm job on Mamba HPC server.
 #
-# Standalone script — does NOT require DNA to be installed on the HPC server.
+# Standalone script — does NOT require DNA to be installed on the Mamba server.
 # The apptainer exec command is executed directly using the pre-built SIF file.
 #
-# Workflow:
+# About:
+#   Mamba supports BOTH Docker and Apptainer workflows:
+#     - Docker workflow:     dna build slurm → dna run slurm <sjob-id>
+#       DNA runs directly on Mamba. Docker manages the container lifecycle.
+#     - Apptainer workflow:  (this template) uses a pre-built SIF file.
+#       DNA does NOT need to be installed on Mamba for this path.
+#
+# Workflow (Apptainer):
 #   Local (macOS):
-#     1. Build:    dna build slurm --apptainer <profile>
-#     2. Generate: dna run slurm <sjob-id> --generate-apptainer <profile> <python-args>
-#     3. Transfer: rsync -av artifact/apptainer/ user@hpc:/path/to/project/artifact/apptainer/
-#   On HPC:
+#     1. Build:    dna build slurm --apptainer mamba
+#                  → builds Docker image, saves tar archive, generates build_sif.sh
+#     2. Edit:     Set SJOB_ID and python_arguments in this script
+#     3. Transfer: artifact/apptainer/, slurm_jobs/slurm_job_<SJOB_ID>.apptainer.mamba.bash, .dockerized_norlab/
+#                  (use your preferred method, e.g., rsync, scp, sftp)
+#   On Mamba:
 #     4. Build SIF: bash artifact/apptainer/build_sif.sh
-#     5. Submit:    sbatch slurm_job.apptainer.hpc_hydra.template.bash
+#     5. Submit:    sbatch slurm_job_<SJOB_ID>.apptainer.mamba.bash
 #
 # Usage:
-#   $ sbatch slurm_job.apptainer.hpc_hydra.template.bash
+#   $ sbatch slurm_job_<SJOB_ID>.apptainer.mamba.bash
 #
 # =================================================================================================
 declare -x SJOB_ID
-declare -a hydra_flags=()
+declare -a python_arguments=()
 
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
@@ -46,25 +55,15 @@ SJOB_ID="default"
 # Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
 #  and use its issue ID as an SJOB_ID.
 
-# ....Hydra app module.............................................................................
+# ....Python module................................................................................
 # TODO: Set python module to launch
-hydra_flags+=("launcher/example_app.py")
-# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in profile env: DN_PROJECT_PATH)
-
-# ....Optional hydra flags.........................................................................
-# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
-# --config-name,-cn : Overrides the config_name specified in hydra.main()
-# --config-dir,-cd : Adds an additional config dir to the config search path
-#hydra_flags+=("--config-path=")
-#hydra_flags+=("--config-dir=")
-#hydra_flags+=("--config-name=")
+python_arguments+=("launcher/example.py")
+# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.mamba: DN_PROJECT_PATH)
 
 # ....HPC server configuration.....................................................................
-# TODO: Set profile to 'valeria', 'compute_canada', or 'mamba'
-HPC_PROFILE="${HPC_PROFILE:-valeria}"
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
-PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.${HPC_PROFILE}"
+PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba"
 
 # ====DNA internal=================================================================================
 export SJOB_ID
@@ -75,7 +74,7 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on HPC
+# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Mamba
 APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
 export APPTAINER_TMPDIR
 
@@ -97,22 +96,18 @@ trap job_teardown_callback EXIT
 # ====Apptainer compatibility======================================================================
 echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
-# ====GPU configuration============================================================================
-NV_FLAG=""
-if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
-    NV_FLAG="--nv"
-fi
-
 # ====Launch Apptainer slurm job===================================================================
-echo "[info] Launching Apptainer Hydra slurm job: SJOB_ID=${SJOB_ID}"
+echo "[info] Launching Apptainer slurm job: SJOB_ID=${SJOB_ID}"
 echo "[info] SIF: ${SIF_PATH}"
-echo "[info] Hydra flags: ${hydra_flags[*]}"
+echo "[info] Python args: ${python_arguments[*]}"
 
+# Note: --nv enables NVIDIA GPU access inside the container (equivalent to Docker's runtime: nvidia).
+#       Remove it for CPU-only jobs.
 apptainer exec \
     --no-eval \
     --cleanenv \
     --no-home \
-    ${NV_FLAG} \
+    --nv \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw" \
@@ -129,4 +124,4 @@ apptainer exec \
     --writable-tmpfs \
     "${SIF_PATH}" \
     /dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash \
-    "${hydra_flags[@]}"
+    "${python_arguments[@]}"

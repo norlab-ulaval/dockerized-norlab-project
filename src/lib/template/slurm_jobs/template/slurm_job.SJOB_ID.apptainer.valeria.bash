@@ -13,14 +13,16 @@
 # Workflow:
 #   Local (macOS):
 #     1. Build:    dna build slurm --apptainer valeria
-#     2. Generate: dna run slurm <sjob-id> --generate-apptainer valeria <python-args>
-#     3. Transfer: rsync -av artifact/apptainer/ user@valeria:/path/to/project/artifact/apptainer/
+#                  → builds Docker image, saves tar archive, generates build_sif.sh
+#     2. Edit:     Set SJOB_ID and python_arguments in this script
+#     3. Transfer: artifact/apptainer/, slurm_jobs/slurm_job_<SJOB_ID>.apptainer.valeria.bash, .dockerized_norlab/
+#                  (use your preferred method, e.g., rsync, scp, sftp)
 #   On Valeria:
 #     4. Build SIF: bash artifact/apptainer/build_sif.sh
-#     5. Submit:    sbatch slurm_job.apptainer.valeria.template.bash
+#     5. Submit:    sbatch slurm_job_<SJOB_ID>.apptainer.valeria.bash
 #
 # Usage:
-#   $ sbatch slurm_job.apptainer.valeria.template.bash
+#   $ sbatch slurm_job_<SJOB_ID>.apptainer.valeria.bash
 #
 # =================================================================================================
 declare -x SJOB_ID
@@ -87,22 +89,18 @@ trap job_teardown_callback EXIT
 # ====Apptainer compatibility======================================================================
 echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
-# ====GPU configuration============================================================================
-NV_FLAG=""
-if [[ "${APPTAINER_ENABLE_GPU:-true}" == "true" ]]; then
-    NV_FLAG="--nv"
-fi
-
 # ====Launch Apptainer slurm job===================================================================
 echo "[info] Launching Apptainer slurm job: SJOB_ID=${SJOB_ID}"
 echo "[info] SIF: ${SIF_PATH}"
 echo "[info] Python args: ${python_arguments[*]}"
 
+# Note: --nv enables NVIDIA GPU access inside the container (equivalent to Docker's runtime: nvidia).
+#       Remove it for CPU-only jobs.
 apptainer exec \
     --no-eval \
     --cleanenv \
     --no-home \
-    ${NV_FLAG} \
+    --nv \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/dn_container_env_variable/:/dn_container_env_variable/:rw" \
