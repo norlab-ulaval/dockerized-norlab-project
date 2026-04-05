@@ -254,7 +254,7 @@ EOF
 # Arguments:
 #   none
 # Outputs:
-#   An error message to to stderr in case of failure
+#   An error message to stderr in case of failure
 # Globals:
 #   write SUPER_PROJECT_ROOT
 #   read DNA_DEBUG (optional)

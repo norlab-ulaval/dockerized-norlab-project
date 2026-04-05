@@ -17,8 +17,16 @@
 #
 # =================================================================================================
 set -e
-
 # ====Setup========================================================================================
+# ....Detect runtime environment (Docker vs Apptainer).............................................
+# Apptainer sets APPTAINER_CONTAINER (>= 1.0) or SINGULARITY_CONTAINER (legacy)
+if [[ -n "${APPTAINER_CONTAINER}" ]] || [[ -n "${SINGULARITY_CONTAINER}" ]]; then
+  DNA_RUNTIME="apptainer"
+else
+  DNA_RUNTIME="docker"
+fi
+export DNA_RUNTIME
+
 if [[ ! -d "${DN_PROJECT_PATH:?'Required DN environment variable is set and not empty'}/src" ]]; then
   echo -e "\n\033[1;31m[DN error]\033[0m '${DN_PROJECT_PATH}/src' directory unreachable!\n Current working directory is '$(pwd)'" 1>&2
   exit 1
@@ -27,8 +35,10 @@ else
 fi
 
 # Remove byte-compiled files that can mess with tools on context/environment change (Remember the
-# non-interactive-ros2 user path nightmare)
-pyclean "${DN_PROJECT_PATH}"
+# non-interactive-ros2 user path nightmare).
+# Note: In Apptainer mode the SIF is read-only — pyclean gracefully handles this since
+# byte-compiled files in the SIF cannot be removed, but writable bind-mounted dirs are cleaned.
+pyclean "${DN_PROJECT_PATH}" 2>/dev/null || true
 
 # ....Load library.................................................................................
 if [[ ${DN_ENTRYPOINT_TRACE_EXECUTION} == true ]]; then

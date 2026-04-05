@@ -117,6 +117,13 @@ function dna::entrypoint() {
   # Skip auto-update for help, version, and update commands to avoid recursion/interference
   if [[ ! "${the_command}" =~ .*(help|--help|-h|version|update).* ]]; then
     dna::run_daily_auto_update || n2st::print_msg_warning "Be advised, auto-update failed. Continue anyway"
+
+    # Configuration scheme patching trigger is:
+    # 1. Bound to 'dna project [validate|sanity]'
+    # 2. General trigger only when running inside a super project root
+    if [[ -d ".dockerized_norlab" ]]; then
+        dna::patch_check_and_run || n2st::print_msg_warning "Be advised, configuration scheme patching failed. Continue anyway"
+    fi
   fi
 
   # ....cli........................................................................................

@@ -14,6 +14,26 @@ trap dna::test_teardown_callback EXIT
 
 # ====begin========================================================================================
 
+# Create a mock apptainer in a temporary directory and add it to PATH
+# This satisfies the version check in the Slurm templates (Apptainer >= 1.1.0)
+mock_bin_dir=$(mktemp -d)
+cat > "${mock_bin_dir}/apptainer" <<'EOF'
+#!/bin/bash
+if [[ "$1" == "version" ]]; then
+  echo "apptainer version 1.1.0"
+else
+  # Do nothing for other commands
+  exit 0
+fi
+EOF
+chmod +x "${mock_bin_dir}/apptainer"
+export PATH="${mock_bin_dir}:${PATH}"
+
+function dna::cleanup_mock_apptainer() {
+  rm -rf "${mock_bin_dir}"
+}
+trap "dna::test_teardown_callback; dna::cleanup_mock_apptainer" EXIT
+
 # Re-build slurm image (required on TC to prevent ownership error related to agent switching)
 cd "${DNA_MOCK_SUPER_PROJECT_ROOT:?err}" || exit 1
 bash "${DNA_LIB_EXEC_PATH:?err}"/build.all.bash --service-names project-slurm -- --no-cache

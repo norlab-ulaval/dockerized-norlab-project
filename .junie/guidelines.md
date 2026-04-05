@@ -69,4 +69,21 @@ See A2G general guidelines for complete procedures and requirements.
 
 ## Repository Specific Additional Guidelines
 
+### For Developers: Creating a New Patch
+
+When you introduce changes to DNA that require updates to the super project configuration (e.g., a new required directory or a new template file), you should:
+
+1. **Increment the Version**: Increment`DNA_RELEASE_CONFIG_SCHEME_VERSION` in `.env.dockerized-norlab-project`.
+2. **Create a Patch Script**: Create a new script named `config_scheme_<FROM>to<TO>.bash` in `src/lib/core/patches/`.
+3. **Use the Template**: Base your script on `src/lib/core/patches/config_scheme_patch_template.bash`.
+4. **Define the Logic**: Use the provided helper functions from `patch_helper.bash` to add missing resources:
+    - `dna::patch_add_file_if_missing <template_source> <target_dest> <description>`: Adds a file from DNA templates to the super project.
+    - `dna::patch_add_directory_if_missing <template_source> <target_dest> <description>`: Adds a directory from DNA templates to the super project.
+    - `dna::patch_add_content_if_missing <target_file> <search_string> <content_to_add> <description>`: Appends content to a file if it doesn't already contain the search string.
+    - `dna::patch_modify_content <target_file> <search_pattern> <replace_pattern> <description>`: Modifies file content using a search and replace pattern (powered by `sed`).
+
+The `template_source` path is relative to `src/lib/template/`.
+The `target_dest` and `target_file` paths are relative to the super project root.
+Refer to `documentation/project_initialization_and_configuration.md` for more details.
+
 Proceed with _AI operator_ instructions

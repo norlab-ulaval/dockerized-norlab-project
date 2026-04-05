@@ -27,9 +27,9 @@ declare -a run_slurm_flags=()
 declare -a hydra_flags=()
 
 # Exported env var
-declare -x SJOB_ID
+declare -x DNA_SJOB_NAME
 
-SJOB_ID="default"
+DNA_SJOB_NAME="default"
 
 # ....Debug flags..................................................................................
 #run_slurm_flags+=("--hydra-dry-run")
@@ -37,5 +37,5 @@ SJOB_ID="default"
 run_slurm_flags+=("--skip-core-force-rebuild")
 hydra_flags+=("--version")
 
-bash "${DNA_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${run_slurm_flags[@]}" "${hydra_flags[@]}"
+bash "${DNA_LIB_EXEC_PATH:?err}"/run.slurm.bash "${DNA_SJOB_NAME}" "${run_slurm_flags[@]}" "${hydra_flags[@]}"
 

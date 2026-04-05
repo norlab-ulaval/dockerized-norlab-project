@@ -8,7 +8,7 @@ defaults:
 comment: ""
 
 hparam_optimizer:
-  sjob_id: "default"
+  dna_sjob_name: "default"
   objectives_name: 'mock_obj'
 
 # ....Overrides....................................

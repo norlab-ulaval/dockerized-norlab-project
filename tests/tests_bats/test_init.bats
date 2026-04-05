@@ -49,6 +49,9 @@ setup_file() {
       apt-get install --yes rsync
 
   BATS_DOCKER_WORKDIR=$(pwd) && export BATS_DOCKER_WORKDIR
+  
+  local current_scheme_version
+  current_scheme_version=$(grep "DNA_RELEASE_CONFIG_SCHEME_VERSION=" "${BATS_DOCKER_WORKDIR}/.env.dockerized-norlab-project" | cut -d'=' -f2)
   # Mock repo dockerized-norlab-project-mock-EMPTY is cloned in setup()
 
   # Create temporary directory for tests
@@ -63,17 +66,22 @@ setup_file() {
 
   mkdir -p "${MOCK_DNA_DIR}/src/lib/core"
   cp -r "${BATS_DOCKER_WORKDIR}/src/lib/core/utils" "${MOCK_DNA_DIR}/src/lib/core/"
+  
+  # Ensure file_tools.bash and patch_helper.bash are available
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/file_tools.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
+  cp "${BATS_DOCKER_WORKDIR}/src/lib/core/utils/patch_helper.bash" "${MOCK_DNA_DIR}/src/lib/core/utils/"
 
   mkdir -p "${MOCK_DNA_DIR}/src/bin"
   cat > "${MOCK_DNA_DIR}/src/bin/dna" << 'EOF'
 #!/bin/bash
 if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
-  DNA_RELEASE_CONFIG_SCHEME_VERSION=3
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
   echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
 else
   exit 1
 fi
 EOF
+  sed -i "s/REPLACE_WITH_SCHEME_VERSION/${current_scheme_version}/" "${MOCK_DNA_DIR}/src/bin/dna"
   # Make the dna script executable
   chmod +x "${MOCK_DNA_DIR}/src/bin/dna"
 
@@ -91,15 +99,19 @@ export MSG_END_FORMAT=""
 # Set up environment variables
 export DNA_SPLASH_NAME_FULL="Dockerized-NorLab (DN)"
 export DNA_SPLASH_NAME_SMALL="Dockerized-NorLab"
-export DNA_ROOT="${MOCK_DNA_DIR}"
-export DNA_PATH="${MOCK_DNA_DIR}/src/bin"
-export DNA_LIB_PATH="${MOCK_DNA_DIR}/src/lib"
+export DNA_ROOT="REPLACE_WITH_MOCK_DNA_DIR"
+export DNA_PATH="REPLACE_WITH_MOCK_DNA_DIR/src/bin"
+export DNA_LIB_PATH="REPLACE_WITH_MOCK_DNA_DIR/src/lib"
 export DNA_HUMAN_NAME="Dockerized-NorLab project application"
-export DNA_RELEASE_CONFIG_SCHEME_VERSION=3
+export DNA_RELEASE_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
 export DNA_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project"
 
-export N2ST_PATH="${BATS_DOCKER_WORKDIR}/utilities/norlab-shell-script-tools"
+export N2ST_PATH="REPLACE_WITH_BATS_DOCKER_WORKDIR/utilities/norlab-shell-script-tools"
 source "${N2ST_PATH}/import_norlab_shell_script_tools_lib.bash"
+
+# Source real file tools and patch helper
+source "${DNA_LIB_PATH}/core/utils/file_tools.bash"
+source "${DNA_LIB_PATH}/core/utils/patch_helper.bash"
 
 # ....Mock dependencies loading test functions.....................................................
 function dna::import_lib_and_dependencies() {
@@ -159,10 +171,14 @@ export DN_PROJECT_HUB="norlabulaval"
 export PROJECT_TAG="latest"
 export DN_PROJECT_GIT_REMOTE_URL="https://github.com/norlab-ulaval/dockerized-norlab-project-mock-EMPTY.git"
 export DN_PROJECT_ALIAS_PREFIX="test"
-export DNA_CONFIG_SCHEME_VERSION=3
+export DNA_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
 echo "Mock load_super_project_config.bash loaded"
 return 0
 EOF
+  sed -i "s|REPLACE_WITH_MOCK_DNA_DIR|${MOCK_DNA_DIR}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s|REPLACE_WITH_SCHEME_VERSION|${current_scheme_version}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s|REPLACE_WITH_BATS_DOCKER_WORKDIR|${BATS_DOCKER_WORKDIR}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash"
+  sed -i "s|REPLACE_WITH_SCHEME_VERSION|${current_scheme_version}|g" "${MOCK_DNA_DIR}/src/lib/core/utils/load_super_project_config.bash"
 }
 
 setup() {
@@ -459,6 +475,37 @@ teardown_file() {
   #assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/README.md" "PLACEHOLDER_DN_CONTAINER_NAME"
   #assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
   #assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
+
+  # Check HPC profile dotenv files for placeholder replacement
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "dockerized-norlab-project-mock-EMPTY"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "dockerized-norlab-project-mock-EMPTY"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "dockerized-norlab-project-mock-EMPTY"
+  # Check DN_CONTAINER_NAME placeholder replacement in HPC profile dotenv files
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "DN_CONTAINER_NAME=IamDNA_"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "DN_CONTAINER_NAME=IamDNA_"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "DN_CONTAINER_NAME=IamDNA_"
+  # Check HPC profile dotenv files contain APPTAINER_TARGET_PLATFORM (APPTAINER_ENABLE_GPU removed — GPU flag now hardcoded in sbatch scripts)
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_TARGET_PLATFORM=linux/amd64"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_ENABLE_GPU"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_TARGET_PLATFORM=linux/amd64"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "APPTAINER_ENABLE_GPU"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_TARGET_PLATFORM=linux/amd64"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "APPTAINER_ENABLE_GPU"
+  # Check Apptainer slurm job templates for DN_PROJECT_IMAGE_NAME placeholder replacement
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" "dockerized-norlab-project-mock-empty"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash" "dockerized-norlab-project-mock-empty"
 }
 
 @test "dna::init_command tests for file/directory creation › expect required files/directories created" {
@@ -481,6 +528,7 @@ teardown_file() {
   assert_dir_exist "${TEST_EMPTY_REPO}/src/dna_example"
   assert_dir_exist "${TEST_EMPTY_REPO}/tests"
   assert_dir_exist "${TEST_EMPTY_REPO}/slurm_jobs"
+  assert_dir_exist "${TEST_EMPTY_REPO}/slurm_jobs/template"
 
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/configs/example_app_hparm_optim.yaml"
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/configs/hparam_optimization_base.yaml"
@@ -490,8 +538,8 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/src/dna_example/try_pytorch.py"
   assert_file_exist "${TEST_EMPTY_REPO}/src/README.md"
   assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.dryrun.bash"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.hydra_template.bash"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.template.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
 
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.no_xdist.ini"

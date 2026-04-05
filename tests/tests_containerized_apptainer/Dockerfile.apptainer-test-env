@@ -1,0 +1,75 @@
+# =================================================================================================
+# Apptainer-in-Docker test environment for DNA Apptainer pipeline testing.
+#
+# This image provides a Linux environment with Apptainer installed for running
+# containerized integration tests of DNA's Apptainer/HPC pipeline.
+#
+# Design notes:
+#   - Uses Ubuntu 22.04 as base (matches typical HPC server environments)
+#   - Installs Apptainer from official GitHub release .deb
+#   - Must be built with --platform linux/amd64 (Apptainer .deb is amd64-only)
+#   - Includes bash, python3, and common test utilities
+#   - Requires --privileged when running (Apptainer needs namespace/fuse support)
+#
+# Usage (built automatically by run_containerized_apptainer_tests.bash):
+#   $ docker build --platform linux/amd64 -f Dockerfile.apptainer-test-env -t dna-apptainer-test-env .
+#   $ docker run --platform linux/amd64 --privileged dna-apptainer-test-env
+#
+# =================================================================================================
+FROM --platform=linux/amd64 ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# ====Install base dependencies====================================================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        curl \
+        fuse2fs \
+        git \
+        gnupg \
+        python3 \
+        python3-pip \
+        squashfs-tools \
+        sudo \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# ====Install Apptainer from official GitHub release===============================================
+ARG APPTAINER_VERSION=1.3.6
+RUN curl -fsSL "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb" \
+        -o /tmp/apptainer.deb && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends /tmp/apptainer.deb && \
+    rm -f /tmp/apptainer.deb && \
+    rm -rf /var/lib/apt/lists/*
+
+# Verify Apptainer installation
+RUN apptainer --version
+
+# ====Setup test environment=======================================================================
+# Create test user matching typical HPC setup
+RUN useradd -m -s /bin/bash -u 1000 testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Create standard directories
+RUN mkdir -p /workspace /test_artifacts /mock_project && \
+    chown -R testuser:testuser /workspace /test_artifacts /mock_project
+
+# Create /etc/localtime as a real file (not symlink) — required by DNA slurm templates
+# --bind /etc/localtime. Apptainer inside Docker cannot follow symlinks during mount.
+ENV TZ=UTC
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime
+
+# Set Apptainer cache/tmp dirs
+ENV APPTAINER_CACHEDIR=/tmp/apptainer_cache
+ENV APPTAINER_TMPDIR=/tmp/apptainer_tmp
+RUN mkdir -p "${APPTAINER_CACHEDIR}" "${APPTAINER_TMPDIR}" && \
+    chmod 777 "${APPTAINER_CACHEDIR}" "${APPTAINER_TMPDIR}"
+
+WORKDIR /workspace
+
+# Default: run all container tests
+CMD ["/bin/bash", "/workspace/container_test_scripts/run_all_container_tests.bash"]

@@ -11,6 +11,10 @@ dna run [OPTIONS] develop|deploy [--] [COMMAND [ARGS...]]
 # Non-interactive containers  
 dna run [OPTIONS] ci-tests [COMMAND [ARG...]]
 dna run [OPTIONS] slurm <sjob-id> [--] <python-cmd-args>
+
+# Generate Apptainer artifacts for HPC servers (does NOT execute apptainer locally)
+dna run [OPTIONS] slurm <sjob-id> --generate-apptainer <profile> [--] <python-cmd-args>
+dna run [OPTIONS] slurm <sjob-id> --ga <profile> [--] <python-cmd-args>
 ```
 
 ## Description
@@ -56,6 +60,11 @@ The `dna run` command creates and runs new container instances with unique ident
 | `--skip-core-force-rebuild` | Skip automatic core image rebuild |
 | `--hydra-dry-run` | Dry-run SLURM job using registered hydra flag |
 | `--register-hydra-dry-run-flag` | Hydra flag used by '--hydra-dry-run' |
+| `--generate-apptainer`, `--ga` `<profile>` | Generate Apptainer exec script for HPC servers using Apptainer (e.g., `valeria`, `compute_canada`). **Does not execute `apptainer` locally** (macOS compatible). See `--help-slurm-apptainer`. |
+| `--sif-path <path>` | (with `--generate-apptainer`) Path to SIF file on HPC server |
+| `--output-dir <path>` | (with `--generate-apptainer`) Output directory for generated run script |
+| `--print-only` | (with `--generate-apptainer`) Print apptainer exec command to stdout only |
+| `--log-name <name>` | (with `--generate-apptainer`) Log file name for script header comment |
 
 ### Help Options
 
@@ -64,6 +73,7 @@ The `dna run` command creates and runs new container instances with unique ident
 | `--help-develop` | Show run develop help message |
 | `--help-deploy` | Show run deploy help message |
 | `--help-slurm` | Show run SLURM help message |
+| `--help-slurm-apptainer` | Show run SLURM Apptainer help message |
 | `--help-ci-tests` | Show run ci-tests help message |
 
 ## Examples
@@ -118,6 +128,25 @@ dna run --log-name "training" --log-path "/logs" slurm job-002 -- python3 experi
 
 # Dry run SLURM job
 dna run --hydra-dry-run slurm job-003 -- python3 simulation.py
+```
+
+### SLURM Jobs with Apptainer (HPC servers — Valeria, Compute Canada)
+
+```bash
+# Generate standalone Apptainer run script (does NOT execute apptainer locally)
+dna run slurm NMO-001 --generate-apptainer valeria -- launcher/train.py --epochs=10
+# → Creates: artifact/apptainer/run_apptainer_NMO-001.sh
+
+# Same command using shorthand flags
+dna run slurm NMO-001 --ga valeria -- launcher/train.py --epochs=10
+
+# Print the apptainer exec command without writing a file
+dna run slurm NMO-001 --ga valeria --print-only -- launcher/train.py
+
+# Use a custom SIF path on the HPC server
+dna run slurm NMO-002 --ga compute_canada \
+    --sif-path /scratch/user/project/my-project.sif \
+    -- launcher/experiment.py --config cfg/base.yaml
 ```
 
 ### Advanced Examples
@@ -292,11 +321,36 @@ dna run slurm ${SLURM_JOB_ID} -- python3 experiment.py \
 - **Volume mounts**: Use for large datasets to avoid copying
 - **Cleanup**: Containers are automatically removed after execution
 
+## Apptainer / HPC Workflow
+
+For HPC servers using Apptainer (Valeria, Compute Canada, Mamba), `dna run slurm <sjob-id> --generate-apptainer <profile>` (or `--ga`)
+**generates** a standalone run script — it never executes `apptainer` locally (macOS compatible).
+
+The generated run script is a **convenience/automation** tool for quick one-off runs.
+For production jobs, use the **slurm job templates** (`slurm_job.apptainer.<profile>.template.bash`)
+which include `#SBATCH` directives and setup/teardown hooks — submit via `sbatch` on the HPC server.
+Both artifacts source the same HPC profile dotenv (`.env.<profile>`) and use the same `apptainer exec` flags
+(including `--no-eval`, `--cleanenv`, `--no-home`, conditional `--nv`, and dynamic SLURM `--env` passthrough).
+
+> ℹ️ **Requires Apptainer ≥ 1.1.0** on the HPC server. See [Apptainer Exec Flags](apptainer.md#apptainer-exec-flags) for details.
+
+| HPC Server | Profile | Method |
+|------------|---------|--------|
+| NorLab Mamba | _(none)_ | `dna run slurm` directly (Docker workflow) |
+| NorLab Mamba | `mamba` | `dna run slurm --ga mamba` → generated standalone script (Apptainer workflow) |
+| Ulaval Valeria | `valeria` | `dna run slurm --ga valeria` → generated standalone script |
+| Compute Canada | `compute_canada` | `dna run slurm --ga compute_canada` → generated standalone script |
+
+> **Note:** Mamba supports both Docker and Apptainer workflows. See [Apptainer / HPC Workflow](apptainer.md) for details.
+
+See [Apptainer / HPC Workflow](apptainer.md) for the complete guide including the [three pipeline artifacts](apptainer.md#understanding-the-apptainer-pipeline-artifacts).
+
 ## See Also
 
 - [dna up](up.md) - Start persistent containers
 - [dna exec](exec.md) - Execute commands in running containers
 - [dna build](build.md) - Build container images
+- [Apptainer / HPC Workflow](apptainer.md) - Deploy slurm jobs on Apptainer HPC servers
 - [Project Initialization & Configuration](../project_initialization_and_configuration.md) - Container configuration
 
 ## Navigation

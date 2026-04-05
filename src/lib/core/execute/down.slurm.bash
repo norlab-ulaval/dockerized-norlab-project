@@ -60,7 +60,14 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     source "${script_path_parent}/../utils/execute_compose.bash" || exit 1
   fi
   if [[ -z ${SUPER_PROJECT_ROOT} ]]; then
-    source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+    if [[ -d ".dockerized_norlab" ]]; then
+        source "${script_path_parent}/../utils/load_super_project_config.bash" || exit 1
+    else
+        # If we are not in a super project, we can't run down.slurm.bash correctly anyway
+        # but we should exit gracefully or skip instead of failing with a scary error
+        # if called from a test teardown.
+        exit 0
+    fi
   fi
 
   # ....Execute....................................................................................
