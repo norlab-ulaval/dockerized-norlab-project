@@ -170,18 +170,6 @@ setup() {
   }
   export -f docker
 
-  function gzip() {
-    echo "Mock gzip called with args: $*"
-    # Simulate gzip behaviour: rename the file with .gz extension
-    for arg in "$@"; do
-      if [[ "${arg}" != -* && -f "${arg}" ]]; then
-        mv "${arg}" "${arg}.gz"
-      fi
-    done
-    return 0
-  }
-  export -f gzip
-
   function git() {
     case "$1" in
       "branch") echo "main"; return 0 ;;
@@ -243,14 +231,13 @@ teardown_file() {
 
 # ====Tests: --apptainer slurm save================================================================
 
-@test "dna::save_command --apptainer valeria slurm › expect success and creates compressed tar.gz" {
+@test "dna::save_command --apptainer valeria slurm › expect success and creates tar archive" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
     dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
   "
   assert_success
-  assert_output --partial "Compressing tar archive"
-  assert_output --partial "Mock gzip called with args:"
+  assert_output --partial "Saving Docker image"
 }
 
 @test "dna::save_command --apptainer valeria slurm › uses --platform linux/amd64 for docker image save" {
@@ -302,14 +289,14 @@ teardown_file() {
   assert_output --partial "apptainer build"
 }
 
-@test "dna::save_command --apptainer valeria slurm › metadata TAR_FILENAME references .tar.gz archive" {
+@test "dna::save_command --apptainer valeria slurm › metadata TAR_FILENAME references .tar archive" {
   bash -c "
     source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
     dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
   "
   run find "${MOCK_SAVE_DIR}" -name "meta.txt" -exec grep "TAR_FILENAME" {} \;
   assert_success
-  assert_output --partial ".tar.gz"
+  assert_output --partial ".tar"
 }
 
 @test "dna::save_command --apptainer valeria slurm › metadata contains linux/amd64 platform" {

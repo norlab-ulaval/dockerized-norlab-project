@@ -24,7 +24,7 @@ The `dna save` command creates portable archives containing Docker images and ne
 | Option | Description |
 |--------|-------------|
 | `--help`, `-h` | Show help message and exit |
-| `--apptainer <profile>` | Save slurm image as gzip-compressed tar archive (`.tar.gz`) and generate `dna_tar_to_apptainer_sif_converter.sh` helper script for HPC (slurm service only). `<profile>` selects `.env.<profile>` configuration (e.g., `valeria`, `compute_canada`). Uses `--platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}"` for `docker image save` to ensure the tar archive targets the correct architecture. **Does not execute `apptainer` locally** (macOS compatible). |
+| `--apptainer <profile>` | Save slurm image as `linux/amd64` tar archive (`.tar`) and generate `dna_tar_to_apptainer_sif_converter.sh` helper script for HPC (slurm service only). `<profile>` selects `.env.<profile>` configuration (e.g., `valeria`, `compute_canada`). Uses `--platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}"` for `docker image save` to ensure the tar archive targets the correct architecture. **Does not execute `apptainer` locally** (macOS compatible). |
 | `--squash` | Squash the image before saving to reduce the archive size. Works for all supported services (`slurm`, `develop`, `deploy`). Uses `docker export/import` — **loses image history and metadata**. |
 
 ## Services
@@ -219,7 +219,7 @@ tar -czf my-project-deploy.tar.gz dna-save-deploy-*
 ### Archive Sizes
 - **Develop service**: Image size only
 - **Deploy service**: Image size + project files
-- **Compression**: TAR archives are uncompressed for `develop`/`deploy`; gzip-compressed (`.tar.gz`) for `slurm` with `--apptainer`
+- **Archives**: TAR archives (`.tar`) for all services including `slurm` with `--apptainer`
 
 ## Troubleshooting
 
@@ -294,7 +294,7 @@ tar -czf my-project-deploy.tar.gz dna-save-deploy-*
 
 - **Use local storage**: Avoid network drives for better performance
 - **Clean up regularly**: Remove old save directories to save space
-- **Compress for transfer**: Use tar/gzip for network transfer
+- **Compress for transfer**: Use tar/gzip externally for additional compression if needed for network transfer
 - **Parallel operations**: Save multiple services simultaneously if needed
 
 ## Apptainer / HPC Workflow
@@ -310,14 +310,14 @@ dna save --apptainer valeria --squash /output/dir slurm
 ```
 
 This generates:
-- `<project>-slurm.<tag>.tar.gz` — gzip-compressed Docker tar archive
-- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: decompresses `.tar.gz`, converts tar → SIF, then **deletes the decompressed tar archive** to free disk space
-- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM` (from HPC profile, default: `linux/amd64`), `SIF_BUILD_CMD`, `TAR_FILENAME` (the `.tar.gz` filename)
+- `<project>-slurm.<tag>.tar` — Docker tar archive
+- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: converts tar → SIF, then **deletes the tar archive** to free disk space
+- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM` (from HPC profile, default: `linux/amd64`), `SIF_BUILD_CMD`, `TAR_FILENAME` (the `.tar` filename)
 
 > ℹ️ Platform is enforced from the HPC profile's `APPTAINER_TARGET_PLATFORM` variable via
 > `DOCKER_DEFAULT_PLATFORM`, ensuring cross-architecture builds on Apple Silicon Macs.
 
-The saved `.tar.gz` archive is one part of the Apptainer pipeline. After saving, use `dna run slurm --ga`
+The saved `.tar` archive is one part of the Apptainer pipeline. After saving, use `dna run slurm --ga`
 to generate run scripts, or use the slurm job templates (`slurm_job.apptainer.<profile>.template.bash`)
 for production job submission. See [Apptainer / HPC Workflow](apptainer.md) for the complete guide
 and the [three pipeline artifacts](apptainer.md#understanding-the-apptainer-pipeline-artifacts).

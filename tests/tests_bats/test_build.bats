@@ -274,21 +274,8 @@ function docker() {
   esac
 }
 
-# ....Mock gzip command............................................................................
-function gzip() {
-  echo "Mock gzip called with args: $*"
-  # Simulate gzip behaviour: rename the file with .gz extension
-  for arg in "$@"; do
-    if [[ "${arg}" != -* && -f "${arg}" ]]; then
-      mv "${arg}" "${arg}.gz"
-    fi
-  done
-  return 0
-}
-
-
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dna:: -e n2st:: -e docker -e command -e gzip); do
+for func in $(compgen -A function | grep -e dna:: -e n2st:: -e docker -e command); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
@@ -1102,8 +1089,6 @@ teardown_file() {
   assert_success
   assert_output --partial "Generating Apptainer artifacts for profile: valeria"
   assert_output --partial "Mock dna::check_apptainer_profile_env_file called with profile: valeria"
-  assert_output --partial "Compressing tar archive"
-  assert_output --partial "Mock gzip called with args:"
   assert_output --partial "Mock dna::generate_apptainer_build_sif_script"
   assert_output --partial "Mock docker command called with: image save --platform linux/amd64"
 }
