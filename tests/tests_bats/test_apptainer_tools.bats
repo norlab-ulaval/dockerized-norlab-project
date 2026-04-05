@@ -175,7 +175,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--nv"
@@ -185,7 +185,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--bind"
@@ -197,7 +197,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--env-file"
@@ -208,7 +208,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--writable-tmpfs"
@@ -218,7 +218,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   refute_output --partial ".X11-unix"
@@ -228,7 +228,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--no-eval"
@@ -238,7 +238,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--cleanenv"
@@ -248,7 +248,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--no-home"
@@ -258,7 +258,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--nv"
@@ -269,7 +269,7 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export APPTAINER_ENABLE_GPU=false
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   # --nv is unconditional; APPTAINER_ENABLE_GPU is no longer used
@@ -280,7 +280,7 @@ teardown_file() {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif'
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
   "
   assert_success
   assert_output --partial "--env CUDA_VISIBLE_DEVICES="
@@ -288,6 +288,17 @@ teardown_file() {
   assert_output --partial "--env SLURM_TMPDIR="
   assert_output --partial "--env SLURM_JOB_NAME="
   assert_output --partial "--env SLURM_NODELIST="
+}
+
+@test "dna::get_apptainer_slurm_exec_flags › output contains DN_CONTAINER_NAME with sjob name" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'my-sjob'
+  "
+  assert_success
+  assert_output --partial "--env DN_CONTAINER_NAME="
+  assert_output --partial "my-sjob"
 }
 
 # ====Tests: dna::generate_apptainer_run_script===================================================
@@ -333,26 +344,6 @@ teardown_file() {
 
   run grep "apptainer exec" "${output_dir}/run_apptainer_NMO-001.sh"
   assert_success
-
-  rm -rf "${output_dir}"
-}
-
-@test "dna::generate_apptainer_run_script › generated script contains entrypoint" {
-  local output_dir
-  output_dir=$(mktemp -d)
-
-  bash -c "
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
-    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
-    export DN_PROJECT_IMAGE_NAME='test-project'
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::generate_apptainer_run_script \
-      'NMO-001' \
-      'valeria' \
-      'artifact/apptainer/test-project-slurm.sif' \
-      '${output_dir}' \
-      'launcher/train.py'
-  "
 
   run grep "dn_entrypoint.init.bash" "${output_dir}/run_apptainer_NMO-001.sh"
   assert_success
@@ -456,23 +447,26 @@ teardown_file() {
     dna::print_apptainer_exec_command \
       'valeria' \
       'artifact/apptainer/test-project-slurm.sif' \
+      'test-sjob' \
       'launcher/train.py'
   "
   assert_success
   assert_output --partial "apptainer exec"
+  assert_output --partial "dn_entrypoint.init.bash"
 }
 
-@test "dna::print_apptainer_exec_command › output contains entrypoint path" {
+@test "dna::print_apptainer_exec_command › output contains python args" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::print_apptainer_exec_command \
       'valeria' \
       'artifact/apptainer/test-project-slurm.sif' \
+      'test-sjob' \
       'launcher/train.py'
   "
   assert_success
-  assert_output --partial "dn_entrypoint.init.bash"
+  assert_output --partial "launcher/train.py"
 }
 
 @test "dna::print_apptainer_exec_command with compute_canada profile › contains .env.compute_canada" {
@@ -482,6 +476,7 @@ teardown_file() {
     dna::print_apptainer_exec_command \
       'compute_canada' \
       'artifact/apptainer/test-project-slurm.sif' \
+      'test-sjob' \
       'launcher/train.py'
   "
   assert_success

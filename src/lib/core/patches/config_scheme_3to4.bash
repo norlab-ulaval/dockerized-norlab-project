@@ -22,6 +22,16 @@ for hpc_profile_file in "${hpc_profile_files[@]}"; do
   target_file="${SUPER_PROJECT_ROOT}/${hpc_profile_file}"
   if [[ -f "${target_file}" ]]; then
     n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${SUPER_PROJECT_REPO_NAME}" "${target_file}"
+    n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${SUPER_PROJECT_REPO_NAME}" "${target_file}"
+    # Add DN_CONTAINER_NAME line if not already present (for pre-existing files that predate this field)
+    dna::patch_add_content_if_missing \
+      "${hpc_profile_file}" \
+      "DN_CONTAINER_NAME=" \
+      "
+# ....Container name configuration................................................................
+# Container name used for identification. Set at runtime to: DN_CONTAINER_NAME-<sjob-name>
+DN_CONTAINER_NAME=IamDNA_${SUPER_PROJECT_REPO_NAME}-slurm" \
+      "Add DN_CONTAINER_NAME to $(basename "${hpc_profile_file}")"
   fi
 done
 unset hpc_profile_files

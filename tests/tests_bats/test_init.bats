@@ -476,13 +476,20 @@ teardown_file() {
   #assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_NAME"
   #assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/README.md" "PLACEHOLDER_SUPER_PROJECT_USER"
 
-  # Check HPC profile dotenv files for DN_PROJECT_GIT_NAME placeholder replacement
+  # Check HPC profile dotenv files for placeholder replacement
   assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "dockerized-norlab-project-mock-EMPTY"
   assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "dockerized-norlab-project-mock-EMPTY"
   assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "PLACEHOLDER_DN_PROJECT_GIT_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "dockerized-norlab-project-mock-EMPTY"
+  # Check DN_CONTAINER_NAME placeholder replacement in HPC profile dotenv files
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "DN_CONTAINER_NAME=IamDNA_"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.compute_canada" "DN_CONTAINER_NAME=IamDNA_"
+  assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "PLACEHOLDER_DN_CONTAINER_NAME"
+  assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba" "DN_CONTAINER_NAME=IamDNA_"
   # Check HPC profile dotenv files contain APPTAINER_TARGET_PLATFORM (APPTAINER_ENABLE_GPU removed — GPU flag now hardcoded in sbatch scripts)
   assert_file_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_TARGET_PLATFORM=linux/amd64"
   assert_file_not_contains "${TEST_EMPTY_REPO}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" "APPTAINER_ENABLE_GPU"

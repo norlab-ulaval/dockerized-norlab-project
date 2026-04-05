@@ -8,7 +8,7 @@
 #
 # Tests:
 #   A. Generate run script via dna::generate_apptainer_run_script
-#   B. Verify run script structure (apptainer exec, flags, entrypoint, version warning)
+#   B. Verify run script structure (apptainer run, flags, entrypoint, version warning)
 #   C. Execute the generated run script against the mock SIF
 #   D. Verify python args are passed through correctly
 #   E. Test --print-only equivalent (dna::print_apptainer_exec_command output)
@@ -78,6 +78,11 @@ if ! grep -q "apptainer exec" "${RUN_SCRIPT}"; then
   exit 1
 fi
 
+if ! grep -q "dn_entrypoint.init.bash" "${RUN_SCRIPT}"; then
+  echo "[FAIL] Missing 'dn_entrypoint.init.bash' entrypoint in run script" >&2
+  exit 1
+fi
+
 if ! grep -q -- "--no-eval" "${RUN_SCRIPT}"; then
   echo "[FAIL] Missing --no-eval flag" >&2
   exit 1
@@ -103,11 +108,6 @@ if ! grep -q -- "--env-file" "${RUN_SCRIPT}"; then
   exit 1
 fi
 
-if ! grep -q "dn_entrypoint.init.bash" "${RUN_SCRIPT}"; then
-  echo "[FAIL] Missing entrypoint reference" >&2
-  exit 1
-fi
-
 if ! grep -q "Apptainer >= 1.1.0" "${RUN_SCRIPT}"; then
   echo "[FAIL] Missing version warning" >&2
   exit 1
@@ -118,13 +118,13 @@ if ! grep -q "test_apptainer_env.py" "${RUN_SCRIPT}"; then
   exit 1
 fi
 
-echo "    PASS: Run script structure verified (all required flags, entrypoint, version warning, python args)"
+echo "    PASS: Run script structure verified (all required flags, version warning, python args)"
 
 # ====Test C: Execute the generated run script=====================================================
 echo ""
 echo ">>> Test C: Execute generated run script against mock SIF"
 
-# The run script sources the profile env file and runs apptainer exec.
+# The run script sources the profile env file and runs apptainer exec with explicit entrypoint.
 # We need to set SUPER_PROJECT_ROOT and SIF_PATH for the script.
 cd "${MOCK_PROJECT_ROOT}"
 export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
@@ -136,6 +136,8 @@ export SLURM_TMPDIR="/tmp/slurm_test"
 export SLURM_JOB_NAME="test_job"
 export SLURM_NODELIST="node01"
 export CUDA_VISIBLE_DEVICES="0"
+# Set DN_CONTAINER_NAME required by the run script (normally sourced from .env.<profile>)
+export DN_CONTAINER_NAME="IamDNA_mock-project-slurm"
 
 EXEC_OUTPUT=$(bash "${RUN_SCRIPT}" 2>&1) || {
   echo "[FAIL] Run script execution failed (exit code: $?)" >&2
@@ -176,10 +178,16 @@ echo ">>> Test E: dna::print_apptainer_exec_command output"
 CMD_OUTPUT=$(dna::print_apptainer_exec_command \
   "${PROFILE}" \
   "${SIF_PATH}" \
+  "${DNA_SJOB_NAME}" \
   "test_apptainer_env.py")
 
 if ! echo "${CMD_OUTPUT}" | grep -q "apptainer exec"; then
   echo "[FAIL] print_apptainer_exec_command missing 'apptainer exec'" >&2
+  exit 1
+fi
+
+if ! echo "${CMD_OUTPUT}" | grep -q "dn_entrypoint.init.bash"; then
+  echo "[FAIL] print_apptainer_exec_command missing 'dn_entrypoint.init.bash'" >&2
   exit 1
 fi
 
@@ -193,8 +201,8 @@ if ! echo "${CMD_OUTPUT}" | grep -q -- "--cleanenv"; then
   exit 1
 fi
 
-if ! echo "${CMD_OUTPUT}" | grep -q "dn_entrypoint.init.bash"; then
-  echo "[FAIL] print_apptainer_exec_command missing entrypoint" >&2
+if ! echo "${CMD_OUTPUT}" | grep -q "test_apptainer_env.py"; then
+  echo "[FAIL] print_apptainer_exec_command missing python args" >&2
   exit 1
 fi
 

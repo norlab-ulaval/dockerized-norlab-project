@@ -176,6 +176,7 @@ function dna::run_slurm_apptainer() {
     dna::print_apptainer_exec_command \
       "${apptainer_profile}" \
       "${sif_path}" \
+      "${DNA_SJOB_NAME}" \
       "${python_arg[@]}"
   else
     # ....Script generation mode: write standalone run script....................................

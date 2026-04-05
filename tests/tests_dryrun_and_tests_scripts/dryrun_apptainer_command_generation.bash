@@ -102,7 +102,7 @@ echo "    PASS: dna_tar_to_apptainer_sif_converter.sh created with correct conte
 # ....Test 3: get_apptainer_slurm_exec_flags..............................................
 echo ""
 echo ">>> Test 5: dna::get_apptainer_slurm_exec_flags"
-FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif")
+FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif" "test-sjob")
 
 if ! echo "${FLAGS}" | grep -q -- "--no-eval"; then
   echo "    FAIL: Missing --no-eval flag" >&2; exit 1
@@ -153,7 +153,7 @@ if ! grep -q "apptainer exec" "${TEMP_DIR}/run_apptainer_NMO-001.sh"; then
   echo "    FAIL: Missing 'apptainer exec' in run script" >&2; exit 1
 fi
 if ! grep -q "dn_entrypoint.init.bash" "${TEMP_DIR}/run_apptainer_NMO-001.sh"; then
-  echo "    FAIL: Missing entrypoint in run script" >&2; exit 1
+  echo "    FAIL: Missing 'dn_entrypoint.init.bash' entrypoint in run script" >&2; exit 1
 fi
 if ! grep -q "launcher/train.py" "${TEMP_DIR}/run_apptainer_NMO-001.sh"; then
   echo "    FAIL: Missing python args in run script" >&2; exit 1
@@ -169,20 +169,21 @@ echo ">>> Test 7: dna::print_apptainer_exec_command"
 CMD_OUTPUT=$(dna::print_apptainer_exec_command \
   "valeria" \
   "artifact/apptainer/my-project-slurm.sif" \
+  "test-sjob" \
   "launcher/train.py")
 
 if ! echo "${CMD_OUTPUT}" | grep -q "apptainer exec"; then
   echo "    FAIL: Missing 'apptainer exec' in command output" >&2; exit 1
 fi
 if ! echo "${CMD_OUTPUT}" | grep -q "dn_entrypoint.init.bash"; then
-  echo "    FAIL: Missing entrypoint in command output" >&2; exit 1
+  echo "    FAIL: Missing 'dn_entrypoint.init.bash' in command output" >&2; exit 1
 fi
 echo "    PASS: print_apptainer_exec_command output is correct"
 
 # ....Test 6: compute_canada profile.......................................................
 echo ""
 echo ">>> Test 8: compute_canada profile flags"
-CCFLAGS=$(dna::get_apptainer_slurm_exec_flags "compute_canada" "artifact/apptainer/my-project-slurm.sif")
+CCFLAGS=$(dna::get_apptainer_slurm_exec_flags "compute_canada" "artifact/apptainer/my-project-slurm.sif" "test-sjob")
 if ! echo "${CCFLAGS}" | grep -q ".env.compute_canada"; then
   echo "    FAIL: Missing .env.compute_canada in flags" >&2; exit 1
 fi
@@ -192,7 +193,7 @@ echo "    PASS: compute_canada profile uses correct env file"
 echo ""
 echo ">>> Test 9: APPTAINER_ENABLE_GPU is ignored (--nv always unconditionally included)"
 export APPTAINER_ENABLE_GPU=false
-GPU_OFF_FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif")
+GPU_OFF_FLAGS=$(dna::get_apptainer_slurm_exec_flags "valeria" "artifact/apptainer/my-project-slurm.sif" "test-sjob")
 if ! echo "${GPU_OFF_FLAGS}" | grep -q -- "--nv"; then
   echo "    FAIL: --nv flag should always be present (APPTAINER_ENABLE_GPU is no longer used)" >&2; exit 1
 fi

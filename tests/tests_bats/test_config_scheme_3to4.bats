@@ -158,3 +158,28 @@ EOF
     assert_success  # actual project name should be present
   done
 }
+
+@test "config_scheme_3to4.bash › should add DN_CONTAINER_NAME to pre-existing HPC server profile files" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
+  export DNA_CONFIG_SCHEME_VERSION=3
+
+  # Pre-create HPC profile files WITHOUT DN_CONTAINER_NAME (simulating v3 files before patch)
+  mkdir -p "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile"
+  for hpc_profile_file in ".env.valeria" ".env.compute_canada" ".env.mamba"; do
+    echo "DN_PROJECT_PATH=/ros2_ws/src/PLACEHOLDER_DN_PROJECT_GIT_NAME" \
+      > "${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/${hpc_profile_file}"
+  done
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  # Verify DN_CONTAINER_NAME was added to all pre-existing HPC server profile files
+  for hpc_profile_file in ".env.valeria" ".env.compute_canada" ".env.mamba"; do
+    target_file="${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/${hpc_profile_file}"
+    run grep "DN_CONTAINER_NAME=" "${target_file}"
+    assert_success  # DN_CONTAINER_NAME should now be present
+    run grep "PLACEHOLDER_DN_CONTAINER_NAME" "${target_file}"
+    assert_failure  # placeholder should NOT be present
+  done
+}

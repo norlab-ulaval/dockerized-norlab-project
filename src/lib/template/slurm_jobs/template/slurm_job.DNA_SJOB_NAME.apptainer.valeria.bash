@@ -116,8 +116,9 @@ apptainer exec \
     --env SLURM_TMPDIR="${SLURM_TMPDIR}" \
     --env SLURM_JOB_NAME="${SLURM_JOB_NAME}" \
     --env SLURM_NODELIST="${SLURM_NODELIST}" \
+    --env DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${DNA_SJOB_NAME}" \
     --pwd "${DN_PROJECT_PATH}/src" \
     --writable-tmpfs \
     "${SIF_PATH}" \
-    /dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash \
+    "/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash" \
     "${python_arguments[@]}"

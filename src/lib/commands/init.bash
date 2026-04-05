@@ -216,6 +216,7 @@ ${MSG_END_FORMAT}"
     for hpc_profile_file in hpc_server_profile/.env.valeria hpc_server_profile/.env.compute_canada hpc_server_profile/.env.mamba; do
       if [[ -f "${hpc_profile_file}" ]]; then
         n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${super_project_name}" "${hpc_profile_file}" || return 1
+        n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${super_project_acronym}" "${hpc_profile_file}" || return 1
       fi
     done
 

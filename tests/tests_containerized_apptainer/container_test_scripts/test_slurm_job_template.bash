@@ -7,7 +7,7 @@
 # directives) and executing against the mock SIF.
 #
 # Tests each profile template (valeria, compute_canada, mamba):
-#   A. Template structure validation (SBATCH, apptainer exec, flags, profile source)
+#   A. Template structure validation (SBATCH, apptainer exec, entrypoint, flags, profile source)
 #   B. Adapted template execution against mock SIF
 #   C. Environment variable pass-through verification
 #
@@ -54,6 +54,7 @@ function adapt_template_for_test() {
     echo "export SLURM_JOB_NAME=\"test_${profile}\""
     echo "export SLURM_NODELIST=\"testnode01\""
     echo "export CUDA_VISIBLE_DEVICES=\"0\""
+    echo "export DN_CONTAINER_NAME=\"IamDNA_mock-project-slurm\""
     echo ""
     echo "# Stub callbacks (defined in template header, stripped for test)"
     echo "function job_setup_callback() { echo '[test] job_setup_callback'; }"
@@ -104,6 +105,11 @@ for profile in "${PROFILES[@]}"; do
     exit 1
   fi
 
+  if ! grep -q "dn_entrypoint.init.bash" "${TEMPLATE_FILE}"; then
+    echo "[FAIL] Template missing 'dn_entrypoint.init.bash' entrypoint" >&2
+    exit 1
+  fi
+
   if ! grep -q -- "--no-eval" "${TEMPLATE_FILE}"; then
     echo "[FAIL] Template missing --no-eval" >&2
     exit 1
@@ -134,8 +140,8 @@ for profile in "${PROFILES[@]}"; do
     exit 1
   fi
 
-  if ! grep -q "dn_entrypoint.init.bash" "${TEMPLATE_FILE}"; then
-    echo "[FAIL] Template missing entrypoint" >&2
+  if ! grep -q -- "--writable-tmpfs" "${TEMPLATE_FILE}"; then
+    echo "[FAIL] Template missing --writable-tmpfs before SIF path" >&2
     exit 1
   fi
 
