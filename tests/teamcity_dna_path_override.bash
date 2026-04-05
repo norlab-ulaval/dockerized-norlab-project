@@ -2,7 +2,7 @@
 # =================================================================================================
 # Override the DNA path environment variable to local repository instead of system wide install
 # for tests executions so that we can directly use "dna COMMAND" in tests script on the TeamCity
-# server e.g., See dockerized-norlab-project-mock/slurm_jobs/slurm_job.hydra_template.bash
+# server e.g., See dockerized-norlab-project-mock/slurm_jobs/slurm_job.hydra.template.bash
 #
 # Usage:
 #

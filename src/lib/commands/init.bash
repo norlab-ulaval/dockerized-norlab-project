@@ -57,101 +57,6 @@ function dna::get_super_project_acronym() {
     return 0
 }
 
-function dna::dimmed_rsync() {
-    DIM=$(tput dim)
-    RESET=$(tput sgr0)
-    n2st::draw_horizontal_line_across_the_terminal_window "─" "${DIM}"
-    rsync "$@" | sed "s/.*/${DIM}&${RESET}/" || return 1
-}
-
-
-function dna::portable_copy() {
-    # Copy function using rsync with backup functionality
-    # Arguments: source destination
-    local source="$1"
-    local destination="$2"
-    local super_project_root="${3:-$(pwd)}"
-
-    # Use rsync with backup functionality (no --update flag to preserve existing files)
-    local rsync_flags=()
-#    rsync_flags+=(--progress)
-    rsync_flags+=(--verbose)
-    rsync_flags+=(--backup --suffix='.old')
-
-    if [[ -d "${source}" ]]; then
-        # For directories, ensure trailing slash for proper rsync behavior
-        dna::dimmed_rsync "${rsync_flags[@]}" --recursive "${source%/}/" "${destination}"
-    else
-        # For files
-        dna::dimmed_rsync "${rsync_flags[@]}" "${source}" "${destination}"
-    fi
-    echo
-
-    # Validate file ownership and permissions match the super project
-    dna::validate_file_ownership_and_permissions "${destination}" "${super_project_root}" || return 1
-
-    git add "${destination}"
-    return 0
-}
-
-function dna::get_owner() {
-    # Cross platform implementation
-    if [[ "$(uname)" == "Darwin" ]]; then
-        stat -f '%Su' "$1"
-    else
-        stat -c '%U' "$1"
-    fi
-}
-
-function dna::get_group() {
-    # Cross platform implementation
-    if [[ "$(uname)" == "Darwin" ]]; then
-        stat -f '%Su' "$1"
-    else
-        stat -c '%U' "$1"
-    fi
-}
-
-function dna::get_permission() {
-    # Cross platform implementation
-    if [[ "$(uname)" == "Darwin" ]]; then
-        stat -f '%A' "$1"
-    else
-        stat -c '%a' "$1"
-    fi
-}
-
-
-function dna::validate_file_ownership_and_permissions() {
-    # Validate that copied files/directories have ownership and permissions matching the super project
-    # Arguments: target_path super_project_root
-    local target_path="$1"
-    local super_project_root="$2"
-
-    # Get super project ownership and permissions
-    local super_project_owner
-    local super_project_group
-
-    super_project_owner=$(dna::get_owner "${super_project_root}" 2>/dev/null)
-    super_project_group=$(dna::get_group "${super_project_root}" 2>/dev/null)
-
-    # Recursively fix ownership and permissions for the target path
-    if [[ -d "$target_path" ]]; then
-        # For directories, apply to all contents
-        find "$target_path" -type f -exec chown "${super_project_owner}:${super_project_group}" {} \; 2>/dev/null || true
-        find "$target_path" -type d -exec chown "${super_project_owner}:${super_project_group}" {} \; 2>/dev/null || true
-        find "$target_path" -type f -exec chmod 644 {} \; 2>/dev/null || true
-        find "$target_path" -type d -exec chmod 755 {} \; 2>/dev/null || true
-    else
-        # For files
-        chown "${super_project_owner}:${super_project_group}" "$target_path" 2>/dev/null || true
-        chmod 644 "$target_path" 2>/dev/null || true
-    fi
-
-    return 0
-}
-
-
 function dna::init_command() {
     local super_project_root
     super_project_root=$(pwd)
@@ -306,6 +211,15 @@ ${MSG_END_FORMAT}"
       n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_ALIAS_PREFIX" "${super_project_acronym}" ".env.dna"
     } || return 1
 
+    # Replace placeholders in HPC server profile dotenv files
+    local hpc_profile_file
+    for hpc_profile_file in hpc_server_profile/.env.valeria hpc_server_profile/.env.compute_canada hpc_server_profile/.env.mamba; do
+      if [[ -f "${hpc_profile_file}" ]]; then
+        n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_GIT_NAME" "${super_project_name}" "${hpc_profile_file}" || return 1
+        n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_CONTAINER_NAME" "IamDNA_${super_project_acronym}" "${hpc_profile_file}" || return 1
+      fi
+    done
+
     # Replace placeholders in the DNA readme file
     cd "${super_project_root}/.dockerized_norlab/" || return 1
     {
@@ -351,7 +265,17 @@ ${MSG_END_FORMAT}"
     dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher/" src/launcher/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
 
-    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/" slurm_jobs/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/slurm_job.dryrun.bash" slurm_jobs/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/template/" slurm_jobs/template/ "${super_project_root}" || return 1
+    # Replace placeholders in Apptainer slurm job templates
+    local super_project_image_name
+    super_project_image_name="$(echo "${super_project_name}" | tr '[:upper:]' '[:lower:]')"
+    local slurm_template_file
+    for slurm_template_file in slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.*.bash; do
+      if [[ -f "${slurm_template_file}" ]]; then
+        n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${super_project_image_name}" "${slurm_template_file}" || return 1
+      fi
+    done
 
     if [[ ! -f "src/README.md" ]]; then
       dna::portable_copy "${DNA_LIB_PATH}/template/src/README.md" src/ "${super_project_root}" || return 1

@@ -49,6 +49,8 @@ setup_file() {
 
   # This is the path to the mock super project (the user side)
   export MOCK_PROJECT_PATH="${BATS_DOCKER_WORKDIR}/utilities/tmp/dockerized-norlab-project-mock"
+  
+  export CURRENT_SCHEME_VERSION=$(grep "DNA_RELEASE_CONFIG_SCHEME_VERSION=" "${BATS_DOCKER_WORKDIR}/.env.dockerized-norlab-project" | cut -d'=' -f2)
 
   # Create secrets directory (if it does not exist)
   local secret_dir="${MOCK_PROJECT_PATH}/.dockerized_norlab/configuration/secrets"
@@ -98,6 +100,12 @@ setup() {
     echo -e "Mock dna::print_msg_error_and_return called with args: $*"
     exit 1
   }
+
+  # Reset formatting variables to avoid escape sequences in assertions
+  export MSG_EMPH_FORMAT=""
+  export MSG_END_FORMAT=""
+  export MSG_DIMMED_FORMAT=""
+  export MSG_ERROR_FORMAT=""
 
 }
 
@@ -289,12 +297,13 @@ EOF
   cat > "${TEST_TEMP_DIR}/bin/dna" << 'EOF'
 #!/bin/bash
 if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
-  DNA_RELEASE_CONFIG_SCHEME_VERSION=3
+  DNA_RELEASE_CONFIG_SCHEME_VERSION=REPLACE_WITH_SCHEME_VERSION
   echo "${DNA_RELEASE_CONFIG_SCHEME_VERSION}"
 else
   exit 1
 fi
 EOF
+  sed -i "s/REPLACE_WITH_SCHEME_VERSION/${CURRENT_SCHEME_VERSION}/" "${TEST_TEMP_DIR}/bin/dna"
   chmod +x "${TEST_TEMP_DIR}/bin/dna"
   
   # Temporarily modify PATH and DNA_PATH for the test
@@ -303,7 +312,7 @@ EOF
   export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
   export DNA_PATH="${TEST_TEMP_DIR}/bin"
 
-  export DNA_CONFIG_SCHEME_VERSION=3
+  export DNA_CONFIG_SCHEME_VERSION=${CURRENT_SCHEME_VERSION}
 
   run dna::check_config_scheme_compatibility
   assert_success
@@ -313,14 +322,14 @@ EOF
   export DNA_PATH="${original_dna_path}"
 }
 
-@test "dna::check_config_scheme_compatibility › expect fail with mismatched versions" {
-  # Test case: When config scheme versions don't match, the function should fail
-  # Create a mock dna script that returns a different version
+@test "dna::check_config_scheme_compatibility › expect failure when super project is newer" {
+  # Test case: When super project config scheme version is newer than DNA, it should fail
+  # Create a mock dna script that returns an older version
   mkdir -p "${TEST_TEMP_DIR}/bin"
   cat > "${TEST_TEMP_DIR}/bin/dna" << 'EOF'
 #!/bin/bash
 if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
-  echo "99"  # Different version that won't match
+  echo "1"  # Older DNA version
 else
   exit 1
 fi
@@ -333,12 +342,51 @@ EOF
   export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
   export DNA_PATH="${TEST_TEMP_DIR}/bin"
 
-  export DNA_CONFIG_SCHEME_VERSION=3
+  export DNA_CONFIG_SCHEME_VERSION=2  # Newer super project
 
   run dna::check_config_scheme_compatibility
   assert_failure
-  assert_output --partial "Super project dna config schemme"
-  assert_output --partial "does not match current dna config scheme version"
+  assert_output --partial "Super project dna config scheme 2 is newer than current dna config scheme version 1"
+
+  # Restore original PATH and DNA_PATH
+  export PATH="${original_path}"
+  export DNA_PATH="${original_dna_path}"
+}
+
+@test "dna::check_config_scheme_compatibility › expect trigger patching when super project is outdated" {
+  # Test case: When super project config scheme version is older than DNA, it should trigger patching
+  # Create a mock dna script that returns a newer version
+  mkdir -p "${TEST_TEMP_DIR}/bin"
+  cat > "${TEST_TEMP_DIR}/bin/dna" << 'EOF'
+#!/bin/bash
+if [[ "$1" == "version" && "$2" == "--config-scheme" ]]; then
+  echo "REPLACE_WITH_SCHEME_VERSION"  # Newer DNA version
+else
+  exit 1
+fi
+EOF
+  sed -i "s/REPLACE_WITH_SCHEME_VERSION/${CURRENT_SCHEME_VERSION}/" "${TEST_TEMP_DIR}/bin/dna"
+  chmod +x "${TEST_TEMP_DIR}/bin/dna"
+
+  # Temporarily modify PATH and DNA_PATH for the test
+  local original_path="${PATH}"
+  local original_dna_path="${DNA_PATH}"
+  export PATH="${TEST_TEMP_DIR}/bin:${PATH}"
+  export DNA_PATH="${TEST_TEMP_DIR}/bin"
+
+  export DNA_CONFIG_SCHEME_VERSION=$((CURRENT_SCHEME_VERSION - 1))  # Outdated super project
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=${CURRENT_SCHEME_VERSION}
+
+  # Mock dna::patch_check_and_run to verify it's called
+  function dna::patch_check_and_run() {
+    echo "dna::patch_check_and_run called"
+    return 0
+  }
+  export -f dna::patch_check_and_run
+
+  run dna::check_config_scheme_compatibility
+  assert_success
+  assert_output --partial "dna::patch_check_and_run called"
 
   # Restore original PATH and DNA_PATH
   export PATH="${original_path}"

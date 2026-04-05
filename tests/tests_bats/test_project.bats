@@ -67,6 +67,15 @@ export SUPER_PROJECT_ROOT="${MOCK_PROJECT_PATH}"
 return 0
 EOF
 
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/patch_helper.bash" << 'EOF'
+#!/bin/bash
+# Mock patch_helper.bash
+function dna::patch_check_and_run() {
+  echo "Mock dna::patch_check_and_run called"
+  return 0
+}
+EOF
+
   cat > "${MOCK_DNA_DIR}/src/lib/core/execute/build.all.bash" << 'EOF'
 #!/bin/bash
 # Mock build.all.bash
@@ -220,6 +229,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating configuration..."
   assert_output --partial "Mock dna::project_validate_all called with args:"
@@ -234,6 +244,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating slurm configuration..."
   assert_output --partial "Mock dna::project_validate_slurm called with args:"
@@ -248,6 +259,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating slurm configuration..."
   assert_output --partial "Mock dna::project_validate_slurm called with args: /path/to/slurm/jobs"
@@ -284,6 +296,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating configuration..."
   assert_output --partial "Mock dna::project_validate_all called with args: --include-multiarch"
@@ -298,6 +311,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating slurm configuration..."
   assert_output --partial "Mock dna::project_validate_slurm called with args: --include-multiarch"
@@ -312,6 +326,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating configuration..."
   assert_output --partial "Mock dna::project_validate_all called with args: --include-multiarch /path/to/config"
@@ -326,6 +341,7 @@ teardown_file() {
   assert_success
 
   # Should output the expected message
+  assert_output --partial "Mock dna::patch_check_and_run called"
   assert_output --partial "Mock n2st::print_formated_script_header called with args: project validate procedure"
   assert_output --partial "Validating slurm configuration..."
   assert_output --partial "Mock dna::project_validate_slurm called with args: --include-multiarch /path/to/slurm/jobs"

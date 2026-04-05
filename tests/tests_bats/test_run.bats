@@ -90,6 +90,15 @@ function dna::run_slurm() {
 }
 EOF
 
+  cat > "${MOCK_DNA_DIR}/src/lib/core/execute/run.slurm.apptainer.bash" << 'EOF'
+#!/bin/bash
+# Mock run.slurm.apptainer.bash
+function dna::run_slurm_apptainer() {
+  echo "Mock dna::run_slurm_apptainer called with args: $*"
+  return 0
+}
+EOF
+
   # Create mock run.any.bash
   cat > "${MOCK_DNA_DIR}/src/lib/core/execute/run.any.bash" << 'EOF'
 #!/bin/bash
@@ -326,7 +335,7 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running slurm containers..."
-  assert_output --partial "Mock dna::run_slurm called with args: -- --help"
+  assert_output --partial "Mock dna::run_slurm called with args:  -- --help"
 }
 
 @test "dna::run_command with develop › expect develop service to be called" {
@@ -631,7 +640,7 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running slurm containers..."
-  assert_output --partial "Mock dna::run_slurm called with args: -w /workdir job123"
+  assert_output --partial "Mock dna::run_slurm called with args: job123 -w /workdir"
 }
 
 @test "dna::run_command with complex option combination and deploy › expect all options passed" {

@@ -80,6 +80,13 @@ EOF
 
 # (CRITICAL) ToDo: update with a runtime version DN lib load shell wrapper
 SHELL ["/bin/bash", "-c"]
+# Apptainer compatibility: marks this image as compatible with Apptainer docker-archive bootstrap.
+# When converted to SIF via: apptainer build <name>.sif docker-archive:<name>.tar
+# Use 'apptainer exec' with explicit entrypoint (apptainer exec bypasses Docker ENTRYPOINT):
+#   apptainer exec [flags] <name>.sif /dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash <python-args>
+LABEL dna.apptainer.compatible="true"
+LABEL dna.apptainer.entrypoint="/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash"
+LABEL dna.apptainer.target.platform="linux/amd64"
 ENTRYPOINT [ "/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash" ]
 CMD [ "-c","print('>>>Hello-slurm')" ]
 

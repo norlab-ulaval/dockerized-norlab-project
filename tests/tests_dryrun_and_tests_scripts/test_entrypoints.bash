@@ -76,8 +76,8 @@ for _service in "${_services[@]}" ; do
     } | tee "$_tmp_output"
   elif [[ ${_service} == "slurm" ]]; then
     # Exported env var
-    declare -x SJOB_ID
-    SJOB_ID="default"
+    declare -x DNA_SJOB_NAME
+    DNA_SJOB_NAME="default"
 
     _run_flag+=("--hydra-dry-run")
     _run_flag+=("--register-hydra-dry-run-flag" "+dev@_global_=math_env_slurm_job_dryrun")
@@ -85,7 +85,7 @@ for _service in "${_services[@]}" ; do
     _run_flag+=("--skip-slurm-force-rebuild")
     hydra_flags+=("--version")
     {
-      bash "${DNA_LIB_EXEC_PATH:?err}"/run.slurm.bash "${SJOB_ID}" "${_run_flag[@]}" "${hydra_flags[@]}";
+      bash "${DNA_LIB_EXEC_PATH:?err}"/run.slurm.bash "${DNA_SJOB_NAME}" "${_run_flag[@]}" "${hydra_flags[@]}";
     } | tee "$_tmp_output"
 
   fi

@@ -14,7 +14,7 @@
 #   $ bash slurm_job.dryrun.bash [<any-dna-argument>]
 #
 # =================================================================================================
-declare -x SJOB_ID
+declare -x DNA_SJOB_NAME
 declare -a dna_run_slurm_flags=()
 declare -a hydra_flags=()
 
@@ -28,7 +28,7 @@ function dna::job_setup_callback() {
 # ....Custom teardown (optional)...................................................................
 function dna::job_teardown_callback() {
   local exit_code=$?
-  # TODO: Add any instruction that should be executed after 'dna run slurm' exit.
+  # Add any instruction that should be executed after 'dna run slurm' exit.
 
   # Note: Command 'dna run slurm' already handle stoping the container in case the slurm command
   #  `scancel` is issued.
@@ -36,13 +36,11 @@ function dna::job_teardown_callback() {
 }
 
 # ....Set job name.................................................................................
-# TODO: Set SJOB_ID
-SJOB_ID="default"
+DNA_SJOB_NAME="dryrun"
 # Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an SJOB_ID.
+#  and use its issue ID as an DNA_SJOB_NAME.
 
 # ....Hydra app module.............................................................................
-# TODO: Set python module to launch
 hydra_flags+=("launcher/example_app_hparm_optim.py")
 # Note: assume container workdir is `<super-project>/src/`
 
@@ -66,10 +64,10 @@ dna_run_slurm_flags+=("--hydra-dry-run")
 dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
 dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
 dna_run_slurm_flags+=("$@")
-export SJOB_ID
+export DNA_SJOB_NAME
 dna::job_setup_callback
 trap dna::job_teardown_callback EXIT
 
 # ====Launch slurm job=============================================================================
-dna run slurm "${SJOB_ID:?err}" "${dna_run_slurm_flags[@]}" "${hydra_flags[@]}"
+dna run slurm "${DNA_SJOB_NAME:?err}" "${dna_run_slurm_flags[@]}" "${hydra_flags[@]}"
 

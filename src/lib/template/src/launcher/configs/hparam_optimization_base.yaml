@@ -12,7 +12,7 @@ defaults:
 
 
 hparam_optimizer:
-  sjob_id: ???
+  dna_sjob_name: ???
   objectives_name: ??? # Take value type str or List[str]
   sweep_optimizer_dryrun: false
   db_path_pre: sqlite:///
@@ -26,6 +26,6 @@ hydra:
   mode: MULTIRUN
   sweeper:
     direction: ??? # str or list with value [minimize|maximize]
-    study_name: ${experiment_name}_${hparam_optimizer.sjob_id}_${now:%Y.%m.%d}_${now:%H%M%S}
+    study_name: ${experiment_name}_${hparam_optimizer.dna_sjob_name}_${now:%Y.%m.%d}_${now:%H%M%S}
     storage: ${hparam_optimizer.db_path_pre}${hparam_optimizer.db_path}
     n_jobs: 1 # Number of parallel workers
