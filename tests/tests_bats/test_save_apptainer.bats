@@ -150,7 +150,17 @@ setup() {
       "image")
         case "$2" in
           "save")
-            touch "$4"
+            # Parse --output argument regardless of flag order (e.g. --platform may precede --output)
+            local _output_file=""
+            local _i
+            for (( _i=3; _i<=$#; _i++ )); do
+              if [[ "${!_i}" == "--output" ]]; then
+                local _next=$(( _i + 1 ))
+                _output_file="${!_next}"
+                break
+              fi
+            done
+            [[ -n "${_output_file}" ]] && touch "${_output_file}"
             echo "Mock docker image save: $*"
             return 0 ;;
           *) echo "Mock docker image: $*"; return 0 ;;
@@ -159,6 +169,18 @@ setup() {
     esac
   }
   export -f docker
+
+  function gzip() {
+    echo "Mock gzip called with args: $*"
+    # Simulate gzip behaviour: rename the file with .gz extension
+    for arg in "$@"; do
+      if [[ "${arg}" != -* && -f "${arg}" ]]; then
+        mv "${arg}" "${arg}.gz"
+      fi
+    done
+    return 0
+  }
+  export -f gzip
 
   function git() {
     case "$1" in
@@ -221,12 +243,33 @@ teardown_file() {
 
 # ====Tests: --apptainer slurm save================================================================
 
-@test "dna::save_command --apptainer valeria slurm › expect success and creates tar" {
+@test "dna::save_command --apptainer valeria slurm › expect success and creates compressed tar.gz" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
     dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
   "
   assert_success
+  assert_output --partial "Compressing tar archive"
+  assert_output --partial "Mock gzip called with args:"
+}
+
+@test "dna::save_command --apptainer valeria slurm › uses --platform linux/amd64 for docker image save" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  assert_success
+  assert_output --partial "Mock docker image save: image save --platform linux/amd64"
+}
+
+@test "dna::save_command --apptainer valeria slurm with APPTAINER_TARGET_PLATFORM set › uses custom platform for docker image save" {
+  run bash -c "
+    export APPTAINER_TARGET_PLATFORM='linux/arm64'
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  assert_success
+  assert_output --partial "Mock docker image save: image save --platform linux/arm64"
 }
 
 @test "dna::save_command --apptainer valeria slurm › creates dna_tar_to_apptainer_sif_converter.sh" {
@@ -257,6 +300,16 @@ teardown_file() {
   run find "${MOCK_SAVE_DIR}" -name "meta.txt" -exec grep "SIF_BUILD_CMD" {} \;
   assert_success
   assert_output --partial "apptainer build"
+}
+
+@test "dna::save_command --apptainer valeria slurm › metadata TAR_FILENAME references .tar.gz archive" {
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  run find "${MOCK_SAVE_DIR}" -name "meta.txt" -exec grep "TAR_FILENAME" {} \;
+  assert_success
+  assert_output --partial ".tar.gz"
 }
 
 @test "dna::save_command --apptainer valeria slurm › metadata contains linux/amd64 platform" {

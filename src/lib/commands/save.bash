@@ -175,24 +175,30 @@ function dna::save_command() {
 
     # Save Docker image
     n2st::print_msg "Saving Docker image: ${image_name}"
-    docker image save --output "${save_dir_path}/${tar_filename}" "${image_name}" || {
+    local platform_flag=()
+    if [[ -n "${apptainer_profile}" ]]; then
+        platform_flag=("--platform" "${APPTAINER_TARGET_PLATFORM:-linux/amd64}")
+    fi
+    docker image save "${platform_flag[@]}" --output "${save_dir_path}/${tar_filename}" "${image_name}" || {
         n2st::print_msg_error "Failed to save Docker image: ${image_name}"
         return 1
     }
 
-    # Create meta.txt file
-    n2st::print_msg "Creating metadata file"
-    dna::create_save_metadata "${save_dir_path}/meta.txt" "${service}" "${tar_filename}" "${timestamp}" "${apptainer_profile}" || {
-        n2st::print_msg_error "Failed to create metadata file"
-        return 1
-    }
-
     # Generate Apptainer artifacts if requested
+    local tar_gz_filename=""
     if [[ -n "${apptainer_profile}" ]]; then
         dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
+
+        tar_gz_filename="${tar_filename}.gz"
+        n2st::print_msg "Compressing tar archive: ${tar_gz_filename}"
+        gzip -9 "${save_dir_path}/${tar_filename}" || {
+            n2st::print_msg_error "Failed to compress tar archive"
+            return 1
+        }
+
         local sif_name="${DN_PROJECT_IMAGE_NAME}-${service}.sif"
         dna::generate_apptainer_build_sif_script \
-            "${tar_filename}" \
+            "${tar_gz_filename}" \
             "${sif_name}" \
             "${save_dir_path}" || {
             n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"
@@ -200,6 +206,13 @@ function dna::save_command() {
         }
         n2st::print_msg_done "Apptainer dna_tar_to_apptainer_sif_converter.sh generated in: ${save_dir_path}"
     fi
+
+    # Create meta.txt file
+    n2st::print_msg "Creating metadata file"
+    dna::create_save_metadata "${save_dir_path}/meta.txt" "${service}" "${tar_gz_filename:-${tar_filename}}" "${timestamp}" "${apptainer_profile}" || {
+        n2st::print_msg_error "Failed to create metadata file"
+        return 1
+    }
 
     # For deploy service, copy project structure
     if [[ "${service}" == "deploy" ]]; then
@@ -210,8 +223,9 @@ function dna::save_command() {
     fi
 
     # Sanity check
-    if [[ ! -f "${save_dir_path}/${tar_filename}" ]]; then
-        n2st::print_msg_error "Docker image archive file ${MSG_DIMMED_FORMAT}${tar_filename}${MSG_END_FORMAT} not found in ${MSG_DIMMED_FORMAT}${save_dir_path}${MSG_END_FORMAT}"
+    local expected_archive="${tar_gz_filename:-${tar_filename}}"
+    if [[ ! -f "${save_dir_path}/${expected_archive}" ]]; then
+        n2st::print_msg_error "Docker image archive file ${MSG_DIMMED_FORMAT}${expected_archive}${MSG_END_FORMAT} not found in ${MSG_DIMMED_FORMAT}${save_dir_path}${MSG_END_FORMAT}"
         return 1
     fi
 

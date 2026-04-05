@@ -423,6 +423,7 @@ ${MSG_END_FORMAT}
         }
 
         local tar_filename="${DN_PROJECT_IMAGE_NAME:?err}-slurm.${PROJECT_TAG:?err}.tar"
+        local tar_gz_filename="${tar_filename}.gz"
         local sif_name="${DN_PROJECT_IMAGE_NAME}-slurm.sif"
         local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG}"
 
@@ -435,13 +436,19 @@ ${MSG_END_FORMAT}
         fi
 
         n2st::print_msg "Saving Docker image as tar archive (linux/amd64 compatible): ${tar_filename}"
-        docker image save --output "${apptainer_save_dir}/${tar_filename}" "${image_name}" || {
+        docker image save --platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}" --output "${apptainer_save_dir}/${tar_filename}" "${image_name}" || {
             n2st::print_msg_error "Failed to save Docker image tar archive"
             return 1
         }
 
+        n2st::print_msg "Compressing tar archive: ${tar_gz_filename}"
+        gzip -9 "${apptainer_save_dir}/${tar_filename}" || {
+            n2st::print_msg_error "Failed to compress tar archive"
+            return 1
+        }
+
         dna::generate_apptainer_build_sif_script \
-            "${tar_filename}" \
+            "${tar_gz_filename}" \
             "${sif_name}" \
             "${apptainer_save_dir}" || {
             n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"

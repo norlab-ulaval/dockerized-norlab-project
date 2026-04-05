@@ -274,9 +274,21 @@ function docker() {
   esac
 }
 
+# ....Mock gzip command............................................................................
+function gzip() {
+  echo "Mock gzip called with args: $*"
+  # Simulate gzip behaviour: rename the file with .gz extension
+  for arg in "$@"; do
+    if [[ "${arg}" != -* && -f "${arg}" ]]; then
+      mv "${arg}" "${arg}.gz"
+    fi
+  done
+  return 0
+}
+
 
 # ....Export mock functions........................................................................
-for func in $(compgen -A function | grep -e dna:: -e n2st:: -e docker -e command); do
+for func in $(compgen -A function | grep -e dna:: -e n2st:: -e docker -e command -e gzip); do
   # shellcheck disable=SC2163
   export -f "${func}"
 done
@@ -1090,7 +1102,25 @@ teardown_file() {
   assert_success
   assert_output --partial "Generating Apptainer artifacts for profile: valeria"
   assert_output --partial "Mock dna::check_apptainer_profile_env_file called with profile: valeria"
+  assert_output --partial "Compressing tar archive"
+  assert_output --partial "Mock gzip called with args:"
   assert_output --partial "Mock dna::generate_apptainer_build_sif_script"
+  assert_output --partial "Mock docker command called with: image save --platform linux/amd64"
+}
+
+@test "dna::build_command slurm --apptainer valeria with APPTAINER_TARGET_PLATFORM set › uses custom platform for docker image save" {
+  run bash -c "
+    export APPTAINER_TARGET_PLATFORM='linux/arm64'
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    mkdir -p '${MOCK_DNA_DIR}/mock_project/artifact/apptainer'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --apptainer valeria
+  "
+  assert_success
+  assert_output --partial "Mock docker command called with: image save --platform linux/arm64"
 }
 
 @test "dna::build_command slurm --apptainer valeria --squash › expect success and calls squash before save" {

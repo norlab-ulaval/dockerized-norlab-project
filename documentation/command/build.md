@@ -32,7 +32,7 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 | `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub (requires Docker Hub authentication) |
 | `--save DIRPATH` | Save built image to specified directory (develop or deploy services only)                                            |
 | `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication)                                  |
-| `--apptainer <profile>` | Build slurm image as `linux/amd64` tar archive and generate `dna_tar_to_apptainer_sif_converter.sh` for HPC Apptainer workflow (slurm service only). Does **not** execute apptainer locally (macOS compatible). |
+| `--apptainer <profile>` | Build slurm image as `linux/amd64` gzip-compressed tar archive (`.tar.gz`) and generate `dna_tar_to_apptainer_sif_converter.sh` for HPC Apptainer workflow (slurm service only). Uses `--platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}"` for `docker image save` to ensure the tar archive targets the correct architecture. Does **not** execute apptainer locally (macOS compatible). |
 | `--squash` | Squash the built image to reduce its size. For `slurm`: squashes before saving tar archive (or in-place without `--apptainer`). For `deploy`/`ci-tests`: squashes image in-place after building. Uses `docker export/import` — **loses image history and metadata**. |
 | `--help`, `-h` | Show help message and exit                                                                                           |
 | `-- <docker-args>` | Pass additional arguments directly to Docker build                                                                   |

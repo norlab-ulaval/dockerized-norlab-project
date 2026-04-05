@@ -124,10 +124,10 @@ Example: DN_PROJECT_USER=jdoe"
 #     └── slurm_jobs/                  ← sbatch scripts
 #
 # Usage:
-#   $ dna::generate_apptainer_build_sif_script "myproject-slurm.latest.tar" "myproject-slurm.sif" "/output/dir"
+#   $ dna::generate_apptainer_build_sif_script "myproject-slurm.latest.tar.gz" "myproject-slurm.sif" "/output/dir"
 #
 # Positional arguments:
-#   tar_filename  - Docker tar archive filename (e.g., 'myproject-slurm.latest.tar')
+#   tar_filename  - Docker tar archive filename (e.g., 'myproject-slurm.latest.tar.gz'; .tar also accepted)
 #   sif_name      - Output SIF filename (e.g., 'myproject-slurm.sif')
 #   output_dir    - Directory where the dna_tar_to_apptainer_sif_converter.sh script will be written
 #
@@ -154,23 +154,52 @@ function dna::generate_apptainer_build_sif_script() {
 #
 # This script:
 #   1. Sets up and validates the expected super-project directory structure on the HPC server.
-#   2. Converts the Docker tar archive to an Apptainer SIF file.
+#   2. Decompresses the gzip-compressed Docker tar archive (.tar.gz → .tar).
+#   3. Converts the Docker tar archive to an Apptainer SIF file.
 #
 # Usage (from the super-project root directory on the HPC server):
-#   $ bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+#   $ bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh [--target-dir <TARGET-DIRECTORY-PATH>]
+#
+# Options:
+#   --target-dir <TARGET-DIRECTORY-PATH>
+#       Optional. Path to the HPC super-project root directory.
+#       When specified, the HPC super-project directory structure will be created under this path,
+#       and the Apptainer SIF file will be output to <TARGET-DIRECTORY-PATH>/artifact/apptainer/.
+#       Defaults to two levels above this script's directory (i.e., the super-project root inferred
+#       from the standard artifact/apptainer/ placement).
 #
 # Requires:
 #   - apptainer installed on the HPC server
-#   - The Docker tar archive in the same directory as this script (artifact/apptainer/)
+#   - The gzip-compressed Docker tar archive (.tar.gz) in the same directory as this script (artifact/apptainer/)
 #
 # =================================================================================================
 set -e
+
+# ====Argument parsing=============================================================================
+TARGET_DIR=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target-dir)
+      if [[ -z "${2:-}" ]]; then
+        echo "[error] --target-dir requires a path argument." 1>&2
+        exit 1
+      fi
+      TARGET_DIR="${2}"
+      shift 2
+      ;;
+    *)
+      echo "[error] Unknown argument: $1" 1>&2
+      echo "Usage: $0 [--target-dir <TARGET-DIRECTORY-PATH>]" 1>&2
+      exit 1
+      ;;
+  esac
+done
 
 # ====Apptainer compatibility======================================================================
 echo "[info] This script requires Apptainer >= 1.1.0 (for --no-eval, --cleanenv, --env-file comment support)." 1>&2
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
+SUPER_PROJECT_ROOT="${TARGET_DIR:-${SUPER_PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}}"
 SCRIPT_EOF
 
   # Inject the tar_filename and sif_name variables (expand at generation time)
@@ -182,7 +211,13 @@ EOF
   cat >> "${script_path}" << 'SCRIPT_EOF'
 
 TAR_FILE="${SCRIPT_DIR}/${TAR_FILENAME}"
-SIF_FILE="${SCRIPT_DIR}/${SIF_FILENAME}"
+# When --target-dir is provided, output the SIF into <target-dir>/artifact/apptainer/
+# otherwise output it alongside this script (default: artifact/apptainer/)
+if [[ -n "${TARGET_DIR}" ]]; then
+  SIF_FILE="${SUPER_PROJECT_ROOT}/artifact/apptainer/${SIF_FILENAME}"
+else
+  SIF_FILE="${SCRIPT_DIR}/${SIF_FILENAME}"
+fi
 
 # ====Setup HPC super-project directory structure=================================================
 echo "[info] Setting up HPC super-project directory structure under: ${SUPER_PROJECT_ROOT}" 1>&2
@@ -210,24 +245,39 @@ done
 
 echo "[info] Directory structure validated." 1>&2
 
+# ====Decompress tar.gz archive if needed=========================================================
+if [[ "${TAR_FILENAME}" == *.gz ]]; then
+  if [[ ! -f "${TAR_FILE}" ]]; then
+    echo "[error] Compressed Docker tar archive not found: ${TAR_FILE}" 1>&2
+    exit 1
+  fi
+  echo "[info] Decompressing tar archive: ${TAR_FILE}" 1>&2
+  gunzip "${TAR_FILE}"
+  # After gunzip, the .tar.gz is replaced by the .tar (strips the .gz extension)
+  DECOMPRESSED_TAR_FILE="${TAR_FILE%.gz}"
+  echo "[info] Decompressed archive: ${DECOMPRESSED_TAR_FILE}" 1>&2
+else
+  DECOMPRESSED_TAR_FILE="${TAR_FILE}"
+fi
+
 # ====Convert tar archive to Apptainer SIF========================================================
-if [[ ! -f "${TAR_FILE}" ]]; then
-  echo "[error] Docker tar archive not found: ${TAR_FILE}" 1>&2
+if [[ ! -f "${DECOMPRESSED_TAR_FILE}" ]]; then
+  echo "[error] Docker tar archive not found: ${DECOMPRESSED_TAR_FILE}" 1>&2
   exit 1
 fi
 
 echo "[info] Building Apptainer SIF from Docker tar archive..." 1>&2
-echo "[info]   Input:  ${TAR_FILE}" 1>&2
+echo "[info]   Input:  ${DECOMPRESSED_TAR_FILE}" 1>&2
 echo "[info]   Output: ${SIF_FILE}" 1>&2
 
-apptainer build "${SIF_FILE}" "docker-archive:${TAR_FILE}"
+apptainer build "${SIF_FILE}" "docker-archive:${DECOMPRESSED_TAR_FILE}"
 
 echo "[done] SIF file created: ${SIF_FILE}" 1>&2
 
-# ====Cleanup: delete the tar archive after successful SIF conversion==============================
-echo "[info] Deleting tar archive to free disk space: ${TAR_FILE}" 1>&2
-rm -f "${TAR_FILE}"
-echo "[done] Tar archive deleted: ${TAR_FILE}" 1>&2
+# ====Cleanup: delete the decompressed tar archive after successful SIF conversion=================
+echo "[info] Deleting decompressed tar archive to free disk space: ${DECOMPRESSED_TAR_FILE}" 1>&2
+rm -f "${DECOMPRESSED_TAR_FILE}"
+echo "[done] Decompressed tar archive deleted: ${DECOMPRESSED_TAR_FILE}" 1>&2
 SCRIPT_EOF
 
   chmod +x "${script_path}"

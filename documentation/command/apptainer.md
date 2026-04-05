@@ -4,8 +4,8 @@ DNA provides a macOS-compatible workflow for deploying slurm jobs on HPC servers
 [Apptainer](https://apptainer.org/) (e.g., Valeria, Compute Canada / Digital Research Alliance of Canada).
 
 > ⚠️ **Apptainer is Linux-only and is NOT supported on macOS.**
-> DNA's role is to **locally build and save** a `linux/amd64` Docker tar archive, which is
-> then transferred to the HPC server where Apptainer converts and runs it.
+> DNA's role is to **locally build, save, and compress** a `linux/amd64` Docker tar archive (`.tar.gz`),
+> which is then transferred to the HPC server where Apptainer decompresses and converts it.
 > DNA **never executes `apptainer` locally**.
 
 ## Overview
@@ -22,7 +22,7 @@ the primary workflow for recurring, configurable jobs.
 
 ```
  [Local]  1. dna build slurm --apptainer <profile>
-             → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
+             → builds Docker image, saves gzip-compressed tar archive (.tar.gz), generates dna_tar_to_apptainer_sif_converter.sh
  [Local]  2. Copy slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash → slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
              → set DNA_SJOB_NAME, python_arguments, and optional callbacks
  [Local]  3. Transfer to HPC (use your preferred method, e.g., rsync, scp, sftp):
@@ -31,7 +31,7 @@ the primary workflow for recurring, configurable jobs.
                data/external_data/, data/repository_data/
                (data/shared_data/ is optional)
  [HPC]    4. bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
-             → sets up project directory structure, converts tar archive to SIF image
+             → sets up project directory structure, decompresses .tar.gz archive, converts tar archive to SIF image
  [HPC]    5. from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
 ```
 
@@ -43,7 +43,7 @@ from the CLI. No SLURM directives or callbacks. Useful for quick one-off runs or
 
 ```
  [Local]  1. dna build slurm --apptainer <profile>
-             → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
+             → builds Docker image, saves gzip-compressed tar archive (.tar.gz), generates dna_tar_to_apptainer_sif_converter.sh
  [Local]  2. dna run slurm <sjob-id> --ga <profile> -- <args>
              → generates artifact/apptainer/run_apptainer_<sjob-id>.sh (does NOT execute)
  [Local]  3. Transfer to HPC (use your preferred method, e.g., rsync, scp, sftp):
@@ -52,7 +52,7 @@ from the CLI. No SLURM directives or callbacks. Useful for quick one-off runs or
                data/external_data/, data/repository_data/
                (data/shared_data/ is optional)
  [HPC]    4. bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
-             → sets up project directory structure, converts tar archive to SIF image
+             → sets up project directory structure, decompresses .tar.gz archive, converts tar archive to SIF image
  [HPC]    5. bash artifact/apptainer/run_apptainer_<sjob-id>.sh
 ```
 
@@ -122,8 +122,8 @@ dna build slurm --apptainer valeria
 
 This:
 - Builds the slurm Docker image
-- Saves it as a `linux/amd64` tar archive to `artifact/apptainer/`
-- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to set up directory structure and convert tar → SIF)
+- Saves it as a `linux/amd64` gzip-compressed tar archive (`.tar.gz`) to `artifact/apptainer/`
+- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to decompress and convert `.tar.gz` → SIF)
 
 > 💡 **Tip: Use `--squash` to reduce tar archive size before transferring to HPC.**
 >
@@ -167,7 +167,21 @@ Transfer the following files/directories to your super-project root on the HPC s
 bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
 ```
 
-This script sets up the expected super-project directory structure, converts the tar archive to a SIF image, and **automatically deletes the tar archive** after the conversion to free disk space.
+This script sets up the expected super-project directory structure, decompresses the `.tar.gz` archive, converts the tar archive to a SIF image, and **automatically deletes the decompressed tar archive** after the conversion to free disk space.
+
+> 💡 **Tip: Use `--target-dir` to specify a custom HPC super-project root.**
+>
+> If you want the HPC super-project directory structure to be created under a different path
+> (e.g., a shared filesystem mount or a non-standard home directory), pass `--target-dir`:
+>
+> ```bash
+> bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh --target-dir /scratch/myproject
+> ```
+>
+> When `--target-dir` is provided:
+> - The HPC super-project directory structure (e.g., `artifact/`, `data/`, `slurm_jobs/`) is created under `<TARGET-DIRECTORY-PATH>`.
+> - The SIF file is output to `<TARGET-DIRECTORY-PATH>/artifact/apptainer/<name>.sif` instead of alongside the script.
+> - Defaults to two levels above this script's location (inferred from the standard `artifact/apptainer/` placement).
 
 ### Step 5 — Submit the slurm job
 
@@ -192,8 +206,8 @@ dna build slurm --apptainer valeria
 
 This:
 - Builds the slurm Docker image
-- Saves it as a `linux/amd64` tar archive to `artifact/apptainer/`
-- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to set up directory structure and convert tar → SIF)
+- Saves it as a `linux/amd64` gzip-compressed tar archive (`.tar.gz`) to `artifact/apptainer/`
+- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to decompress and convert `.tar.gz` → SIF)
 
 > 💡 **Tip: Add `--squash` to reduce tar archive size before transferring to HPC.**
 > See the note in Use Case 1 Step 1 for details.
@@ -229,7 +243,10 @@ Transfer the following files/directories to your super-project root on the HPC s
 bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
 ```
 
-This script sets up the expected super-project directory structure, converts the tar archive to a SIF image, and **automatically deletes the tar archive** after the conversion to free disk space.
+This script sets up the expected super-project directory structure, decompresses the `.tar.gz` archive, converts the tar archive to a SIF image, and **automatically deletes the decompressed tar archive** after the conversion to free disk space.
+
+> 💡 **Tip: Use `--target-dir` to specify a custom HPC super-project root.**
+> See the note in Use Case 1 Step 4 for details.
 
 ### Step 5 — Run the generated script
 
@@ -306,8 +323,18 @@ dna build slurm --apptainer <profile>
 | `--squash` | Squash slurm image layers before saving the tar archive. Reduces transfer size. See [Squashing note](#squash-note). |
 
 Output files in `artifact/apptainer/`:
-- `<project>-slurm.<tag>.tar` — Docker tar archive (Apptainer `docker-archive:` compatible)
-- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: sets up directory structure + `apptainer build <name>.sif docker-archive:<name>.tar` + deletes the tar archive after conversion
+- `<project>-slurm.<tag>.tar.gz` — gzip-compressed Docker tar archive
+- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: sets up directory structure + decompresses `.tar.gz` + `apptainer build <name>.sif docker-archive:<name>.tar` + deletes the decompressed tar after conversion
+
+#### `dna_tar_to_apptainer_sif_converter.sh` Options
+
+```bash
+bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh [--target-dir <TARGET-DIRECTORY-PATH>]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--target-dir <PATH>` | Optional. Path to the HPC super-project root. When set, creates the directory structure under `<PATH>` and outputs the SIF to `<PATH>/artifact/apptainer/`. Defaults to two levels above the script location (i.e., inferred from the standard `artifact/apptainer/` placement). |
 
 ### `dna save --apptainer <profile> DIRPATH slurm`
 
@@ -353,7 +380,7 @@ Profile env files serve a dual purpose:
 | `DN_PROJECT_USER` | Build time | **Required.** HPC server username — baked into the Docker image so the container user matches the Apptainer host user. |
 | `DN_PROJECT_PATH` | Runtime | Path to the project **inside the container** (auto-set by `dna init` from `DN_PROJECT_GIT_NAME`) |
 | `DN_HOST` | Build time | Target platform (`linux/x86`) |
-| `APPTAINER_TARGET_PLATFORM` | Build time | Docker build platform (default: `linux/amd64`). Sets `DOCKER_DEFAULT_PLATFORM` during `dna build slurm --apptainer` to enforce cross-architecture builds on Apple Silicon Macs. |
+| `APPTAINER_TARGET_PLATFORM` | Build time | Docker build/save platform (default: `linux/amd64`). Sets `DOCKER_DEFAULT_PLATFORM` during `dna build slurm --apptainer` to enforce cross-architecture builds on Apple Silicon Macs. Also passed as `--platform` to `docker image save` to ensure the exported tar archive targets the correct architecture. |
 | `APPTAINER_CACHEDIR` | Runtime | Apptainer cache directory on HPC |
 | `APPTAINER_TMPDIR` | Runtime | Apptainer temp directory (set to `$SLURM_TMPDIR` in SBATCH script) |
 
@@ -400,7 +427,7 @@ DNA generates `apptainer exec` commands with the following hardening flags (base
 
 | Docker Compose | Apptainer | Notes |
 |----------------|-----------|-------|
-| `image:` | SIF from `apptainer build ... docker-archive:<tar>` | Built from DNA tar archive |
+| `image:` | SIF from `apptainer build ... docker-archive:<tar>` | Built from DNA `.tar.gz` archive (decompressed by `dna_tar_to_apptainer_sif_converter.sh`) |
 | `volumes:` | `--bind /host:/container[:ro\|:rw]` | Direct mapping |
 | `environment:` | `--env-file` (static) + `--env` (dynamic SLURM) | Two-tier strategy |
 | `runtime: nvidia` | `--nv` | GPU support (remove for CPU-only jobs) |

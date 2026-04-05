@@ -122,7 +122,7 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
       'test-project-slurm.sif' \
       '${output_dir}'
   "
@@ -140,7 +140,7 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
       'test-project-slurm.sif' \
       '${output_dir}'
   "
@@ -160,7 +160,7 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
       'test-project-slurm.sif' \
       '${output_dir}'
   "
@@ -428,7 +428,7 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
       'test-project-slurm.sif' \
       '${output_dir}'
   "
@@ -439,7 +439,7 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh deletes tar archive after SIF conversion" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh deletes decompressed tar archive after SIF conversion" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -447,14 +447,94 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
       'test-project-slurm.sif' \
       '${output_dir}'
   "
 
   run grep "rm -f" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
+  assert_output --partial "DECOMPRESSED_TAR_FILE"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh decompresses tar.gz archive before apptainer build" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run grep "gunzip" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
   assert_output --partial "TAR_FILE"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains --target-dir argument parsing" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run grep "\-\-target-dir" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh uses TARGET_DIR as SIF output directory when --target-dir is provided" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  # The generated script sets SIF_FILE to <target-dir>/artifact/apptainer/<sif> when --target-dir is used
+  run grep "SUPER_PROJECT_ROOT}/artifact/apptainer" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial "SIF_FILE"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh fails when --target-dir is provided without argument" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar.gz' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh" --target-dir
+  assert_failure
+  assert_output --partial "--target-dir requires a path argument"
 
   rm -rf "${output_dir}"
 }
