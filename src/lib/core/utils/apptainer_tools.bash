@@ -223,6 +223,11 @@ echo "[info]   Output: ${SIF_FILE}" 1>&2
 apptainer build "${SIF_FILE}" "docker-archive:${TAR_FILE}"
 
 echo "[done] SIF file created: ${SIF_FILE}" 1>&2
+
+# ====Cleanup: delete the tar archive after successful SIF conversion==============================
+echo "[info] Deleting tar archive to free disk space: ${TAR_FILE}" 1>&2
+rm -f "${TAR_FILE}"
+echo "[done] Tar archive deleted: ${TAR_FILE}" 1>&2
 SCRIPT_EOF
 
   chmod +x "${script_path}"
@@ -421,6 +426,67 @@ EOF
   chmod +x "${script_path}"
   n2st::print_msg_done "Generated: ${script_path}"
   echo "${script_path}"
+  return 0
+}
+
+
+# =================================================================================================
+# Squashes a Docker image by exporting and re-importing to remove intermediate layers.
+#
+# This reduces the tar archive size by collapsing all image layers into a single layer,
+# which is especially useful when transferring the archive to an HPC server for Apptainer.
+#
+# The squash pattern used:
+#   docker export $(docker create <image>) | docker import - <image>-squashed
+#
+# The squashed image replaces the original tag so downstream commands remain transparent.
+#
+# Usage:
+#   $ dna::squash_docker_image "norlabulaval/myproject-slurm:latest"
+#
+# Positional argument:
+#   image_name  - Full Docker image name including tag (e.g., 'hub/name:tag')
+#
+# Returns:
+#   0 on success, 1 on failure
+# =================================================================================================
+function dna::squash_docker_image() {
+  local image_name="${1:?err}"
+  local squashed_tag="${image_name}-squashed"
+
+  n2st::print_msg "Squashing Docker image: ${image_name}"
+  n2st::print_msg "  This reduces image size by collapsing all layers into one (removes intermediate layers)."
+
+  # Create a temporary container from the image (no execution)
+  local container_id
+  container_id=$(docker create "${image_name}") || {
+    n2st::print_msg_error "Failed to create temporary container from: ${image_name}"
+    return 1
+  }
+
+  # Export the container filesystem and import it as a new (squashed) image
+  n2st::print_msg "  Exporting container ${container_id} and importing as squashed image..."
+  docker export "${container_id}" | docker import - "${squashed_tag}" || {
+    docker rm "${container_id}" 2>/dev/null || true
+    n2st::print_msg_error "Failed to squash image: ${image_name}"
+    return 1
+  }
+
+  # Clean up temporary container
+  docker rm "${container_id}" || {
+    n2st::print_msg_warning "Failed to remove temporary container: ${container_id}"
+  }
+
+  # Re-tag the squashed image to replace the original tag
+  docker tag "${squashed_tag}" "${image_name}" || {
+    n2st::print_msg_error "Failed to re-tag squashed image to: ${image_name}"
+    return 1
+  }
+
+  # Remove the intermediate squashed tag
+  docker rmi "${squashed_tag}" 2>/dev/null || true
+
+  n2st::print_msg_done "Image squashed successfully: ${image_name}"
   return 0
 }
 

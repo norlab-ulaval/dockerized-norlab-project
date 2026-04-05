@@ -115,6 +115,35 @@ function dna::save_command() {
 }
 EOF
 
+  # Create mock apptainer_tools.bash
+  cat > "${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash" << 'EOF'
+#!/bin/bash
+function dna::check_apptainer_profile_env_file() {
+  local profile="$1"
+  echo "Mock dna::check_apptainer_profile_env_file called with profile: ${profile}"
+  return 0
+}
+function dna::load_apptainer_profile_env() {
+  local profile="$1"
+  echo "Mock dna::load_apptainer_profile_env called with profile: ${profile}"
+  return 0
+}
+function dna::generate_apptainer_build_sif_script() {
+  echo "Mock dna::generate_apptainer_build_sif_script called with args: $*"
+  return 0
+}
+function dna::squash_docker_image() {
+  local image_name="$1"
+  echo "Mock dna::squash_docker_image called with image: ${image_name}"
+  if [[ "${MOCK_SQUASH_FAIL:-false}" == "true" ]]; then
+    return 1
+  fi
+  return 0
+}
+for func in $(compgen -A function | grep -e dna::); do export -f "${func}"; done
+echo "Mock apptainer_tools.bash loaded"
+EOF
+
   # Create a mock import_dna_lib.bash that sets up the environment
   cat > "${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash" << 'EOF'
 #!/bin/bash
@@ -976,4 +1005,120 @@ teardown_file() {
   assert_output --partial "Mock buildx_builder.bash called with builder: local-builder-multiarch-virtual"
   assert_output --partial "Mock n2st::print_msg_done called with args: New builder local-builder-multiarch-virtual created successfully."
   assert_output --partial "Mock dna::build_project_deploy_service called with args: --multiarch --push"
+}
+
+# ====--apptainer and --squash flag tests==========================================================
+
+@test "dna::build_command with --apptainer without service › expect error" {
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --apptainer valeria"
+  assert_failure
+  assert_output --partial "--apptainer flag can only be used with SERVICE=slurm"
+}
+
+@test "dna::build_command with --apptainer with deploy service › expect error" {
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --apptainer valeria deploy"
+  assert_failure
+  assert_output --partial "--apptainer flag can only be used with SERVICE=slurm"
+}
+
+@test "dna::build_command with --apptainer with develop service › expect error" {
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --apptainer valeria develop"
+  assert_failure
+  assert_output --partial "--apptainer flag can only be used with SERVICE=slurm"
+}
+
+@test "dna::build_command slurm --squash without --apptainer › expect success and squashes slurm image in-place" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --squash
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image: norlabulaval/test-image-slurm:l4t-r36.4.0"
+  assert_output --partial "Image squashed successfully"
+}
+
+@test "dna::build_command with --squash with develop service (no --apptainer) › expect error" {
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command --squash develop"
+  assert_failure
+  assert_output --partial "--squash flag requires"
+}
+
+
+@test "dna::build_command deploy --squash › expect success and squashes deploy image in-place" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command deploy --squash
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image: norlabulaval/test-image-deploy:l4t-r36.4.0"
+  assert_output --partial "Image squashed successfully"
+}
+
+@test "dna::build_command ci-tests --squash › expect success and squashes ci-tests image in-place" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command ci-tests --squash
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image: norlabulaval/test-image-ci-tests:l4t-r36.4.0"
+  assert_output --partial "Image squashed successfully"
+}
+
+
+@test "dna::build_command slurm --apptainer valeria › expect success and calls apptainer artifacts generation" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    mkdir -p '${MOCK_DNA_DIR}/mock_project/artifact/apptainer'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --apptainer valeria
+  "
+  assert_success
+  assert_output --partial "Generating Apptainer artifacts for profile: valeria"
+  assert_output --partial "Mock dna::check_apptainer_profile_env_file called with profile: valeria"
+  assert_output --partial "Mock dna::generate_apptainer_build_sif_script"
+}
+
+@test "dna::build_command slurm --apptainer valeria --squash › expect success and calls squash before save" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    mkdir -p '${MOCK_DNA_DIR}/mock_project/artifact/apptainer'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --apptainer valeria --squash
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image: norlabulaval/test-image-slurm:l4t-r36.4.0"
+  assert_output --partial "Mock dna::generate_apptainer_build_sif_script"
+}
+
+@test "dna::build_command slurm --apptainer valeria --squash when squash fails › expect error" {
+  run bash -c "
+    export MOCK_SQUASH_FAIL=true
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    mkdir -p '${MOCK_DNA_DIR}/mock_project/artifact/apptainer'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --apptainer valeria --squash
+  "
+  assert_failure
+  assert_output --partial "Failed to squash Docker image"
 }

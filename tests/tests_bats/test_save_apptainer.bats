@@ -5,10 +5,11 @@
 # Test cases:
 # - --apptainer flag requires a profile argument
 # - --apptainer flag only valid with SERVICE=slurm
-# - slurm service requires --apptainer flag
+# - slurm service can be saved without --apptainer (produces tar archive only)
 # - save with --apptainer generates dna_tar_to_apptainer_sif_converter.sh
 # - save with --apptainer updates metadata with Apptainer info
 # - save with --apptainer validates profile env file exists
+# - --squash works for slurm/develop/deploy services (with or without --apptainer)
 #
 # =================================================================================================
 bats_path=/usr/lib/bats
@@ -124,6 +125,15 @@ function dna::load_apptainer_profile_env() {
   export DN_PROJECT_USER
   return 0
 }
+function dna::squash_docker_image() {
+  local image_name="$1"
+  echo "MSG: Mock dna::squash_docker_image called with image: ${image_name}"
+  if [[ "${MOCK_SQUASH_FAIL:-false}" == "true" ]]; then
+    echo "ERROR: Mock squash failure" >&2
+    return 1
+  fi
+  return 0
+}
 for func in $(compgen -A function | grep -e dna::); do export -f "${func}"; done
 EOF
 }
@@ -182,28 +192,28 @@ teardown_file() {
   assert_output --partial "profile"
 }
 
-@test "dna::save_command slurm without --apptainer flag › expect error" {
+@test "dna::save_command slurm without --apptainer flag › expect success and saves tar archive only" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
     dna::save_command ${MOCK_SAVE_DIR} slurm
   "
-  assert_failure
-  assert_output --partial "slurm requires the --apptainer"
-}
-
-@test "dna::save_command --apptainer with develop service › expect error" {
-  run bash -c "
-    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
-    dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} develop
-  "
-  assert_failure
-  assert_output --partial "--apptainer flag can only be used with SERVICE=slurm"
+  assert_success
+  assert_output --partial "save slurm image procedure"
 }
 
 @test "dna::save_command --apptainer with deploy service › expect error" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
     dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} deploy
+  "
+  assert_failure
+  assert_output --partial "--apptainer flag can only be used with SERVICE=slurm"
+}
+
+@test "dna::save_command --apptainer with develop service › expect error" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} develop
   "
   assert_failure
   assert_output --partial "--apptainer flag can only be used with SERVICE=slurm"
@@ -266,4 +276,84 @@ teardown_file() {
   "
   assert_failure
   assert_output --partial "not found"
+}
+
+# ====Tests: --squash flag validation==============================================================
+
+@test "dna::save_command --squash slurm without --apptainer › expect success and squashes slurm image" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash ${MOCK_SAVE_DIR} slurm
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image:"
+}
+
+# ====Tests: --squash with --apptainer slurm save=================================================
+
+@test "dna::save_command --squash --apptainer valeria slurm › expect success" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  assert_success
+}
+
+@test "dna::save_command --squash --apptainer valeria slurm › calls dna::squash_docker_image" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image:"
+}
+
+@test "dna::save_command --squash --apptainer valeria slurm › creates dna_tar_to_apptainer_sif_converter.sh" {
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  run find "${MOCK_SAVE_DIR}" -name "dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial "dna_tar_to_apptainer_sif_converter.sh"
+}
+
+@test "dna::save_command --squash --apptainer valeria slurm when squash fails › expect error" {
+  run bash -c "
+    export MOCK_SQUASH_FAIL=true
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  assert_failure
+  assert_output --partial "Failed to squash Docker image"
+}
+
+# ====Tests: --squash with develop/deploy (without --apptainer)===================================
+
+@test "dna::save_command --squash develop › expect success and calls dna::squash_docker_image" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash ${MOCK_SAVE_DIR} develop
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image:"
+}
+
+@test "dna::save_command --squash deploy › expect success and calls dna::squash_docker_image" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash ${MOCK_SAVE_DIR} deploy
+  "
+  assert_success
+  assert_output --partial "Mock dna::squash_docker_image called with image:"
+}
+
+@test "dna::save_command --squash develop when squash fails › expect error" {
+  run bash -c "
+    export MOCK_SQUASH_FAIL=true
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --squash ${MOCK_SAVE_DIR} develop
+  "
+  assert_failure
+  assert_output --partial "Failed to squash Docker image"
 }

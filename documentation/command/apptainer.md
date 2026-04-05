@@ -125,6 +125,20 @@ This:
 - Saves it as a `linux/amd64` tar archive to `artifact/apptainer/`
 - Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to set up directory structure and convert tar → SIF)
 
+> 💡 **Tip: Use `--squash` to reduce tar archive size before transferring to HPC.**
+>
+> ```bash
+> dna build slurm --apptainer valeria --squash
+> ```
+>
+> This collapses all Docker image layers into a single layer before saving the tar archive,
+> which significantly reduces the transfer size. This is especially useful for large images
+> on slow network connections.
+>
+> ⚠️ **Note:** Squashing uses `docker export/import` which **loses image history and metadata**
+> (labels, environment variables embedded in the image manifest). Container runtime behavior
+> is preserved, but the image cannot be used for further incremental builds.
+
 ### Step 2 — Edit the slurm job template
 
 Copy and rename the template, then edit it locally:
@@ -153,7 +167,7 @@ Transfer the following files/directories to your super-project root on the HPC s
 bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
 ```
 
-This script sets up the expected super-project directory structure and converts the tar archive to a SIF image.
+This script sets up the expected super-project directory structure, converts the tar archive to a SIF image, and **automatically deletes the tar archive** after the conversion to free disk space.
 
 ### Step 5 — Submit the slurm job
 
@@ -180,6 +194,9 @@ This:
 - Builds the slurm Docker image
 - Saves it as a `linux/amd64` tar archive to `artifact/apptainer/`
 - Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to set up directory structure and convert tar → SIF)
+
+> 💡 **Tip: Add `--squash` to reduce tar archive size before transferring to HPC.**
+> See the note in Use Case 1 Step 1 for details.
 
 ### Step 2 — Generate the Apptainer run script
 
@@ -212,7 +229,7 @@ Transfer the following files/directories to your super-project root on the HPC s
 bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
 ```
 
-This script sets up the expected super-project directory structure and converts the tar archive to a SIF image.
+This script sets up the expected super-project directory structure, converts the tar archive to a SIF image, and **automatically deletes the tar archive** after the conversion to free disk space.
 
 ### Step 5 — Run the generated script
 
@@ -286,10 +303,11 @@ dna build slurm --apptainer <profile>
 | Option | Description |
 |--------|-------------|
 | `--apptainer <profile>` | Build slurm image and save as `linux/amd64` tar archive. Generates `dna_tar_to_apptainer_sif_converter.sh`. |
+| `--squash` | Squash slurm image layers before saving the tar archive. Reduces transfer size. See [Squashing note](#squash-note). |
 
 Output files in `artifact/apptainer/`:
 - `<project>-slurm.<tag>.tar` — Docker tar archive (Apptainer `docker-archive:` compatible)
-- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: sets up directory structure + `apptainer build <name>.sif docker-archive:<name>.tar`
+- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: sets up directory structure + `apptainer build <name>.sif docker-archive:<name>.tar` + deletes the tar archive after conversion
 
 ### `dna save --apptainer <profile> DIRPATH slurm`
 
@@ -299,13 +317,18 @@ dna save --apptainer <profile> DIRPATH slurm
 
 | Option | Description |
 |--------|-------------|
-| `--apptainer <profile>` | Generate Apptainer artifacts alongside the tar archive |
+| `--apptainer <profile>` | Generate Apptainer artifacts alongside the tar archive. |
+| `--squash` | Squash slurm image before saving the tar archive. Reduces transfer size. See [Squashing note](#squash-note). |
+
+<a name="squash-note"></a>
+> ⚠️ **Squashing note:** `--squash` uses `docker export/import` which **loses image history and metadata**
+> (labels, environment variables embedded in the image manifest). Container runtime behavior
+> is preserved, but the image cannot be used for further incremental builds.
 
 ### `dna run slurm <sjob-id> --generate-apptainer <profile> [OPTIONS] [--] <python-args>`
 
 ```bash
 dna run slurm <sjob-id> --generate-apptainer <profile> [OPTIONS] [--] <python-args>
-dna run slurm <sjob-id> --ga <profile> [OPTIONS] [--] <python-args>
 dna run slurm <sjob-id> --ga <profile> [OPTIONS] [--] <python-args>
 ```
 

@@ -16,16 +16,21 @@ DOCUMENTATION_BUFFER_SAVE=$( cat <<'EOF'
 #                                 <profile> selects .env.<profile> server configuration
 #                                 e.g., dna save --apptainer valeria DIRPATH slurm
 #                                 Note: apptainer is NOT executed locally (macOS compatible)
+#   --squash                      Squash the image before saving to reduce the archive size.
+#                                 For slurm (with or without --apptainer): squashes before saving the tar archive.
+#                                 For develop/deploy: squashes the image in-place before saving.
+#                                 Collapses all image layers into one.
+#                                 Uses docker export/import method (loses image history and metadata).
 #
 # Arguments:
 #   DIRPATH                       Directory path where to save the image
-#   SERVICE                       Service to save (develop, deploy, or slurm with --apptainer)
+#   SERVICE                       Service to save (develop, deploy, or slurm)
 #
 # Notes:
 #   - Creates a portable archive containing the Docker image and necessary files
 #   - For deploy service: includes full project structure for self-contained deployment
 #   - For develop service: includes only the Docker image (assumes project is cloned on target)
-#   - For slurm + --apptainer: saves tar archive and generates dna_tar_to_apptainer_sif_converter.sh for HPC conversion
+#   - For slurm: saves tar archive; add --apptainer to also generate dna_tar_to_apptainer_sif_converter.sh for HPC conversion
 #   - Output directory follows pattern: dna-save-<SERVICE>-<REPO_NAME>-<timestamp>
 #
 # =================================================================================================
@@ -46,6 +51,7 @@ function dna::save_command() {
     local dirpath=""
     local service=""
     local apptainer_profile=""
+    local squash_image=false
     local original_command="$*"
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL2}"
     local line_style="${MSG_LINE_STYLE_LVL2}"
@@ -64,6 +70,10 @@ function dna::save_command() {
                 fi
                 apptainer_profile="$2"
                 shift 2
+                ;;
+            --squash)
+                squash_image=true
+                shift
                 ;;
             develop|deploy|slurm)
                 # If service is already set, it's an error
@@ -102,18 +112,18 @@ function dna::save_command() {
         return 1
     fi
 
-    if [[ -z "${apptainer_profile}" && "${service}" == "slurm" ]]; then
-        dna::illegal_command_msg "save" "${original_command}" "SERVICE=slurm requires the --apptainer <profile> flag.\n"
-        return 1
-    fi
-
     if [[ "${service}" != "develop" && "${service}" != "deploy" && "${service}" != "slurm" ]]; then
-        dna::illegal_command_msg "save" "${original_command}" "Invalid SERVICE: ${service}. Valid services are: develop, deploy, slurm (with --apptainer).\n"
+        dna::illegal_command_msg "save" "${original_command}" "Invalid SERVICE: ${service}. Valid services are: develop, deploy, slurm.\n"
         return 1
     fi
 
     if [[ -n "${apptainer_profile}" && "${service}" != "slurm" ]]; then
         dna::illegal_command_msg "save" "${original_command}" "The --apptainer flag can only be used with SERVICE=slurm.\n"
+        return 1
+    fi
+
+    if [[ "${squash_image}" == true && -z "${apptainer_profile}" && "${service}" != "develop" && "${service}" != "deploy" && "${service}" != "slurm" ]]; then
+        dna::illegal_command_msg "save" "${original_command}" "The ${MSG_DIMMED_FORMAT}--squash${MSG_END_FORMAT} flag requires SERVICE=slurm, develop, or deploy (or use --apptainer <profile> with slurm).\n"
         return 1
     fi
 
@@ -127,6 +137,8 @@ function dna::save_command() {
         # Enforce target platform for cross-architecture save (e.g., arm64 Mac → amd64 HPC)
         export DOCKER_DEFAULT_PLATFORM="${APPTAINER_TARGET_PLATFORM:-linux/amd64}"
         n2st::print_msg "Enforcing save platform: ${DOCKER_DEFAULT_PLATFORM} (from profile: ${apptainer_profile})"
+    elif [[ "${squash_image}" == true ]]; then
+        source "${DNA_LIB_PATH}/core/utils/apptainer_tools.bash" || return 1
     fi
 
     # ....Validate dirpath.........................................................................
@@ -153,6 +165,14 @@ function dna::save_command() {
         return 1
     }
 
+    # Squash image if requested (reduces tar archive size for HPC transfer)
+    if [[ "${squash_image}" == true ]]; then
+        dna::squash_docker_image "${image_name}" || {
+            n2st::print_msg_error "Failed to squash Docker image"
+            return 1
+        }
+    fi
+
     # Save Docker image
     n2st::print_msg "Saving Docker image: ${image_name}"
     docker image save --output "${save_dir_path}/${tar_filename}" "${image_name}" || {
@@ -170,7 +190,7 @@ function dna::save_command() {
     # Generate Apptainer artifacts if requested
     if [[ -n "${apptainer_profile}" ]]; then
         dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
-        local sif_name="${DN_PROJECT_IMAGE_NAME}-slurm.sif"
+        local sif_name="${DN_PROJECT_IMAGE_NAME}-${service}.sif"
         dna::generate_apptainer_build_sif_script \
             "${tar_filename}" \
             "${sif_name}" \

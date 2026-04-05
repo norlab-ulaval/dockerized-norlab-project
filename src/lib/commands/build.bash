@@ -21,6 +21,12 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #                                  <profile> selects .env.<profile> server configuration
 #                                  e.g., dna build slurm --apptainer valeria
 #                                  Note: apptainer is NOT executed locally (macOS compatible)
+#   --squash                      Squash the built image to reduce its size.
+#                                  For slurm (with or without --apptainer): squashes the slurm image
+#                                  before saving the tar archive (or in-place without --apptainer).
+#                                  For deploy/ci-tests: squashes the image in-place after building.
+#                                  Collapses all image layers into one.
+#                                  Uses docker export/import method (loses image history and metadata).
 #   --help, -h                    Show this help message
 #
 #
@@ -105,6 +111,7 @@ function dna::build_command() {
     local push_deploy=false
     local save_dirpath=""
     local apptainer_profile=""
+    local squash_image=false
     local remaining_args=()
     local original_command="$*"
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
@@ -145,6 +152,10 @@ function dna::build_command() {
                 fi
                 apptainer_profile="$2"
                 shift 2
+                ;;
+            --squash)
+                squash_image=true
+                shift
                 ;;
             --help|-h)
                 dna::command_help_menu "${DOCUMENTATION_BUFFER_BUILD:?err}"
@@ -275,6 +286,13 @@ ${MSG_END_FORMAT}
       fi
     fi
 
+    if [[ "${squash_image}" == true ]]; then
+      if [[ -z "${apptainer_profile}" && "${service}" != "deploy" && "${service}" != "ci-tests" && "${service}" != "slurm" ]]; then
+        dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--squash${MSG_END_FORMAT} flag requires SERVICE=slurm, deploy, or ci-tests (or use --apptainer <profile> with slurm).\n"
+        return 1
+      fi
+    fi
+
     # ....Load dependencies........................................................................
     source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
@@ -287,6 +305,8 @@ ${MSG_END_FORMAT}
       # Enforce target platform for cross-architecture build (e.g., arm64 Mac → amd64 HPC)
       export DOCKER_DEFAULT_PLATFORM="${APPTAINER_TARGET_PLATFORM:-linux/amd64}"
       n2st::print_msg "Enforcing build platform: ${DOCKER_DEFAULT_PLATFORM} (from profile: ${apptainer_profile})"
+    elif [[ "${squash_image}" == true ]]; then
+      source "${DNA_LIB_PATH}/core/utils/apptainer_tools.bash" || return 1
     fi
 
     # ....Docker Hub login check..................................................................
@@ -366,6 +386,17 @@ ${MSG_END_FORMAT}
       fi
     fi
 
+    # ....Post-build squash if requested (slurm/deploy/ci-tests without --apptainer)...........
+    if [[ "${squash_image}" == true && -z "${apptainer_profile}" && $fct_exit_code -eq 0 ]]; then
+        local squash_image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-${service}:${PROJECT_TAG:?err}"
+        n2st::print_msg "Squashing ${service} image: ${squash_image_name}"
+        dna::squash_docker_image "${squash_image_name}" || {
+            n2st::print_msg_error "Failed to squash Docker image"
+            return 1
+        }
+        n2st::print_msg_done "Image squashed successfully: ${squash_image_name}"
+    fi
+
     # ....Post-build save if requested.............................................................
     if [[ -n "${save_dirpath}" && $fct_exit_code -eq 0 ]]; then
         n2st::print_msg "Executing save command as requested"
@@ -394,6 +425,14 @@ ${MSG_END_FORMAT}
         local tar_filename="${DN_PROJECT_IMAGE_NAME:?err}-slurm.${PROJECT_TAG:?err}.tar"
         local sif_name="${DN_PROJECT_IMAGE_NAME}-slurm.sif"
         local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG}"
+
+        # Squash image if requested (reduces tar archive size for HPC transfer)
+        if [[ "${squash_image}" == true ]]; then
+            dna::squash_docker_image "${image_name}" || {
+                n2st::print_msg_error "Failed to squash Docker image"
+                return 1
+            }
+        fi
 
         n2st::print_msg "Saving Docker image as tar archive (linux/amd64 compatible): ${tar_filename}"
         docker image save --output "${apptainer_save_dir}/${tar_filename}" "${image_name}" || {

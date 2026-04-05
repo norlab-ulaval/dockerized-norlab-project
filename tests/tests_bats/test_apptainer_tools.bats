@@ -13,6 +13,7 @@
 #       All functions only GENERATE scripts/commands — they never execute apptainer locally.
 #
 # =================================================================================================
+bats_require_minimum_version 1.5.0
 bats_path=/usr/lib/bats
 error_prefix="[\033[1;31mN2ST ERROR\033[0m]"
 if [[ -d ${bats_path} ]]; then
@@ -438,6 +439,26 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh deletes tar archive after SIF conversion" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run grep "rm -f" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial "TAR_FILE"
+
+  rm -rf "${output_dir}"
+}
+
 # ====Tests: dna::print_apptainer_exec_command====================================================
 
 @test "dna::print_apptainer_exec_command › output starts with apptainer exec" {
@@ -570,4 +591,151 @@ teardown_file() {
   "
   assert_failure
   assert_output --partial "DN_PROJECT_USER is not configured"
+}
+
+# ====Tests: dna::squash_docker_image=============================================================
+
+@test "dna::squash_docker_image with valid image › expect success and calls docker create/export/import/tag" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+
+    # Mock docker commands for squash workflow
+    function docker() {
+      case \"\$1\" in
+        create)
+          echo 'mock-container-id-abc123'
+          return 0 ;;
+        export)
+          # Simulate producing tar stream to stdout
+          echo 'mock-tar-stream'
+          return 0 ;;
+        import)
+          echo 'sha256:mocksquashedimagesha'
+          return 0 ;;
+        tag)
+          echo \"Mock docker tag: \$*\"
+          return 0 ;;
+        rm)
+          echo \"Mock docker rm: \$*\"
+          return 0 ;;
+        rmi)
+          echo \"Mock docker rmi: \$*\"
+          return 0 ;;
+        *)
+          echo \"Mock docker: \$*\"
+          return 0 ;;
+      esac
+    }
+    export -f docker
+
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_success
+  assert_output --partial "Squashing Docker image"
+  assert_output --partial "squashed successfully"
+}
+
+@test "dna::squash_docker_image › docker create failure causes function to return error" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+
+    function docker() {
+      case \"\$1\" in
+        create)
+          echo 'ERROR: No such image' >&2
+          return 1 ;;
+        *)
+          echo \"Mock docker: \$*\"
+          return 0 ;;
+      esac
+    }
+    export -f docker
+
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_failure
+  assert_output --partial "Failed to create temporary container"
+}
+
+@test "dna::squash_docker_image › docker import failure causes function to return error and cleans up container" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+
+    function docker() {
+      case \"\$1\" in
+        create)
+          echo 'mock-container-id-abc123'
+          return 0 ;;
+        export)
+          echo 'mock-tar-stream'
+          return 0 ;;
+        import)
+          echo 'ERROR: import failed' >&2
+          return 1 ;;
+        rm)
+          echo \"Mock docker rm: \$*\"
+          return 0 ;;
+        *)
+          echo \"Mock docker: \$*\"
+          return 0 ;;
+      esac
+    }
+    export -f docker
+
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_failure
+  assert_output --partial "Failed to squash image"
+}
+
+@test "dna::squash_docker_image › docker tag failure causes function to return error" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+
+    function docker() {
+      case \"\$1\" in
+        create)
+          echo 'mock-container-id-abc123'
+          return 0 ;;
+        export)
+          echo 'mock-tar-stream'
+          return 0 ;;
+        import)
+          echo 'sha256:mocksquashedimagesha'
+          return 0 ;;
+        rm)
+          echo \"Mock docker rm: \$*\"
+          return 0 ;;
+        tag)
+          echo 'ERROR: tag failed' >&2
+          return 1 ;;
+        rmi)
+          return 0 ;;
+        *)
+          echo \"Mock docker: \$*\"
+          return 0 ;;
+      esac
+    }
+    export -f docker
+
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_failure
+  assert_output --partial "Failed to re-tag squashed image"
+}
+
+@test "dna::squash_docker_image › missing image argument causes error" {
+  run -127 bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image
+  "
 }

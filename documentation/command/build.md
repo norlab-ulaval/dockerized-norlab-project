@@ -32,6 +32,8 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 | `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub (requires Docker Hub authentication) |
 | `--save DIRPATH` | Save built image to specified directory (develop or deploy services only)                                            |
 | `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication)                                  |
+| `--apptainer <profile>` | Build slurm image as `linux/amd64` tar archive and generate `dna_tar_to_apptainer_sif_converter.sh` for HPC Apptainer workflow (slurm service only). Does **not** execute apptainer locally (macOS compatible). |
+| `--squash` | Squash the built image to reduce its size. For `slurm`: squashes before saving tar archive (or in-place without `--apptainer`). For `deploy`/`ci-tests`: squashes image in-place after building. Uses `docker export/import` — **loses image history and metadata**. |
 | `--help`, `-h` | Show help message and exit                                                                                           |
 | `-- <docker-args>` | Pass additional arguments directly to Docker build                                                                   |
 
@@ -93,6 +95,25 @@ dna build ci-tests
 ```bash
 # Build images for SLURM cluster execution
 dna build slurm
+
+# Build slurm image and generate Apptainer artifacts for HPC (Valeria)
+dna build slurm --apptainer valeria
+
+# Build and squash slurm image before saving to HPC (reduces transfer size)
+dna build slurm --apptainer valeria --squash
+
+# Build slurm image and squash in-place (no Apptainer artifacts)
+dna build slurm --squash
+```
+
+### Squash Image to Reduce Size
+
+```bash
+# Squash deploy image in-place after build
+dna build deploy --squash
+
+# Squash ci-tests image in-place after build
+dna build ci-tests --squash
 ```
 
 ### Pass Docker Arguments
@@ -199,6 +220,7 @@ docker system prune -a
 - [dna up](up.md) - Start built containers
 - [dna save](save.md) - Save images for offline use
 - [dna load](load.md) - Load saved images
+- [Apptainer / HPC Workflow](apptainer.md) - Complete guide for HPC/Apptainer deployment
 - [Docker Buildx documentation](https://docs.docker.com/buildx/)
 
 ## Navigation
