@@ -16,10 +16,17 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   --save DIRPATH                Save built image to directory (develop or deploy services only)
 #   --push                        Push image to Dockerhub (deploy services only,
 #                                  requires Docker Hub authentication)
-#   --apptainer <profile>         Build linux/amd64 tar archive and generate dna_tar_to_apptainer_sif_converter.sh helper
-#                                  for HPC Apptainer workflow (slurm service only).
-#                                  <profile> selects .env.<profile> server configuration
-#                                  e.g., dna build slurm --apptainer valeria
+#   --apptainer <profile>         HPC Apptainer workflow for slurm service only.
+#                                  <profile> selects .env.<profile> server configuration.
+#                                  Must be combined with --save or --push:
+#                                    --apptainer <profile> --save  : tar archive pipeline
+#                                      Saves slurm image as linux/amd64 .tar archive and generates
+#                                      dna_tar_to_apptainer_sif_converter.sh helper script for HPC.
+#                                    --apptainer <profile> --push  : registry push pipeline
+#                                      Pushes slurm image to Docker registry and generates
+#                                      dna_registry_to_apptainer_sif_converter.sh helper script for HPC.
+#                                  e.g., dna build slurm --apptainer valeria --save
+#                                        dna build slurm --apptainer valeria --push
 #                                  Note: apptainer is NOT executed locally (macOS compatible)
 #   --squash                      Squash the built image to reduce its size.
 #                                  For slurm (with or without --apptainer): squashes the slurm image
@@ -111,6 +118,7 @@ function dna::build_command() {
     local push_deploy=false
     local save_dirpath=""
     local apptainer_profile=""
+    local apptainer_pipeline=""  # "save" or "push" — required when --apptainer is set
     local squash_image=false
     local remaining_args=()
     local original_command="$*"
@@ -135,15 +143,25 @@ function dna::build_command() {
                 ;;
             --push)
                 push_deploy=true
+                # When --apptainer is already set, --push selects the registry pipeline
+                if [[ -n "${apptainer_profile}" ]]; then
+                    apptainer_pipeline="push"
+                fi
                 shift
                 ;;
             --save)
-                if [[ -z "$2" ]]; then
-                    dna::illegal_command_msg "build" "${original_command}" "The --save flag requires a DIRPATH argument.\n"
-                    return 1
+                # When --apptainer is already set, --save (no DIRPATH) selects the tar pipeline
+                if [[ -n "${apptainer_profile}" ]]; then
+                    apptainer_pipeline="save"
+                    shift
+                else
+                    if [[ -z "$2" ]]; then
+                        dna::illegal_command_msg "build" "${original_command}" "The --save flag requires a DIRPATH argument (or use with --apptainer for slurm tar pipeline).\n"
+                        return 1
+                    fi
+                    save_dirpath="$2"
+                    shift 2
                 fi
-                save_dirpath="$2"
-                shift 2
                 ;;
             --apptainer)
                 if [[ -z "$2" ]]; then
@@ -262,9 +280,15 @@ ${MSG_END_FORMAT}
     n2st::norlab_splash "${DNA_SPLASH_NAME_SMALL}" "${DNA_GIT_REMOTE_URL}" "small"
     n2st::print_formated_script_header "${header_footer_name}" "${line_format}" "${line_style}"
 
+    # ....Post-CLI flag resolution.................................................................
+    # Handle the case where --push was parsed before --apptainer (arg order independent)
+    if [[ -n "${apptainer_profile}" && "${push_deploy}" == true && -z "${apptainer_pipeline}" ]]; then
+        apptainer_pipeline="push"
+    fi
+
     # ....Flag check...............................................................................
-    if [[ "${service}" != "deploy" ]] && [[ "${push_deploy}" == true ]]; then
-      dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} flag can only be used with SERVICE=deploy.\n"
+    if [[ "${service}" != "deploy" ]] && [[ "${push_deploy}" == true ]] && [[ -z "${apptainer_profile}" ]]; then
+      dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} flag can only be used with SERVICE=deploy (or with --apptainer <profile> for the registry pipeline).\n"
       return 1
     fi
 
@@ -282,6 +306,12 @@ ${MSG_END_FORMAT}
     if [[ -n "${apptainer_profile}" ]]; then
       if [[ "${service}" != "slurm" ]]; then
         dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--apptainer${MSG_END_FORMAT} flag can only be used with SERVICE=slurm.\n"
+        return 1
+      fi
+      if [[ -z "${apptainer_pipeline}" ]]; then
+        dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--apptainer${MSG_END_FORMAT} flag requires either ${MSG_DIMMED_FORMAT}--save${MSG_END_FORMAT} (tar archive pipeline) or ${MSG_DIMMED_FORMAT}--push${MSG_END_FORMAT} (registry pipeline).
+  e.g.: dna build slurm --apptainer ${apptainer_profile} --save
+        dna build slurm --apptainer ${apptainer_profile} --push\n"
         return 1
       fi
     fi
@@ -326,6 +356,13 @@ ${MSG_END_FORMAT}
         dockerhub_login_required=true
         login_hub_check_flag="deploy --push"
         n2st::print_msg "Deploy push mode detected (${login_hub_check_flag} flag)"
+    fi
+
+    # Check if slurm with --apptainer --push is used (requires Docker Hub access for pushing)
+    if [[ "${service}" == "slurm" && "${apptainer_pipeline}" == "push" ]]; then
+        dockerhub_login_required=true
+        login_hub_check_flag="slurm --apptainer --push"
+        n2st::print_msg "Slurm apptainer registry push pipeline detected (${login_hub_check_flag} flag)"
     fi
 
     # Perform Docker Hub login check if required
@@ -412,21 +449,19 @@ ${MSG_END_FORMAT}
 
     # ....Post-build apptainer artifacts if requested..............................................
     if [[ -n "${apptainer_profile}" && $fct_exit_code -eq 0 ]]; then
-        n2st::print_msg "Generating Apptainer artifacts for profile: ${apptainer_profile}"
+        n2st::print_msg "Generating Apptainer artifacts for profile: ${apptainer_profile} (pipeline: ${apptainer_pipeline})"
         dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
 
-        # Save slurm image as linux/amd64 tar archive
         local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer"
         mkdir -p "${apptainer_save_dir}" || {
             n2st::print_msg_error "Failed to create apptainer artifact directory: ${apptainer_save_dir}"
             return 1
         }
 
-        local tar_filename="${DN_PROJECT_IMAGE_NAME:?err}-slurm.${PROJECT_TAG:?err}.tar"
-        local sif_name="${DN_PROJECT_IMAGE_NAME}-slurm.sif"
-        local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG}"
+        local sif_name="${DN_PROJECT_IMAGE_NAME:?err}-slurm.sif"
+        local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}"
 
-        # Squash image if requested (reduces tar archive size for HPC transfer)
+        # Squash image if requested (reduces size before save/push)
         if [[ "${squash_image}" == true ]]; then
             dna::squash_docker_image "${image_name}" || {
                 n2st::print_msg_error "Failed to squash Docker image"
@@ -434,25 +469,61 @@ ${MSG_END_FORMAT}
             }
         fi
 
-        n2st::print_msg "Saving Docker image as tar archive (linux/amd64 compatible): ${tar_filename}"
-        docker image save --platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}" --output "${apptainer_save_dir}/${tar_filename}" "${image_name}" || {
-            n2st::print_msg_error "Failed to save Docker image tar archive"
-            return 1
-        }
+        if [[ "${apptainer_pipeline}" == "save" ]]; then
+            # ....Save pipeline: save tar archive + generate dna_tar_to_apptainer_sif_converter.sh.
+            local tar_filename="${DN_PROJECT_IMAGE_NAME}-slurm.${PROJECT_TAG}.tar"
 
-        dna::generate_apptainer_build_sif_script \
-            "${tar_filename}" \
-            "${sif_name}" \
-            "${apptainer_save_dir}" || {
-            n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"
-            return 1
-        }
+            n2st::print_msg "Saving Docker image as tar archive (platform: ${APPTAINER_TARGET_PLATFORM:-linux/amd64}): ${tar_filename}"
+            docker image save --platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}" --output "${apptainer_save_dir}/${tar_filename}" "${image_name}" || {
+                n2st::print_msg_error "Failed to save Docker image tar archive"
+                return 1
+            }
 
-        n2st::print_msg_done "Apptainer artifacts saved to: ${apptainer_save_dir}"
-        n2st::print_msg "Next steps:
+            dna::generate_apptainer_build_sif_script \
+                "${tar_filename}" \
+                "${sif_name}" \
+                "${apptainer_save_dir}" \
+                "${apptainer_profile}" || {
+                n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"
+                return 1
+            }
+
+            local generated_script="${apptainer_save_dir}/dna_tar_to_apptainer_sif_converter.sh"
+
+            n2st::print_msg_done "Apptainer artifacts saved to: ${apptainer_save_dir}"
+
+            n2st::print_msg "Next steps:
   1. Transfer to HPC: artifact/apptainer/ (use your preferred method, e.g., rsync, scp, sftp)
   2. Build SIF on HPC: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
   3. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
+
+        elif [[ "${apptainer_pipeline}" == "push" ]]; then
+            # ....Push pipeline: push to Docker registry + generate dna_registry_to_apptainer_sif_converter.sh.
+            n2st::print_msg "Pushing slurm image to Docker registry: ${image_name}"
+            docker push "${image_name}" || {
+                n2st::print_msg_error "Failed to push Docker image to registry: ${image_name}"
+                return 1
+            }
+            n2st::print_msg_done "Slurm image pushed to registry: ${image_name}"
+
+            dna::generate_registry_to_apptainer_sif_script \
+                "${image_name}" \
+                "${sif_name}" \
+                "${apptainer_save_dir}" \
+                "${apptainer_profile}" || {
+                n2st::print_msg_error "Failed to generate dna_registry_to_apptainer_sif_converter.sh"
+                return 1
+            }
+
+            local generated_script="${apptainer_save_dir}/dna_registry_to_apptainer_sif_converter.sh"
+
+            n2st::print_msg_done "Apptainer registry converter script saved to: ${apptainer_save_dir}"
+
+            n2st::print_msg "Next steps:
+  1. Transfer script to HPC: artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+  2. Build SIF on HPC: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+  3. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
+        fi
     fi
 
     # ....Teardown.................................................................................

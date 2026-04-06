@@ -31,9 +31,10 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 | `--rmab` | Create/re-create a docker buildx multiarch builder instance                                                          |
 | `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub (requires Docker Hub authentication) |
 | `--save DIRPATH` | Save built image to specified directory (develop or deploy services only)                                            |
-| `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication)                                  |
-| `--apptainer <profile>` | Build slurm image as `linux/amd64` tar archive (`.tar`) and generate `dna_tar_to_apptainer_sif_converter.sh` for HPC Apptainer workflow (slurm service only). Uses `--platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}"` for `docker image save` to ensure the tar archive targets the correct architecture. Does **not** execute apptainer locally (macOS compatible). |
-| `--squash` | Squash the built image to reduce its size. For `slurm`: squashes before saving tar archive (or in-place without `--apptainer`). For `deploy`/`ci-tests`: squashes image in-place after building. Uses `docker export/import` — **loses image history and metadata**. |
+| `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication). For slurm with `--apptainer`, selects the registry push pipeline (see `--apptainer`). |
+| `--apptainer <profile>` | HPC Apptainer workflow for slurm service only. **Requires `--save` or `--push`:** `--save` selects the tar archive pipeline (saves `.tar`, generates `dna_tar_to_apptainer_sif_converter.sh`); `--push` selects the registry pipeline (pushes to Docker registry, generates `dna_registry_to_apptainer_sif_converter.sh`). Does **not** execute apptainer locally (macOS compatible). See [Apptainer documentation](apptainer.md). |
+| `--save` | When used with `--apptainer <profile>`, selects the tar archive pipeline (no `DIRPATH` needed). When used for `develop`/`deploy` services (without `--apptainer`), saves the built image to the specified `DIRPATH`. |
+| `--squash` | Squash the built image to reduce its size. For `slurm` (with or without `--apptainer`): squashes before saving tar archive, pushing to registry, or in-place. For `deploy`/`ci-tests`: squashes image in-place after building. Uses `docker export/import` — **loses image history and metadata**. |
 | `--help`, `-h` | Show help message and exit                                                                                           |
 | `-- <docker-args>` | Pass additional arguments directly to Docker build                                                                   |
 
@@ -96,11 +97,17 @@ dna build ci-tests
 # Build images for SLURM cluster execution
 dna build slurm
 
-# Build slurm image and generate Apptainer artifacts for HPC (Valeria)
-dna build slurm --apptainer valeria
+# Build slurm image and save as tar archive for HPC Apptainer workflow (Valeria) — tar archive pipeline
+dna build slurm --apptainer valeria --save
 
-# Build and squash slurm image before saving to HPC (reduces transfer size)
-dna build slurm --apptainer valeria --squash
+# Build slurm image and push to Docker registry for HPC Apptainer workflow — registry push pipeline
+dna build slurm --apptainer valeria --push
+
+# Build and squash slurm image before saving (reduces transfer size)
+dna build slurm --apptainer valeria --save --squash
+
+# Build, push to registry, and squash before push
+dna build slurm --apptainer valeria --push --squash
 
 # Build slurm image and squash in-place (no Apptainer artifacts)
 dna build slurm --squash

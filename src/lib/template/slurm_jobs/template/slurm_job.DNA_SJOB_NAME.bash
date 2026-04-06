@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
-#SBATCH --time=7-00:00
+#SBATCH --time=0-24:00
 #SBATCH --output=out/%x-%j.out
 
 

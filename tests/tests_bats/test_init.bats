@@ -504,8 +504,6 @@ teardown_file() {
   assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" "dockerized-norlab-project-mock-empty"
   assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
   assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" "dockerized-norlab-project-mock-empty"
-  assert_file_not_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash" "PLACEHOLDER_DN_PROJECT_IMAGE_NAME"
-  assert_file_contains "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash" "dockerized-norlab-project-mock-empty"
 }
 
 @test "dna::init_command tests for file/directory creation › expect required files/directories created" {

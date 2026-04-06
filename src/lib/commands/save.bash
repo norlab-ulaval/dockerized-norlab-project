@@ -192,7 +192,8 @@ function dna::save_command() {
         dna::generate_apptainer_build_sif_script \
             "${tar_filename}" \
             "${sif_name}" \
-            "${save_dir_path}" || {
+            "${save_dir_path}" \
+            "${apptainer_profile}" || {
             n2st::print_msg_error "Failed to generate dna_tar_to_apptainer_sif_converter.sh"
             return 1
         }

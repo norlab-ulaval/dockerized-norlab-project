@@ -4,14 +4,24 @@ DNA provides a macOS-compatible workflow for deploying slurm jobs on HPC servers
 [Apptainer](https://apptainer.org/) (e.g., Valeria, Compute Canada / Digital Research Alliance of Canada).
 
 > ⚠️ **Apptainer is Linux-only and is NOT supported on macOS.**
-> DNA's role is to **locally build and save** a `linux/amd64` Docker tar archive (`.tar`),
-> which is then transferred to the HPC server where Apptainer converts it.
+> DNA's role is to **locally build** the slurm Docker image and then either:
+> - **Save** it as a `linux/amd64` Docker tar archive (`.tar`) to be transferred to the HPC server, OR
+> - **Push** it to a Docker registry from which the HPC server can pull it.
 > DNA **never executes `apptainer` locally**.
 
 ## Overview
 
 DNA supports two distinct use cases for running Apptainer slurm jobs on an HPC server.
 Both share the same build step and HPC profile configuration, but differ in how the job is submitted.
+
+In both use cases, `dna build slurm --apptainer <profile>` requires choosing a **pipeline** via
+`--save` (tar archive) or `--push` (Docker registry):
+
+| Pipeline flag | What it does |
+|---|---|
+| `--save` | Saves the slurm image as a `.tar` archive and generates `dna_tar_to_apptainer_sif_converter.sh` |
+| `--push` | Pushes the slurm image to a Docker registry and generates `dna_registry_to_apptainer_sif_converter.sh` |
+
 
 ### Use Case 1 — SBATCH Template Workflow
 
@@ -20,8 +30,9 @@ from `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash` adde
 copy directly (set `DNA_SJOB_NAME`, `python_arguments`, callbacks) and submit it with `sbatch`. This is
 the primary workflow for recurring, configurable jobs.
 
+**Tar archive pipeline (`--save`):**
 ```
- [Local]  1. dna build slurm --apptainer <profile>
+ [Local]  1. dna build slurm --apptainer <profile> --save
              → builds Docker image, saves linux/amd64 tar archive (.tar), generates dna_tar_to_apptainer_sif_converter.sh
  [Local]  2. Copy slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash → slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
              → set DNA_SJOB_NAME, python_arguments, and optional callbacks
@@ -35,14 +46,27 @@ the primary workflow for recurring, configurable jobs.
  [HPC]    5. from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
 ```
 
+**Registry push pipeline (`--push`):**
+```
+ [Local]  1. dna build slurm --apptainer <profile> --push
+             → builds Docker image, pushes to Docker registry (requires authentication),
+               generates dna_registry_to_apptainer_sif_converter.sh
+ [Local]  2. Copy and edit slurm job template (same as above)
+ [HPC]    3. Transfer dna_registry_to_apptainer_sif_converter.sh to HPC
+ [HPC]    4. bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+             → sets up project directory structure, pulls image from registry, converts to SIF
+ [HPC]    5. from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash
+```
+
 ### Use Case 2 — Generated Script Workflow
 
 Generate a standalone run script locally via `dna run slurm <sjob-id> --ga <profile> -- <args>`,
 transfer it, and run it directly on the HPC server. Python arguments are pre-baked into the script
 from the CLI. No SLURM directives or callbacks. Useful for quick one-off runs or CI pipelines.
 
+**Tar archive pipeline (`--save`):**
 ```
- [Local]  1. dna build slurm --apptainer <profile>
+ [Local]  1. dna build slurm --apptainer <profile> --save
              → builds Docker image, saves linux/amd64 tar archive (.tar), generates dna_tar_to_apptainer_sif_converter.sh
  [Local]  2. dna run slurm <sjob-id> --ga <profile> -- <args>
              → generates artifact/apptainer/run_apptainer_<sjob-id>.sh (does NOT execute)
@@ -53,6 +77,17 @@ from the CLI. No SLURM directives or callbacks. Useful for quick one-off runs or
                (data/shared_data/ is optional)
  [HPC]    4. bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
              → sets up project directory structure, converts tar archive to SIF image
+ [HPC]    5. bash artifact/apptainer/run_apptainer_<sjob-id>.sh
+```
+
+**Registry push pipeline (`--push`):**
+```
+ [Local]  1. dna build slurm --apptainer <profile> --push
+             → builds Docker image, pushes to registry, generates dna_registry_to_apptainer_sif_converter.sh
+ [Local]  2. dna run slurm <sjob-id> --ga <profile> -- <args>
+             → generates artifact/apptainer/run_apptainer_<sjob-id>.sh (does NOT execute)
+ [HPC]    3. Transfer scripts to HPC
+ [HPC]    4. bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
  [HPC]    5. bash artifact/apptainer/run_apptainer_<sjob-id>.sh
 ```
 
@@ -116,28 +151,49 @@ setup/teardown callbacks directly in the script.
 
 ### Step 1 — Build locally (cross-platform for HPC target)
 
+**Tar archive pipeline (`--save`):**
 ```bash
-dna build slurm --apptainer valeria
+dna build slurm --apptainer valeria --save
+```
+
+This:
+- Builds the slurm Docker image targeting `linux/amd64` (from `APPTAINER_TARGET_PLATFORM` in profile)
+- Saves it as a `linux/amd64` tar archive (`.tar`) to `artifact/apptainer/`
+- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to convert `.tar` → SIF)
+
+**Registry push pipeline (`--push`):**
+```bash
+dna build slurm --apptainer valeria --push
 ```
 
 This:
 - Builds the slurm Docker image
-- Saves it as a `linux/amd64` tar archive (`.tar`) to `artifact/apptainer/`
-- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to convert `.tar` → SIF)
+- Pushes it to the Docker registry (requires Docker Hub authentication: `docker login`)
+- Generates `artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh` (run on HPC to pull from registry → SIF)
 
-> 💡 **Tip: Use `--squash` to reduce tar archive size before transferring to HPC.**
+> 💡 **Tip: Use `--squash` to reduce image size before saving/pushing.**
 >
 > ```bash
-> dna build slurm --apptainer valeria --squash
+> dna build slurm --apptainer valeria --save --squash
+> dna build slurm --apptainer valeria --push --squash
 > ```
 >
-> This collapses all Docker image layers into a single layer before saving the tar archive,
-> which significantly reduces the transfer size. This is especially useful for large images
-> on slow network connections.
+> This collapses all Docker image layers into a single layer, reducing tar archive or registry push size.
 >
 > ⚠️ **Note:** Squashing uses `docker export/import` which **loses image history and metadata**
 > (labels, environment variables embedded in the image manifest). Container runtime behavior
 > is preserved, but the image cannot be used for further incremental builds.
+
+> 💡 **Tip: Use `--docker-login` when authenticating with the push pipeline on the HPC server.**
+>
+> When running `dna_registry_to_apptainer_sif_converter.sh` on the HPC server for a private
+> registry image, pass `--docker-login` to authenticate interactively:
+>
+> ```bash
+> bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh --docker-login
+> ```
+>
+> Apptainer will prompt for your credentials once and cache them for the session.
 
 ### Step 2 — Edit the slurm job template
 
@@ -206,17 +262,7 @@ HPC server. No `#SBATCH` directives or callbacks. Useful for quick one-off runs 
 
 ### Step 1 — Build locally (cross-platform for HPC target)
 
-```bash
-dna build slurm --apptainer valeria
-```
-
-This:
-- Builds the slurm Docker image
-- Saves it as a `linux/amd64` tar archive (`.tar`) to `artifact/apptainer/`
-- Generates `artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh` (run on HPC to convert `.tar` → SIF)
-
-> 💡 **Tip: Add `--squash` to reduce tar archive size before transferring to HPC.**
-> See the note in Use Case 1 Step 1 for details.
+Same as Use Case 1 Step 1 — choose the `--save` or `--push` pipeline. See that section for details.
 
 ### Step 2 — Generate the Apptainer run script
 
@@ -289,9 +335,9 @@ HPC Profile Dotenv (.env.<profile>)
 **Location (in super project):** `.dockerized_norlab/configuration/hpc_server_profile/.env.<profile>`
 
 Configuration files that define HPC-server-specific environment variables (`DN_PROJECT_USER`,
-`DN_PROJECT_PATH`, `APPTAINER_CACHEDIR`, etc.). Used **twice**: locally by DNA at build time
-(to bake `DN_PROJECT_USER` into the Docker image) and on the HPC server at runtime (sourced
-by both the slurm job templates and generated run scripts).
+`DN_PROJECT_PATH`, etc.). Used **twice**: locally by DNA at build time (to bake `DN_PROJECT_USER`
+into the Docker image) and on the HPC server at runtime (sourced by both the slurm job templates
+and generated run scripts).
 
 ### 2. Slurm Job Scripts (user-editable sbatch scripts)
 
@@ -323,20 +369,29 @@ one-off runs or CI pipelines.
 
 ## CLI Reference
 
-### `dna build slurm --apptainer <profile>`
+### `dna build slurm --apptainer <profile> --save|--push`
 
 ```bash
-dna build slurm --apptainer <profile>
+# Tar archive pipeline (--save):
+dna build slurm --apptainer <profile> --save [--squash]
+
+# Registry push pipeline (--push) — requires Docker Hub authentication:
+dna build slurm --apptainer <profile> --push [--squash]
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--apptainer <profile>` | Build slurm image and save as `linux/amd64` tar archive. Generates `dna_tar_to_apptainer_sif_converter.sh`. |
-| `--squash` | Squash slurm image layers before saving the tar archive. Reduces transfer size. See [Squashing note](#squash-note). |
+| `--apptainer <profile>` | **Required.** HPC Apptainer workflow for slurm service. Must be combined with `--save` or `--push`. |
+| `--save` | Tar archive pipeline: saves slurm image as `linux/amd64` `.tar` archive to `artifact/apptainer/`. Generates `dna_tar_to_apptainer_sif_converter.sh`. |
+| `--push` | Registry pipeline: pushes slurm image to Docker registry. Generates `dna_registry_to_apptainer_sif_converter.sh`. Requires `docker login`. |
+| `--squash` | Squash slurm image layers before saving/pushing. Reduces size. See [Squashing note](#squash-note). |
 
-Output files in `artifact/apptainer/`:
+**`--save` pipeline output files in `artifact/apptainer/`:**
 - `<project>-slurm.<tag>.tar` — Docker tar archive
-- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: sets up directory structure + `module load apptainer` + `apptainer build <name>.sif docker-archive:<name>.tar` + deletes the tar after successful conversion (preserved on failure)
+- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC
+
+**`--push` pipeline output files in `artifact/apptainer/`:**
+- `dna_registry_to_apptainer_sif_converter.sh` — Helper script to run on HPC (pulls from registry)
 
 #### `dna_tar_to_apptainer_sif_converter.sh` Options
 
@@ -348,15 +403,30 @@ bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh [--target-dir <TAR
 |--------|-------------|
 | `--target-dir <PATH>` | Optional. Path to the HPC super-project root. When set, creates the directory structure under `<PATH>` and outputs the SIF to `<PATH>/artifact/apptainer/`. Defaults to two levels above the script location (i.e., inferred from the standard `artifact/apptainer/` placement). |
 
-### `dna save --apptainer <profile> DIRPATH slurm`
+This script: sets up the HPC super-project directory structure + conditionally runs `module load apptainer` + `apptainer build <name>.sif docker-archive:<name>.tar` + deletes the tar after successful conversion (preserved on failure).
+
+#### `dna_registry_to_apptainer_sif_converter.sh` Options
 
 ```bash
-dna save --apptainer <profile> DIRPATH slurm
+bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh [OPTIONS]
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--apptainer <profile>` | Generate Apptainer artifacts alongside the tar archive. |
+| `--target-dir <PATH>` | Optional. Path to the HPC super-project root. When set, creates directory structure under `<PATH>` and outputs the SIF to `<PATH>/artifact/apptainer/`. |
+| `--docker-login` | Optional. Authenticate interactively with docker.io before pulling. Apptainer prompts for credentials once. Use this for private registry images. |
+
+This script: sets up the HPC super-project directory structure + conditionally runs `module load apptainer` + optionally authenticates via `--docker-login` + `apptainer pull docker://<image>` to create the SIF file.
+
+### `dna save --apptainer <profile> DIRPATH slurm`
+
+```bash
+dna save --apptainer <profile> DIRPATH slurm [--squash]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--apptainer <profile>` | Generate Apptainer tar archive artifacts alongside the saved image. |
 | `--squash` | Squash slurm image before saving the tar archive. Reduces transfer size. See [Squashing note](#squash-note). |
 
 <a name="squash-note"></a>
@@ -392,9 +462,17 @@ Profile env files serve a dual purpose:
 | `DN_PROJECT_USER` | Build time | **Required.** HPC server username — baked into the Docker image so the container user matches the Apptainer host user. |
 | `DN_PROJECT_PATH` | Runtime | Path to the project **inside the container** (auto-set by `dna init` from `DN_PROJECT_GIT_NAME`) |
 | `DN_HOST` | Build time | Target platform (`linux/x86`) |
-| `APPTAINER_TARGET_PLATFORM` | Build time | Docker build/save platform (default: `linux/amd64`). Sets `DOCKER_DEFAULT_PLATFORM` during `dna build slurm --apptainer` to enforce cross-architecture builds on Apple Silicon Macs. Also passed as `--platform` to `docker image save` to ensure the exported tar archive targets the correct architecture. |
-| `APPTAINER_CACHEDIR` | Runtime | Apptainer cache directory on HPC |
-| `APPTAINER_TMPDIR` | Runtime | Apptainer temp directory (set to `$SLURM_TMPDIR` in SBATCH script) |
+| `APPTAINER_TARGET_PLATFORM` | Build time | Docker build/save platform (default: `linux/amd64`). Sets `DOCKER_DEFAULT_PLATFORM` during `dna build slurm --apptainer` to enforce cross-architecture builds on Apple Silicon Macs. Also passed as `--platform` to `docker image save` (for `--save` pipeline) to ensure the exported tar archive targets the correct architecture. |
+
+> **Note (Valeria profile):** `APPTAINER_CACHEDIR` and `APPTAINER_TMPDIR` are **not** set in
+> `.env.valeria`. Instead, the generated converter scripts (`dna_tar_to_apptainer_sif_converter.sh`
+> and `dna_registry_to_apptainer_sif_converter.sh`) and the slurm job template for Valeria
+> (`slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash`) use Valeria's `val-mktemp-dir` utility to
+> allocate local scratch directories at runtime:
+> ```bash
+> export APPTAINER_CACHEDIR="$( val-mktemp-dir )"
+> export APPTAINER_TMPDIR="$( val-mktemp-dir )"
+> ```
 
 ## Slurm Job Templates
 
@@ -406,7 +484,6 @@ Copy and rename to `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bas
 | `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash` | `valeria` | Valeria HPC standalone job |
 | `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash` | `compute_canada` | Compute Canada standalone job |
 | `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash` | `mamba` | Mamba HPC standalone job (Apptainer workflow) |
-| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash` | any | Hydra-based standalone job |
 
 All templates are **standalone** — they do not require DNA on the HPC server.
 They source the same HPC profile dotenv file (`.env.<profile>`) as the `--ga` generated scripts

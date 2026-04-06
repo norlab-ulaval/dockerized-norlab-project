@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
-#SBATCH --time=7-00:00
+#SBATCH --time=0-24:00
 #SBATCH --output=out/%x-%j.out
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
 # =================================================================================================
@@ -62,6 +62,14 @@ DNA_SJOB_NAME="default"
 # TODO: Set python module to launch
 python_arguments+=("launcher/example.py")
 # Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.mamba: DN_PROJECT_PATH)
+
+# ....Optional hydra flags.........................................................................
+# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
+# --config-name,-cn : Overrides the config_name specified in hydra.main()
+# --config-dir,-cd : Adds an additional config dir to the config search path
+#python_arguments+=("--config-path=")
+#python_arguments+=("--config-dir=")
+#python_arguments+=("--config-name=")
 
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"

@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
-#SBATCH --time=7-00:00
+#SBATCH --time=0-24:00
 #SBATCH --output=out/%x-%j.out
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
 # =================================================================================================
@@ -35,7 +35,14 @@ declare -a python_arguments=()
 # ....Custom setup (optional)......................................................................
 function job_setup_callback() {
   # Add any instruction that should be executed before the apptainer exec command
-  :
+  module load apptainer
+
+  # Required for wandb.ai
+  module load httpproxy
+
+  # Required because configurations under profile.d are not available by default for batch jobs
+  # Ref https://doc.s3.valeria.science/fr/calcul/apptainer.html
+  source /etc/profile.d/val-utils.sh
 }
 
 # ....Custom teardown (optional)...................................................................
@@ -56,6 +63,14 @@ DNA_SJOB_NAME="default"
 python_arguments+=("launcher/example.py")
 # Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)
 
+# ....Optional hydra flags.........................................................................
+# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
+# --config-name,-cn : Overrides the config_name specified in hydra.main()
+# --config-dir,-cd : Adds an additional config dir to the config search path
+#python_arguments+=("--config-path=")
+#python_arguments+=("--config-dir=")
+#python_arguments+=("--config-name=")
+
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
@@ -70,9 +85,9 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Valeria
-APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
-export APPTAINER_TMPDIR
+# Set Apptainer cache and tmp dirs using Valeria's val-mktemp-dir for best performance
+export APPTAINER_CACHEDIR="$( val-mktemp-dir )"
+export APPTAINER_TMPDIR="$( val-mktemp-dir )"
 
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then
