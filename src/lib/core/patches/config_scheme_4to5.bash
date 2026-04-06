@@ -23,23 +23,27 @@ hpc_profile_files=(
 for hpc_profile_file in "${hpc_profile_files[@]}"; do
   target_file="${SUPER_PROJECT_ROOT}/${hpc_profile_file}"
   if [[ -f "${target_file}" ]]; then
-    dna::patch_modify_content \
-      "${hpc_profile_file}" \
-      "# ....Apptainer cache configuration" \
-      "" \
-      "Remove 'Apptainer cache configuration' comment from $(basename "${hpc_profile_file}")"
-
-    dna::patch_modify_content \
-      "${hpc_profile_file}" \
-      "APPTAINER_CACHEDIR=" \
-      "" \
-      "Remove APPTAINER_CACHEDIR from $(basename "${hpc_profile_file}")"
-
-    dna::patch_modify_content \
-      "${hpc_profile_file}" \
-      "APPTAINER_TMPDIR=" \
-      "" \
-      "Remove APPTAINER_TMPDIR from $(basename "${hpc_profile_file}")"
+    if grep -qF "APPTAINER_CACHEDIR=" "${target_file}" || grep -qF "APPTAINER_TMPDIR=" "${target_file}"; then
+      n2st::print_msg "Removing 'Apptainer cache configuration' section from $(basename "${target_file}")"
+      dna::patch_prompt_user "Apply modification?"
+      user_input="${REPLY}"
+      if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
+        # Delete entire lines matching any part of the Apptainer cache configuration block.
+        # Using /pattern/d so the full line is removed (not just the matched substring).
+        sed -i.bak \
+          -e '/^# \.\.\.\.Apptainer cache configuration/d' \
+          -e '/^# Apptainer cache and temp directories/d' \
+          -e '/^# Compute Canada recommends storing Apptainer/d' \
+          -e '/^APPTAINER_CACHEDIR=/d' \
+          -e '/^# Note: Set APPTAINER_TMPDIR to/d' \
+          -e '/^APPTAINER_TMPDIR=/d' \
+          "${target_file}"
+        rm -f "${target_file}.bak"
+        added_resources+=("${hpc_profile_file} (content modification)")
+      else
+        n2st::print_msg_warning "Skipping modification for ${hpc_profile_file}. This might cause issues."
+      fi
+    fi
   fi
 done
 unset hpc_profile_files

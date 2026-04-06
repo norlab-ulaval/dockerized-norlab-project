@@ -174,6 +174,31 @@ teardown() {
   done
 }
 
+@test "config_scheme_4to5.bash › should leave no orphaned APPTAINER cache values in HPC profile files" {
+  # Regression test: the old implementation used sed substring replacement which left orphaned
+  # partial content (e.g. '/tmp' or '"${HOME}/.apptainer/cache"') as standalone lines.
+  # The corrected implementation deletes entire matching lines, leaving no orphaned values.
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=5
+  export DNA_CONFIG_SCHEME_VERSION=4
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  for hpc_profile_file in ".env.valeria" ".env.compute_canada" ".env.mamba"; do
+    target_file="${TEST_TEMP_DIR}/.dockerized_norlab/configuration/hpc_server_profile/${hpc_profile_file}"
+    assert_file_exist "${target_file}"
+    # The orphaned value lines must not exist as standalone content after patching
+    run grep '\.apptainer/cache' "${target_file}"
+    assert_failure  # No orphaned APPTAINER_CACHEDIR value should remain
+    run grep '^/tmp$' "${target_file}"
+    assert_failure  # No orphaned APPTAINER_TMPDIR=/tmp value should remain
+    # Also verify the section comment itself is fully gone (not partially mangled)
+    run grep '^\.\.\.\.' "${target_file}"
+    assert_failure  # No orphaned trailing dots from the section header should remain
+  done
+}
+
 @test "config_scheme_4to5.bash › should skip HPC profile files that do not exist" {
   export DNA_RELEASE_CONFIG_SCHEME_VERSION=5
   export DNA_CONFIG_SCHEME_VERSION=4
