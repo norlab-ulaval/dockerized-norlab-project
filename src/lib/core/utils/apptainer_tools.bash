@@ -261,6 +261,10 @@ SCRIPT_EOF
   if [[ "${profile}" == "valeria" ]]; then
     cat >> "${script_path}" << 'SCRIPT_EOF'
 # ====Valeria HPC Apptainer cache configuration====================================================
+# Required because val-mktemp-dir is provided by val-utils.sh which is not available by default
+# for batch jobs. Ref https://doc.s3.valeria.science/fr/calcul/apptainer.html
+# shellcheck source=/dev/null
+source /etc/profile.d/val-utils.sh
 export APPTAINER_CACHEDIR="$( val-mktemp-dir )"
 export APPTAINER_TMPDIR="$( val-mktemp-dir )"
 
@@ -452,6 +456,10 @@ SCRIPT_EOF
   if [[ "${profile}" == "valeria" ]]; then
     cat >> "${script_path}" << 'SCRIPT_EOF'
 # ====Valeria HPC Apptainer cache configuration====================================================
+# Required because val-mktemp-dir is provided by val-utils.sh which is not available by default
+# for batch jobs. Ref https://doc.s3.valeria.science/fr/calcul/apptainer.html
+# shellcheck source=/dev/null
+source /etc/profile.d/val-utils.sh
 export APPTAINER_CACHEDIR="$( val-mktemp-dir )"
 export APPTAINER_TMPDIR="$( val-mktemp-dir )"
 

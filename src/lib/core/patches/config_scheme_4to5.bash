@@ -114,18 +114,22 @@ if [[ -f "${SUPER_PROJECT_ROOT}/${valeria_template}" ]]; then
   source /etc/profile.d/val-utils.sh" \
     "Add module load apptainer/httpproxy and val-utils.sh source to job_setup_callback in valeria template"
 
-  # (3) Add optional hydra flags comment block (after python_arguments launcher line, before HPC server config).
-  dna::patch_add_content_if_missing \
+  # (3) Add optional hydra flags comment block: insert after the Python module Note line, before HPC server config.
+  dna::patch_modify_content \
     "${valeria_template}" \
-    "# ....Optional hydra flags" \
-    '
+    '# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)
+# ....HPC server configuration' \
+    '# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)
+
 # ....Optional hydra flags.........................................................................
 # --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
 # --config-name,-cn : Overrides the config_name specified in hydra.main()
 # --config-dir,-cd : Adds an additional config dir to the config search path
 #python_arguments+=("--config-path=")
 #python_arguments+=("--config-dir=")
-#python_arguments+=("--config-name=")' \
+#python_arguments+=("--config-name=")
+
+# ....HPC server configuration' \
     "Add optional hydra flags comment block to valeria apptainer slurm template"
 fi
 unset valeria_template
@@ -135,17 +139,21 @@ unset valeria_template
 
 compute_canada_template="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash"
 if [[ -f "${SUPER_PROJECT_ROOT}/${compute_canada_template}" ]]; then
-  dna::patch_add_content_if_missing \
+  dna::patch_modify_content \
     "${compute_canada_template}" \
-    "# ....Optional hydra flags" \
-    '
+    '# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.compute_canada: DN_PROJECT_PATH)
+# ....HPC server configuration' \
+    '# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.compute_canada: DN_PROJECT_PATH)
+
 # ....Optional hydra flags.........................................................................
 # --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
 # --config-name,-cn : Overrides the config_name specified in hydra.main()
 # --config-dir,-cd : Adds an additional config dir to the config search path
 #python_arguments+=("--config-path=")
 #python_arguments+=("--config-dir=")
-#python_arguments+=("--config-name=")' \
+#python_arguments+=("--config-name=")
+
+# ....HPC server configuration' \
     "Add optional hydra flags comment block to compute_canada apptainer slurm template"
 fi
 unset compute_canada_template
@@ -155,17 +163,21 @@ unset compute_canada_template
 
 mamba_template="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash"
 if [[ -f "${SUPER_PROJECT_ROOT}/${mamba_template}" ]]; then
-  dna::patch_add_content_if_missing \
+  dna::patch_modify_content \
     "${mamba_template}" \
-    "# ....Optional hydra flags" \
-    '
+    '# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.mamba: DN_PROJECT_PATH)
+# ....HPC server configuration' \
+    '# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.mamba: DN_PROJECT_PATH)
+
 # ....Optional hydra flags.........................................................................
 # --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
 # --config-name,-cn : Overrides the config_name specified in hydra.main()
 # --config-dir,-cd : Adds an additional config dir to the config search path
 #python_arguments+=("--config-path=")
 #python_arguments+=("--config-dir=")
-#python_arguments+=("--config-name=")' \
+#python_arguments+=("--config-name=")
+
+# ....HPC server configuration' \
     "Add optional hydra flags comment block to mamba apptainer slurm template"
 fi
 unset mamba_template

@@ -60,7 +60,7 @@ python_arguments+=("launcher/example.py")
 EOF
   done
 
-  # Pre-create valeria template with old v4 content
+  # Pre-create valeria template with old v4 content (includes Note line required for hydra patch)
   cat > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash" << 'EOF'
 #!/bin/bash
 #SBATCH --time=7-00:00
@@ -69,11 +69,41 @@ function job_setup_callback() {
   # Add any instruction that should be executed before the apptainer exec command
   :
 }
+# ....Python module................................................................................
+# TODO: Set python module to launch
+python_arguments+=("launcher/example.py")
+# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 # Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Valeria
 APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
 export APPTAINER_TMPDIR
+EOF
+
+  # Pre-create compute_canada template with old v4 content (includes Note line required for hydra patch)
+  cat > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" << 'EOF'
+#!/bin/bash
+#SBATCH --time=7-00:00
+#SBATCH --cpus-per-task=4
+# ....Python module................................................................................
+# TODO: Set python module to launch
+python_arguments+=("launcher/example.py")
+# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.compute_canada: DN_PROJECT_PATH)
+# ....HPC server configuration.....................................................................
+SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
+EOF
+
+  # Pre-create mamba template with old v4 content (includes Note line required for hydra patch)
+  cat > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" << 'EOF'
+#!/bin/bash
+#SBATCH --time=7-00:00
+#SBATCH --cpus-per-task=4
+# ....Python module................................................................................
+# TODO: Set python module to launch
+python_arguments+=("launcher/example.py")
+# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.mamba: DN_PROJECT_PATH)
+# ....HPC server configuration.....................................................................
+SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 EOF
 
   # Mock user input to return 'y'
@@ -368,9 +398,13 @@ teardown() {
   export DNA_RELEASE_CONFIG_SCHEME_VERSION=5
   export DNA_CONFIG_SCHEME_VERSION=4
 
-  # Pre-add the hydra flags block to simulate already-patched file
-  echo '# ....Optional hydra flags.........................................................................' \
-    >> "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
+  # Simulate already-patched file: replace the v4 Note line with the v5 content (Note + hydra block + HPC header)
+  # dna::patch_modify_content uses n2st::seek_and_modify_string_in_file which is a no-op when the
+  # search pattern is not found — so running the patch a second time on an already-patched file
+  # won't add a duplicate.
+  sed -i \
+    's|# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)|# Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)\n\n# ....Optional hydra flags.........................................................................\n#python_arguments+=("--config-path=")|' \
+    "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
 
   run dna::patch_check_and_run
 

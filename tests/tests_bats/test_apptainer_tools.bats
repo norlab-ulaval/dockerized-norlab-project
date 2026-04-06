@@ -573,10 +573,11 @@ teardown_file() {
       'valeria'
   "
 
-  run grep "val-mktemp-dir" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run grep -E "val-mktemp-dir|val-utils" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
   assert_output --partial "APPTAINER_CACHEDIR"
   assert_output --partial "APPTAINER_TMPDIR"
+  assert_output --partial "source /etc/profile.d/val-utils.sh"
 
   rm -rf "${output_dir}"
 }
@@ -994,6 +995,7 @@ teardown_file() {
   assert_output --partial 'APPTAINER_CACHEDIR'
   assert_output --partial 'APPTAINER_TMPDIR'
   assert_output --partial 'val-mktemp-dir'
+  assert_output --partial 'source /etc/profile.d/val-utils.sh'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains module load apptainer" {

@@ -11,18 +11,36 @@
 # The apptainer exec command is executed directly using the pre-built SIF file.
 #
 # Workflow:
-#   Local (macOS):
-#     1. Build:    dna build slurm --apptainer valeria
-#                  → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
-#     2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
-#     3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                  artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
-#                  .dockerized_norlab/,
-#                  data/external_data/, data/repository_data/
-#                  (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
-#   On Valeria:
-#     4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
-#     5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
+#   Two pipelines are available. Choose the one that fits your setup:
+#
+#   Pipeline A — tar archive (--save): build image locally, transfer tar, convert to SIF on HPC.
+#     Local (macOS):
+#       1. Build:    dna build slurm --apptainer valeria --save
+#                    → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
+#       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
+#       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
+#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
+#                    .dockerized_norlab/,
+#                    data/external_data/, data/repository_data/
+#                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
+#     On Valeria:
+#       4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+#       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
+#
+#   Pipeline B — registry push (--push): build and push image to a Docker registry, pull on HPC via Apptainer.
+#     Local (macOS):
+#       1. Build:    dna build slurm --apptainer valeria --push
+#                    → builds Docker image, pushes to registry, generates dna_registry_to_apptainer_sif_converter.sh
+#       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
+#       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
+#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
+#                    .dockerized_norlab/,
+#                    data/external_data/, data/repository_data/
+#                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
+#     On Valeria:
+#       4. Build SIF: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+#                    (optionally add --docker-login to authenticate to a private registry)
+#       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
 #
 # Usage:
 #   $ sbatch slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
