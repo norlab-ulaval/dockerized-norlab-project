@@ -2,7 +2,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
 #SBATCH --time=0-24:00
-#SBATCH --output=out/%x-%j.out
+#SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out
 
 
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
@@ -35,11 +35,6 @@ function dna::job_teardown_callback() {
   exit ${exit_code:-1}
 }
 
-# ....Set job name.................................................................................
-# TODO: Set DNA_SJOB_NAME
-DNA_SJOB_NAME="default"
-# Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an DNA_SJOB_NAME.
 
 # ....Hydra app module.............................................................................
 # TODO: Set python module to launch
@@ -65,10 +60,17 @@ dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
 #hydra_flags+=("--cfg" "all")
 
 # ====DNA internal=================================================================================
+# ....Set job name.................................................................................
+# Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
+#  and use its issue ID as the DNA_SJOB_NAME.
+
+# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.hydra_hparam_optim.bash → <name>)
+DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.hydra_hparam_optim\.bash$//' )"
+export DNA_SJOB_NAME
+
 dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
 dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
 dna_run_slurm_flags+=("$@")
-export DNA_SJOB_NAME
 dna::job_setup_callback
 trap dna::job_teardown_callback EXIT
 

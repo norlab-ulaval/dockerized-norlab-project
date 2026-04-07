@@ -2,7 +2,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
 #SBATCH --time=0-24:00
-#SBATCH --output=out/%x-%j.out
+#SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out
 # Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
 # =================================================================================================
 # Execute Apptainer slurm job on Mamba HPC server.
@@ -59,7 +59,7 @@ declare -a python_arguments=()
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
 function job_setup_callback() {
-  # Add any instruction that should be executed before the apptainer exec command
+  # TODO: Add any instruction that should be executed before the apptainer exec command
   :
 }
 
@@ -69,12 +69,6 @@ function job_teardown_callback() {
   # TODO: Add any instruction that should be executed after apptainer exec exits.
   exit "${exit_code:-1}"
 }
-
-# ....Set job name.................................................................................
-# TODO: Set DNA_SJOB_NAME
-DNA_SJOB_NAME="default"
-# Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an DNA_SJOB_NAME.
 
 # ....Python module................................................................................
 # TODO: Set python module to launch
@@ -89,13 +83,19 @@ python_arguments+=("launcher/example.py")
 #python_arguments+=("--config-dir=")
 #python_arguments+=("--config-name=")
 
+# ====DNA internal=================================================================================
+# ....Set job name.................................................................................
+# Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
+#  and use its issue ID as the DNA_SJOB_NAME.
+
+# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.apptainer.mamba.bash → <name>)
+DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.apptainer\.mamba\.bash$//' )"
+export DNA_SJOB_NAME
+
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
 PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba"
-
-# ====DNA internal=================================================================================
-export DNA_SJOB_NAME
 
 # Source HPC-specific env (sets DN_PROJECT_PATH, DN_PROJECT_USER, etc.)
 # shellcheck source=/dev/null
@@ -103,9 +103,26 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Mamba
-APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
-export APPTAINER_TMPDIR
+# ====Load Apptainer module (HPC module system)====================================================
+# Try to load the highest available apptainer version; fallback to default.
+if command -v module &>/dev/null; then
+  _APPTAINER_LATEST_VERSION="$( module spider apptainer 2>&1 | grep -oE 'apptainer/[0-9]+\.[0-9]+\.[0-9]+' | sed 's|apptainer/||' | sort -V | tail -1 )"
+  if [[ -n "${_APPTAINER_LATEST_VERSION}" ]]; then
+    echo "[info] Loading Apptainer module version: ${_APPTAINER_LATEST_VERSION}" 1>&2
+    module load "apptainer/${_APPTAINER_LATEST_VERSION}"
+  else
+    echo "[info] Loading default Apptainer module" 1>&2
+    module load apptainer
+  fi
+fi
+
+# Set APPTAINER_CACHEDIR and APPTAINER_TMPDIR to the local node scratch space.
+# Using SLURM_TMPDIR (fast local SSD allocated per job) avoids writing to network
+# filesystems, which have quota limits and may not support atomic rename required
+# by Apptainer's cache. Falls back to /tmp if SLURM_TMPDIR is not set.
+# Ref: https://apptainer.org/docs/user/latest/build_env.html
+export APPTAINER_CACHEDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp -d )"
+export APPTAINER_TMPDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp -d )"
 
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then

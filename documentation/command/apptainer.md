@@ -537,9 +537,17 @@ Profile env files serve a dual purpose:
 >   **For best results, run the converter scripts via sbatch** (not interactively on the login node)
 >   so that `SLURM_TMPDIR` points to local node scratch.
 >
-> - **Slurm job execution template** (`slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash`):
->   Uses `SLURM_TMPDIR` for `APPTAINER_TMPDIR` during the `apptainer exec` command,
->   consistent with all other HPC profile templates (mamba, compute_canada, valeria).
+> - **Slurm job execution templates** (`slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash`, `slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash`, `slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash`):
+>   All three templates use the same unified mechanism for `APPTAINER_CACHEDIR` and `APPTAINER_TMPDIR`
+>   as the converter and HPC config scripts:
+>   ```bash
+>   export APPTAINER_CACHEDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp -d )"
+>   export APPTAINER_TMPDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp -d )"
+>   ```
+>   This ensures Apptainer's cache (OCI layers, pulled images) is stored on local node scratch and
+>   never lands in the Lustre home directory (quota-limited, no atomic rename). Consistent with
+>   Valeria best practices (https://doc.s3.valeria.science/fr/calcul/apptainer.html#bonnes-pratiques) and
+>   applicable to all three Apptainer HPC profiles (valeria, compute_canada, mamba).
 
 ## Slurm Job Templates
 
@@ -607,8 +615,8 @@ Apptainer SIF files are immutable. Directories needing writes must be bind-mount
 
 ### `DN_PROJECT_USER` / User namespace
 Apptainer runs as the calling user (maps host UID/GID). To avoid user mismatch errors,
-`DN_PROJECT_USER` must be set in the HPC profile env file (e.g., `.env.valeria`, `.env.mamba`) to your
-HPC server username **before building**. DNA reads this value at build time and bakes it
+`DN_PROJECT_USER` must be set in the HPC profile env file (e.g., `.env.valeria`, `.env.compute_canada`, `.env.mamba`) to your
+HPC server username **before building** (use command `$ id -un` on hpc server if you are not sure). DNA reads this value at build time and bakes it
 into the Docker image. The `--apptainer <profile>` flag on `dna build slurm` and
 `dna save` automatically sources the profile and validates `DN_PROJECT_USER`.
 
