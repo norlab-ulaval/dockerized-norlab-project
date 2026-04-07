@@ -20,7 +20,8 @@ DOCUMENTATION_BUFFER_SAVE=$( cat <<'EOF'
 #                                 For slurm (with or without --apptainer): squashes before saving the tar archive.
 #                                 For develop/deploy: squashes the image in-place before saving.
 #                                 Collapses all image layers into one.
-#                                 Uses docker export/import method (loses image history and metadata).
+#                                 Preserves ENV, ENTRYPOINT/CMD, WORKDIR, LABEL, USER.
+#                                 Removes intermediate layer history. Requires python3 on host.
 #
 # Arguments:
 #   DIRPATH                       Directory path where to save the image

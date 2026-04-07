@@ -103,9 +103,11 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set Apptainer cache and tmp dirs using Valeria's val-mktemp-dir for best performance
-export APPTAINER_CACHEDIR="$( val-mktemp-dir )"
-export APPTAINER_TMPDIR="$( val-mktemp-dir )"
+# Set APPTAINER_TMPDIR to SLURM_TMPDIR (local node scratch) for best performance on Valeria
+# Note: val-mktemp-dir is only available after job_setup_callback sources val-utils.sh.
+#       SLURM_TMPDIR is the correct variable to use here for job execution context.
+APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
+export APPTAINER_TMPDIR
 
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then

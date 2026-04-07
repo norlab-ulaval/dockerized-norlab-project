@@ -1222,3 +1222,49 @@ teardown_file() {
   run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command slurm --execute"
   assert_failure
 }
+
+# ====--gs-only flag tests=========================================================================
+
+@test "dna::build_command slurm --apptainer valeria --save --gs-only › expect success and skips docker build" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    mkdir -p '${MOCK_DNA_DIR}/mock_project/artifact/apptainer'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --apptainer valeria --save --gs-only
+  "
+  assert_success
+  assert_output --partial "--gs-only flag set: skipping docker build/push/save"
+  assert_output --partial "Mock dna::generate_apptainer_build_sif_script"
+  assert_output --partial "dna_tar_to_apptainer_sif_converter.sh regenerated"
+  # Must NOT call docker build or docker image save
+  refute_output --partial "Mock docker command called with: image save"
+  refute_output --partial "Mock dna::build_services"
+}
+
+@test "dna::build_command slurm --apptainer valeria --push --gs-only › expect success and skips docker build and push" {
+  run bash -c "
+    export SUPER_PROJECT_ROOT='${MOCK_DNA_DIR}/mock_project'
+    export DN_PROJECT_IMAGE_NAME='test-image'
+    export DN_PROJECT_HUB='norlabulaval'
+    export PROJECT_TAG='l4t-r36.4.0'
+    mkdir -p '${MOCK_DNA_DIR}/mock_project/artifact/apptainer'
+    source ${MOCK_DNA_DIR}/src/lib/commands/build.bash
+    dna::build_command slurm --apptainer valeria --push --gs-only
+  "
+  assert_success
+  assert_output --partial "--gs-only flag set: skipping docker build/push/save"
+  assert_output --partial "Mock dna::generate_registry_to_apptainer_sif_script"
+  assert_output --partial "dna_registry_to_apptainer_sif_converter.sh regenerated"
+  # Must NOT call docker push
+  refute_output --partial "Mock docker command called with: push"
+}
+
+@test "dna::build_command --gs-only without --apptainer › expect error" {
+  run bash -c "source ${MOCK_DNA_DIR}/src/lib/commands/build.bash && dna::build_command slurm --gs-only"
+  assert_failure
+  assert_output --partial "--gs-only"
+  assert_output --partial "--apptainer"
+}

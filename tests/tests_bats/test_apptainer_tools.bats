@@ -573,11 +573,37 @@ teardown_file() {
       'valeria'
   "
 
-  run grep -E "val-mktemp-dir|val-utils" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run grep -E "val-mktemp-dir|val-utils|mktemp" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
   assert_output --partial "APPTAINER_CACHEDIR"
   assert_output --partial "APPTAINER_TMPDIR"
   assert_output --partial "source /etc/profile.d/val-utils.sh"
+  assert_output --partial "mktemp -d"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh for non-valeria profile contains mktemp -d cache config" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.sif' \
+      '${output_dir}' \
+      'compute_canada'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial "APPTAINER_CACHEDIR"
+  assert_output --partial "APPTAINER_TMPDIR"
+  assert_output --partial "mktemp -d"
+  # Non-valeria profile must NOT inject the Valeria-specific val-utils.sh source
+  refute_output --partial "source /etc/profile.d/val-utils.sh"
 
   rm -rf "${output_dir}"
 }
@@ -718,33 +744,121 @@ teardown_file() {
 
 # ====Tests: dna::squash_docker_image=============================================================
 
-@test "dna::squash_docker_image with valid image › expect success and calls docker create/export/import/tag" {
+# Helper: standard mock docker for the new inspect+export+import+tag squash pipeline
+_SQUASH_MOCK_DOCKER='
+function docker() {
+  case "$1" in
+    inspect)
+      case "$2" in
+        --format={{json\ .Config.Env}})
+          echo "[\"ROS_DISTRO=humble\",\"WORKDIR=/app\"]" ;;
+        --format={{json\ .Config.Entrypoint}})
+          echo "[\"/entrypoints/dn_entrypoint.init.bash\"]" ;;
+        --format={{json\ .Config.Cmd}})
+          echo "[\"/bin/bash\"]" ;;
+        --format={{.Config.WorkingDir}})
+          echo "/dockerized-norlab/project/src" ;;
+        --format={{.Config.User}})
+          echo "ros" ;;
+        --format={{json\ .Config.Labels}})
+          echo "{\"org.opencontainers.image.authors\":\"test\"}" ;;
+        *) echo "mock-inspect" ;;
+      esac
+      return 0 ;;
+    create) echo "mock-container-id-abc123"; return 0 ;;
+    export) dd if=/dev/zero bs=1 count=1 2>/dev/null; return 0 ;;
+    import) echo "sha256:mockimportedimagesha"; return 0 ;;
+    tag)   echo "Mock docker tag: $*"; return 0 ;;
+    rm)    echo "Mock docker rm: $*"; return 0 ;;
+    rmi)   return 0 ;;
+    *)     echo "Mock docker: $*"; return 0 ;;
+  esac
+}
+export -f docker
+'
+
+@test "dna::squash_docker_image with valid image › expect success and calls docker inspect/create/export/import/tag" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    ${_SQUASH_MOCK_DOCKER}
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_success
+  assert_output --partial "Squashing Docker image"
+  assert_output --partial "squashed successfully"
+}
+
+@test "dna::squash_docker_image › metadata preserved in docker import --change flags" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    ${_SQUASH_MOCK_DOCKER}
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    # DNA_DEBUG=true prints the --change flags to stdout so we can assert their contents
+    DNA_DEBUG=true dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_success
+  assert_output --partial "ENV ROS_DISTRO="
+  assert_output --partial "WORKDIR /dockerized-norlab/project/src"
+  assert_output --partial "USER ros"
+  assert_output --partial "ENTRYPOINT ["
+  assert_output --partial "CMD ["
+  assert_output --partial "LABEL org.opencontainers"
+}
+
+@test "dna::squash_docker_image › null ENTRYPOINT and CMD are omitted from --change flags" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
 
-    # Mock docker commands for squash workflow
     function docker() {
       case \"\$1\" in
-        create)
-          echo 'mock-container-id-abc123'
+        inspect)
+          case \"\$2\" in
+            --format={{json\ .Config.Env}})       echo '[]' ;;
+            --format={{json\ .Config.Entrypoint}}) echo 'null' ;;
+            --format={{json\ .Config.Cmd}})        echo 'null' ;;
+            --format={{.Config.WorkingDir}})       echo '' ;;
+            --format={{.Config.User}})             echo '' ;;
+            --format={{json\ .Config.Labels}})     echo '{}' ;;
+            *) echo 'mock-inspect' ;;
+          esac
           return 0 ;;
-        export)
-          # Simulate producing tar stream to stdout
-          echo 'mock-tar-stream'
-          return 0 ;;
-        import)
-          echo 'sha256:mocksquashedimagesha'
-          return 0 ;;
-        tag)
-          echo \"Mock docker tag: \$*\"
-          return 0 ;;
-        rm)
-          echo \"Mock docker rm: \$*\"
-          return 0 ;;
-        rmi)
-          echo \"Mock docker rmi: \$*\"
-          return 0 ;;
+        create) echo 'mock-container-id'; return 0 ;;
+        export) dd if=/dev/zero bs=1 count=1 2>/dev/null; return 0 ;;
+        import) echo 'sha256:mockimportedimagesha'; return 0 ;;
+        tag) return 0 ;;
+        rm|rmi) return 0 ;;
+        *) return 0 ;;
+      esac
+    }
+    export -f docker
+
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    # DNA_DEBUG=true prints the --change flags to stdout so we can assert their contents
+    DNA_DEBUG=true dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_success
+  # The --change flags for null/empty metadata should NOT be present
+  refute_output --partial "ENTRYPOINT ["
+  refute_output --partial "CMD ["
+  refute_output --partial "LABEL "
+  refute_output --partial "WORKDIR /"
+  refute_output --partial "USER "
+}
+
+@test "dna::squash_docker_image › docker inspect failure causes function to return error" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+
+    function docker() {
+      case \"\$1\" in
+        inspect)
+          echo 'ERROR: No such image' >&2
+          return 1 ;;
         *)
           echo \"Mock docker: \$*\"
           return 0 ;;
@@ -755,9 +869,8 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
   "
-  assert_success
-  assert_output --partial "Squashing Docker image"
-  assert_output --partial "squashed successfully"
+  assert_failure
+  assert_output --partial "Failed to inspect image"
 }
 
 @test "dna::squash_docker_image › docker create failure causes function to return error" {
@@ -767,6 +880,12 @@ teardown_file() {
 
     function docker() {
       case \"\$1\" in
+        inspect)
+          case \"\$2\" in
+            --format={{json\ .Config.Env}}) echo '[]' ;;
+            *) echo 'null' ;;
+          esac
+          return 0 ;;
         create)
           echo 'ERROR: No such image' >&2
           return 1 ;;
@@ -784,21 +903,24 @@ teardown_file() {
   assert_output --partial "Failed to create temporary container"
 }
 
-@test "dna::squash_docker_image › docker import failure causes function to return error and cleans up container" {
+@test "dna::squash_docker_image › docker export failure causes function to return error and cleans up container" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
 
     function docker() {
       case \"\$1\" in
+        inspect)
+          case \"\$2\" in
+            --format={{json\ .Config.Env}}) echo '[]' ;;
+            *) echo 'null' ;;
+          esac
+          return 0 ;;
         create)
           echo 'mock-container-id-abc123'
           return 0 ;;
         export)
-          echo 'mock-tar-stream'
-          return 0 ;;
-        import)
-          echo 'ERROR: import failed' >&2
+          echo 'ERROR: export failed' >&2
           return 1 ;;
         rm)
           echo \"Mock docker rm: \$*\"
@@ -814,36 +936,67 @@ teardown_file() {
     dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
   "
   assert_failure
-  assert_output --partial "Failed to squash image"
+  assert_output --partial "Failed to export container filesystem"
 }
 
-@test "dna::squash_docker_image › docker tag failure causes function to return error" {
+@test "dna::squash_docker_image › docker import failure causes function to return error and cleans up tmp" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
 
     function docker() {
       case \"\$1\" in
+        inspect)
+          case \"\$2\" in
+            --format={{json\ .Config.Env}}) echo '[]' ;;
+            *) echo 'null' ;;
+          esac
+          return 0 ;;
         create)
           echo 'mock-container-id-abc123'
           return 0 ;;
-        export)
-          echo 'mock-tar-stream'
-          return 0 ;;
+        export) dd if=/dev/zero bs=1 count=1 2>/dev/null; return 0 ;;
         import)
-          echo 'sha256:mocksquashedimagesha'
-          return 0 ;;
-        rm)
-          echo \"Mock docker rm: \$*\"
-          return 0 ;;
-        tag)
-          echo 'ERROR: tag failed' >&2
+          echo 'ERROR: import failed' >&2
           return 1 ;;
-        rmi)
-          return 0 ;;
+        rm|rmi) return 0 ;;
         *)
           echo \"Mock docker: \$*\"
           return 0 ;;
+      esac
+    }
+    export -f docker
+
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::squash_docker_image 'norlabulaval/test-project-slurm:l4t-r36.4.0'
+  "
+  assert_failure
+  assert_output --partial "Failed to import squashed image"
+}
+
+@test "dna::squash_docker_image › docker tag failure causes function to return error" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    ${_SQUASH_MOCK_DOCKER}
+
+    function docker() {
+      case \"\$1\" in
+        inspect)
+          case \"\$2\" in
+            --format={{json\ .Config.Env}}) echo '[]' ;;
+            *) echo 'null' ;;
+          esac
+          return 0 ;;
+        create) echo 'mock-container-id-abc123'; return 0 ;;
+        export) dd if=/dev/zero bs=1 count=1 2>/dev/null; return 0 ;;
+        import) echo 'sha256:mockimportedimagesha'; return 0 ;;
+        rm)     echo \"Mock docker rm: \$*\"; return 0 ;;
+        tag)
+          echo 'ERROR: tag failed' >&2
+          return 1 ;;
+        rmi)    return 0 ;;
+        *)      echo \"Mock docker: \$*\"; return 0 ;;
       esac
     }
     export -f docker
@@ -912,7 +1065,7 @@ teardown_file() {
   assert_output --partial 'SIF_FILENAME="test-project-slurm.sif"'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script contains apptainer pull command" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script contains apptainer build command" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
@@ -925,7 +1078,8 @@ teardown_file() {
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial 'apptainer pull --disable-cache'
+  assert_output --partial 'apptainer build'
+  refute_output --partial 'apptainer build --disable-cache'
   assert_output --partial 'docker://${IMAGE_REF}'
 }
 
@@ -996,6 +1150,28 @@ teardown_file() {
   assert_output --partial 'APPTAINER_TMPDIR'
   assert_output --partial 'val-mktemp-dir'
   assert_output --partial 'source /etc/profile.d/val-utils.sh'
+  assert_output --partial 'mktemp -d'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › generated script for non-valeria profile contains mktemp -d cache config" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
+      'test-project-slurm.sif' \
+      \"\${output_dir}\" \
+      'compute_canada'
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  assert_output --partial 'APPTAINER_CACHEDIR'
+  assert_output --partial 'APPTAINER_TMPDIR'
+  assert_output --partial 'mktemp -d'
+  # Non-valeria profile must NOT inject the Valeria-specific val-utils.sh source
+  refute_output --partial 'source /etc/profile.d/val-utils.sh'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains module load apptainer" {
@@ -1014,7 +1190,7 @@ teardown_file() {
   assert_output --partial 'module load apptainer'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script contains error message on pull failure" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script contains error message on build failure" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
@@ -1027,8 +1203,49 @@ teardown_file() {
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial 'Apptainer pull/build failed'
+  assert_output --partial 'Apptainer build failed'
   assert_output --partial '--docker-login'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › generated script uses APPTAINER_TMPDIR staging before moving SIF to destination" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
+      'test-project-slurm.sif' \
+      \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  assert_output --partial 'SIF_STAGING_DIR'
+  assert_output --partial 'SIF_TMP'
+  assert_output --partial 'APPTAINER_TMPDIR'
+  assert_output --partial 'mv "${SIF_TMP}" "${SIF_FILE}"'
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh uses APPTAINER_TMPDIR staging before moving SIF to destination" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial 'SIF_STAGING_DIR'
+  assert_output --partial 'APPTAINER_TMPDIR'
+  assert_output --partial 'mv "${SIF_TMP}" "${SIF_FILE}"'
+
+  rm -rf "${output_dir}"
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › missing image_ref argument causes error" {

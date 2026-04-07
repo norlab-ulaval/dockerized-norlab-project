@@ -33,7 +33,17 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #                                  before saving the tar archive (or in-place without --apptainer).
 #                                  For deploy/ci-tests: squashes the image in-place after building.
 #                                  Collapses all image layers into one.
-#                                  Uses docker export/import method (loses image history and metadata).
+#                                  Preserves ENV, ENTRYPOINT/CMD, WORKDIR, LABEL, USER.
+#                                  Removes intermediate layer history. Requires python3 on host.
+#   --gs-only                     (Apptainer-only flag) Generate script only. Skip all docker
+#                                  build/push/save steps and re-generate only the HPC converter
+#                                  script. Must be used together with --apptainer <profile>
+#                                  and either --save or --push. Useful to update
+#                                  dna_tar_to_apptainer_sif_converter.sh (with --save) or
+#                                  dna_registry_to_apptainer_sif_converter.sh (with --push)
+#                                  without re-building the Docker image. Does not require internet.
+#                                  e.g., dna build slurm --apptainer valeria --save --gs-only
+#                                        dna build slurm --apptainer valeria --push --gs-only
 #   --help, -h                    Show this help message
 #
 #
@@ -105,7 +115,13 @@ function dna::check_user_is_login_dockerhub() {
 
 function dna::build_command() {
 
-    if ! dna::is_online; then
+    # Pre-scan for --gs-only: it is a local-only operation that does not require internet
+    local _gs_only_prescan=false
+    for _arg in "$@"; do
+      [[ "${_arg}" == "--gs-only" ]] && _gs_only_prescan=true && break
+    done
+
+    if [[ "${_gs_only_prescan}" == false ]] && ! dna::is_online; then
       n2st::print_msg_error "Be advised, you are currently offline. Executing ${MSG_DIMMED_FORMAT}dna build${MSG_END_FORMAT} require internet connection."
       return 1
     fi
@@ -120,6 +136,7 @@ function dna::build_command() {
     local apptainer_profile=""
     local apptainer_pipeline=""  # "save" or "push" — required when --apptainer is set
     local squash_image=false
+    local gs_only=false
     local remaining_args=()
     local original_command="$*"
     local line_format="${MSG_LINE_CHAR_BUILDER_LVL1}"
@@ -173,6 +190,10 @@ function dna::build_command() {
                 ;;
             --squash)
                 squash_image=true
+                shift
+                ;;
+            --gs-only)
+                gs_only=true
                 shift
                 ;;
             --help|-h)
@@ -323,6 +344,13 @@ ${MSG_END_FORMAT}
       fi
     fi
 
+    if [[ "${gs_only}" == true ]]; then
+      if [[ -z "${apptainer_profile}" || -z "${apptainer_pipeline}" ]]; then
+        dna::illegal_command_msg "build" "${original_command}" "The ${MSG_DIMMED_FORMAT}--gs-only${MSG_END_FORMAT} flag requires ${MSG_DIMMED_FORMAT}--apptainer <profile> --save${MSG_END_FORMAT} or ${MSG_DIMMED_FORMAT}--apptainer <profile> --push${MSG_END_FORMAT}.\n  e.g.: dna build slurm --apptainer ${apptainer_profile:-valeria} --save --gs-only\n"
+        return 1
+      fi
+    fi
+
     # ....Load dependencies........................................................................
     source "${DNA_LIB_PATH}/core/utils/load_super_project_config.bash" || return 1
     source "${DNA_LIB_EXEC_PATH}/build.all.bash" || return 1
@@ -337,6 +365,37 @@ ${MSG_END_FORMAT}
       n2st::print_msg "Enforcing build platform: ${DOCKER_DEFAULT_PLATFORM} (from profile: ${apptainer_profile})"
     elif [[ "${squash_image}" == true ]]; then
       source "${DNA_LIB_PATH}/core/utils/apptainer_tools.bash" || return 1
+    fi
+
+    # When --gs-only is set, skip all docker build/push/save steps and jump directly to script generation
+    if [[ "${gs_only}" == true ]]; then
+      n2st::print_msg "--gs-only flag set: skipping docker build/push/save, regenerating HPC converter script only"
+      local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer"
+      mkdir -p "${apptainer_save_dir}" || return 1
+      local sif_name_gs="${DN_PROJECT_IMAGE_NAME:?err}-slurm.sif"
+      local image_name_gs="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}"
+
+      dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
+
+      if [[ "${apptainer_pipeline}" == "save" ]]; then
+        local tar_filename_gs="${DN_PROJECT_IMAGE_NAME}-slurm.${PROJECT_TAG}.tar"
+        dna::generate_apptainer_build_sif_script \
+            "${tar_filename_gs}" \
+            "${sif_name_gs}" \
+            "${apptainer_save_dir}" \
+            "${apptainer_profile}" || return 1
+        n2st::print_msg_done "dna_tar_to_apptainer_sif_converter.sh regenerated in: ${apptainer_save_dir}"
+      elif [[ "${apptainer_pipeline}" == "push" ]]; then
+        dna::generate_registry_to_apptainer_sif_script \
+            "${image_name_gs}" \
+            "${sif_name_gs}" \
+            "${apptainer_save_dir}" \
+            "${apptainer_profile}" || return 1
+        n2st::print_msg_done "dna_registry_to_apptainer_sif_converter.sh regenerated in: ${apptainer_save_dir}"
+      fi
+
+      n2st::print_formated_script_footer "${header_footer_name}" "${line_format}" "${line_style}"
+      return 0
     fi
 
     # ....Docker Hub login check..................................................................

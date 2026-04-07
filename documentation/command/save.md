@@ -25,7 +25,7 @@ The `dna save` command creates portable archives containing Docker images and ne
 |--------|-------------|
 | `--help`, `-h` | Show help message and exit |
 | `--apptainer <profile>` | Save slurm image as `linux/amd64` tar archive (`.tar`) and generate `dna_tar_to_apptainer_sif_converter.sh` helper script for HPC (slurm service only). `<profile>` selects `.env.<profile>` configuration (e.g., `valeria`, `compute_canada`). Uses `--platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}"` for `docker image save` to ensure the tar archive targets the correct architecture. **Does not execute `apptainer` locally** (macOS compatible). See [Apptainer documentation](apptainer.md) for the full HPC workflow. Note: `dna save --apptainer` is the tar archive pipeline only; for the registry push pipeline use `dna build slurm --apptainer <profile> --push`. |
-| `--squash` | Squash the image before saving to reduce the archive size. Works for all supported services (`slurm`, `develop`, `deploy`). Uses `docker export/import` — **loses image history and metadata**. |
+| `--squash` | Squash the image before saving to reduce the archive size. Works for all supported services (`slurm`, `develop`, `deploy`). Collapses all layers into one. **Preserves** `ENV`, `ENTRYPOINT`/`CMD`, `WORKDIR`, `LABEL`, `USER`. Removes intermediate layer history. Requires `python3` on host. |
 
 ## Services
 
