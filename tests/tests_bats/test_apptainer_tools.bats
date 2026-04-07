@@ -145,9 +145,12 @@ teardown_file() {
       '${output_dir}'
   "
 
-  run grep "apptainer build" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
+  assert_output --partial "apptainer build"
   assert_output --partial "docker-archive:"
+  assert_output --partial "--mksquashfs-args"
+  assert_output --partial "-comp zstd"
 
   rm -rf "${output_dir}"
 }
@@ -1081,6 +1084,8 @@ export -f docker
   assert_output --partial 'apptainer build'
   refute_output --partial 'apptainer build --disable-cache'
   assert_output --partial 'docker://${IMAGE_REF}'
+  assert_output --partial '--mksquashfs-args'
+  assert_output --partial '-comp zstd'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains --docker-login flag support" {

@@ -303,7 +303,10 @@ SIF_TMP="${SIF_STAGING_DIR}/${SIF_FILENAME}"
 
 echo "[info]   Staging: ${SIF_TMP}" 1>&2
 
-if ! apptainer build "${SIF_TMP}" "docker-archive:${TAR_FILE}"; then
+if ! apptainer build \
+    --mksquashfs-args="-comp zstd -Xcompression-level 19" \
+    "${SIF_TMP}" \
+    "docker-archive:${TAR_FILE}"; then
   echo "[error] Apptainer build failed. The tar archive has been preserved: ${TAR_FILE}" 1>&2
   exit 1
 fi
@@ -520,7 +523,7 @@ fi
 # Note: --disable-cache is NOT used here because APPTAINER_CACHEDIR is already redirected to
 # scratch space above (val-mktemp-dir or mktemp -d), so the cache never lands in the home
 # directory. Keeping the cache also enables faster retries if the build fails mid-way.
-APPTAINER_BUILD_CMD=(apptainer build)
+APPTAINER_BUILD_CMD=(apptainer build --mksquashfs-args="-comp zstd -Xcompression-level 19")
 if [[ "${USE_DOCKER_LOGIN}" == true ]]; then
   echo "[info] Authenticating with docker.io interactively (--docker-login)..." 1>&2
   APPTAINER_BUILD_CMD+=(--docker-login)
