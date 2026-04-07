@@ -125,6 +125,13 @@ function dna::load_apptainer_profile_env() {
   export DN_PROJECT_USER
   return 0
 }
+function dna::generate_hpc_server_config_script() {
+  local output_dir="$1"
+  echo "#!/bin/bash" > "${output_dir}/dna_hpc_server_config.bash"
+  chmod +x "${output_dir}/dna_hpc_server_config.bash"
+  echo "DONE: Generated ${output_dir}/dna_hpc_server_config.bash"
+  return 0
+}
 function dna::squash_docker_image() {
   local image_name="$1"
   echo "MSG: Mock dna::squash_docker_image called with image: ${image_name}"

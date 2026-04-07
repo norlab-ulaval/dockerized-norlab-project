@@ -394,6 +394,11 @@ ${MSG_END_FORMAT}
         n2st::print_msg_done "dna_registry_to_apptainer_sif_converter.sh regenerated in: ${apptainer_save_dir}"
       fi
 
+      dna::generate_hpc_server_config_script \
+          "${apptainer_save_dir}" \
+          "${apptainer_profile}" || return 1
+      n2st::print_msg_done "dna_hpc_server_config.bash regenerated in: ${apptainer_save_dir}"
+
       n2st::print_formated_script_footer "${header_footer_name}" "${line_format}" "${line_style}"
       return 0
     fi
@@ -547,14 +552,22 @@ ${MSG_END_FORMAT}
                 return 1
             }
 
+            dna::generate_hpc_server_config_script \
+                "${apptainer_save_dir}" \
+                "${apptainer_profile}" || {
+                n2st::print_msg_error "Failed to generate dna_hpc_server_config.bash"
+                return 1
+            }
+
             local generated_script="${apptainer_save_dir}/dna_tar_to_apptainer_sif_converter.sh"
 
             n2st::print_msg_done "Apptainer artifacts saved to: ${apptainer_save_dir}"
 
             n2st::print_msg "Next steps:
   1. Transfer to HPC: artifact/apptainer/ (use your preferred method, e.g., rsync, scp, sftp)
-  2. Build SIF on HPC: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
-  3. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
+  2. Configure HPC (first time only): bash artifact/apptainer/dna_hpc_server_config.bash
+  3. Build SIF on HPC: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+  4. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
 
         elif [[ "${apptainer_pipeline}" == "push" ]]; then
             # ....Push pipeline: push to Docker registry + generate dna_registry_to_apptainer_sif_converter.sh.
@@ -574,14 +587,22 @@ ${MSG_END_FORMAT}
                 return 1
             }
 
+            dna::generate_hpc_server_config_script \
+                "${apptainer_save_dir}" \
+                "${apptainer_profile}" || {
+                n2st::print_msg_error "Failed to generate dna_hpc_server_config.bash"
+                return 1
+            }
+
             local generated_script="${apptainer_save_dir}/dna_registry_to_apptainer_sif_converter.sh"
 
             n2st::print_msg_done "Apptainer registry converter script saved to: ${apptainer_save_dir}"
 
             n2st::print_msg "Next steps:
-  1. Transfer script to HPC: artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
-  2. Build SIF on HPC: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
-  3. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
+  1. Transfer scripts to HPC: artifact/apptainer/
+  2. Configure HPC (first time only): bash artifact/apptainer/dna_hpc_server_config.bash
+  3. Build SIF on HPC: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+  4. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
         fi
     fi
 

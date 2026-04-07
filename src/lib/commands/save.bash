@@ -199,6 +199,14 @@ function dna::save_command() {
             return 1
         }
         n2st::print_msg_done "Apptainer dna_tar_to_apptainer_sif_converter.sh generated in: ${save_dir_path}"
+
+        dna::generate_hpc_server_config_script \
+            "${save_dir_path}" \
+            "${apptainer_profile}" || {
+            n2st::print_msg_error "Failed to generate dna_hpc_server_config.bash"
+            return 1
+        }
+        n2st::print_msg_done "Apptainer dna_hpc_server_config.bash generated in: ${save_dir_path}"
     fi
 
     # Create meta.txt file

@@ -136,6 +136,10 @@ function dna::generate_registry_to_apptainer_sif_script() {
   echo "Mock dna::generate_registry_to_apptainer_sif_script called with args: $*"
   return 0
 }
+function dna::generate_hpc_server_config_script() {
+  echo "Mock dna::generate_hpc_server_config_script called with args: $*"
+  return 0
+}
 function dna::squash_docker_image() {
   local image_name="$1"
   echo "Mock dna::squash_docker_image called with image: ${image_name}"

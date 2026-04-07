@@ -5,6 +5,7 @@
 # Test cases:
 # - dna::check_apptainer_profile_env_file validation
 # - dna::generate_apptainer_build_sif_script (dna_tar_to_apptainer_sif_converter.sh) generation
+# - dna::generate_hpc_server_config_script (dna_hpc_server_config.bash) generation
 # - dna::get_apptainer_slurm_exec_flags output
 # - dna::generate_apptainer_run_script generation
 # - dna::print_apptainer_exec_command output
@@ -149,8 +150,13 @@ teardown_file() {
   assert_success
   assert_output --partial "apptainer build"
   assert_output --partial "docker-archive:"
+  # Conditional compression: --mksquashfs-args is applied only when apptainer >= 1.4.0
   assert_output --partial "--mksquashfs-args"
   assert_output --partial "-comp zstd"
+  # Version check logic must be present
+  assert_output --partial "_APPTAINER_VERSION"
+  assert_output --partial "_APPTAINER_MAJOR"
+  assert_output --partial "_APPTAINER_MINOR"
 
   rm -rf "${output_dir}"
 }
@@ -535,8 +541,12 @@ teardown_file() {
       '${output_dir}'
   "
 
-  run grep "module load apptainer" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
+  # Version-aware module load: try highest version via module spider, fallback to default
+  assert_output --partial "module load apptainer"
+  assert_output --partial "module spider apptainer"
+  assert_output --partial "_APPTAINER_LATEST_VERSION"
 
   rm -rf "${output_dir}"
 }
@@ -562,7 +572,7 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh for valeria profile contains val-mktemp-dir cache config" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh uses SLURM_TMPDIR-aware mktemp for cache config" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -576,17 +586,21 @@ teardown_file() {
       'valeria'
   "
 
-  run grep -E "val-mktemp-dir|val-utils|mktemp" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
   assert_output --partial "APPTAINER_CACHEDIR"
   assert_output --partial "APPTAINER_TMPDIR"
-  assert_output --partial "source /etc/profile.d/val-utils.sh"
+  # Generic SLURM_TMPDIR-aware mechanism: works on all HPC servers
+  assert_output --partial "SLURM_TMPDIR"
   assert_output --partial "mktemp -d"
+  # val-utils.sh / val-mktemp-dir must NOT be present (removed in favour of generic mechanism)
+  refute_output --partial "source /etc/profile.d/val-utils.sh"
+  refute_output --partial "val-mktemp-dir"
 
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh for non-valeria profile contains mktemp -d cache config" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains --help flag support" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -596,17 +610,13 @@ teardown_file() {
     dna::generate_apptainer_build_sif_script \
       'test-project-slurm.l4t-r36.4.0.tar' \
       'test-project-slurm.sif' \
-      '${output_dir}' \
-      'compute_canada'
+      '${output_dir}'
   "
 
   run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
-  assert_output --partial "APPTAINER_CACHEDIR"
-  assert_output --partial "APPTAINER_TMPDIR"
-  assert_output --partial "mktemp -d"
-  # Non-valeria profile must NOT inject the Valeria-specific val-utils.sh source
-  refute_output --partial "source /etc/profile.d/val-utils.sh"
+  assert_output --partial "--help"
+  assert_output --partial "-h)"
 
   rm -rf "${output_dir}"
 }
@@ -1084,8 +1094,13 @@ export -f docker
   assert_output --partial 'apptainer build'
   refute_output --partial 'apptainer build --disable-cache'
   assert_output --partial 'docker://${IMAGE_REF}'
+  # Conditional compression: --mksquashfs-args is applied only when apptainer >= 1.4.0
   assert_output --partial '--mksquashfs-args'
   assert_output --partial '-comp zstd'
+  # Version check logic must be present
+  assert_output --partial '_APPTAINER_VERSION'
+  assert_output --partial '_APPTAINER_MAJOR'
+  assert_output --partial '_APPTAINER_MINOR'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains --docker-login flag support" {
@@ -1137,7 +1152,7 @@ export -f docker
   assert_output --partial 'artifact/apptainer'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script for valeria profile contains val-mktemp-dir cache config" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script uses SLURM_TMPDIR-aware mktemp for cache config" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
@@ -1153,33 +1168,15 @@ export -f docker
   assert_success
   assert_output --partial 'APPTAINER_CACHEDIR'
   assert_output --partial 'APPTAINER_TMPDIR'
-  assert_output --partial 'val-mktemp-dir'
-  assert_output --partial 'source /etc/profile.d/val-utils.sh'
+  # Generic SLURM_TMPDIR-aware mechanism: works on all HPC servers
+  assert_output --partial 'SLURM_TMPDIR'
   assert_output --partial 'mktemp -d'
-}
-
-@test "dna::generate_registry_to_apptainer_sif_script › generated script for non-valeria profile contains mktemp -d cache config" {
-  run bash -c "
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
-    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    output_dir=\$(mktemp -d)
-    dna::generate_registry_to_apptainer_sif_script \
-      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
-      'test-project-slurm.sif' \
-      \"\${output_dir}\" \
-      'compute_canada'
-    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
-  "
-  assert_success
-  assert_output --partial 'APPTAINER_CACHEDIR'
-  assert_output --partial 'APPTAINER_TMPDIR'
-  assert_output --partial 'mktemp -d'
-  # Non-valeria profile must NOT inject the Valeria-specific val-utils.sh source
+  # val-utils.sh / val-mktemp-dir must NOT be present (removed in favour of generic mechanism)
   refute_output --partial 'source /etc/profile.d/val-utils.sh'
+  refute_output --partial 'val-mktemp-dir'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script contains module load apptainer" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script contains --help flag support" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
@@ -1192,7 +1189,27 @@ export -f docker
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
+  assert_output --partial '--help'
+  assert_output --partial '-h)'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › generated script contains version-aware module load apptainer" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
+      'test-project-slurm.sif' \
+      \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  # Version-aware module load: try highest version via module spider, fallback to default
   assert_output --partial 'module load apptainer'
+  assert_output --partial 'module spider apptainer'
+  assert_output --partial '_APPTAINER_LATEST_VERSION'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains error message on build failure" {
@@ -1258,6 +1275,184 @@ export -f docker
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_registry_to_apptainer_sif_script
+  "
+}
+
+# ====Tests: dna::generate_hpc_server_config_script===============================================
+
+@test "dna::generate_hpc_server_config_script › creates dna_hpc_server_config.bash" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+  assert_success
+  assert_file_exists "${output_dir}/dna_hpc_server_config.bash"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script has a bash shebang" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run head -1 "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output --partial "#!/bin/bash"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script contains directory structure setup" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output --partial "artifact/apptainer"
+  assert_output --partial "artifact/optuna_storage"
+  assert_output --partial "artifact/slurm_jobs_logs"
+  assert_output --partial "artifact/tensorboard_tmp"
+  assert_output --partial "data/external_data"
+  assert_output --partial "data/repository_data"
+  assert_output --partial "data/shared_data"
+  assert_output --partial "slurm_jobs"
+  assert_output --partial "mkdir -p"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script contains version-aware module load apptainer" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  # Version-aware module load: try highest version via module spider, fallback to default
+  assert_output --partial "module load apptainer"
+  assert_output --partial "module spider apptainer"
+  assert_output --partial "_APPTAINER_LATEST_VERSION"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script contains apptainer registry login with --username and docker://docker.io" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  # New pattern: apptainer registry login --username <username> docker://docker.io
+  assert_output --partial "apptainer registry login"
+  assert_output --partial "--username"
+  assert_output --partial "docker://docker.io"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script does NOT contain val-utils.sh sourcing (generic SLURM_TMPDIR mechanism used instead)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}' 'valeria'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  # val-utils.sh removed: generic SLURM_TMPDIR mechanism is used on all HPC servers
+  refute_output --partial "source /etc/profile.d/val-utils.sh"
+  refute_output --partial "val-mktemp-dir"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script contains --help flag support" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output --partial "--help"
+  assert_output --partial "-h)"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script contains --target-dir argument parsing" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output --partial "--target-dir"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script fails when --target-dir is provided without argument" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run bash "${output_dir}/dna_hpc_server_config.bash" --target-dir 2>&1
+  assert_failure
+  assert_output --partial "--target-dir requires a path argument"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › missing output_dir argument causes error" {
+  run -127 bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script
   "
 }
 
