@@ -13,8 +13,8 @@ DOCUMENTATION_BUFFER_BUILD=$( cat <<'EOF'
 #   --rmab                        Re-create a local docker buildx multiarch builder
 #   --online-build                Build image sequentialy by pushing/pulling intermediate images
 #                                  from Dockerhub (requires Docker Hub authentication)
-#   --save DIRPATH                Save built image to directory (develop or deploy services only)
-#   --push                        Push image to Dockerhub (deploy services only,
+#   --save DIRPATH                Save built image to directory (develop, deploy or slurm services only)
+#   --push                        Push image to Dockerhub (deploy or slurm services only,
 #                                  requires Docker Hub authentication)
 #   --apptainer <profile>         HPC Apptainer workflow for slurm service only.
 #                                  <profile> selects .env.<profile> server configuration.

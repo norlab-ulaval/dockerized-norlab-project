@@ -159,6 +159,34 @@ EOF
   done
 }
 
+@test "config_scheme_3to4.bash › should replace PLACEHOLDER_DN_PROJECT_IMAGE_NAME with lowercased project name in slurm templates" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
+  export DNA_CONFIG_SCHEME_VERSION=3
+  # Use a mixed-case repo name to verify lowercasing
+  export SUPER_PROJECT_REPO_NAME="Test-Project"
+  # Create the meta dotenv file matching the mixed-case repo name (patch_helper looks for .env.${SUPER_PROJECT_REPO_NAME})
+  echo "DNA_CONFIG_SCHEME_VERSION=3" > "${TEST_TEMP_DIR}/.dockerized_norlab/.env.Test-Project"
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  # Verify placeholder is replaced and value is lowercase (matching DN_PROJECT_IMAGE_NAME convention)
+  for template_file in \
+    "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash" \
+    "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" \
+    "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash"; do
+    target_file="${TEST_TEMP_DIR}/${template_file}"
+    assert_file_exist "${target_file}"
+    run grep "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${target_file}"
+    assert_failure  # placeholder should NOT be present
+    run grep "test-project-slurm.sif" "${target_file}"
+    assert_success  # lowercase image name with -slurm.sif should be present
+    run grep "Test-Project" "${target_file}"
+    assert_failure  # mixed-case original should NOT be present
+  done
+}
+
 @test "config_scheme_3to4.bash › should add DN_CONTAINER_NAME to pre-existing HPC server profile files" {
   export DNA_RELEASE_CONFIG_SCHEME_VERSION=4
   export DNA_CONFIG_SCHEME_VERSION=3

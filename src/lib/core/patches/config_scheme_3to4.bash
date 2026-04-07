@@ -55,7 +55,7 @@ for template in "${slurm_job_templates[@]}"; do
     # Replace placeholder in the newly added template
     target_file="${SUPER_PROJECT_ROOT}/${template}"
     if [[ -f "${target_file}" ]]; then
-      n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${SUPER_PROJECT_REPO_NAME}" "${target_file}"
+      n2st::seek_and_modify_string_in_file "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "$(echo "${SUPER_PROJECT_REPO_NAME}" | tr '[:upper:]' '[:lower:]')" "${target_file}"
     fi
   fi
 done
