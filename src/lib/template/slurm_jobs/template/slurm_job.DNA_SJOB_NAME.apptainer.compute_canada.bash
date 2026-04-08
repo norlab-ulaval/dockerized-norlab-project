@@ -146,6 +146,9 @@ echo "[info] Python args: ${python_arguments[*]}"
 
 # Note: --nv enables NVIDIA GPU access inside the container (equivalent to Docker's runtime: nvidia).
 #       Remove it for CPU-only jobs.
+# Note: src/ and utilities/ are bind-mounted read-only to enable fast code iteration.
+#       Build, push, pull, and convert to SIF once; then rsync modified code to the HPC server
+#       and re-submit the job without rebuilding the Docker image or reconverting the SIF.
 apptainer exec \
     --no-eval \
     --cleanenv \
@@ -157,6 +160,9 @@ apptainer exec \
     --bind "${SUPER_PROJECT_ROOT}/artifact/:${DN_PROJECT_PATH}/artifact/:rw" \
     --bind "${SUPER_PROJECT_ROOT}/data/external_data/:${DN_PROJECT_PATH}/data/external_data/:rw" \
     --bind "${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:${DN_PROJECT_PATH}/data/shared_data/:ro" \
+    --bind "${SUPER_PROJECT_ROOT}/src/:${DN_PROJECT_PATH}/src/:ro" \
+    --bind "${SUPER_PROJECT_ROOT}/utilities/:${DN_PROJECT_PATH}/utilities/:ro" \
+    --env GIT_DIR="${DN_PROJECT_PATH}/.git" \
     --env-file "${PROFILE_ENV_FILE}" \
     --env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
     --env SLURM_JOB_ID="${SLURM_JOB_ID}" \

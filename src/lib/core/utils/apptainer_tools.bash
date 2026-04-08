@@ -650,6 +650,11 @@ declare -a REQUIRED_DIRS=(
   "data/repository_data"
   "data/shared_data"
   "slurm_jobs"
+  # src/ and utilities/ are bind-mounted read-only at apptainer exec time.
+  # Mounting them enables fast code iteration: rsync modified code to the HPC server
+  # and re-run without rebuilding the Docker image or converting to SIF each time.
+  "src"
+  "utilities"
 )
 
 for dir in "${REQUIRED_DIRS[@]}"; do
@@ -742,6 +747,13 @@ function dna::get_apptainer_slurm_exec_flags() {
   flags+=("    --bind ${super_project_root}/artifact/:${dn_project_path}/artifact/:rw \\")
   flags+=("    --bind ${super_project_root}/data/external_data/:${dn_project_path}/data/external_data/:rw \\")
   flags+=("    --bind ${shared_data_path}:${dn_project_path}/data/shared_data/:ro \\")
+  # Mount src/ and utilities/ read-only to enable fast code iteration without rebuilding the SIF.
+  # This allows rsyncing modified code to the HPC server and re-running without rebuilding the
+  # Docker image, pushing to the registry, pulling on HPC, or converting to SIF.
+  # Git metadata is forwarded so tools inside the container can resolve the repo state.
+  flags+=("    --bind ${super_project_root}/src/:${dn_project_path}/src/:ro \\")
+  flags+=("    --bind ${super_project_root}/utilities/:${dn_project_path}/utilities/:ro \\")
+  flags+=("    --env GIT_DIR=\${DN_PROJECT_PATH}/.git \\")
 
   # Environment file — passes all static config vars from HPC profile
   # (DN_PROJECT_USER, DN_HOST, IS_SLURM_RUN, DN_ENTRYPOINT_TRACE_EXECUTION, etc.)

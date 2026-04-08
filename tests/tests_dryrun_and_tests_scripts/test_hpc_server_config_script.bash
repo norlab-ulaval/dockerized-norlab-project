@@ -4,7 +4,7 @@
 #
 # Calls dna::generate_hpc_server_config_script, then runs the generated dna_hpc_server_config.bash
 # against a temporary directory tree to verify:
-#   1. All 8 required super-project directories are created.
+#   1. All 10 required super-project directories are created (including src/ and utilities/).
 #   2. The script contains version-aware module load apptainer (module spider + fallback).
 #   3. The script contains apptainer registry login --username ... docker://docker.io.
 #   4. The --target-dir argument creates the structure under the specified path.
@@ -71,7 +71,7 @@ n2st::print_msg "Step 2: Verifying generated script content"
 
 for dir in "artifact/apptainer" "artifact/optuna_storage" "artifact/slurm_jobs_logs" \
            "artifact/tensorboard_tmp" "data/external_data" "data/repository_data" \
-           "data/shared_data" "slurm_jobs"; do
+           "data/shared_data" "slurm_jobs" "src" "utilities"; do
   _assert_true "contains directory '${dir}'" "$(grep -q "${dir}" "${SCRIPT}" && echo true || echo false)"
 done
 
@@ -111,7 +111,7 @@ echo "testuser" | timeout 10 bash "${SCRIPT}" --target-dir "${TARGET_DIR}" || {
 
 for dir in "artifact/apptainer" "artifact/optuna_storage" "artifact/slurm_jobs_logs" \
            "artifact/tensorboard_tmp" "data/external_data" "data/repository_data" \
-           "data/shared_data" "slurm_jobs"; do
+           "data/shared_data" "slurm_jobs" "src" "utilities"; do
   _assert_true "directory created: ${dir}" "$([[ -d "${TARGET_DIR}/${dir}" ]] && echo true || echo false)"
 done
 

@@ -242,6 +242,8 @@ Transfer the following files/directories to your super-project root on the HPC s
 - `artifact/apptainer/` — tar archive + `dna_tar_to_apptainer_sif_converter.sh` + `dna_hpc_server_config.bash`
 - `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` — the sbatch script
 - `.dockerized_norlab/` — DNA configuration directory
+- `src/` — project source code (bind-mounted read-only at runtime; see fast iteration tip below)
+- `utilities/` — project utilities (bind-mounted read-only at runtime; see fast iteration tip below)
 - `data/external_data/` — non-tracked external data (if applicable)
 - `data/repository_data/` — data required by src/test code logic (if applicable)
 - `data/shared_data/` — optional; may be replaced by a local data volume on the HPC server
@@ -257,9 +259,21 @@ bash artifact/apptainer/dna_hpc_server_config.bash
 ```
 
 This script:
-1. Creates all expected super-project directories (`artifact/apptainer/`, `artifact/optuna_storage/`, `artifact/slurm_jobs_logs/`, `artifact/tensorboard_tmp/`, `data/external_data/`, `data/repository_data/`, `data/shared_data/`, `slurm_jobs/`).
+1. Creates all expected super-project directories (`artifact/apptainer/`, `artifact/optuna_storage/`, `artifact/slurm_jobs_logs/`, `artifact/tensorboard_tmp/`, `data/external_data/`, `data/repository_data/`, `data/shared_data/`, `slurm_jobs/`, `src/`, `utilities/`).
 2. Loads Apptainer via `module load apptainer/<latest-version>` (tries the highest available version via `module spider`, falls back to the default).
 3. Prompts for your Docker Hub username and runs `apptainer registry login --username <username> docker://docker.io` interactively. No secrets are stored by DNA.
+
+> 💡 **Fast code iteration tip (no SIF rebuild needed):**
+>
+> `src/` and `utilities/` are bind-mounted **read-only** inside the container at `apptainer exec` time.
+> This means you can iterate on code changes without rebuilding the Docker image, pushing to a registry,
+> pulling on the HPC server, or converting to SIF each time. The workflow is:
+> 1. Build, push/save, pull, and convert to SIF **once**.
+> 2. Make code changes locally.
+> 3. Rsync only the changed files: `rsync -av src/ user@hpc:/path/to/project/src/`
+> 4. Re-submit the job without any rebuild.
+>
+> Git metadata (`GIT_DIR`) is forwarded into the container so tools that inspect the repo state work correctly.
 
 > 💡 **Tip: Use `--target-dir` to specify a custom HPC super-project root.**
 >
@@ -323,6 +337,8 @@ dna run slurm <sjob-id> --ga valeria --print-only -- launcher/train.py
 Transfer the following files/directories to your super-project root on the HPC server using your preferred method (e.g., rsync, scp, sftp):
 - `artifact/apptainer/` — tar archive + `dna_tar_to_apptainer_sif_converter.sh` + `dna_hpc_server_config.bash` + generated run script
 - `.dockerized_norlab/` — DNA configuration directory
+- `src/` — project source code (bind-mounted read-only at runtime; see fast iteration tip in Use Case 1)
+- `utilities/` — project utilities (bind-mounted read-only at runtime; see fast iteration tip in Use Case 1)
 - `data/external_data/` — non-tracked external data (if applicable)
 - `data/repository_data/` — data required by src/test code logic (if applicable)
 - `data/shared_data/` — optional; may be replaced by a local data volume on the HPC server

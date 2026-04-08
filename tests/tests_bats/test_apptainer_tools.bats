@@ -203,6 +203,28 @@ teardown_file() {
   assert_output --partial "data/external_data/"
 }
 
+@test "dna::get_apptainer_slurm_exec_flags › output contains src/ and utilities/ bind mounts" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
+  "
+  assert_success
+  # Use literal substrings — DN_PROJECT_PATH is a runtime variable expanded by the generated script
+  assert_output --partial "/src/:ro"
+  assert_output --partial "/utilities/:ro"
+}
+
+@test "dna::get_apptainer_slurm_exec_flags › output contains --env GIT_DIR" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::get_apptainer_slurm_exec_flags 'valeria' 'artifact/apptainer/test-project-slurm.sif' 'test-sjob'
+  "
+  assert_success
+  assert_output --partial "--env GIT_DIR="
+}
+
 @test "dna::get_apptainer_slurm_exec_flags › output contains --env-file with profile" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
@@ -1377,6 +1399,9 @@ export -f docker
   assert_output --partial "data/repository_data"
   assert_output --partial "data/shared_data"
   assert_output --partial "slurm_jobs"
+  # src/ and utilities/ must be present: they are bind-mounted at apptainer exec time for fast iteration
+  assert_output --partial '"src"'
+  assert_output --partial '"utilities"'
   assert_output --partial "mkdir -p"
 
   rm -rf "${output_dir}"
