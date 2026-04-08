@@ -1,11 +1,16 @@
 #!/bin/bash
+#
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
+#SBATCH --mem=32g
 #SBATCH --cpus-per-task=12
 #SBATCH --time=0-24:00
 #SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out
 #SBATCH --account=PLACEHOLDER_ACCOUNT
-# Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
-# Note: Replace PLACEHOLDER_ACCOUNT with your Compute Canada allocation account (e.g., def-username)
+#
+# Note:
+# - Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+# - Replace PLACEHOLDER_ACCOUNT with your Compute Canada allocation account (e.g., def-username)
 # =================================================================================================
 # Execute Apptainer slurm job on Compute Canada (Digital Research Alliance of Canada) HPC server.
 #

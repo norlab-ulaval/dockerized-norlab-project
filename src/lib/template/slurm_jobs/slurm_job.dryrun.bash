@@ -1,11 +1,14 @@
 #!/bin/bash
-#SBATCH --gres=gpu:0
+#
+#SBATCH --partition=debug
 #SBATCH --cpus-per-task=2
-#SBATCH --time=0-01:00
+#SBATCH --mem=2g
+#SBATCH --time=0-00:15
 #SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out
-
-
-# Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+#
+# Note:
+# - Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+# - debug partition only has CPU nodes (ul-val-pr-cpv*) — no GPU resources available.
 
 # =================================================================================================
 # Execute slurm job
