@@ -40,7 +40,7 @@ DNA can be installed using different methods depending on your system configurat
 ### Optional Requirements
 
 - **NVIDIA Container Toolkit**: Required for GPU acceleration support
-- **[Dockerhub account](https://docs.docker.com/accounts/create-account/**: Required for online build, sharing deploy image online, and publishing release image
+- **[Dockerhub account](https://docs.docker.com/accounts/create-account/)**: Required for online build, sharing deploy image online, and publishing release image
 
 
 ### Platform Support
