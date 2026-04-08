@@ -45,9 +45,9 @@ slurm_job_templates=(
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
 )
 
 for template in "${slurm_job_templates[@]}"; do

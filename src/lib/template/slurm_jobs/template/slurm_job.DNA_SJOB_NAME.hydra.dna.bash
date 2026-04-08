@@ -11,7 +11,7 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.template.bash [<any-dna-argument>]
+#   $ bash slurm_job.DNA_SJOB_NAME.hydra.dna.bash [<any-dna-argument>]
 #
 # =================================================================================================
 declare -x DNA_SJOB_NAME
@@ -64,11 +64,11 @@ dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
 # Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
 #  and use its issue ID as the DNA_SJOB_NAME.
 
-# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.hydra.bash → <name>)
-DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.hydra\.bash$//' )"
+# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.hydra.dna.bash → <name>)
+DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.hydra\.dna\.bash$//' )"
 export DNA_SJOB_NAME
 
-dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
+dna_run_slurm_flags+=("--log-name" "$(basename -s .dna.bash $0)")
 dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
 dna_run_slurm_flags+=("$@")
 dna::job_setup_callback

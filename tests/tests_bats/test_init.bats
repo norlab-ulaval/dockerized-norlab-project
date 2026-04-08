@@ -535,9 +535,9 @@ teardown_file() {
   assert_file_exist "${TEST_EMPTY_REPO}/src/launcher/example_app_hparm_optim.py"
   assert_file_exist "${TEST_EMPTY_REPO}/src/dna_example/try_pytorch.py"
   assert_file_exist "${TEST_EMPTY_REPO}/src/README.md"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.dryrun.bash"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
-  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/slurm_job.dryrun.dna.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
+  assert_file_exist "${TEST_EMPTY_REPO}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
 
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.ini"
   assert_file_exist "${TEST_EMPTY_REPO}/tests/pytest.no_xdist.ini"

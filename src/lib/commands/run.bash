@@ -88,7 +88,7 @@ DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 #
 # Notes about slurm run:
 #   To launch job on slurm/mamba server, use 'dna run slurm ...' command in a slurm launch script.
-#   See example 'slurm_job.*template.bash' and 'slurm_job.dryrun.bash' in 'slurm_jobs/' directory.
+#   See example 'slurm_job.*.dna.bash' and 'slurm_job.dryrun.dna.bash' in 'slurm_jobs/' directory.
 #
 # =================================================================================================
 EOF

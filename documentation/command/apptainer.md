@@ -568,7 +568,20 @@ Profile env files serve a dual purpose:
 ## Slurm Job Templates
 
 Templates are located in `slurm_jobs/template/` in the super project (added by `dna init`).
-Copy and rename to `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bash` before editing.
+Copy and rename to `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.<type>.bash` before editing.
+
+### Naming Convention
+
+DNA uses two families of slurm job templates, distinguished by their naming suffix:
+
+| Family | Pattern | Requirement |
+|--------|---------|-------------|
+| **Apptainer templates** | `slurm_job.DNA_SJOB_NAME.apptainer.<profile>.bash` | Requires **Apptainer** to be available on the HPC server. No DNA needed on the server. Use for HPC workflows with SIF images. |
+| **DNA templates** | `slurm_job.DNA_SJOB_NAME.*.dna.bash` | Requires **DNA** to be available on the HPC server. Use for workflows where the full Docker/DNA stack is accessible on the server. |
+
+The `<profile>` in Apptainer templates is the HPC server name: `valeria`, `compute_canada`, or `mamba`.
+
+### Apptainer Templates (require Apptainer on HPC server, no DNA needed)
 
 | Template file | Profile | Description |
 |---------------|---------|-------------|
@@ -576,9 +589,20 @@ Copy and rename to `slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.<profile>.bas
 | `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash` | `compute_canada` | Compute Canada standalone job |
 | `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash` | `mamba` | Mamba HPC standalone job (Apptainer workflow) |
 
-All templates are **standalone** — they do not require DNA on the HPC server.
+All Apptainer templates are **standalone** — they do not require DNA on the HPC server.
 They source the same HPC profile dotenv file (`.env.<profile>`) as the `--ga` generated scripts
 and use the same `apptainer exec` flags. See [Understanding the Apptainer Pipeline Artifacts](#understanding-the-apptainer-pipeline-artifacts) for details.
+
+### DNA Templates (require DNA on HPC server)
+
+| Template file | Description |
+|---------------|-------------|
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash` | Base DNA slurm job template |
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash` | Hydra app launcher template |
+| `slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash` | Hydra hyperparameter optimization template |
+| `slurm_jobs/slurm_job.dryrun.dna.bash` | Dry-run validation template (debug partition) |
+
+DNA templates call `dna run slurm` and require DNA to be installed and configured on the HPC server.
 
 ## Apptainer Exec Flags
 

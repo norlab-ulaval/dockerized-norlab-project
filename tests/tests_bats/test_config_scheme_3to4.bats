@@ -67,7 +67,7 @@ teardown() {
   # Verify slurm job templates directory and files
   assert_dir_exist "${TEST_TEMP_DIR}/slurm_jobs/template"
   assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash"
-  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
+  assert_file_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
   
   # Verify version update
   run grep "DNA_CONFIG_SCHEME_VERSION=4" "${TEST_TEMP_DIR}/.dockerized_norlab/.env.test-project"
@@ -132,6 +132,8 @@ EOF
   # TODO comments should be removed
   run grep '# TODO:' "${target_file}"
   assert_failure
+  # Note: config_scheme_3to4 patch operates on the old slurm_job.dryrun.bash naming (pre-v6).
+  # The rename to slurm_job.dryrun.dna.bash is handled by config_scheme_5to6.
 }
 
 @test "config_scheme_3to4.bash › should replace PLACEHOLDER_DN_PROJECT_GIT_NAME in pre-existing HPC server profile files" {

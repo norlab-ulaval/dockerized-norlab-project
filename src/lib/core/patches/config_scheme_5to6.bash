@@ -25,22 +25,32 @@
 # ....Determine the super project image name (same logic as dna init).............................
 _super_project_image_name="$(echo "${SUPER_PROJECT_REPO_NAME:?err}" | tr '[:upper:]' '[:lower:]')"
 
-# ....Replace non-apptainer slurm job templates...................................................
+# ....Replace non-apptainer slurm job templates (now using .dna.bash naming convention)...........
+# Mapping: <old-name-in-super-project> -> <new-template-source-path>
+# The super project may have the old naming (v5) or the new naming (already patched); both handled.
 
-_non_apptainer_templates=(
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"
-  "slurm_jobs/slurm_job.dryrun.bash"
+declare -A _non_apptainer_template_map=(
+  ["slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"]="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
+  ["slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"]="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
+  ["slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"]="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash"
+  ["slurm_jobs/slurm_job.dryrun.bash"]="slurm_jobs/slurm_job.dryrun.dna.bash"
 )
 
-for _t in "${_non_apptainer_templates[@]}"; do
-  dna::patch_replace_file \
-    "${_t}" \
-    "${_t}" \
-    "slurm job template $(basename "${_t}")"
+for _old_t in "${!_non_apptainer_template_map[@]}"; do
+  _new_t="${_non_apptainer_template_map[${_old_t}]}"
+  # Remove old-named file if it exists (renamed to .dna.bash)
+  if [[ -f "${SUPER_PROJECT_ROOT}/${_old_t}" ]]; then
+    rm -f "${SUPER_PROJECT_ROOT}/${_old_t}"
+    n2st::print_msg "Removed old template: ${_old_t}"
+  fi
+  # Copy new template to super project under new name.
+  # Use patch_add_file_if_missing because after removing the old name the new name does not exist yet.
+  dna::patch_add_file_if_missing \
+    "${_new_t}" \
+    "${_new_t}" \
+    "slurm job template $(basename "${_new_t}")"
 done
-unset _non_apptainer_templates _t
+unset _non_apptainer_template_map _old_t _new_t
 
 # ....Replace apptainer slurm job templates and re-apply PLACEHOLDER substitution.................
 

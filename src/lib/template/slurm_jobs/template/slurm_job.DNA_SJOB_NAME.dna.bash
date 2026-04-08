@@ -11,17 +11,17 @@
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.template.bash [<any-dna-argument>]
+#   $ bash slurm_job.DNA_SJOB_NAME.dna.bash [<any-dna-argument>]
 #
 # =================================================================================================
 declare -x DNA_SJOB_NAME
 declare -a dna_run_slurm_flags=()
-declare -a hydra_flags=()
+declare -a python_arguments=()
 
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
 function dna::job_setup_callback() {
-  # TODO: Add any instruction that should be executed before 'dna run slurm' command
+  # Add any instruction that should be executed before 'dna run slurm' command
   :
 }
 
@@ -35,46 +35,30 @@ function dna::job_teardown_callback() {
   exit ${exit_code:-1}
 }
 
-
-# ....Hydra app module.............................................................................
+# ....Python module................................................................................
 # TODO: Set python module to launch
-hydra_flags+=("launcher/example_app_hparm_optim.py")
+python_arguments+=("launcher/example.py")
 # Note: assume container workdir is `<super-project>/src/`
 
-# ....Optional hydra flags.........................................................................
-# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
-# --config-name,-cn : Overrides the config_name specified in hydra.main()
-# --config-dir,-cd : Adds an additional config dir to the config search path
-
-#hydra_flags+=("--config-path=")
-#hydra_flags+=("--config-dir=")
-#hydra_flags+=("--config-name=")
-
 # ....Debug flags..................................................................................
-dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
-
 #dna_run_slurm_flags+=("--skip-core-force-rebuild")
 #dna_run_slurm_flags+=("--skip-slurm-force-rebuild")
 #dna_run_slurm_flags+=("--hydra-dry-run")
-
-#hydra_flags+=("--cfg" "all")
 
 # ====DNA internal=================================================================================
 # ....Set job name.................................................................................
 # Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
 #  and use its issue ID as the DNA_SJOB_NAME.
 
-# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.hydra_hparam_optim.bash → <name>)
-DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.hydra_hparam_optim\.bash$//' )"
+# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.dna.bash → <name>)
+DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.dna\.bash$//' )"
 export DNA_SJOB_NAME
 
-dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
+dna_run_slurm_flags+=("--log-name" "$(basename -s .dna.bash $0)")
 dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
 dna_run_slurm_flags+=("$@")
 dna::job_setup_callback
 trap dna::job_teardown_callback EXIT
 
 # ====Launch slurm job=============================================================================
-dna version --all
-dna run slurm "${DNA_SJOB_NAME:?err}" "${dna_run_slurm_flags[@]}" "${hydra_flags[@]}"
-
+dna run slurm "${DNA_SJOB_NAME:?err}" "${dna_run_slurm_flags[@]}" "${python_arguments[@]}"

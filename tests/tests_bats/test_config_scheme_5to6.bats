@@ -29,6 +29,7 @@ setup() {
   echo "DNA_CONFIG_SCHEME_VERSION=5" > "${TEST_TEMP_DIR}/.dockerized_norlab/.env.test-project"
 
   # Create stub slurm job files (old/outdated content) that the patch will replace
+  # The patch renames .bash -> .dna.bash, so we create v5-style old names here.
   mkdir -p "${TEST_TEMP_DIR}/slurm_jobs/template"
   printf '# outdated stub\n' > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
   printf '# outdated stub\n' > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
@@ -91,19 +92,25 @@ teardown() {
   assert_success
 
   # Verify outdated stub content is gone and each file now matches the real DNA template
+  # Non-apptainer templates are now renamed to .dna.bash
   for template in \
-      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash" \
-      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash" \
-      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash" \
+      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash" \
+      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash" \
+      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash" \
       "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash" \
       "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" \
       "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" \
-      "slurm_jobs/slurm_job.dryrun.bash"; do
+      "slurm_jobs/slurm_job.dryrun.dna.bash"; do
     target_file="${TEST_TEMP_DIR}/${template}"
     assert_file_exist "${target_file}"
     run grep "# outdated stub" "${target_file}"
     assert_failure  # Stub marker must be gone
   done
+  # Old-named files must be removed
+  assert_file_not_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
+  assert_file_not_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
+  assert_file_not_exist "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"
+  assert_file_not_exist "${TEST_TEMP_DIR}/slurm_jobs/slurm_job.dryrun.bash"
 }
 
 @test "config_scheme_5to6.bash › should set #SBATCH --output to artifact/slurm_jobs_logs in all templates" {
@@ -115,13 +122,13 @@ teardown() {
   assert_success
 
   for template in \
-      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash" \
-      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash" \
-      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash" \
+      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash" \
+      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash" \
+      "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash" \
       "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash" \
       "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash" \
       "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash" \
-      "slurm_jobs/slurm_job.dryrun.bash"; do
+      "slurm_jobs/slurm_job.dryrun.dna.bash"; do
     target_file="${TEST_TEMP_DIR}/${template}"
     run grep "#SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out" "${target_file}"
     assert_success  # New artifact/slurm_jobs_logs path should be present
@@ -151,7 +158,7 @@ teardown() {
 
   assert_success
 
-  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
+  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
   run grep 'basename "${BASH_SOURCE\[0\]}"' "${target_file}"
   assert_success  # auto-set line should be present
   run grep 'DNA_SJOB_NAME="default"' "${target_file}"
@@ -166,9 +173,9 @@ teardown() {
 
   assert_success
 
-  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
-  run grep "hydra\.bash" "${target_file}"
-  assert_success  # profile-specific sed stripping .hydra.bash should be present
+  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
+  run grep "hydra\.dna\.bash" "${target_file}"
+  assert_success  # profile-specific sed stripping .hydra.dna.bash should be present
   run grep 'DNA_SJOB_NAME="default"' "${target_file}"
   assert_failure
 }
@@ -181,9 +188,9 @@ teardown() {
 
   assert_success
 
-  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"
-  run grep "hydra_hparam_optim\.bash" "${target_file}"
-  assert_success  # profile-specific sed stripping .hydra_hparam_optim.bash should be present
+  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash"
+  run grep "hydra_hparam_optim\.dna\.bash" "${target_file}"
+  assert_success  # profile-specific sed stripping .hydra_hparam_optim.dna.bash should be present
   run grep 'DNA_SJOB_NAME="default"' "${target_file}"
   assert_failure
 }
@@ -196,7 +203,7 @@ teardown() {
 
   assert_success
 
-  target_file="${TEST_TEMP_DIR}/slurm_jobs/slurm_job.dryrun.bash"
+  target_file="${TEST_TEMP_DIR}/slurm_jobs/slurm_job.dryrun.dna.bash"
   run grep 'basename "${BASH_SOURCE\[0\]}"' "${target_file}"
   assert_success  # auto-set line should be present
   run grep 'DNA_SJOB_NAME="dryrun"' "${target_file}"

@@ -265,7 +265,7 @@ ${MSG_END_FORMAT}"
     dna::portable_copy "${DNA_LIB_PATH}/template/src/launcher/" src/launcher/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/src/dna_example/" src/dna_example/ "${super_project_root}" || return 1
 
-    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/slurm_job.dryrun.bash" slurm_jobs/ "${super_project_root}" || return 1
+    dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/slurm_job.dryrun.dna.bash" slurm_jobs/ "${super_project_root}" || return 1
     dna::portable_copy "${DNA_LIB_PATH}/template/slurm_jobs/template/" slurm_jobs/template/ "${super_project_root}" || return 1
     # Replace placeholders in Apptainer slurm job templates
     local super_project_image_name
