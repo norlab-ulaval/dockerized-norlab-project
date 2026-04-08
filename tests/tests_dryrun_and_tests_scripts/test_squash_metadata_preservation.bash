@@ -70,7 +70,7 @@ ENTRYPOINT ["/bin/sh","-c"]
 CMD ["echo hello"]
 EOF
 
-docker build --no-cache -t "${TEST_IMAGE}" "${TMPDIR_BUILD}" || {
+DOCKER_BUILDKIT=1 docker build --no-cache -t "${TEST_IMAGE}" "${TMPDIR_BUILD}" || {
   rm -rf "${TMPDIR_BUILD}"
   n2st::print_msg_error "Failed to build test image"
   exit 1
