@@ -617,6 +617,30 @@ teardown_file() {
   assert_success
   assert_output --partial "--help"
   assert_output --partial "-h)"
+  # Must use DOCUMENTATION_BUFFER pattern (portable, matches dna::documentation_buffer_to_help_parser)
+  assert_output --partial "DOCUMENTATION_BUFFER"
+  assert_output --partial 'sed'
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › --help flag on generated script produces usage output" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm.sif' \
+      '${output_dir}'
+  "
+
+  run bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh" --help
+  assert_success
+  assert_output --partial "Usage"
+  assert_output --partial "--target-dir"
 
   rm -rf "${output_dir}"
 }
@@ -1191,6 +1215,27 @@ export -f docker
   assert_success
   assert_output --partial '--help'
   assert_output --partial '-h)'
+  # Must use DOCUMENTATION_BUFFER pattern (portable, matches dna::documentation_buffer_to_help_parser)
+  assert_output --partial 'DOCUMENTATION_BUFFER'
+  assert_output --partial 'sed'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › --help flag on generated script produces usage output" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
+      'test-project-slurm.sif' \
+      \"\${output_dir}\"
+    bash \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\" --help
+  "
+  assert_success
+  assert_output --partial 'Usage'
+  assert_output --partial '--target-dir'
+  assert_output --partial '--docker-login'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains version-aware module load apptainer" {
@@ -1410,6 +1455,27 @@ export -f docker
   assert_success
   assert_output --partial "--help"
   assert_output --partial "-h)"
+  # Must use DOCUMENTATION_BUFFER pattern (portable, matches dna::documentation_buffer_to_help_parser)
+  assert_output --partial "DOCUMENTATION_BUFFER"
+  assert_output --partial 'sed'
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › --help flag on generated script produces usage output" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run bash "${output_dir}/dna_hpc_server_config.bash" --help
+  assert_success
+  assert_output --partial "Usage"
+  assert_output --partial "--target-dir"
 
   rm -rf "${output_dir}"
 }

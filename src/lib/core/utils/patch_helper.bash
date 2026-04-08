@@ -290,6 +290,59 @@ function dna::patch_add_content_if_missing() {
 }
 
 # =================================================================================================
+# Replace an existing file in the super project with the current DNA template version.
+#
+# This function always overwrites the target file unconditionally (after user confirmation),
+# unlike dna::patch_add_file_if_missing which skips existing files.  Use it when an existing
+# file needs to be upgraded to the latest template rather than just added if absent.
+#
+# Usage:
+#   $ dna::patch_replace_file <source_file> <target_file> <description>
+#
+# Arguments:
+#   source_file: Path to the template file (relative to src/lib/template).
+#   target_file: Path to the target file in the super project (relative to SUPER_PROJECT_ROOT).
+#   description: A brief description of the file for the user prompt.
+#
+# Global variables used:
+#   added_resources: Array to keep track of added resources for reporting.
+#
+# Returns:
+#   0 on success or if skipped
+#   1 on failure
+# =================================================================================================
+function dna::patch_replace_file() {
+    local source_file="$1"
+    local target_file="$2"
+    local description="$3"
+
+    local full_target_path="${SUPER_PROJECT_ROOT}/${target_file}"
+    local full_source_path="${DNA_LIB_PATH}/template/${source_file}"
+
+    if [[ ! -f "${full_target_path}" ]]; then
+        # File missing — nothing to replace; silently skip.
+        return 0
+    fi
+
+    if [[ ! -f "${full_source_path}" ]]; then
+        n2st::print_msg_error "Template source not found: ${full_source_path}"
+        return 1
+    fi
+
+    n2st::print_msg "Replacing ${description}: ${target_file}"
+
+    dna::patch_prompt_user "Replace file with latest DNA template version?"
+    local user_input="${REPLY}"
+
+    if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
+        cp "${full_source_path}" "${full_target_path}" || return 1
+        added_resources+=("${target_file} (file replacement)")
+    else
+        n2st::print_msg_warning "Skipping replacement for ${target_file}. File may be outdated."
+    fi
+}
+
+# =================================================================================================
 # Modify content in a file in the super project using a search and replace pattern.
 #
 # Usage:
