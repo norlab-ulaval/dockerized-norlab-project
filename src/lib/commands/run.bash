@@ -333,7 +333,7 @@ function dna::run_command() {
         build_all_flag+=(--service-names "project-core-pre,project-core-user,project-core,project-ci-tests")
         #build_all_flag+=(-- --no-cache)
 
-        # (NICE TO HAVE) ToDo: implement logic for an optional `--build` flag
+        # (NICE TO HAVE) ToDo: # Build stage will be re-activated with task NMO-692 feat: add a --build option to run.ci_tests.bash
         #dna::build_services "${build_all_flag[@]}"
 
         dna::run_ci_tests "${remaining_args[@]}"
