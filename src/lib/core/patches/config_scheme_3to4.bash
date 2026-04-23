@@ -42,13 +42,17 @@ dna::patch_add_directory_if_missing "slurm_jobs/template" "slurm_jobs/template" 
 
 slurm_job_templates=(
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.compute_canada.bash"
-  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.mamba.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash"
   "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
 )
+# Note (historical): an earlier version of this patch also listed
+#   slurm_job.DNA_SJOB_NAME.apptainer.hpc_hydra.bash
+# which was never shipped in src/lib/template/. It has been removed from this list.
+# Even if a user ran the buggy version, dna::patch_add_file_if_missing now gracefully
+# skips missing template sources with a warning instead of failing the patch chain.
 
 for template in "${slurm_job_templates[@]}"; do
   if dna::patch_add_file_if_missing "${template}" "${template}" "Slurm job template: $(basename "${template}")"; then

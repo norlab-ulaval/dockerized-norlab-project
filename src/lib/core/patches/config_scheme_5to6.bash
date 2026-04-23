@@ -18,6 +18,17 @@
 #   Replacing templates wholesale and re-running init substitutions is simpler, more robust, and
 #   easier to maintain.
 #
+# Note on re-running this patch to recover from a corrupted super project:
+#   An earlier (perl-based) version of this patch had two known bugs:
+#     1. The "HPC server configuration" block removal searched for the literal string
+#        PLACEHOLDER_DN_PROJECT_IMAGE_NAME, which is already substituted in initialized super
+#        projects. This caused the block to appear twice in the apptainer templates.
+#     2. Multi-line replacements in non-apptainer templates produced literal \n sequences
+#        instead of actual newlines.
+#   If your super project exhibits these symptoms, reset DNA_CONFIG_SCHEME_VERSION back to 5
+#   in .dockerized_norlab/.env.<SUPER_PROJECT_REPO_NAME> and re-run `dna update` to apply
+#   this corrected patch.
+#
 # =================================================================================================
 
 # ==== Patch logic starts here ====
@@ -29,28 +40,49 @@ _super_project_image_name="$(echo "${SUPER_PROJECT_REPO_NAME:?err}" | tr '[:uppe
 # Mapping: <old-name-in-super-project> -> <new-template-source-path>
 # The super project may have the old naming (v5) or the new naming (already patched); both handled.
 
-declare -A _non_apptainer_template_map=(
-  ["slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"]="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
-  ["slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"]="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
-  ["slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"]="slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash"
-  ["slurm_jobs/slurm_job.dryrun.bash"]="slurm_jobs/slurm_job.dryrun.dna.bash"
+# Use two parallel indexed arrays instead of an associative array so this patch remains
+# compatible with bash 3.2 (the default /bin/bash shipped on macOS). Associative arrays
+# (`declare -A`) require bash >= 4 and would otherwise cause the infamous
+# "expression recursion level exceeded" error when the subsequent subscript assignment
+# is parsed as an arithmetic expression.
+_non_apptainer_old_templates=(
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.bash"
+  "slurm_jobs/slurm_job.dryrun.bash"
+)
+_non_apptainer_new_templates=(
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra.dna.bash"
+  "slurm_jobs/template/slurm_job.DNA_SJOB_NAME.hydra_hparam_optim.dna.bash"
+  "slurm_jobs/slurm_job.dryrun.dna.bash"
 )
 
-for _old_t in "${!_non_apptainer_template_map[@]}"; do
-  _new_t="${_non_apptainer_template_map[${_old_t}]}"
+for _i in "${!_non_apptainer_old_templates[@]}"; do
+  _old_t="${_non_apptainer_old_templates[${_i}]}"
+  _new_t="${_non_apptainer_new_templates[${_i}]}"
   # Remove old-named file if it exists (renamed to .dna.bash)
   if [[ -f "${SUPER_PROJECT_ROOT}/${_old_t}" ]]; then
     rm -f "${SUPER_PROJECT_ROOT}/${_old_t}"
     n2st::print_msg "Removed old template: ${_old_t}"
   fi
-  # Copy new template to super project under new name.
-  # Use patch_add_file_if_missing because after removing the old name the new name does not exist yet.
-  dna::patch_add_file_if_missing \
-    "${_new_t}" \
-    "${_new_t}" \
-    "slurm job template $(basename "${_new_t}")"
+  # Copy new template to super project under the new name.
+  # - If the new-named file already exists (e.g., left by an earlier, buggy version of this patch),
+  #   replace it wholesale so any corruption (e.g., literal \n sequences) is corrected.
+  # - If it doesn't exist yet (normal rename path), add it fresh.
+  if [[ -f "${SUPER_PROJECT_ROOT}/${_new_t}" ]]; then
+    dna::patch_replace_file \
+      "${_new_t}" \
+      "${_new_t}" \
+      "slurm job template $(basename "${_new_t}")"
+  else
+    dna::patch_add_file_if_missing \
+      "${_new_t}" \
+      "${_new_t}" \
+      "slurm job template $(basename "${_new_t}")"
+  fi
 done
-unset _non_apptainer_template_map _old_t _new_t
+unset _non_apptainer_old_templates _non_apptainer_new_templates _old_t _new_t _i
 
 # ....Replace apptainer slurm job templates and re-apply PLACEHOLDER substitution.................
 

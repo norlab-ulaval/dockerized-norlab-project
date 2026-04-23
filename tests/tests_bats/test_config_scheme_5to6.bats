@@ -146,6 +146,54 @@ teardown() {
   assert_success
 }
 
+@test "config_scheme_5to6.bash › should replace corrupted non-apptainer .dna.bash file (regression: literal backslash-n from old perl patch)" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=6
+  export DNA_CONFIG_SCHEME_VERSION=5
+
+  # Simulate the corrupted state produced by the old perl-based patch: the .dna.bash file already
+  # exists but contains literal \n sequences (backslash + n) instead of real newlines, and the sed
+  # pattern uses the old .bash suffix instead of .dna.bash.
+  printf '# outdated stub\nDNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed '"'"'s/^slurm_job\\.//;s/\\.bash$//'"'"' )"\\nexport DNA_SJOB_NAME\n' \
+    > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  target_file="${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.dna.bash"
+  # Corrupted stub marker must be replaced
+  run grep "# outdated stub" "${target_file}"
+  assert_failure
+  # The correct sed suffix (.dna.bash) must be present; the old wrong one (.bash) must not
+  run grep "dna\.bash" "${target_file}"
+  assert_success
+}
+
+@test "config_scheme_5to6.bash › should replace corrupted apptainer template with duplicated HPC server configuration block (regression: old perl patch bug)" {
+  export DNA_RELEASE_CONFIG_SCHEME_VERSION=6
+  export DNA_CONFIG_SCHEME_VERSION=5
+
+  # Simulate the corrupted valeria template: HPC server configuration block appears twice because
+  # the old perl patch failed to remove the one in the Setup section (it searched for the literal
+  # PLACEHOLDER string which was already substituted with the actual image name).
+  printf '#!/bin/bash\n# ....HPC server configuration.....\nSIF_PATH="artifact/apptainer/myproject-slurm.sif"\n# ====DNA internal=====\n# ....Set job name.....\nDNA_SJOB_NAME="stub"\n# ....HPC server configuration.....\nSIF_PATH="artifact/apptainer/myproject-slurm.sif"\n' \
+    > "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
+
+  # Precondition: 2 occurrences of the HPC config header
+  run grep -c "HPC server configuration" \
+    "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
+  assert_output "2"
+
+  run dna::patch_check_and_run
+
+  assert_success
+
+  # After patch: exactly 1 occurrence (inside DNA internal section, from the current template)
+  run grep -c "HPC server configuration" \
+    "${TEST_TEMP_DIR}/slurm_jobs/template/slurm_job.DNA_SJOB_NAME.apptainer.valeria.bash"
+  assert_output "1"
+}
+
 # -------------------------------------------------------------------------------------------------
 # Non-apptainer template DNA_SJOB_NAME auto-set
 # -------------------------------------------------------------------------------------------------

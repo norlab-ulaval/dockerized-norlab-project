@@ -94,6 +94,12 @@ function dna::global_install_hack() {
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
+  # Package is not maintained and pytest-env version 1.6.0 (which is maintained) introduce a flag
+  # that conflict with pytest-env (ref task NMO-834)
+  pip3 uninstall --yes pytest-dotenv
+
+  # ///////////////////////////////////////////////////////////////////////////////////////////////
+
   # NMO-789 fix: path pytest-rerunfailure bogus release
   pip3 install pytest-rerunfailures!=16.0
 
