@@ -149,6 +149,35 @@ dna project validate --slurm
 dna project validate --slurm "/path/to/slurm/jobs"
 ```
 
+> **Note — HPC-target apptainer scripts are skipped off-HPC.**
+>
+> `dna project validate --slurm` iterates over every `slurm_job.*.bash` found in
+> the target directory and executes each one in dry-run mode to catch
+> configuration issues early.
+>
+> Slurm job scripts whose filename matches `*.apptainer.*.bash` (for example
+> `slurm_job.<name>.apptainer.valeria.bash`) are **standalone HPC submission
+> scripts**: they are meant to be executed by `sbatch` on an HPC login/compute
+> node (Valeria, etc.) where `apptainer` and `module` (Lmod) are available.
+> They do **not** honor DNA's `--hydra-dry-run` / `--skip-*-force-rebuild`
+> flags and they call `module` / `apptainer` unconditionally.
+>
+> To avoid environment-only failures when `dna project validate --slurm` runs
+> on a non-HPC host (e.g. a developer laptop, a CI build agent such as
+> TeamCity, etc.), any `*.apptainer.*.bash` script is **automatically skipped
+> when `apptainer` is not available on the current host's `PATH`**. Skipped
+> scripts are listed in the validate output so you can easily see that they
+> were not dry-run. When `apptainer` **is** available on `PATH`, these scripts
+> are dry-run like the others.
+>
+> The filter applies to **every** HPC profile (not just `valeria`): any file
+> matching the glob `slurm_job.*.apptainer.*.bash` is affected.
+>
+> At the end of the run, a **"Skipped slurm job summary"** section is printed
+> alongside the config / build / dry-run summaries, listing each skipped
+> script with the reason (e.g. `apptainer` not available on this host). This
+> section is only shown when at least one script was skipped.
+
 ### Multi-Architecture Validation
 
 ```bash

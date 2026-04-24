@@ -532,7 +532,7 @@ function dna::_patch_fixed_string_replace_in_file() {
         return 1
     fi
 
-    SEARCH="${search}" REPLACE="${replace}" python3 - "${file_path}" <<'PY' || return 1
+    SEARCH="${search}" REPLACE="${replace}" python3 - "${file_path}" <<'PY'
 import os, sys, pathlib
 target = pathlib.Path(sys.argv[1])
 s = os.environ["SEARCH"]
@@ -543,5 +543,9 @@ if s not in text:
     sys.exit(0)
 target.write_text(text.replace(s, r, 1))
 PY
+    local _rc=$?
+    if [[ ${_rc} -ne 0 ]]; then
+        return 1
+    fi
     return 0
 }

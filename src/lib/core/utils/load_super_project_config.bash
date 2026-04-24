@@ -152,10 +152,18 @@ function dna::load_super_project_configurations() {
   fi
 
   # ....Set DN git branch and version dynamicaly based on DNA current branch.......................
+  # Note: Dotenv file '.env.dna-internal.local' is an optional local override layer. If it
+  #       exists, it is sourced before '.env.dna-internal'. If it doesn't exist, there is
+  #       nothing to override, so we simply skip it (no need to create an empty placeholder
+  #       file, which would also fail on read-only/multi-user DNA installs e.g. /opt/...).
+  #       Loading precedence when present:
+  #         1. .env.dna
+  #         2. .env
+  #         3. .env.local
+  #         4. .env.dna-internal.local  (DNA repo, optional override)
+  #         5. .env.dna-internal        (DNA repo)
   local dna_internal_local="${DNA_LIB_PATH:?err}/core/docker/.env.dna-internal.local"
   if [[ -f "${dna_internal_local}" ]]; then
-    # Note: Dotenv file '.env.dna-internal.local', if it exist, should be sourced
-    #       before '.env.dna-internal'.
     if [[ $(grep -c '^[[:space:]]*[A-Z_][A-Z0-9_]*=' "${dna_internal_local}" 2>/dev/null) -gt 0 ]]; then
         n2st::print_msg_warning "Be advised, sourcing dna internal ${MSG_EMPH_FORMAT}local${MSG_END_FORMAT} dotenv file ${MSG_DIMMED_FORMAT}${dna_internal_local}${MSG_END_FORMAT}."
     fi
@@ -163,25 +171,6 @@ function dna::load_super_project_configurations() {
     # shellcheck disable=SC1090
     source "${dna_internal_local}" || return 1
     set +o allexport
-  else
-    # Note: Dotenv file .env.dna-internal.local is required by docker-compose.[build|run].*.yaml files
-    cat > "${dna_internal_local}" << EOF
-# =================================================================================================
-# Set Dockerized-NorLab project application (DNA) internal environment variable LOCALY.
-#
-# Notes:
-#   - This file is git ignored ⚠️
-#   - This dotenv file is use both at buildtime and runtime
-#   - DNA dotenv file loading precedence:
-#       1. .env.dna
-#       2. .env
-#       3. .env.local
-#       4. .env.dna-internal.local  (DNA repo)
-#       5. .env.dna-internal        (DNA repo)
-#
-# =================================================================================================
-
-EOF
   fi
 
   # Set the Dockerized-NorLab repository branch for fetching container internal tools if not

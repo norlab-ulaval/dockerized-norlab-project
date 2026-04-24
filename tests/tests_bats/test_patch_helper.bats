@@ -282,6 +282,21 @@ teardown_file() {
   assert_output "1"
 }
 
+@test "dna::_patch_fixed_string_replace_in_file › heredoc opener must not be chained with '|| return' (bash 3.2 re-parse regression)" {
+  # Regression test for a bash 3.2 (macOS default /bin/bash) failure observed
+  # when dna::_patch_fixed_string_replace_in_file was re-parsed in a child shell
+  # via 'export -f':
+  #   bash: dna::_patch_fixed_string_replace_in_file: line NN: syntax error near unexpected token `||'
+  #   bash: error importing function definition for `dna::_patch_fixed_string_replace_in_file'
+  # Root cause: bash 3.2's parser chokes on a heredoc opener chained with '||'
+  # on the same line, e.g. `python3 - "$f" <<'PY' || return 1`. The fix is to
+  # check $? on its own line after the heredoc terminator.
+  local fn_file="${BATS_DOCKER_WORKDIR}/src/lib/core/utils/patch_helper.bash"
+  # Must not contain the offending pattern anywhere in the file.
+  run grep -E "<<'?[A-Za-z_][A-Za-z_0-9]*'?[[:space:]]+\\|\\|" "${fn_file}"
+  assert_failure
+}
+
 @test "dna::patch_modify_content › should not modify content if search pattern is not found" {
   local test_file="file_not_to_modify.txt"
   echo "Initial content" > "${TEST_TEMP_DIR}/${test_file}"
