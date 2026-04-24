@@ -1,9 +1,14 @@
 #!/bin/bash
+#
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
+#SBATCH --mem=32g
 #SBATCH --cpus-per-task=12
-#SBATCH --time=7-00:00
-#SBATCH --output=out/%x-%j.out
-# Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+#SBATCH --time=0-24:00
+#SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out
+#
+# Note:
+# - Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
 # =================================================================================================
 # Execute Apptainer slurm job on Valeria HPC server.
 #
@@ -11,18 +16,36 @@
 # The apptainer exec command is executed directly using the pre-built SIF file.
 #
 # Workflow:
-#   Local (macOS):
-#     1. Build:    dna build slurm --apptainer valeria
-#                  → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
-#     2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
-#     3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                  artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
-#                  .dockerized_norlab/,
-#                  data/external_data/, data/repository_data/
-#                  (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
-#   On Valeria:
-#     4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
-#     5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
+#   Two pipelines are available. Choose the one that fits your setup:
+#
+#   Pipeline A — tar archive (--save): build image locally, transfer tar, convert to SIF on HPC.
+#     Local (macOS):
+#       1. Build:    dna build slurm --apptainer valeria --save
+#                    → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
+#       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
+#       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
+#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
+#                    .dockerized_norlab/,
+#                    data/external_data/, data/repository_data/
+#                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
+#     On Valeria:
+#       4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+#       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
+#
+#   Pipeline B — registry push (--push): build and push image to a Docker registry, pull on HPC via Apptainer.
+#     Local (macOS):
+#       1. Build:    dna build slurm --apptainer valeria --push
+#                    → builds Docker image, pushes to registry, generates dna_registry_to_apptainer_sif_converter.sh
+#       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
+#       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
+#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
+#                    .dockerized_norlab/,
+#                    data/external_data/, data/repository_data/
+#                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
+#     On Valeria:
+#       4. Build SIF: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+#                    (optionally add --docker-login to authenticate to a private registry)
+#       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
 #
 # Usage:
 #   $ sbatch slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
@@ -34,8 +57,10 @@ declare -a python_arguments=()
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
 function job_setup_callback() {
-  # Add any instruction that should be executed before the apptainer exec command
-  :
+  # TODO: Add any instruction that should be executed before the apptainer exec command
+
+  # Required for wandb.ai
+  module load httpproxy
 }
 
 # ....Custom teardown (optional)...................................................................
@@ -45,24 +70,32 @@ function job_teardown_callback() {
   exit "${exit_code:-1}"
 }
 
-# ....Set job name.................................................................................
-# TODO: Set DNA_SJOB_NAME
-DNA_SJOB_NAME="default"
-# Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an DNA_SJOB_NAME.
-
 # ....Python module................................................................................
 # TODO: Set python module to launch
 python_arguments+=("launcher/example.py")
 # Note: container workdir is <DN_PROJECT_PATH>/src/ (set in .env.valeria: DN_PROJECT_PATH)
 
+# ....Optional hydra flags.........................................................................
+# --config-path,-cp : Overrides the config_path specified in hydra.main(). (absolute or relative)
+# --config-name,-cn : Overrides the config_name specified in hydra.main()
+# --config-dir,-cd : Adds an additional config dir to the config search path
+#python_arguments+=("--config-path=")
+#python_arguments+=("--config-dir=")
+#python_arguments+=("--config-name=")
+
+# ====DNA internal=================================================================================
+# ....Set job name.................................................................................
+# Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
+#  and use its issue ID as the DNA_SJOB_NAME.
+
+# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.apptainer.valeria.bash → <name>)
+DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.apptainer\.valeria\.bash$//' )"
+export DNA_SJOB_NAME
+
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
 SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
 PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria"
-
-# ====DNA internal=================================================================================
-export DNA_SJOB_NAME
 
 # Source HPC-specific env (sets DN_PROJECT_PATH, DN_PROJECT_USER, etc.)
 # shellcheck source=/dev/null
@@ -70,9 +103,27 @@ source "${PROFILE_ENV_FILE}" 2>/dev/null || {
   echo "[warning] Profile env file not found: ${PROFILE_ENV_FILE}" 1>&2
 }
 
-# Set APPTAINER_TMPDIR to SLURM_TMPDIR for best performance on Valeria
-APPTAINER_TMPDIR="${SLURM_TMPDIR:-/tmp}"
-export APPTAINER_TMPDIR
+# ====Load Apptainer module (HPC module system)====================================================
+# Try to load the highest available apptainer version; fallback to default.
+if command -v module &>/dev/null; then
+  _APPTAINER_LATEST_VERSION="$( module spider apptainer 2>&1 | grep -oE 'apptainer/[0-9]+\.[0-9]+\.[0-9]+' | sed 's|apptainer/||' | sort -V | tail -1 )"
+  if [[ -n "${_APPTAINER_LATEST_VERSION}" ]]; then
+    echo "[info] Loading Apptainer module version: ${_APPTAINER_LATEST_VERSION}" 1>&2
+    module load "apptainer/${_APPTAINER_LATEST_VERSION}"
+  else
+    echo "[info] Loading default Apptainer module" 1>&2
+    module load apptainer
+  fi
+fi
+
+# Set APPTAINER_CACHEDIR and APPTAINER_TMPDIR to the local node scratch space.
+# Using SLURM_TMPDIR (fast local SSD allocated per job) avoids writing to the Lustre
+# home filesystem, which has quota limits and does not support atomic rename required
+# by Apptainer's cache. Falls back to /tmp if SLURM_TMPDIR is not set.
+# Ref: https://apptainer.org/docs/user/latest/build_env.html
+# Ref: https://doc.s3.valeria.science/fr/calcul/apptainer.html#bonnes-pratiques
+export APPTAINER_CACHEDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp -d )"
+export APPTAINER_TMPDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp -d )"
 
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then
@@ -99,6 +150,9 @@ echo "[info] Python args: ${python_arguments[*]}"
 
 # Note: --nv enables NVIDIA GPU access inside the container (equivalent to Docker's runtime: nvidia).
 #       Remove it for CPU-only jobs.
+# Note: src/ and utilities/ are bind-mounted read-only to enable fast code iteration.
+#       Build, push, pull, and convert to SIF once; then rsync modified code to the HPC server
+#       and re-submit the job without rebuilding the Docker image or reconverting the SIF.
 apptainer exec \
     --no-eval \
     --cleanenv \
@@ -110,6 +164,9 @@ apptainer exec \
     --bind "${SUPER_PROJECT_ROOT}/artifact/:${DN_PROJECT_PATH}/artifact/:rw" \
     --bind "${SUPER_PROJECT_ROOT}/data/external_data/:${DN_PROJECT_PATH}/data/external_data/:rw" \
     --bind "${DNA_HOST_SHARED_DATA_PATH:-${SUPER_PROJECT_ROOT}/data/shared_data/}:${DN_PROJECT_PATH}/data/shared_data/:ro" \
+    --bind "${SUPER_PROJECT_ROOT}/src/:${DN_PROJECT_PATH}/src/:ro" \
+    --bind "${SUPER_PROJECT_ROOT}/utilities/:${DN_PROJECT_PATH}/utilities/:ro" \
+    --env GIT_DIR="${DN_PROJECT_PATH}/.git" \
     --env-file "${PROFILE_ENV_FILE}" \
     --env CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
     --env SLURM_JOB_ID="${SLURM_JOB_ID}" \

@@ -274,7 +274,10 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dna::build_services called with args: --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
+
+  # Build stage will be re-activated with task NMO-692 feat: add a --build option to run.ci_tests.bash
+  #assert_output --partial "Mock dna::build_services called with args: --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
+
   assert_output --partial "Mock dna::run_ci_tests called with args:"
 }
 
@@ -287,7 +290,10 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dna::build_services called with args: --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
+
+  # Build stage will be re-activated with task NMO-692 feat: add a --build option to run.ci_tests.bash
+  #assert_output --partial "Mock dna::build_services called with args: --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
+
   assert_output --partial "Mock dna::run_ci_tests called with args: --arg1 --arg2"
 }
 
@@ -627,7 +633,10 @@ teardown_file() {
 
   # Should output the expected messages
   assert_output --partial "Mock n2st::print_msg called with args: Running CI tests..."
-  assert_output --partial "Mock dna::build_services called with args: --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
+
+  # Build stage will be re-activated with task NMO-692 feat: add a --build option to run.ci_tests.bash
+  #assert_output --partial "Mock dna::build_services called with args: --service-names project-core-pre,project-core-user,project-core,project-ci-tests"
+
   assert_output --partial "Mock dna::run_ci_tests called with args: -e TEST_VAR=value --detach"
 }
 

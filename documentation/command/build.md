@@ -30,8 +30,12 @@ The `dna build` command builds Docker images for your DNA project. It supports d
 | `--multiarch` | Build services for multiple architectures                                      |
 | `--rmab` | Create/re-create a docker buildx multiarch builder instance                                                          |
 | `--online-build` | Build images sequentially by pushing/pulling intermediate images from Docker Hub (requires Docker Hub authentication) |
-| `--save DIRPATH` | Save built image to specified directory (develop or deploy services only)                                            |
-| `--push` | Push image to Docker Hub (deploy services only, requires Docker Hub authentication)                                  |
+| `--save DIRPATH` | Save built image to specified directory (develop, deploy or slurm services only)                                            |
+| `--push` | Push image to Docker Hub (deploy or slurm services only, requires Docker Hub authentication). For slurm with `--apptainer`, selects the registry push pipeline (see `--apptainer`). |
+| `--apptainer <profile>` | HPC Apptainer workflow for slurm service only. **Requires `--save` or `--push`:** `--save` selects the tar archive pipeline (saves `.tar`, generates `dna_tar_to_apptainer_sif_converter.sh`); `--push` selects the registry pipeline (pushes to Docker registry, generates `dna_registry_to_apptainer_sif_converter.sh`). Does **not** execute apptainer locally (macOS compatible). See [Apptainer documentation](apptainer.md). |
+| `--save` | When used with `--apptainer <profile>`, selects the tar archive pipeline (no `DIRPATH` needed). When used for `develop`/`deploy` services (without `--apptainer`), saves the built image to the specified `DIRPATH`. |
+| `--squash` | Squash the built image to reduce its size. For `slurm` (with or without `--apptainer`): squashes before saving tar archive, pushing to registry, or in-place. For `deploy`/`ci-tests`: squashes image in-place after building. Collapses all layers into one. **Preserves** `ENV`, `ENTRYPOINT`/`CMD`, `WORKDIR`, `LABEL`, `USER`. Removes intermediate layer history. Requires `python3` on host. |
+| `--gs-only` | **(Apptainer-only)** Skip all docker build/push/save steps and re-generate only the HPC converter script. **Must be combined with `--apptainer <profile>` and `--save` or `--push`** — e.g., `dna build slurm --apptainer valeria --save --gs-only`. Regenerates `dna_tar_to_apptainer_sif_converter.sh` (with `--save`) or `dna_registry_to_apptainer_sif_converter.sh` (with `--push`) without rebuilding the Docker image. Does **not** require internet. |
 | `--help`, `-h` | Show help message and exit                                                                                           |
 | `-- <docker-args>` | Pass additional arguments directly to Docker build                                                                   |
 
@@ -93,6 +97,35 @@ dna build ci-tests
 ```bash
 # Build images for SLURM cluster execution
 dna build slurm
+
+# Build slurm image and save as tar archive for HPC Apptainer workflow (Valeria) — tar archive pipeline
+dna build slurm --apptainer valeria --save
+
+# Build slurm image and push to Docker registry for HPC Apptainer workflow — registry push pipeline
+dna build slurm --apptainer valeria --push
+
+# Build and squash slurm image before saving (reduces transfer size)
+dna build slurm --apptainer valeria --save --squash
+
+# Build, push to registry, and squash before push
+dna build slurm --apptainer valeria --push --squash
+
+# Build slurm image and squash in-place (no Apptainer artifacts)
+dna build slurm --squash
+
+# Regenerate only the HPC converter script (skip docker build/push/save)
+dna build slurm --apptainer valeria --save --gs-only
+dna build slurm --apptainer valeria --push --gs-only
+```
+
+### Squash Image to Reduce Size
+
+```bash
+# Squash deploy image in-place after build
+dna build deploy --squash
+
+# Squash ci-tests image in-place after build
+dna build ci-tests --squash
 ```
 
 ### Pass Docker Arguments
@@ -199,6 +232,7 @@ docker system prune -a
 - [dna up](up.md) - Start built containers
 - [dna save](save.md) - Save images for offline use
 - [dna load](load.md) - Load saved images
+- [Apptainer / HPC Workflow](apptainer.md) - Complete guide for HPC/Apptainer deployment
 - [Docker Buildx documentation](https://docs.docker.com/buildx/)
 
 ## Navigation

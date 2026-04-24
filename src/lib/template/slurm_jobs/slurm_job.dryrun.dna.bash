@@ -1,17 +1,20 @@
 #!/bin/bash
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=12
-#SBATCH --time=7-00:00
-#SBATCH --output=out/%x-%j.out
-
-
-# Note: Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+#
+#SBATCH --partition=debug
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=2g
+#SBATCH --time=0-00:15
+#SBATCH --output=artifact/slurm_jobs_logs/%x-%j.out
+#
+# Note:
+# - Flag time format --time=D-HH:MM ->  D=day, HH=hours, MM=minutes
+# - debug partition only has CPU nodes (ul-val-pr-cpv*) — no GPU resources available.
 
 # =================================================================================================
 # Execute slurm job
 #
 # Usage:
-#   $ bash slurm_job.template.bash [<any-dna-argument>]
+#   $ bash slurm_job.dryrun.dna.bash [<any-dna-argument>]
 #
 # =================================================================================================
 declare -x DNA_SJOB_NAME
@@ -21,29 +24,23 @@ declare -a hydra_flags=()
 # ====Setup========================================================================================
 # ....Custom setup (optional)......................................................................
 function dna::job_setup_callback() {
-  # TODO: Add any instruction that should be executed before 'dna run slurm' command
+  # Add any instruction that should be executed before 'dna run slurm' command
   :
 }
 
 # ....Custom teardown (optional)...................................................................
 function dna::job_teardown_callback() {
   local exit_code=$?
-  # TODO: Add any instruction that should be executed after 'dna run slurm' exit.
+  # Add any instruction that should be executed after 'dna run slurm' exit.
 
   # Note: Command 'dna run slurm' already handle stoping the container in case the slurm command
   #  `scancel` is issued.
   exit ${exit_code:-1}
 }
 
-# ....Set job name.................................................................................
-# TODO: Set DNA_SJOB_NAME
-DNA_SJOB_NAME="default"
-# Note: Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
-#  and use its issue ID as an DNA_SJOB_NAME.
 
 # ....Hydra app module.............................................................................
-# TODO: Set python module to launch
-hydra_flags+=("launcher/example_app.py")
+hydra_flags+=("launcher/example_app_hparm_optim.py")
 # Note: assume container workdir is `<super-project>/src/`
 
 # ....Optional hydra flags.........................................................................
@@ -56,19 +53,24 @@ hydra_flags+=("launcher/example_app.py")
 #hydra_flags+=("--config-name=")
 
 # ....Debug flags..................................................................................
-dna_run_slurm_flags+=(--register-hydra-dry-run-flag "+new_key='fake-value'")
+dna_run_slurm_flags+=(--register-hydra-dry-run-flag "run_pytorch_check=true")
 
-#dna_run_slurm_flags+=("--skip-core-force-rebuild")
-#dna_run_slurm_flags+=("--skip-slurm-force-rebuild")
-#dna_run_slurm_flags+=("--hydra-dry-run")
-
-#hydra_flags+=("--cfg" "all")
+dna_run_slurm_flags+=("--skip-core-force-rebuild")
+dna_run_slurm_flags+=("--skip-slurm-force-rebuild")
+dna_run_slurm_flags+=("--hydra-dry-run")
 
 # ====DNA internal=================================================================================
-dna_run_slurm_flags+=("--log-name" "$(basename -s .bash $0)")
+# ....Set job name.................................................................................
+# Recommend opening an issue tracker task (e.g., YouTrack, GitHub issue, Trello)
+#  and use its issue ID as the DNA_SJOB_NAME.
+
+# Auto-set DNA_SJOB_NAME from the script filename (slurm_job.<name>.dna.bash → <name>)
+DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed 's/^slurm_job\.//;s/\.dna\.bash$//' )"
+export DNA_SJOB_NAME
+
+dna_run_slurm_flags+=("--log-name" "$(basename -s .dna.bash $0)")
 dna_run_slurm_flags+=("--log-path" "artifact/slurm_jobs_logs")
 dna_run_slurm_flags+=("$@")
-export DNA_SJOB_NAME
 dna::job_setup_callback
 trap dna::job_teardown_callback EXIT
 

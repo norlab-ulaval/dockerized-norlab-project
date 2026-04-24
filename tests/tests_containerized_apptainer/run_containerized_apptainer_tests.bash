@@ -158,6 +158,12 @@ mkdir -p "${MOCK_SUPER_PROJECT}/artifact/apptainer"
 mkdir -p "${MOCK_SUPER_PROJECT}/data/external_data"
 mkdir -p "${MOCK_SUPER_PROJECT}/data/shared_data"
 mkdir -p "${MOCK_SUPER_PROJECT}/src"
+mkdir -p "${MOCK_SUPER_PROJECT}/utilities"
+
+# Copy test python script into mock src/ so it is accessible when src/ is bind-mounted
+# at runtime (--bind "${SUPER_PROJECT_ROOT}/src/:${DN_PROJECT_PATH}/src/:ro" would otherwise
+# shadow the script that was baked into the mock slurm image).
+cp "${SCRIPT_DIR}/test_apptainer_env.py" "${MOCK_SUPER_PROJECT}/src/test_apptainer_env.py"
 
 # Create mock HPC profile env files
 cat > "${MOCK_SUPER_PROJECT}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria" << 'ENVEOF'

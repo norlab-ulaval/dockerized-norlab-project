@@ -17,14 +17,15 @@ The `dna save` command creates portable archives containing Docker images and ne
 | Argument | Description |
 |----------|-------------|
 | `DIRPATH` | Directory path where to save the image archive |
-| `SERVICE` | Service to save (`develop`, `deploy`, or `slurm` with `--apptainer`) |
+| `SERVICE` | Service to save (`develop`, `deploy`, or `slurm`) |
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
 | `--help`, `-h` | Show help message and exit |
-| `--apptainer <profile>` | Generate Apptainer artifacts for HPC (slurm service only). Creates `build_sif.sh` helper and Apptainer metadata. `<profile>` selects `.env.<profile>` configuration (e.g., `valeria`, `compute_canada`). **Does not execute `apptainer` locally** (macOS compatible). |
+| `--apptainer <profile>` | Save slurm image as `linux/amd64` tar archive (`.tar`) and generate `dna_tar_to_apptainer_sif_converter.sh` helper script for HPC (slurm service only). `<profile>` selects `.env.<profile>` configuration (e.g., `valeria`, `compute_canada`). Uses `--platform "${APPTAINER_TARGET_PLATFORM:-linux/amd64}"` for `docker image save` to ensure the tar archive targets the correct architecture. **Does not execute `apptainer` locally** (macOS compatible). See [Apptainer documentation](apptainer.md) for the full HPC workflow. Note: `dna save --apptainer` is the tar archive pipeline only; for the registry push pipeline use `dna build slurm --apptainer <profile> --push`. |
+| `--squash` | Squash the image before saving to reduce the archive size. Works for all supported services (`slurm`, `develop`, `deploy`). Collapses all layers into one. **Preserves** `ENV`, `ENTRYPOINT`/`CMD`, `WORKDIR`, `LABEL`, `USER`. Removes intermediate layer history. Requires `python3` on host. |
 
 ## Services
 
@@ -32,7 +33,7 @@ The `dna save` command creates portable archives containing Docker images and ne
 |---------|-------------|----------|
 | `develop` | Development service | Docker image only (assumes project is cloned on target) |
 | `deploy` | Deployment service | Full project structure for self-contained deployment |
-| `slurm` | HPC Apptainer service (requires `--apptainer`) | Docker tar archive + `build_sif.sh` for HPC conversion |
+| `slurm` | HPC / Apptainer service | Docker tar archive; add `--apptainer` to also generate `dna_tar_to_apptainer_sif_converter.sh` for HPC conversion |
 
 ## Output Structure
 
@@ -64,6 +65,22 @@ dna-save-deploy-my-project-202312151430/
 
 ## Examples
 
+### Save Slurm Image (for HPC)
+
+```bash
+# Save slurm image as tar archive
+dna save /output/dir slurm
+
+# Save slurm image with Apptainer artifacts (generates dna_tar_to_apptainer_sif_converter.sh)
+dna save --apptainer valeria /output/dir slurm
+
+# Save slurm image squashed (reduces transfer size)
+dna save --squash /output/dir slurm
+
+# Save slurm image with Apptainer artifacts and squash
+dna save --apptainer valeria --squash /output/dir slurm
+```
+
 ### Save Development Image
 
 ```bash
@@ -82,6 +99,9 @@ dna save /media/usb/dna-backups develop
 ```bash
 # Save complete deployment package
 dna save /deployment/packages deploy
+
+# Save deployment package with squashed image (smaller archive)
+dna save --squash /deployment/packages deploy
 
 # Save to shared network location
 dna save /shared/deployments deploy
@@ -199,7 +219,7 @@ tar -czf my-project-deploy.tar.gz dna-save-deploy-*
 ### Archive Sizes
 - **Develop service**: Image size only
 - **Deploy service**: Image size + project files
-- **Compression**: TAR archives are uncompressed
+- **Archives**: TAR archives (`.tar`) for all services including `slurm` with `--apptainer`
 
 ## Troubleshooting
 
@@ -274,7 +294,7 @@ tar -czf my-project-deploy.tar.gz dna-save-deploy-*
 
 - **Use local storage**: Avoid network drives for better performance
 - **Clean up regularly**: Remove old save directories to save space
-- **Compress for transfer**: Use tar/gzip for network transfer
+- **Compress for transfer**: Use tar/gzip externally for additional compression if needed for network transfer
 - **Parallel operations**: Save multiple services simultaneously if needed
 
 ## Apptainer / HPC Workflow
@@ -284,17 +304,20 @@ For HPC servers using Apptainer (Valeria, Compute Canada, Mamba), use `--apptain
 ```bash
 # Save slurm image with Apptainer artifacts
 dna save --apptainer valeria /output/dir slurm
+
+# Squash before saving (reduces HPC transfer size)
+dna save --apptainer valeria --squash /output/dir slurm
 ```
 
 This generates:
-- `<project>-slurm.<tag>.tar` — Docker tar archive compatible with Apptainer's `docker-archive:` bootstrap
-- `build_sif.sh` — Helper script to run on HPC: `apptainer build <name>.sif docker-archive:<name>.tar`
-- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM` (from HPC profile, default: `linux/amd64`), `SIF_BUILD_CMD`
+- `<project>-slurm.<tag>.tar` — Docker tar archive
+- `dna_tar_to_apptainer_sif_converter.sh` — Helper script to run on HPC: converts tar → SIF, then **deletes the tar archive** to free disk space
+- `meta.txt` — Includes `APPTAINER_PROFILE`, `APPTAINER_TARGET_PLATFORM` (from HPC profile, default: `linux/amd64`), `SIF_BUILD_CMD`, `TAR_FILENAME` (the `.tar` filename)
 
 > ℹ️ Platform is enforced from the HPC profile's `APPTAINER_TARGET_PLATFORM` variable via
 > `DOCKER_DEFAULT_PLATFORM`, ensuring cross-architecture builds on Apple Silicon Macs.
 
-The saved tar archive is one part of the Apptainer pipeline. After saving, use `dna run slurm --ga`
+The saved `.tar` archive is one part of the Apptainer pipeline. After saving, use `dna run slurm --ga`
 to generate run scripts, or use the slurm job templates (`slurm_job.apptainer.<profile>.template.bash`)
 for production job submission. See [Apptainer / HPC Workflow](apptainer.md) for the complete guide
 and the [three pipeline artifacts](apptainer.md#understanding-the-apptainer-pipeline-artifacts).

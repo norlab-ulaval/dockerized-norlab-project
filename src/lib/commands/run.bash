@@ -88,7 +88,7 @@ DOCUMENTATION_RUN_SLURM_CMD=$( cat <<'EOF'
 #
 # Notes about slurm run:
 #   To launch job on slurm/mamba server, use 'dna run slurm ...' command in a slurm launch script.
-#   See example 'slurm_job.*template.bash' and 'slurm_job.dryrun.bash' in 'slurm_jobs/' directory.
+#   See example 'slurm_job.*.dna.bash' and 'slurm_job.dryrun.dna.bash' in 'slurm_jobs/' directory.
 #
 # =================================================================================================
 EOF
@@ -332,7 +332,10 @@ function dna::run_command() {
         build_all_flag=()
         build_all_flag+=(--service-names "project-core-pre,project-core-user,project-core,project-ci-tests")
         #build_all_flag+=(-- --no-cache)
-        dna::build_services "${build_all_flag[@]}"
+
+        # (NICE TO HAVE) ToDo: # Build stage will be re-activated with task NMO-692 feat: add a --build option to run.ci_tests.bash
+        #dna::build_services "${build_all_flag[@]}"
+
         dna::run_ci_tests "${remaining_args[@]}"
         fct_exit_code=$?
     elif [[ "${service}" == "slurm" ]]; then

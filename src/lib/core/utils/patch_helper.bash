@@ -188,11 +188,18 @@ function dna::patch_add_file_if_missing() {
     local description="$3"
 
     if [[ ! -f "${SUPER_PROJECT_ROOT}/${target_file}" ]]; then
+        # Graceful guard: if the DNA template source does not exist, warn and skip
+        # instead of blindly invoking rsync (which would fail with error 23).
+        if [[ ! -f "${DNA_LIB_PATH}/template/${source_file}" ]]; then
+            n2st::print_msg_warning "Skipping ${description}: template source not found in DNA (${source_file}). This resource will not be added; continuing patch chain."
+            return 0
+        fi
+
         n2st::print_msg "Missing ${description}: ${target_file}"
-        
+
         dna::patch_prompt_user "Add missing file?"
         local user_input="${REPLY}"
-        
+
         if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
             dna::portable_copy "${DNA_LIB_PATH}/template/${source_file}" "${SUPER_PROJECT_ROOT}/${target_file}" "${SUPER_PROJECT_ROOT}"
             added_resources+=("${target_file} (file)")
@@ -227,11 +234,17 @@ function dna::patch_add_directory_if_missing() {
     local description="$3"
 
     if [[ ! -d "${SUPER_PROJECT_ROOT}/${target_dir}" ]]; then
+        # Graceful guard: if the DNA template source directory does not exist, warn and skip.
+        if [[ ! -d "${DNA_LIB_PATH}/template/${source_dir}" ]]; then
+            n2st::print_msg_warning "Skipping ${description}: template source directory not found in DNA (${source_dir}). This resource will not be added; continuing patch chain."
+            return 0
+        fi
+
         n2st::print_msg "Missing ${description}: ${target_dir}"
-        
+
         dna::patch_prompt_user "Add missing directory?"
         local user_input="${REPLY}"
-        
+
         if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
             # Directories handled by rsync in portable_copy
             dna::portable_copy "${DNA_LIB_PATH}/template/${source_dir}/" "${SUPER_PROJECT_ROOT}/${target_dir}" "${SUPER_PROJECT_ROOT}"
@@ -290,6 +303,59 @@ function dna::patch_add_content_if_missing() {
 }
 
 # =================================================================================================
+# Replace an existing file in the super project with the current DNA template version.
+#
+# This function always overwrites the target file unconditionally (after user confirmation),
+# unlike dna::patch_add_file_if_missing which skips existing files.  Use it when an existing
+# file needs to be upgraded to the latest template rather than just added if absent.
+#
+# Usage:
+#   $ dna::patch_replace_file <source_file> <target_file> <description>
+#
+# Arguments:
+#   source_file: Path to the template file (relative to src/lib/template).
+#   target_file: Path to the target file in the super project (relative to SUPER_PROJECT_ROOT).
+#   description: A brief description of the file for the user prompt.
+#
+# Global variables used:
+#   added_resources: Array to keep track of added resources for reporting.
+#
+# Returns:
+#   0 on success or if skipped
+#   1 on failure
+# =================================================================================================
+function dna::patch_replace_file() {
+    local source_file="$1"
+    local target_file="$2"
+    local description="$3"
+
+    local full_target_path="${SUPER_PROJECT_ROOT}/${target_file}"
+    local full_source_path="${DNA_LIB_PATH}/template/${source_file}"
+
+    if [[ ! -f "${full_target_path}" ]]; then
+        # File missing — nothing to replace; silently skip.
+        return 0
+    fi
+
+    if [[ ! -f "${full_source_path}" ]]; then
+        n2st::print_msg_error "Template source not found: ${full_source_path}"
+        return 1
+    fi
+
+    n2st::print_msg "Replacing ${description}: ${target_file}"
+
+    dna::patch_prompt_user "Replace file with latest DNA template version?"
+    local user_input="${REPLY}"
+
+    if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
+        cp "${full_source_path}" "${full_target_path}" || return 1
+        added_resources+=("${target_file} (file replacement)")
+    else
+        n2st::print_msg_warning "Skipping replacement for ${target_file}. File may be outdated."
+    fi
+}
+
+# =================================================================================================
 # Modify content in a file in the super project using a search and replace pattern.
 #
 # Usage:
@@ -321,17 +387,161 @@ function dna::patch_modify_content() {
         return 1
     fi
 
-    if grep -qF "${search_pattern}" "${full_target_path}"; then
+    # Decide routing up-front: multi-line or ';'-containing patterns cannot safely be
+    # handled by sed with `;` as delimiter, so we route them through the newline-safe
+    # fixed-string block replacer. This also dictates which containment check to use,
+    # since `grep -qF` does not span newlines.
+    local _needs_block_replace="false"
+    if [[ "${search_pattern}" == *$'\n'* \
+        || "${replace_pattern}" == *$'\n'* \
+        || "${search_pattern}" == *';'* \
+        || "${replace_pattern}" == *';'* ]]; then
+        _needs_block_replace="true"
+    fi
+
+    local _found="false"
+    if [[ "${_needs_block_replace}" == "true" ]]; then
+        if SEARCH="${search_pattern}" python3 -c '
+import os, sys, pathlib
+sys.exit(0 if os.environ["SEARCH"] in pathlib.Path(sys.argv[1]).read_text() else 1)
+' "${full_target_path}" 2>/dev/null; then
+            _found="true"
+        fi
+    else
+        if grep -qF "${search_pattern}" "${full_target_path}"; then
+            _found="true"
+        fi
+    fi
+
+    if [[ "${_found}" == "true" ]]; then
         n2st::print_msg "Modifying ${description} in ${target_file}"
-        
+
         dna::patch_prompt_user "Apply modification?"
         local user_input="${REPLY}"
-        
+
         if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
-            n2st::seek_and_modify_string_in_file "${search_pattern}" "${replace_pattern}" "${full_target_path}"
+            if [[ "${_needs_block_replace}" == "true" ]]; then
+                if ! dna::_patch_fixed_string_replace_in_file \
+                        "${full_target_path}" "${search_pattern}" "${replace_pattern}"; then
+                    n2st::print_msg_warning "Skipping modification for ${target_file} (${description}): fixed-string block replace failed. Patch chain will continue; consider re-running the patch after resolving the issue."
+                    return 0
+                fi
+            else
+                if ! n2st::seek_and_modify_string_in_file "${search_pattern}" "${replace_pattern}" "${full_target_path}"; then
+                    n2st::print_msg_warning "Skipping modification for ${target_file} (${description}): single-line sed replace failed. Patch chain will continue."
+                    return 0
+                fi
+            fi
             added_resources+=("${target_file} (content modification)")
         else
             n2st::print_msg_warning "Skipping modification for ${target_file}. This might cause issues."
         fi
     fi
+    return 0
+}
+
+# =================================================================================================
+# Replace a (possibly multi-line) block of text in a file using fixed-string matching.
+#
+# This is a newline-safe, delimiter-free alternative to n2st::seek_and_modify_string_in_file,
+# which uses a single `sed "s;...;...;"` expression and therefore cannot handle patterns
+# containing newlines or the ';' character.
+#
+# Usage:
+#   $ dna::patch_replace_block <target_file> <search_block> <replace_block> <description>
+#
+# Arguments:
+#   target_file: Path to the file in the super project (relative to SUPER_PROJECT_ROOT).
+#   search_block: Literal (possibly multi-line) string to search for. Only the first occurrence
+#                 is replaced.
+#   replace_block: Literal replacement string.
+#   description: Human-readable description of the modification.
+#
+# Global variables used:
+#   added_resources: Array to keep track of added resources for reporting.
+#
+# Returns:
+#   0 on success, if skipped, or if the search block is not present (no-op).
+#   0 (with a warning) on failure — this helper is intentionally non-fatal so a single
+#     faulty block replacement does not block the rest of the patch chain.
+# =================================================================================================
+function dna::patch_replace_block() {
+    local target_file="$1"
+    local search_block="$2"
+    local replace_block="$3"
+    local description="$4"
+
+    local full_target_path="${SUPER_PROJECT_ROOT}/${target_file}"
+
+    if [[ ! -f "${full_target_path}" ]]; then
+        n2st::print_msg_warning "Target file not found for patching: ${target_file}. Skipping ${description}."
+        return 0
+    fi
+
+    # Fast, newline-safe containment check via python (grep -F does not span lines).
+    if ! SEARCH="${search_block}" python3 -c '
+import os, sys, pathlib
+sys.exit(0 if os.environ["SEARCH"] in pathlib.Path(sys.argv[1]).read_text() else 1)
+' "${full_target_path}" 2>/dev/null; then
+        # Pattern not present — assume already applied; silently no-op.
+        return 0
+    fi
+
+    n2st::print_msg "Modifying (block) ${description} in ${target_file}"
+
+    dna::patch_prompt_user "Apply modification?"
+    local user_input="${REPLY}"
+
+    if [[ "${user_input}" == "y" || "${user_input}" == "Y" ]]; then
+        if dna::_patch_fixed_string_replace_in_file \
+                "${full_target_path}" "${search_block}" "${replace_block}"; then
+            added_resources+=("${target_file} (content modification)")
+        else
+            n2st::print_msg_warning "Skipping ${description} in ${target_file}: fixed-string block replace failed. Patch chain will continue."
+        fi
+    else
+        n2st::print_msg_warning "Skipping modification for ${target_file}. This might cause issues."
+    fi
+    return 0
+}
+
+# =================================================================================================
+# Internal: perform an in-place, first-occurrence, fixed-string replace in a file using python3.
+#
+# Unlike sed, this is newline-safe, delimiter-free, and does not interpret any regex or escape
+# sequence in the search or replace strings.
+#
+# Usage:
+#   $ dna::_patch_fixed_string_replace_in_file <file> <search> <replace>
+#
+# Returns:
+#   0 on success (including no-op when search is absent).
+#   1 on failure (file unreadable/unwritable, python3 missing, etc.).
+# =================================================================================================
+function dna::_patch_fixed_string_replace_in_file() {
+    local file_path="$1"
+    local search="$2"
+    local replace="$3"
+
+    if [[ ! -f "${file_path}" ]]; then
+        return 1
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        n2st::print_msg_error "python3 is required for multi-line patch block replacement but was not found on PATH."
+        return 1
+    fi
+
+    SEARCH="${search}" REPLACE="${replace}" python3 - "${file_path}" <<'PY' || return 1
+import os, sys, pathlib
+target = pathlib.Path(sys.argv[1])
+s = os.environ["SEARCH"]
+r = os.environ["REPLACE"]
+text = target.read_text()
+if s not in text:
+    # Nothing to replace — treat as success (no-op).
+    sys.exit(0)
+target.write_text(text.replace(s, r, 1))
+PY
+    return 0
 }
