@@ -36,6 +36,58 @@ function dna::show_help() {
 }
 
 
+#
+# Collects slurm job scripts to dry-run from a given directory, filtering out
+# HPC-target apptainer scripts when 'apptainer' is not available on the host.
+#
+# Slurm job scripts named '*.apptainer.*.bash' are standalone HPC submission
+# scripts (e.g. '*.apptainer.valeria.bash'). They are meant to be executed by
+# 'sbatch' on an HPC login/compute node (where 'apptainer' and 'module' are
+# available). They do NOT honor DNA's --hydra-dry-run / --skip-*-force-rebuild
+# flags, and they call 'module' / 'apptainer' unconditionally. Running them on
+# a non-HPC host (e.g. a CI build agent or a developer workstation) would fail
+# with 'apptainer: command not found'. When 'apptainer' is not available on the
+# current host, we skip these scripts with a clear notice instead of letting
+# 'dna project validate --slurm' fail on environment-only issues.
+#
+# Arguments:
+#   $1  slurm_jobs_dir          Absolute path of the directory to scan.
+#   $2  out_included_array_name Name of an existing array variable where
+#                               basenames of scripts to dry-run will be appended.
+#   $3  out_skipped_array_name  Name of an existing array variable where
+#                               basenames of scripts skipped because 'apptainer'
+#                               is missing will be appended.
+#
+# Returns:
+#   0 always (no job files found is not an error).
+#
+function dna::_project_validate_slurm_collect_job_files() {
+  local _slurm_jobs_dir="${1:?err}"
+  local _out_included_name="${2:?err}"
+  local _out_skipped_name="${3:?err}"
+
+  local _has_apptainer=false
+  if command -v apptainer &>/dev/null; then
+    _has_apptainer=true
+  fi
+
+  local each_file_path each_file_name
+  for each_file_path in "${_slurm_jobs_dir}"/slurm_job.*.bash ; do
+    # Guard against the glob staying literal when no file matches.
+    [[ -e "${each_file_path}" ]] || continue
+    each_file_name="$(basename "${each_file_path}")"
+    if [[ "${each_file_name}" == *.apptainer.*.bash ]] && [[ "${_has_apptainer}" != true ]]; then
+      # shellcheck disable=SC2004
+      eval "${_out_skipped_name}+=(\"\${each_file_name}\")"
+      continue
+    fi
+    # shellcheck disable=SC2004
+    eval "${_out_included_name}+=(\"\${each_file_name}\")"
+  done
+  return 0
+}
+
+
 function dna::project_validate_slurm() {
 
   # ....Set env variables (pre cli)................................................................
@@ -166,12 +218,20 @@ function dna::project_validate_slurm() {
   n2st::print_formated_script_header "Dry-run slurm job" "${line_format}" "${line_style}"
   pushd "$(pwd)" >/dev/null || exit 1
 
-  # Execute slurm joc dry-run tests
+  # Execute slurm job dry-run tests
   slurm_job_file_name=()
-  for each_file_path in "${SUPER_PROJECT_ROOT:?err}"/"${slurm_script_job_path}"/slurm_job.*.bash ; do
-    each_file_name="$(basename "${each_file_path}")"
-    slurm_job_file_name+=("$each_file_name")
-  done
+  declare -a _skipped_apptainer_jobs=()
+  dna::_project_validate_slurm_collect_job_files \
+      "${SUPER_PROJECT_ROOT:?err}/${slurm_script_job_path}" \
+      slurm_job_file_name \
+      _skipped_apptainer_jobs
+
+  if [[ ${#_skipped_apptainer_jobs[@]} -gt 0 ]]; then
+    n2st::print_msg "Skipping HPC-target apptainer slurm job scripts (apptainer not available on this host):"
+    for idx in "${!_skipped_apptainer_jobs[@]}"; do
+      echo "              $idx › ${_skipped_apptainer_jobs[idx]}"
+    done
+  fi
 
   n2st::print_msg "Will dry-run the following slurm job files:"
   for idx in "${!slurm_job_file_name[@]}"; do
@@ -230,6 +290,13 @@ function dna::project_validate_slurm() {
       echo -e "    ${MSG_DONE_FORMAT}${slurm_job_file_name[idx]} dry-run slurm job completed${MSG_END_FORMAT}"
     fi
   done
+
+  if [[ ${#_skipped_apptainer_jobs[@]} -gt 0 ]]; then
+    n2st::print_msg "Skipped slurm job summary"
+    for idx in "${!_skipped_apptainer_jobs[@]}"; do
+      echo -e "    ${MSG_DIMMED_FORMAT}${_skipped_apptainer_jobs[idx]} skipped › HPC-target apptainer script and 'apptainer' is not available on this host${MSG_END_FORMAT}"
+    done
+  fi
 
 
   # ....Set exit code................................................................................
