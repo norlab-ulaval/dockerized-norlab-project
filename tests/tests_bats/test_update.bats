@@ -115,13 +115,29 @@ function n2st::print_msg() {
 function git() {
   case "$1" in
     "fetch")
+      # Accept 'git fetch --tags origin', 'git fetch --all --tags origin',
+      # and the self-healing pre-flight 'git fetch --tags --prune origin <branch>'.
       if [[ "$2" == "--tags" && "$3" == "origin" ]]; then
         echo "Mock git fetch --tags origin"
+        return 0
+      elif [[ "$2" == "--tags" && "$3" == "--prune" && "$4" == "origin" ]]; then
+        echo "Mock git fetch --tags --prune origin ${5:-}"
         return 0
       elif [[ "$2" == "--all" && "$3" == "--tags" && "$4" == "origin" ]]; then
         echo "Mock git fetch --tags origin"
         return 0
       fi
+      ;;
+    "diff")
+      # Used by dna::update_perform_update pre-flight dirty-tree check:
+      #   'git diff --quiet HEAD --'  and  'git diff --cached --quiet'
+      # Return success (0) = clean working tree so the non-destructive
+      # checkout + pull --ff-only path is exercised.
+      return 0
+      ;;
+    "status")
+      echo "Mock git status $*"
+      return 0
       ;;
     "tag")
       if [[ "$2" == "-l" ]]; then
@@ -150,18 +166,31 @@ function git() {
       fi
       ;;
     "pull")
-      if [[ "$2" == "--recurse-submodules" && "$3" == "origin" ]]; then
-        if [[ "$4" == "main" || "$4" == "beta" ]]; then
-          echo "Mock git pull --recurse-submodules origin $4"
-          return 0
-        else
-          echo "Mock git pull --recurse-submodules origin"
-          return 0
-        fi
+      # Accept both legacy 'git pull --recurse-submodules origin <branch>'
+      # and the new fast-forward-only form
+      # 'git pull --recurse-submodules --ff-only origin <branch>'.
+      if [[ "$2" == "--recurse-submodules" ]]; then
+        echo "Mock git pull $*"
+        return 0
       elif [[ "$2" == "origin" ]]; then
         echo "Mock git pull origin"
         return 0
       fi
+      ;;
+    "reset")
+      # Self-healing recovery path (hard reset to origin/<branch>).
+      # Not expected on the happy path (mock 'diff' returns clean) but
+      # mocked here for safety/future tests.
+      echo "Mock git reset $*"
+      return 0
+      ;;
+    "clean")
+      echo "Mock git clean $*"
+      return 0
+      ;;
+    "submodule")
+      echo "Mock git submodule $*"
+      return 0
       ;;
     *)
       command git "$@"

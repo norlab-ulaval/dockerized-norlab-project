@@ -30,7 +30,7 @@
 #   - [x] implement direct unit-test ->  function dna::update_get_auto_update_setting()
 #   - [x] implement direct unit-test ->  function dna::update_get_auto_update_prerelease_setting()
 #   - [ ] implement direct unit-test ->  function dna::update_toggle_auto_update_setting()
-#   - [ ] implement direct unit-test ->  function dna::update_perform_update()
+#   - [x] implement direct unit-test ->  function dna::update_perform_update()
 #   - [x] implement direct unit-test ->  function dna::should_run_daily_update()
 #   - [x] implement direct unit-test ->  function dna::update_timestamp()
 
@@ -424,33 +424,64 @@ function dna::update_perform_update() {
     n2st::print_msg "Updating DNA repository to latest release from '${checkout_branch}' branch..."
 
     # Pre-flight check: warn (but do not fail) if working tree is dirty, as this
-    # is a common cause of checkout/pull failures on CI servers.
+    # is a common cause of checkout/pull failures on CI servers. The self-healing
+    # fallback below (git reset --hard) will recover from this automatically.
+    local working_tree_dirty=false
     if ! git diff --quiet HEAD -- 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
-        n2st::print_msg_warning "DNA repository at '${DNA_ROOT}' has uncommitted local changes. This may cause the update to fail. Current status:"
+        working_tree_dirty=true
+        n2st::print_msg_warning "DNA repository at '${DNA_ROOT}' has uncommitted local changes. Current status:"
         git status --short 1>&2 || true
     fi
 
-    # Checkout the target branch. Capture combined git output so that, on failure,
-    # the actual git error is surfaced to the user for diagnostic purposes
-    # (ref: NMO "Failed to update DNA repository from branch" issue on CI servers).
-    if ! git_output=$(git checkout "${checkout_branch}" 2>&1); then
-        n2st::print_msg_error "Failed to checkout branch: ${checkout_branch}"
+    # Always fetch first so local refs are up-to-date before checkout/pull/reset.
+    if ! git_output=$(git fetch --tags --prune origin "${checkout_branch}" 2>&1); then
+        n2st::print_msg_error "Failed to fetch from origin for branch: ${checkout_branch}"
         printf '%s\n' "${git_output}" 1>&2
         cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 1
     fi
 
-    # Pull the latest changes (capture output for diagnostics on failure)
-    if git_output=$(git pull --recurse-submodules origin "${checkout_branch}" 2>&1); then
-        n2st::print_msg "DNA successfully updated to latest version from '${checkout_branch}' branch"
-        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
-        return 0
-    else
-        n2st::print_msg_error "Failed to update DNA repository from branch: ${checkout_branch}"
+    # Attempt the non-destructive update path first: checkout + pull.
+    # On failure (dirty tree, diverged branch, submodule mismatch, ...), fall back
+    # to a self-healing hard reset against origin/<branch>, since DNA_ROOT is a
+    # managed install location (not a user dev clone) and must track upstream.
+    local checkout_failed=false
+    local pull_failed=false
+    if ! git_output=$(git checkout "${checkout_branch}" 2>&1); then
+        checkout_failed=true
+        n2st::print_msg_warning "git checkout '${checkout_branch}' failed, will attempt self-healing recovery."
         printf '%s\n' "${git_output}" 1>&2
-        cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
-        return 1
+    elif ! git_output=$(git pull --recurse-submodules --ff-only origin "${checkout_branch}" 2>&1); then
+        pull_failed=true
+        n2st::print_msg_warning "git pull --ff-only from '${checkout_branch}' failed, will attempt self-healing recovery."
+        printf '%s\n' "${git_output}" 1>&2
     fi
+
+    if [[ "${checkout_failed}" == true ]] || [[ "${pull_failed}" == true ]] || [[ "${working_tree_dirty}" == true ]]; then
+        # Self-healing recovery: hard reset to origin/<branch> and re-sync submodules.
+        # This discards any local changes in DNA_ROOT. Safe by design because DNA_ROOT
+        # is meant to mirror the upstream release; user code lives in the super project.
+        n2st::print_msg "Attempting self-healing recovery (hard reset to 'origin/${checkout_branch}')..."
+        if ! git_output=$(git reset --hard "origin/${checkout_branch}" 2>&1); then
+            n2st::print_msg_error "Failed to hard-reset DNA repository to 'origin/${checkout_branch}'"
+            printf '%s\n' "${git_output}" 1>&2
+            cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
+            return 1
+        fi
+        # Clean untracked files that could shadow tracked resources (e.g. stale patches).
+        git clean -fd >/dev/null 2>&1 || true
+        # Re-sync submodules to match the new HEAD.
+        if ! git_output=$(git submodule sync --recursive 2>&1 && git submodule update --init --recursive 2>&1); then
+            n2st::print_msg_error "Failed to re-sync DNA submodules after recovery"
+            printf '%s\n' "${git_output}" 1>&2
+            cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
+            return 1
+        fi
+    fi
+
+    n2st::print_msg "DNA successfully updated to latest version from '${checkout_branch}' branch"
+    cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
+    return 0
 }
 
 # ::::Auto-update helper functions:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

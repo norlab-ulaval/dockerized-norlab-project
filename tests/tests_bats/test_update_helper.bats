@@ -112,16 +112,65 @@ function n2st::print_msg() {
 
 
 # ....Mock git commands............................................................................
+# Mock git allows tests to configure behavior via env vars:
+#   DNA_TEST_DIRTY=1           -> make 'git diff --quiet' report a dirty working tree
+#   DNA_TEST_CHECKOUT_FAIL=1   -> make 'git checkout <branch>' return non-zero
+#   DNA_TEST_PULL_FAIL=1       -> make 'git pull ...' return non-zero
+#   DNA_TEST_FETCH_FAIL=1      -> make 'git fetch ...' return non-zero
+#   DNA_TEST_RESET_FAIL=1      -> make 'git reset --hard ...' return non-zero
+#   DNA_TEST_SUBMODULE_FAIL=1  -> make 'git submodule ...' return non-zero
+#   DNA_TEST_GIT_LOG=<path>    -> append each git subcommand to this file for assertions
 function git() {
+  if [[ -n "${DNA_TEST_GIT_LOG:-}" ]]; then
+    echo "git $*" >> "${DNA_TEST_GIT_LOG}"
+  fi
   case "$1" in
     "fetch")
+      if [[ "${DNA_TEST_FETCH_FAIL:-0}" == "1" ]]; then
+        echo "Mock git fetch failure" >&2
+        return 1
+      fi
       if [[ "$2" == "--tags" && "$3" == "origin" ]]; then
         echo "Mock git fetch --tags origin"
+        return 0
+      elif [[ "$2" == "--tags" && "$3" == "--prune" && "$4" == "origin" ]]; then
+        echo "Mock git fetch --tags --prune origin ${5:-}"
         return 0
       elif [[ "$2" == "--all" && "$3" == "--tags" && "$4" == "origin" ]]; then
         echo "Mock git fetch --tags origin"
         return 0
       fi
+      ;;
+    "diff")
+      # Support: 'git diff --quiet HEAD --' and 'git diff --cached --quiet'
+      if [[ "${DNA_TEST_DIRTY:-0}" == "1" ]]; then
+        return 1
+      fi
+      return 0
+      ;;
+    "status")
+      echo "Mock git status $*"
+      return 0
+      ;;
+    "reset")
+      if [[ "${DNA_TEST_RESET_FAIL:-0}" == "1" ]]; then
+        echo "Mock git reset failure" >&2
+        return 1
+      fi
+      echo "Mock git reset $*"
+      return 0
+      ;;
+    "clean")
+      echo "Mock git clean $*"
+      return 0
+      ;;
+    "submodule")
+      if [[ "${DNA_TEST_SUBMODULE_FAIL:-0}" == "1" ]]; then
+        echo "Mock git submodule failure" >&2
+        return 1
+      fi
+      echo "Mock git submodule $*"
+      return 0
       ;;
     "tag")
       if [[ "$2" == "-l" ]]; then
@@ -144,20 +193,23 @@ function git() {
       fi
       ;;
     "checkout")
+      if [[ "${DNA_TEST_CHECKOUT_FAIL:-0}" == "1" ]]; then
+        echo "Mock git checkout failure: local changes would be overwritten" >&2
+        return 1
+      fi
       if [[ "$2" == "main" || "$2" == "beta" ]]; then
         echo "Mock git checkout $2"
         return 0
       fi
       ;;
     "pull")
-      if [[ "$2" == "--recurse-submodules" && "$3" == "origin" ]]; then
-        if [[ "$4" == "main" || "$4" == "beta" ]]; then
-          echo "Mock git pull --recurse-submodules origin $4"
-          return 0
-        else
-          echo "Mock git pull --recurse-submodules origin"
-          return 0
-        fi
+      if [[ "${DNA_TEST_PULL_FAIL:-0}" == "1" ]]; then
+        echo "Mock git pull failure: not possible to fast-forward, aborting" >&2
+        return 1
+      fi
+      if [[ "$2" == "--recurse-submodules" ]]; then
+        echo "Mock git pull $*"
+        return 0
       elif [[ "$2" == "origin" ]]; then
         echo "Mock git pull origin"
         return 0
@@ -316,6 +368,110 @@ teardown_file() {
   # Teardown
   #cat "/tmp/.dna_last_update_check" >&3
   rm -f "/tmp/.dna_last_update_check"
+}
+
+@test "dna::update_perform_update › happy path (clean tree, checkout+pull succeed)" {
+  # Pre-condition: clean tree, no forced failures
+  export DNA_TEST_GIT_LOG="${MOCK_DNA_DIR}/git_calls.log"
+  : > "${DNA_TEST_GIT_LOG}"
+
+  run dna::update_perform_update "beta"
+  assert_success
+  assert_output --partial "DNA successfully updated to latest version from 'beta' branch"
+
+  # Non-destructive path: fetch + checkout + pull must have been invoked,
+  # and the self-healing recovery (reset --hard) must NOT have been triggered.
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git fetch --tags --prune origin beta"
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git checkout beta"
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git pull --recurse-submodules --ff-only origin beta"
+  run grep -c "git reset --hard" "${DNA_TEST_GIT_LOG}"
+  assert_output "0"
+
+  unset DNA_TEST_GIT_LOG
+}
+
+@test "dna::update_perform_update › dirty working tree triggers self-healing recovery" {
+  export DNA_TEST_DIRTY=1
+  export DNA_TEST_GIT_LOG="${MOCK_DNA_DIR}/git_calls.log"
+  : > "${DNA_TEST_GIT_LOG}"
+
+  run dna::update_perform_update "beta"
+  assert_success
+  assert_output --partial "uncommitted local changes"
+  assert_output --partial "Attempting self-healing recovery"
+  assert_output --partial "DNA successfully updated to latest version from 'beta' branch"
+
+  # Recovery path must reset + clean + re-sync submodules
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git reset --hard origin/beta"
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git clean -fd"
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git submodule sync --recursive"
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git submodule update --init --recursive"
+
+  unset DNA_TEST_DIRTY DNA_TEST_GIT_LOG
+}
+
+@test "dna::update_perform_update › diverged branch (pull --ff-only fails) triggers self-healing recovery" {
+  export DNA_TEST_PULL_FAIL=1
+  export DNA_TEST_GIT_LOG="${MOCK_DNA_DIR}/git_calls.log"
+  : > "${DNA_TEST_GIT_LOG}"
+
+  run dna::update_perform_update "beta"
+  assert_success
+  assert_output --partial "git pull --ff-only from 'beta' failed"
+  assert_output --partial "Attempting self-healing recovery"
+  # Underlying git diagnostic must be surfaced
+  assert_output --partial "not possible to fast-forward"
+  assert_output --partial "DNA successfully updated to latest version from 'beta' branch"
+
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git reset --hard origin/beta"
+
+  unset DNA_TEST_PULL_FAIL DNA_TEST_GIT_LOG
+}
+
+@test "dna::update_perform_update › checkout failure triggers self-healing recovery" {
+  export DNA_TEST_CHECKOUT_FAIL=1
+  export DNA_TEST_GIT_LOG="${MOCK_DNA_DIR}/git_calls.log"
+  : > "${DNA_TEST_GIT_LOG}"
+
+  run dna::update_perform_update "beta"
+  assert_success
+  assert_output --partial "git checkout 'beta' failed"
+  assert_output --partial "local changes would be overwritten"
+  assert_output --partial "Attempting self-healing recovery"
+  assert_output --partial "DNA successfully updated to latest version from 'beta' branch"
+
+  assert_file_contains "${DNA_TEST_GIT_LOG}" "git reset --hard origin/beta"
+
+  unset DNA_TEST_CHECKOUT_FAIL DNA_TEST_GIT_LOG
+}
+
+@test "dna::update_perform_update › fetch failure aborts without mutating the repo" {
+  export DNA_TEST_FETCH_FAIL=1
+  export DNA_TEST_GIT_LOG="${MOCK_DNA_DIR}/git_calls.log"
+  : > "${DNA_TEST_GIT_LOG}"
+
+  run dna::update_perform_update "beta"
+  assert_failure
+  assert_output --partial "Failed to fetch from origin for branch: beta"
+  assert_output --partial "Mock git fetch failure"
+
+  # No mutation must have happened
+  run grep -c "git checkout\|git reset --hard\|git pull" "${DNA_TEST_GIT_LOG}"
+  assert_output "0"
+
+  unset DNA_TEST_FETCH_FAIL DNA_TEST_GIT_LOG
+}
+
+@test "dna::update_perform_update › reset failure during recovery is reported" {
+  export DNA_TEST_DIRTY=1
+  export DNA_TEST_RESET_FAIL=1
+
+  run dna::update_perform_update "beta"
+  assert_failure
+  assert_output --partial "Failed to hard-reset DNA repository to 'origin/beta'"
+  assert_output --partial "Mock git reset failure"
+
+  unset DNA_TEST_DIRTY DNA_TEST_RESET_FAIL
 }
 
 @test "dna::update_timestamp › expect /tmp/.dna_last_update_check to be updated" {
