@@ -233,6 +233,70 @@ teardown_file() {
   assert_failure
 }
 
+@test "dna::patch_modify_content › multi-line replacement should produce actual newlines (regression: no literal \\n)" {
+  # Regression test for a bug where a multi-line replacement string such as
+  #   'DNA_SJOB_NAME="$( ... )"\nexport DNA_SJOB_NAME'
+  # was injected into the super project as a single line containing the literal
+  # two-character sequence "\n" instead of an actual newline.
+  local test_file="multiline_target.bash"
+  printf '%s\n' '#!/bin/bash' 'DNA_SJOB_NAME="default"' 'echo ok' > "${TEST_TEMP_DIR}/${test_file}"
+
+  function dna::patch_prompt_user() { REPLY="y"; }
+  export -f dna::patch_prompt_user
+  declare -a added_resources=()
+
+  local search='DNA_SJOB_NAME="default"'
+  # Replacement contains an actual newline character (as bash $'...' interprets \n).
+  local replace=$'DNA_SJOB_NAME="$( basename "${BASH_SOURCE[0]}" | sed \'s/^slurm_job\\.//;s/\\.bash$//\' )"\nexport DNA_SJOB_NAME'
+
+  run dna::patch_modify_content "${test_file}" "${search}" "${replace}" "Replace with multi-line assignment"
+  assert_success
+
+  # The resulting file must contain two SEPARATE lines (actual newline), not a
+  # single line with a literal backslash-n.
+  run grep -cF '\n' "${TEST_TEMP_DIR}/${test_file}"
+  assert_output "0"
+
+  run grep -cE '^export DNA_SJOB_NAME$' "${TEST_TEMP_DIR}/${test_file}"
+  assert_output "1"
+
+  run grep -cE '^DNA_SJOB_NAME="\$\( basename' "${TEST_TEMP_DIR}/${test_file}"
+  assert_output "1"
+}
+
+@test "dna::patch_modify_content › patterns containing ';' should not be split by sed delimiter" {
+  # Regression test: a `;` in the replacement must not corrupt the result.
+  local test_file="semicolon_target.bash"
+  printf '%s\n' 'REPLACE_ME' 'other line' > "${TEST_TEMP_DIR}/${test_file}"
+
+  function dna::patch_prompt_user() { REPLY="y"; }
+  export -f dna::patch_prompt_user
+  declare -a added_resources=()
+
+  local replace='sed '\''s/^a\.//;s/\.b$//'\'' done'
+
+  run dna::patch_modify_content "${test_file}" "REPLACE_ME" "${replace}" "Semicolon-bearing replacement"
+  assert_success
+
+  run grep -cF "s/^a\\.//;s/\\.b\$//" "${TEST_TEMP_DIR}/${test_file}"
+  assert_output "1"
+}
+
+@test "dna::_patch_fixed_string_replace_in_file › heredoc opener must not be chained with '|| return' (bash 3.2 re-parse regression)" {
+  # Regression test for a bash 3.2 (macOS default /bin/bash) failure observed
+  # when dna::_patch_fixed_string_replace_in_file was re-parsed in a child shell
+  # via 'export -f':
+  #   bash: dna::_patch_fixed_string_replace_in_file: line NN: syntax error near unexpected token `||'
+  #   bash: error importing function definition for `dna::_patch_fixed_string_replace_in_file'
+  # Root cause: bash 3.2's parser chokes on a heredoc opener chained with '||'
+  # on the same line, e.g. `python3 - "$f" <<'PY' || return 1`. The fix is to
+  # check $? on its own line after the heredoc terminator.
+  local fn_file="${BATS_DOCKER_WORKDIR}/src/lib/core/utils/patch_helper.bash"
+  # Must not contain the offending pattern anywhere in the file.
+  run grep -E "<<'?[A-Za-z_][A-Za-z_0-9]*'?[[:space:]]+\\|\\|" "${fn_file}"
+  assert_failure
+}
+
 @test "dna::patch_modify_content › should not modify content if search pattern is not found" {
   local test_file="file_not_to_modify.txt"
   echo "Initial content" > "${TEST_TEMP_DIR}/${test_file}"
