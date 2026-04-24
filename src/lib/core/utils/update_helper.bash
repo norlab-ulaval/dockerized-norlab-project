@@ -406,6 +406,7 @@ function dna::update_perform_update() {
     local target_branch="${1:-auto}"
     local checkout_branch
     local tmp_cwd
+    local git_output
     tmp_cwd=$(pwd)
 
     cd "${DNA_ROOT:?err}" || return 1
@@ -422,20 +423,31 @@ function dna::update_perform_update() {
 
     n2st::print_msg "Updating DNA repository to latest release from '${checkout_branch}' branch..."
 
-    # Checkout the target branch
-    if ! git checkout "${checkout_branch}" >/dev/null 2>&1; then
+    # Pre-flight check: warn (but do not fail) if working tree is dirty, as this
+    # is a common cause of checkout/pull failures on CI servers.
+    if ! git diff --quiet HEAD -- 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+        n2st::print_msg_warning "DNA repository at '${DNA_ROOT}' has uncommitted local changes. This may cause the update to fail. Current status:"
+        git status --short 1>&2 || true
+    fi
+
+    # Checkout the target branch. Capture combined git output so that, on failure,
+    # the actual git error is surfaced to the user for diagnostic purposes
+    # (ref: NMO "Failed to update DNA repository from branch" issue on CI servers).
+    if ! git_output=$(git checkout "${checkout_branch}" 2>&1); then
         n2st::print_msg_error "Failed to checkout branch: ${checkout_branch}"
+        printf '%s\n' "${git_output}" 1>&2
         cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 1
     fi
 
-    # Pull the latest changes
-    if git pull --recurse-submodules origin "${checkout_branch}" >/dev/null 2>&1; then
+    # Pull the latest changes (capture output for diagnostics on failure)
+    if git_output=$(git pull --recurse-submodules origin "${checkout_branch}" 2>&1); then
         n2st::print_msg "DNA successfully updated to latest version from '${checkout_branch}' branch"
         cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 0
     else
         n2st::print_msg_error "Failed to update DNA repository from branch: ${checkout_branch}"
+        printf '%s\n' "${git_output}" 1>&2
         cd "${tmp_cwd}" || { n2st::print_msg_error "Return to original dir error"; return 1; }
         return 1
     fi
