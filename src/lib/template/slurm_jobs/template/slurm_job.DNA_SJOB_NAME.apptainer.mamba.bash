@@ -31,12 +31,12 @@
 #                    → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
 #       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
 #       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.mamba.bash,
+#                    artifact/apptainer/mamba/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.mamba.bash,
 #                    .dockerized_norlab/,
 #                    data/external_data/, data/repository_data/
 #                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
 #     On Mamba:
-#       4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+#       4. Build SIF: bash artifact/apptainer/mamba/dna_tar_to_apptainer_sif_converter.sh
 #       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.mamba.bash
 #
 #   Pipeline B — registry push (--push): build and push image to a Docker registry, pull on HPC via Apptainer.
@@ -45,12 +45,12 @@
 #                    → builds Docker image, pushes to registry, generates dna_registry_to_apptainer_sif_converter.sh
 #       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
 #       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.mamba.bash,
+#                    artifact/apptainer/mamba/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.mamba.bash,
 #                    .dockerized_norlab/,
 #                    data/external_data/, data/repository_data/
 #                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
 #     On Mamba:
-#       4. Build SIF: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+#       4. Build SIF: bash artifact/apptainer/mamba/dna_registry_to_apptainer_sif_converter.sh
 #                    (optionally add --docker-login to authenticate to a private registry)
 #       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.mamba.bash
 #
@@ -99,7 +99,10 @@ export DNA_SJOB_NAME
 
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
-SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
+# DNA names each SIF with the full version: <image>-slurm-<PROJECT_TAG>-<target>.sif (e.g.
+# ...-slurm-l4t-r36.4.0-mamba.sif). The exact version is only known at build time, so resolve the
+# newest matching versioned SIF at runtime. Export SIF_PATH to pin a specific version instead.
+SIF_PATH="${SIF_PATH:-$(ls -t ${SCRATCH}/sif/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm-*-mamba.sif 2>/dev/null | head -n1)}"
 PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.mamba"
 
 # Source HPC-specific env (sets DN_PROJECT_PATH, DN_PROJECT_USER, etc.)
@@ -132,7 +135,7 @@ export APPTAINER_TMPDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then
   echo "[error] SIF file not found: ${SIF_PATH}" 1>&2
-  echo "[hint] Build it with: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh" 1>&2
+  echo "[hint] Build it with: bash artifact/apptainer/mamba/dna_tar_to_apptainer_sif_converter.sh" 1>&2
   exit 1
 fi
 

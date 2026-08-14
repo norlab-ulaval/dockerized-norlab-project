@@ -128,6 +128,11 @@ function dna::load_apptainer_profile_env() {
   echo "Mock dna::load_apptainer_profile_env called with profile: ${profile}"
   return 0
 }
+function dna::apptainer_target_suffix() {
+  local profile="$1"
+  echo "${profile//_/-}"
+  return 0
+}
 function dna::generate_apptainer_build_sif_script() {
   echo "Mock dna::generate_apptainer_build_sif_script called with args: $*"
   return 0

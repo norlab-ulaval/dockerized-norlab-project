@@ -155,6 +155,13 @@ function dna::save_command() {
     local save_dir_path="${dirpath}/${save_dir_name}"
     local image_name=${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-${service}:${PROJECT_TAG:?err}
     local tar_filename="${DN_PROJECT_IMAGE_NAME}-${service}.${PROJECT_TAG}.tar"
+    local target_suffix=""
+    if [[ -n "${apptainer_profile}" ]]; then
+        # Slurm apptainer artifacts are target-aware so builds for different HPC targets do not
+        # overwrite each other (image tag and SIF filename carry the target-platform suffix).
+        target_suffix="$(dna::apptainer_target_suffix "${apptainer_profile}")" || return 1
+        image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME:?err}-${service}:${PROJECT_TAG:?err}-${target_suffix}"
+    fi
 
     # ....Begin....................................................................................
     n2st::print_formated_script_header "save ${service} image procedure" "${line_format}" "${line_style}"
@@ -189,7 +196,9 @@ function dna::save_command() {
     if [[ -n "${apptainer_profile}" ]]; then
         dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
 
-        local sif_name="${DN_PROJECT_IMAGE_NAME}-${service}.sif"
+        # SIF filename is fully versioned (image name + PROJECT_TAG + target suffix) so builds for
+        # different versions/targets never overwrite each other in the shared ${SCRATCH}/sif/ dir.
+        local sif_name="${DN_PROJECT_IMAGE_NAME}-${service}-${PROJECT_TAG:?err}-${target_suffix}.sif"
         dna::generate_apptainer_build_sif_script \
             "${tar_filename}" \
             "${sif_name}" \
@@ -291,7 +300,9 @@ EOF
 
     # Append Apptainer metadata if profile is set
     if [[ -n "${apptainer_profile}" ]]; then
-        local sif_name="${DN_PROJECT_IMAGE_NAME:?err}-slurm.sif"
+        local target_suffix
+        target_suffix="$(dna::apptainer_target_suffix "${apptainer_profile}")" || return 1
+        local sif_name="${DN_PROJECT_IMAGE_NAME:?err}-slurm-${PROJECT_TAG:?err}-${target_suffix}.sif"
         cat >> "${meta_file}" << EOF
 
 # Apptainer Information

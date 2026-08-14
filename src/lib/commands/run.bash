@@ -123,9 +123,9 @@ DOCUMENTATION_RUN_SLURM_APPTAINER_CMD=$( cat <<'EOF'
 #
 # Optional flags:
 #   --sif-path <path>      Path to the SIF file on the HPC server.
-#                          (default: artifact/apptainer/<image>-slurm.sif)
+#                          (default: ${SCRATCH}/sif/<image>-slurm-<target>.sif)
 #   --output-dir <path>    Directory for generated scripts.
-#                          (default: artifact/apptainer/)
+#                          (default: artifact/apptainer/<profile>/)
 #   --print-only           Print apptainer exec command to stdout only
 #                          (do not write script file).
 #   --log-name <name>      Log file name (for script header comment).

@@ -56,6 +56,24 @@ function dna::setup_mock() {
     find "${mock_root}/slurm_jobs" -name "*.bash" -type f -exec sed -i "s/PLACEHOLDER_DN_PROJECT_IMAGE_NAME/${mock_repo_name}/g" {} +
   fi
 
+  # ....Disable incompatible ROS2 pytest plugins in mock ci-tests config..........................
+  # The DN base image ships the ROS2 `launch_testing` pytest plugin, which declares the removed
+  # `path` argument in its `pytest_pycollect_makemodule` hookimpl. On pytest >= 8 this fails
+  # hookspec validation and aborts test collection with a PluginValidationError. Its companion
+  # `launch_ros` depends on `launch_testing`'s hookspec, so both must be disabled together.
+  # The DNA template `tests/pytest*.ini` already carry this fix; inject it into the freshly cloned
+  # mock (which is a pre-initialized super project fetched from GitHub) so the ci-tests run is green.
+  local mock_pytest_ini
+  for mock_pytest_ini in \
+      "${mock_root}/tests/pytest.ini" \
+      "${mock_root}/tests/pytest.no_xdist.ini"; do
+    if [[ -f "${mock_pytest_ini}" ]] && ! grep -q "no:launch_testing" "${mock_pytest_ini}"; then
+      awk '{print} /-p no:randomly/{print "    -p no:launch_testing"; print "    -p no:launch_ros"}' \
+        "${mock_pytest_ini}" > "${mock_pytest_ini}.tmp" \
+        && mv "${mock_pytest_ini}.tmp" "${mock_pytest_ini}"
+    fi
+  done
+
   if [[ ${DNA_DEBUG} == true ]]; then
     cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" || exit 1
     #git status

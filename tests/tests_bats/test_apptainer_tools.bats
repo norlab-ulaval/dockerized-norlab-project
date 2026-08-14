@@ -113,6 +113,32 @@ teardown_file() {
   assert_output --partial "not found"
 }
 
+# ====Tests: dna::apptainer_target_suffix========================================================
+
+@test "dna::apptainer_target_suffix › replaces underscores with hyphens" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::apptainer_target_suffix 'compute_canada'
+  "
+  assert_success
+  # Note: sourcing the mock import_dna_lib.bash emits a banner line on stdout, so assert the
+  # specific normalized suffix line rather than the whole output.
+  assert_line "compute-canada"
+}
+
+@test "dna::apptainer_target_suffix › leaves single-word profile unchanged" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::apptainer_target_suffix 'valeria'
+  "
+  assert_success
+  # Note: sourcing the mock import_dna_lib.bash emits a banner line on stdout, so assert the
+  # specific normalized suffix line rather than the whole output.
+  assert_line "valeria"
+}
+
 # ====Tests: dna::generate_apptainer_build_sif_script=============================================
 
 @test "dna::generate_apptainer_build_sif_script › creates dna_tar_to_apptainer_sif_converter.sh" {
@@ -152,7 +178,8 @@ teardown_file() {
   assert_output --partial "docker-archive:"
   # Conditional compression: --mksquashfs-args is applied only when apptainer >= 1.4.0
   assert_output --partial "--mksquashfs-args"
-  assert_output --partial "-comp zstd"
+  # Compression is tunable via APPTAINER_BUILD_COMPRESS (default none)
+  assert_output --partial "APPTAINER_BUILD_COMPRESS"
   # Version check logic must be present
   assert_output --partial "_APPTAINER_VERSION"
   assert_output --partial "_APPTAINER_MAJOR"
@@ -490,7 +517,7 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains --target-dir argument parsing" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains --source-tar argument parsing" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -499,17 +526,17 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
       'test-project-slurm.l4t-r36.4.0.tar' \
-      'test-project-slurm.sif' \
+      'test-project-slurm-valeria.sif' \
       '${output_dir}'
   "
 
-  run grep "\-\-target-dir" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run grep "\-\-source-tar" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
 
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh uses TARGET_DIR as SIF output directory when --target-dir is provided" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh outputs SIF to \${SCRATCH}/sif" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -518,19 +545,18 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
       'test-project-slurm.l4t-r36.4.0.tar' \
-      'test-project-slurm.sif' \
+      'test-project-slurm-valeria.sif' \
       '${output_dir}'
   "
 
-  # The generated script sets SIF_FILE to <target-dir>/artifact/apptainer/<sif> when --target-dir is used
-  run grep "SUPER_PROJECT_ROOT}/artifact/apptainer" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  # The generated script builds the SIF into the shared scratch SIF cache (${SCRATCH}/sif/)
+  run grep 'SIF_DIR="${SCRATCH}/sif"' "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
-  assert_output --partial "SIF_FILE"
 
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh fails when --target-dir is provided without argument" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh fails when \$SCRATCH is not set" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -539,13 +565,13 @@ teardown_file() {
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     dna::generate_apptainer_build_sif_script \
       'test-project-slurm.l4t-r36.4.0.tar' \
-      'test-project-slurm.sif' \
+      'test-project-slurm-valeria.sif' \
       '${output_dir}'
   "
 
-  run bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh" --target-dir
+  run env -u SCRATCH bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_failure
-  assert_output --partial "--target-dir requires a path argument"
+  assert_output --partial "\$SCRATCH is not set"
 
   rm -rf "${output_dir}"
 }
@@ -662,7 +688,7 @@ teardown_file() {
   run bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh" --help
   assert_success
   assert_output --partial "Usage"
-  assert_output --partial "--target-dir"
+  assert_output --partial "--source-tar"
 
   rm -rf "${output_dir}"
 }
@@ -1142,7 +1168,8 @@ export -f docker
   assert_output --partial 'docker://${IMAGE_REF}'
   # Conditional compression: --mksquashfs-args is applied only when apptainer >= 1.4.0
   assert_output --partial '--mksquashfs-args'
-  assert_output --partial '-comp zstd'
+  # Compression is tunable via APPTAINER_BUILD_COMPRESS (default none)
+  assert_output --partial 'APPTAINER_BUILD_COMPRESS'
   # Version check logic must be present
   assert_output --partial '_APPTAINER_VERSION'
   assert_output --partial '_APPTAINER_MAJOR'
@@ -1166,36 +1193,37 @@ export -f docker
   assert_output --partial 'USE_DOCKER_LOGIN'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script contains --target-dir argument parsing" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script outputs SIF to \${SCRATCH}/sif" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     output_dir=\$(mktemp -d)
     dna::generate_registry_to_apptainer_sif_script \
-      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
-      'test-project-slurm.sif' \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0-valeria' \
+      'test-project-slurm-valeria.sif' \
       \"\${output_dir}\"
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial '--target-dir'
+  assert_output --partial 'SIF_DIR="${SCRATCH}/sif"'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script uses TARGET_DIR as SIF output directory when --target-dir is provided" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script re-execs inside a compute allocation via salloc" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     output_dir=\$(mktemp -d)
     dna::generate_registry_to_apptainer_sif_script \
-      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
-      'test-project-slurm.sif' \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0-valeria' \
+      'test-project-slurm-valeria.sif' \
       \"\${output_dir}\"
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial 'artifact/apptainer'
+  assert_output --partial 'exec salloc'
+  assert_output --partial 'APPTAINER_BUILD_NO_SALLOC'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script uses SLURM_TMPDIR-aware mktemp for cache config" {
@@ -1256,7 +1284,6 @@ export -f docker
   "
   assert_success
   assert_output --partial 'Usage'
-  assert_output --partial '--target-dir'
   assert_output --partial '--docker-login'
 }
 

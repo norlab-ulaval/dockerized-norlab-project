@@ -125,6 +125,11 @@ function dna::load_apptainer_profile_env() {
   export DN_PROJECT_USER
   return 0
 }
+function dna::apptainer_target_suffix() {
+  local profile="$1"
+  echo "${profile//_/-}"
+  return 0
+}
 function dna::generate_hpc_server_config_script() {
   local output_dir="$1"
   echo "#!/bin/bash" > "${output_dir}/dna_hpc_server_config.bash"
@@ -294,6 +299,18 @@ teardown_file() {
   run find "${MOCK_SAVE_DIR}" -name "meta.txt" -exec grep "SIF_BUILD_CMD" {} \;
   assert_success
   assert_output --partial "apptainer build"
+}
+
+@test "dna::save_command --apptainer valeria slurm › metadata SIF_NAME is fully versioned (image + tag + target)" {
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/commands/save.bash
+    dna::save_command --apptainer valeria ${MOCK_SAVE_DIR} slurm
+  "
+  # SIF filename must embed both the PROJECT_TAG (version) and the target suffix so that builds for
+  # different versions/targets never collide in the shared ${SCRATCH}/sif/ cache.
+  run find "${MOCK_SAVE_DIR}" -name "meta.txt" -exec grep "SIF_NAME" {} \;
+  assert_success
+  assert_output --partial "test-image-slurm-l4t-r36.4.0-valeria.sif"
 }
 
 @test "dna::save_command --apptainer valeria slurm › metadata TAR_FILENAME references .tar archive" {
