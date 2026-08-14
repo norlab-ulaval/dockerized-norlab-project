@@ -20,6 +20,11 @@
 #   --keep        Keep test artifacts after completion (for debugging)
 #   --skip-build  Skip Docker image build (use existing images)
 #
+# Environment:
+#   DNA_APPTAINER_TEST_FORCE=true   Run the suite even on a non-amd64 host. By default the suite is
+#                                   skipped (exit 0) on non-amd64 hosts because the amd64-only
+#                                   Apptainer binary crashes under QEMU emulation (e.g. Apple Silicon).
+#
 # =================================================================================================
 set -e
 
@@ -101,6 +106,40 @@ echo " Containerized Apptainer Integration Tests"
 echo " Project root: ${PROJECT_ROOT}"
 echo " Script dir:   ${SCRIPT_DIR}"
 echo "========================================================"
+
+# ====Host architecture guard======================================================================
+# Apptainer publishes amd64-only .deb packages, so the test environment image is built for
+# linux/amd64. On a non-amd64 host (e.g. Apple Silicon / arm64), Docker runs that image under
+# QEMU user-mode emulation, where the Apptainer Go binary crashes with a fatal runtime error
+# (`lfstack.push invalid packing` — QEMU does not preserve the upper pointer bits Go relies on).
+# This is a host/QEMU emulation limitation, not a DNA defect, so skip the suite gracefully (exit 0)
+# unless the host is natively amd64 or the user explicitly forces the run.
+HOST_ARCH="$(uname -m)"
+case "${HOST_ARCH}" in
+  x86_64 | amd64) HOST_IS_AMD64=true ;;
+  *) HOST_IS_AMD64=false ;;
+esac
+
+if [[ "${HOST_IS_AMD64}" == "false" && "${DNA_APPTAINER_TEST_FORCE:-false}" != "true" ]]; then
+  # Disable the EXIT cleanup trap's failure banner by exiting 0 explicitly.
+  trap - EXIT
+  echo ""
+  echo "========================================================"
+  echo " SKIPPED: Containerized Apptainer tests"
+  echo "--------------------------------------------------------"
+  echo " Host architecture is '${HOST_ARCH}' (non-amd64)."
+  echo " The Apptainer .deb is amd64-only; running it under QEMU"
+  echo " emulation crashes the Apptainer Go binary."
+  echo " Set DNA_APPTAINER_TEST_FORCE=true to run anyway (expected"
+  echo " to fail under emulation), or run on a native amd64 host."
+  echo "========================================================"
+  # Best-effort cleanup of any leftover artifacts/container.
+  docker rm -f "${TEST_CONTAINER_NAME}" 2>/dev/null || true
+  if [[ "${KEEP_ARTIFACTS}" == "false" ]]; then
+    rm -rf "${ARTIFACTS_DIR}"
+  fi
+  exit 0
+fi
 
 # ====Step 1: Build test environment image=========================================================
 if [[ "${SKIP_BUILD}" == "false" ]]; then

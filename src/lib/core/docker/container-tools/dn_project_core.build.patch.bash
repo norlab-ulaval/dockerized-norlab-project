@@ -56,8 +56,8 @@ function dna::global_install_hack() {
   # ....Hydra related..............................................................................
   pip3 install 'hydra-core >= 1.3'
 
-  # https://hydra.cc/docs/plugins/ray_launcher/
-  pip3 install 'hydra-ray-launcher'
+  ## https://hydra.cc/docs/plugins/ray_launcher/
+  #pip3 install 'hydra-ray-launcher'
 
   # Hydra Experiment Sweeper
   # https://github.com/martenlienen/hydra-experiment-sweeper
@@ -80,8 +80,8 @@ function dna::global_install_hack() {
   pip3 install 'optuna-dashboard'
   #pip3 install 'bottle == 0.12.*' # Fix the optuna-dashboard loading screen stall problem
   # optional dependencies to make optuna-dashboard faster
-  pip3 install 'optuna-fast-fanova'
-  pip3 install 'gunicorn'
+  #pip3 install 'optuna-fast-fanova'
+  #pip3 install 'gunicorn'
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 
