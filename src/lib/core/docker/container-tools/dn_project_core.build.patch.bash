@@ -70,7 +70,7 @@ function dna::global_install_hack() {
   # https://hydra.cc/docs/plugins/optuna_sweeper/
   #hydra-optuna-sweeper >= 1.2.0
   pip3 install 'hydra-optuna-sweeper >= 1.3.0.dev0'
-  pip3 install 'sqlalchemy<2.0' # Temporary compatibility quickhack for hydra-optuna-sweeper
+  # pip3 install 'sqlalchemy<2.0' # Temporary compatibility quickhack for hydra-optuna-sweeper # <--
 
   # ///////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -74,6 +74,23 @@ function dna::setup_mock() {
     fi
   done
 
+  # ....Point the Slurm dryrun job at the non-sweeper example.....................................
+  # The mock's `slurm_job.dryrun.bash` historically targets `example_app_hparm_optim.py`, a hydra
+  # MULTIRUN that instantiates the optuna TPE sampler. The DN base image ships incompatible
+  # hydra-optuna-sweeper/optuna versions, so the sampler instantiation crashes
+  # (`Cannot instantiate config of type TPESampler`), failing the slurm dryrun/validate tests.
+  # The dryrun only needs to validate the slurm/container pipeline, so retarget it to the
+  # non-sweeper single-run `example_app.py`. The DNA template already carries this fix; inject it
+  # into the freshly cloned mock (fetched from GitHub) so the tests are self-contained.
+  local mock_dryrun_job="${mock_root}/slurm_jobs/slurm_job.dryrun.bash"
+  if [[ -f "${mock_dryrun_job}" ]] && grep -q "example_app_hparm_optim.py" "${mock_dryrun_job}"; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i "" "s|launcher/example_app_hparm_optim.py|launcher/example_app.py|g" "${mock_dryrun_job}"
+    else
+      sed -i "s|launcher/example_app_hparm_optim.py|launcher/example_app.py|g" "${mock_dryrun_job}"
+    fi
+  fi
+
   if [[ ${DNA_DEBUG} == true ]]; then
     cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" || exit 1
     #git status

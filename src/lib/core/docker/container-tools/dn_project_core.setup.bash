@@ -63,7 +63,11 @@ function dna::install_python_requirement() {
 
   # ....Begin......................................................................................
   n2st::print_msg "Execute pip install from python.requirements-dna.txt file..."
-  pip3 install --verbose -r /python.requirements-dna.txt
+  # Note: `--retries`/`--timeout` keep the install resilient to an unreachable extra index (e.g.
+  #  https://pypi.ngc.nvidia.com configured in the NVIDIA L4T base image's pip config). Without a
+  #  fast fall-through, pip's default 5 retries against the unresolvable host stall/fail the build.
+  #  The PIP_RETRIES/PIP_DEFAULT_TIMEOUT env (exported by the build stage) take precedence when set.
+  pip3 install --verbose --retries "${PIP_RETRIES:-1}" --timeout "${PIP_DEFAULT_TIMEOUT:-10}" -r /python.requirements-dna.txt
   local exit_code=$?
 
   # ....Teardown...................................................................................

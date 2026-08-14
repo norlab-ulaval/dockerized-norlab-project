@@ -40,7 +40,11 @@ function dna::job_teardown_callback() {
 
 
 # ....Hydra app module.............................................................................
-hydra_flags+=("launcher/example_app_hparm_optim.py")
+# Note: the dryrun deliberately targets the non-sweeper `example_app.py` (single run) rather than
+#  `example_app_hparm_optim.py` (hydra MULTIRUN + optuna sweeper). The dryrun only needs to validate
+#  the slurm/container pipeline; using the optuna sweeper couples the dryrun to the base image's
+#  hydra-optuna-sweeper/optuna versions and is unnecessary for pipeline validation.
+hydra_flags+=("launcher/example_app.py")
 # Note: assume container workdir is `<super-project>/src/`
 
 # ....Optional hydra flags.........................................................................

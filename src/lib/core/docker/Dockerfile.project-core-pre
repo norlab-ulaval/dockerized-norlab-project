@@ -35,6 +35,13 @@ COPY --from=context-dn-container-tools ./dn_project_core_init.bash /dn_project_c
 COPY --from=context-dna-lib-container-tools . /dna-lib-container-tools/
 
 RUN <<EOF
+    # Make build-time pip installs resilient to an unreachable extra index (e.g.
+    # https://pypi.ngc.nvidia.com configured in the NVIDIA L4T base image's pip config).
+    # Without this, pip's default 5 retries against the unresolvable host stall (and can fail)
+    # the project-core-pre build. Lowering retries/timeout lets resolution fall through quickly
+    # to the reachable default index (pypi.org). Scoped to this RUN so it does not persist in the image.
+    export PIP_RETRIES="${PIP_RETRIES:-1}"
+    export PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT:-10}"
     source /dn_project_core_init.bash || exit 1
     source /dna-lib-container-tools/dn_project_core.setup.bash || exit 1
     source /dna-lib-container-tools/dn_project_core.build.patch.bash || exit 1
