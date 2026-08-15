@@ -171,6 +171,9 @@ function dna::generate_apptainer_build_sif_script() {
 
   n2st::print_msg "Generating Apptainer SIF build helper script: ${script_path}"
 
+  # Remove any previous (possibly read-only) generated script so we can overwrite it cleanly.
+  rm -f "${script_path}"
+
   cat > "${script_path}" << 'SCRIPT_EOF'
 #!/bin/bash
 set -e
@@ -434,6 +437,23 @@ if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
   exit 1
 fi
 
+# ====Content guard: verify the baked-in super-project '.git' survived the conversion=============
+# DNA bakes the super-project '.git' into the image so the container stays portable and the DN/N2ST
+# bootstrap can resolve PROJECT_PATH/N2ST_PATH via 'git rev-parse'. If the SIF conversion silently
+# dropped '.git' (e.g. an OOM-killed/truncated extraction on a resource-capped login node), the
+# slurm job would later fail deep inside the entrypoint with 'N2ST_PATH: [ERROR] env var not set!'.
+# Detect it here and fail loudly instead of installing an invalid SIF.
+if ! apptainer exec "${SIF_TMP}" sh -c 'ls -d /ros2_ws/src/*/.git/HEAD >/dev/null 2>&1'; then
+  echo "[error] Content guard FAILED: the built SIF is missing the baked-in super-project '.git' directory." 1>&2
+  echo "[error]   This usually means the OCI extraction was truncated (often an OOM 'Killed' on a" 1>&2
+  echo "[error]   resource-capped login node). The SIF is INVALID and was NOT installed." 1>&2
+  echo "[hint]  Re-run this converter inside a compute allocation (it does so automatically unless" 1>&2
+  echo "[hint]   APPTAINER_BUILD_NO_SALLOC=1) and keep APPTAINER_TMPDIR on fast local disk (\$SLURM_TMPDIR)." 1>&2
+  rm -f "${SIF_TMP}"
+  exit 1
+fi
+echo "[done] Content guard passed: baked-in super-project '.git' is present in the SIF." 1>&2
+
 echo "[info] Moving SIF from staging to final destination..." 1>&2
 mv "${SIF_TMP}" "${SIF_FILE}"
 echo "[done] SIF file created: ${SIF_FILE}" 1>&2
@@ -444,7 +464,9 @@ rm -f "${TAR_FILE}"
 echo "[done] Tar archive deleted: ${TAR_FILE}" 1>&2
 SCRIPT_EOF
 
-  chmod +x "${script_path}"
+  # Make the generated script read-only so users don't mistakenly edit a file that 'dna' silently
+  # regenerates/overwrites on the next build. Regeneration handles this via the leading 'rm -f'.
+  chmod 0555 "${script_path}"
   return 0
 }
 
@@ -492,6 +514,9 @@ function dna::generate_registry_to_apptainer_sif_script() {
   local script_path="${output_dir}/dna_registry_to_apptainer_sif_converter.sh"
 
   n2st::print_msg "Generating Apptainer SIF registry-pull helper script: ${script_path}"
+
+  # Remove any previous (possibly read-only) generated script so we can overwrite it cleanly.
+  rm -f "${script_path}"
 
   cat > "${script_path}" << 'SCRIPT_EOF'
 #!/bin/bash
@@ -599,6 +624,27 @@ mkdir -p "${SIF_DIR}"
 
 echo "[info] Image reference: ${IMAGE_REF}" 1>&2
 echo "[info] SIF output:      ${SIF_FILE}" 1>&2
+
+# ====Login-node resource-limit detection=========================================================
+# Alliance Canada / Compute Canada clusters cap per-user RAM (~4 GB) and CPU-time on login nodes and
+# SIGKILL heavy processes ("Killed"). 'apptainer build docker://' fuses a memory-heavy extraction
+# with the registry fetch and is frequently killed here, silently producing an INVALID SIF (missing
+# the baked-in super-project '.git', which later crashes the slurm job with 'N2ST_PATH: [ERROR] ...').
+# The CC_CLUSTER env var is exported on all Alliance clusters, so use it to detect a capped login node.
+if [[ -z "${SLURM_JOB_ID:-}" && -n "${CC_CLUSTER:-}" && "${APPTAINER_BUILD_USE_SALLOC:-0}" != "1" ]]; then
+  echo "[warn] =================================================================================" 1>&2
+  echo "[warn] Detected an Alliance Canada login node (CC_CLUSTER=${CC_CLUSTER}) with strict RAM/CPU" 1>&2
+  echo "[warn]   limits. The registry (--push) conversion is UNRELIABLE here: the build is often" 1>&2
+  echo "[warn]   SIGKILLed mid-extraction, and compute nodes cannot reach Docker Hub's blob CDN, so" 1>&2
+  echo "[warn]   neither node type can complete a docker:// pull+build." 1>&2
+  echo "[warn]   Recommended on Alliance clusters instead of the --push pipeline:" 1>&2
+  echo "[warn]     1. Use the tar pipeline: 'dna build slurm --apptainer <target> --save', transfer" 1>&2
+  echo "[warn]        the tar, then run dna_tar_to_apptainer_sif_converter.sh (it builds inside salloc)." 1>&2
+  echo "[warn]     2. Or copy a working SIF built elsewhere (same linux/amd64 arch) into \${SCRATCH}/sif/." 1>&2
+  echo "[warn]   Proceeding with a best-effort login-node build; the post-build content guard below" 1>&2
+  echo "[warn]   will FAIL LOUDLY if the resulting SIF is truncated (never a silent bad SIF)." 1>&2
+  echo "[warn] =================================================================================" 1>&2
+fi
 
 # ====Optional compute-allocation re-exec (opt-in)================================================
 # Building a SIF is memory- and I/O-heavy, so on memory-capped login nodes one may want to run it
@@ -749,6 +795,9 @@ if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
   echo "[error] Apptainer build failed for image: ${IMAGE_REF}" 1>&2
   echo "[hint]  Check that the image is accessible from the HPC server." 1>&2
   echo "[hint]  If the registry requires authentication, re-run with: --docker-login" 1>&2
+  echo "[hint]  A 'Killed' during 'Extracting'/'Fetching' means the process was SIGKILLed by the" 1>&2
+  echo "[hint]    login-node resource limits (Alliance Canada). Use the '--save' tar pipeline or copy" 1>&2
+  echo "[hint]    a prebuilt SIF into \${SCRATCH}/sif/ instead (see the warning printed above)." 1>&2
   echo "[hint]  A 'Forbidden' from index.docker.io usually means the httpproxy module is loaded on" 1>&2
   echo "[hint]    the login node (it routes docker.io through a proxy meant for compute nodes). This" 1>&2
   echo "[hint]    script builds on the login node by default and does NOT load httpproxy there; if you" 1>&2
@@ -758,12 +807,31 @@ if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
   exit 1
 fi
 
+# ====Content guard: verify the baked-in super-project '.git' survived the conversion=============
+# DNA bakes the super-project '.git' into the image so the container stays portable and the DN/N2ST
+# bootstrap can resolve PROJECT_PATH/N2ST_PATH via 'git rev-parse'. If the SIF conversion silently
+# dropped '.git' (e.g. an OOM-killed/truncated extraction on a resource-capped login node), the
+# slurm job would later fail deep inside the entrypoint with 'N2ST_PATH: [ERROR] env var not set!'.
+# Detect it here and fail loudly instead of installing an invalid SIF.
+if ! apptainer exec "${SIF_TMP}" sh -c 'ls -d /ros2_ws/src/*/.git/HEAD >/dev/null 2>&1'; then
+  echo "[error] Content guard FAILED: the built SIF is missing the baked-in super-project '.git' directory." 1>&2
+  echo "[error]   This usually means the OCI extraction was truncated (often an OOM 'Killed' on a" 1>&2
+  echo "[error]   resource-capped login node). The SIF is INVALID and was NOT installed." 1>&2
+  echo "[hint]  On Alliance Canada clusters, use the '--save' tar pipeline or copy a prebuilt SIF" 1>&2
+  echo "[hint]   (same linux/amd64 arch) into \${SCRATCH}/sif/ instead of the registry (--push) pipeline." 1>&2
+  rm -f "${SIF_TMP}"
+  exit 1
+fi
+echo "[done] Content guard passed: baked-in super-project '.git' is present in the SIF." 1>&2
+
 echo "[info] Moving SIF from staging to final destination..." 1>&2
 mv "${SIF_TMP}" "${SIF_FILE}"
 echo "[done] SIF file created: ${SIF_FILE}" 1>&2
 SCRIPT_EOF
 
-  chmod +x "${script_path}"
+  # Make the generated script read-only so users don't mistakenly edit a file that 'dna' silently
+  # regenerates/overwrites on the next build. Regeneration handles this via the leading 'rm -f'.
+  chmod 0555 "${script_path}"
   return 0
 }
 
@@ -813,6 +881,9 @@ function dna::generate_hpc_server_config_script() {
   local script_path="${output_dir}/dna_hpc_server_config.bash"
 
   n2st::print_msg "Generating HPC server config script: ${script_path}"
+
+  # Remove any previous (possibly read-only) generated script so we can overwrite it cleanly.
+  rm -f "${script_path}"
 
   cat > "${script_path}" << 'SCRIPT_EOF'
 #!/bin/bash
@@ -919,6 +990,58 @@ else
   echo "[warn] \$SCRATCH is not set — the SIF converter scripts output to \${SCRATCH}/sif/ and will fail without it." 1>&2
 fi
 
+# ====Generate artifact/apptainer/README.md=======================================================
+# Document the auto-generated apptainer artifact directory so users don't mistakenly edit the
+# generated (read-only) converter/config scripts, and have a quick usage guide at hand.
+_APPTAINER_ARTIFACT_DIR="${SUPER_PROJECT_ROOT}/artifact/apptainer"
+mkdir -p "${_APPTAINER_ARTIFACT_DIR}"
+echo "[info] Writing ${_APPTAINER_ARTIFACT_DIR}/README.md" 1>&2
+cat > "${_APPTAINER_ARTIFACT_DIR}/README.md" <<'README_EOF'
+# artifact/apptainer/
+
+> ⚠️ **AUTO-GENERATED DIRECTORY** — the scripts under `artifact/apptainer/<target>/` are generated
+> by `dna` commands (`dna build slurm --apptainer <target> --save|--push`). **Do not edit them by
+> hand**: they are marked read-only and are silently overwritten on the next `dna` build. Put any
+> custom logic elsewhere.
+
+## Contents
+
+Each `<target>/` subdirectory (e.g. `valeria/`, `compute_canada/`, `mamba/`) contains:
+
+- `dna_hpc_server_config.bash` — Run **once** on the HPC server to create the super-project
+  directory structure, load the Apptainer module, and authenticate with the Docker registry. It
+  also (re)writes this README.
+- `dna_tar_to_apptainer_sif_converter.sh` — Converts a transferred Docker **tar archive** (produced
+  by `dna build ... --save`) into a `.sif`. Builds inside a compute allocation (salloc) by default,
+  so it works on memory-capped login nodes. **Recommended on Alliance Canada / Compute Canada.**
+- `dna_registry_to_apptainer_sif_converter.sh` — Builds a `.sif` directly from a Docker **registry**
+  image (produced by `dna build ... --push`). Requires outbound internet on the build node; it is
+  unreliable on Alliance Canada clusters (login-node kill + no compute-node blob-CDN access).
+
+The built `.sif` is written to `${SCRATCH}/sif/`.
+
+## Quick usage (on the HPC server, from the super-project root)
+
+```bash
+# 1. One-time setup + registry login:
+bash artifact/apptainer/<target>/dna_hpc_server_config.bash
+
+# 2a. Tar pipeline (recommended on Alliance Canada) — after rsync-ing the .tar next to the script:
+bash artifact/apptainer/<target>/dna_tar_to_apptainer_sif_converter.sh
+
+# 2b. OR registry pipeline (needs internet on the build node):
+bash artifact/apptainer/<target>/dna_registry_to_apptainer_sif_converter.sh
+
+# 3. Submit the job:
+sbatch slurm_jobs/<your-job>/slurm_job.<name>.apptainer.<target>.bash
+```
+
+Both converters run a post-build **content guard** that fails loudly if the baked-in super-project
+`.git` directory did not survive the SIF conversion (a symptom of a truncated / OOM-killed build on
+a resource-capped login node). Pass `--help` to any script for the full option list.
+README_EOF
+echo "[done] artifact/apptainer/README.md written." 1>&2
+
 # ====Load Apptainer module (HPC module system)====================================================
 if command -v module &>/dev/null; then
   # Try to load the highest available apptainer version; fallback to default
@@ -942,6 +1065,9 @@ apptainer registry login --username "${_DNA_DOCKER_HUB_USERNAME}" docker://docke
 echo "[done] Docker registry authentication complete." 1>&2
 SCRIPT_EOF
 
+  # Make the generated script read-only so users don't mistakenly edit a file that 'dna' silently
+  # regenerates/overwrites on the next build. Regeneration handles this via the leading 'rm -f'.
+  chmod 0555 "${script_path}"
   return 0
 }
 

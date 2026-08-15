@@ -206,6 +206,60 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
+@test "dna::generate_apptainer_build_sif_script › contains the baked-in '.git' content guard" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial "Content guard"
+  assert_output --partial '/ros2_ws/src/*/.git/HEAD'
+  assert_output --partial "missing the baked-in super-project '.git'"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › generated script is read-only (mode 555)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  # Use stat (mode bits) rather than 'test -w': bats runs as root, which bypasses permission bits.
+  run stat -c '%a' "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output "555"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › regeneration overwrites a read-only script" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script 'a.tar' 'a.sif' '${output_dir}'
+    dna::generate_apptainer_build_sif_script 'a.tar' 'a.sif' '${output_dir}'
+  "
+  assert_success
+
+  rm -rf "${output_dir}"
+}
+
 # ====Tests: dna::get_apptainer_slurm_exec_flags==================================================
 
 @test "dna::get_apptainer_slurm_exec_flags › output contains --nv flag" {
@@ -1133,6 +1187,54 @@ export -f docker
   assert_success
 }
 
+@test "dna::generate_registry_to_apptainer_sif_script › contains the baked-in '.git' content guard" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' 'test-project-slurm.sif' \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  assert_output --partial "Content guard"
+  assert_output --partial '/ros2_ws/src/*/.git/HEAD'
+  assert_output --partial "missing the baked-in super-project '.git'"
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › detects Alliance/Compute Canada login node via CC_CLUSTER" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' 'test-project-slurm.sif' \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  assert_output --partial 'CC_CLUSTER'
+  assert_output --partial 'Alliance Canada login node'
+  assert_output --partial '--save'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › generated script is read-only (mode 555)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' 'test-project-slurm.sif' '${output_dir}'
+  "
+  run stat -c '%a' "${output_dir}/dna_registry_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output "555"
+  rm -rf "${output_dir}"
+}
+
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains IMAGE_REF" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
@@ -1414,6 +1516,42 @@ export -f docker
   "
   assert_success
   assert_file_exists "${output_dir}/dna_hpc_server_config.bash"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › embeds artifact/apptainer/README.md generation" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output --partial "artifact/apptainer/README.md"
+  assert_output --partial "AUTO-GENERATED DIRECTORY"
+  assert_output --partial "README_EOF"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script is read-only (mode 555)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run stat -c '%a' "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output "555"
 
   rm -rf "${output_dir}"
 }

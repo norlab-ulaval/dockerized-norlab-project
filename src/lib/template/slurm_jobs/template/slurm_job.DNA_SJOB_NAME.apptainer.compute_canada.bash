@@ -141,6 +141,19 @@ if [[ -z "${DN_PROJECT_PATH}" ]]; then
   exit 1
 fi
 
+# ====Content guard: verify the SIF carries the baked-in super-project '.git'=====================
+# The DN/N2ST entrypoint bootstrap resolves PROJECT_PATH/N2ST_PATH via 'git rev-parse'. If the SIF
+# lost its baked-in '.git' during conversion (e.g. a truncated/OOM-killed build on a resource-capped
+# login node), the job would crash deep in the entrypoint with 'N2ST_PATH: [ERROR] env var not set!'.
+# Detect it up-front and fail fast with an actionable message.
+if ! apptainer exec "${SIF_PATH}" test -f "${DN_PROJECT_PATH}/.git/HEAD"; then
+  echo "[error] The SIF is missing the baked-in super-project '.git' directory: ${SIF_PATH}" 1>&2
+  echo "[error]   (expected ${DN_PROJECT_PATH}/.git inside the container). The SIF was likely produced" 1>&2
+  echo "[error]   by a truncated/OOM-killed SIF conversion. Rebuild it with the tar pipeline" 1>&2
+  echo "[error]   (dna build slurm --apptainer <target> --save) or copy a known-good SIF, then re-submit." 1>&2
+  exit 1
+fi
+
 job_setup_callback
 trap job_teardown_callback EXIT
 
