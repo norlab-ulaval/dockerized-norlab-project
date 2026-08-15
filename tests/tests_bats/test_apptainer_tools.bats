@@ -1209,7 +1209,7 @@ export -f docker
   assert_output --partial 'SIF_DIR="${SCRATCH}/sif"'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script re-execs inside a compute allocation via salloc" {
+@test "dna::generate_registry_to_apptainer_sif_script › registry pull runs on the login node by default (salloc is opt-in)" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
@@ -1222,8 +1222,13 @@ export -f docker
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
+  # The docker:// registry pull needs internet (login node), so the salloc re-exec is OPT-IN only.
+  # By default the fetch+build runs in place on the internet-connected login node.
+  assert_output --partial 'APPTAINER_BUILD_USE_SALLOC'
+  # salloc is still available (opt-in) so the re-exec code path must remain present.
   assert_output --partial 'exec salloc'
-  assert_output --partial 'APPTAINER_BUILD_NO_SALLOC'
+  # The old always-on salloc default flag must be gone from the registry converter.
+  refute_output --partial 'APPTAINER_BUILD_NO_SALLOC'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script uses SLURM_TMPDIR-aware mktemp for cache config" {
@@ -1304,6 +1309,30 @@ export -f docker
   assert_output --partial 'module load apptainer'
   assert_output --partial 'module spider apptainer'
   assert_output --partial '_APPTAINER_LATEST_VERSION'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › httpproxy only loads inside a SLURM job (never on the login node)" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
+      'test-project-slurm.sif' \
+      \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  # Isolated compute nodes (e.g. Alliance Canada / compute_canada) need the httpproxy module for
+  # outbound internet, but loading it on the login node routes docker.io through the proxy and
+  # returns 'Forbidden'. Since this converter builds on the login node by default, the httpproxy
+  # load MUST be gated behind an in-SLURM-job guard.
+  assert_output --partial 'module spider httpproxy'
+  assert_output --partial 'module load httpproxy'
+  assert_output --partial 'APPTAINER_BUILD_NO_HTTPPROXY'
+  # The httpproxy load must be guarded by the SLURM_JOB_ID (in-compute-allocation) check.
+  assert_output --partial 'if [[ -n "${SLURM_JOB_ID:-}" ]] && [[ "${APPTAINER_BUILD_NO_HTTPPROXY:-0}" != "1" ]] && module spider httpproxy'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains error message on build failure" {

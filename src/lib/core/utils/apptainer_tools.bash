@@ -473,8 +473,9 @@ SCRIPT_EOF
 #   profile     - Optional HPC server profile/target name (reserved; the SIF is output to
 #                 ${SCRATCH}/sif/ on the HPC server regardless of the profile).
 #
-# The generated script builds the SIF into ${SCRATCH}/sif/ on the HPC server (a compute
-# allocation is requested via salloc when not already inside a SLURM job).
+# The generated script builds the SIF into ${SCRATCH}/sif/ on the HPC server. The registry pull
+# runs on the login node by default (that is where outbound internet is available); it does NOT
+# re-exec into a salloc compute allocation unless APPTAINER_BUILD_USE_SALLOC=1 is set.
 #
 # Outputs:
 #   Writes dna_registry_to_apptainer_sif_converter.sh to output_dir
@@ -519,12 +520,21 @@ DOCUMENTATION_BUFFER=$( cat <<'EOF'
 #       (docker.io) before building the SIF. Apptainer will prompt for credentials.
 #       Note: the interactive prompt does not work when the build is re-run inside a SLURM
 #       allocation (see below); prefer `apptainer registry login` beforehand (run by
-#       dna_hpc_server_config.bash), or combine with APPTAINER_BUILD_NO_SALLOC=1.
+#       dna_hpc_server_config.bash). Note: by default this script builds on the login node (no
+#       salloc), so the interactive prompt works unless you set APPTAINER_BUILD_USE_SALLOC=1.
 #   -h | --help
 #       Print this help message and exit.
 #
 # Environment variables (build tuning, all optional):
-#   APPTAINER_BUILD_NO_SALLOC=1   Build in-place instead of re-running inside a compute allocation.
+#   APPTAINER_BUILD_USE_SALLOC=1  Opt in to running the fetch+build inside a compute allocation
+#       (salloc). OFF by default: `apptainer build docker://` fuses the network fetch and the SIF
+#       conversion into a single step, and the fetch needs outbound internet — which the login node
+#       has but compute nodes usually do NOT (e.g. Alliance Canada / compute_canada). So by default
+#       the pull+build runs in place on the internet-connected login node. Only enable this on
+#       clusters whose compute nodes have outbound internet (or with the httpproxy module).
+#   APPTAINER_BUILD_NO_HTTPPROXY=1  Do NOT load the `httpproxy` module. When APPTAINER_BUILD_USE_SALLOC=1
+#       the script loads it (when available) so isolated compute nodes get outbound internet for the
+#       registry pull. Set this to skip it (ignored for the default login-node build).
 #   APPTAINER_BUILD_ACCOUNT=<acct>  SLURM account for the allocation (auto-detected otherwise).
 #   APPTAINER_BUILD_MEM=<mem>       salloc --mem     (default 64G).
 #   APPTAINER_BUILD_CPUS=<n>        salloc --cpus-per-task and mksquashfs -processors (default 10).
@@ -535,7 +545,8 @@ DOCUMENTATION_BUFFER=$( cat <<'EOF'
 #
 # Requires:
 #   - apptainer installed on the HPC server
-#   - Network access to docker.io from the HPC server
+#   - Network access to docker.io from the HPC server (on isolated compute nodes the `httpproxy`
+#     module is loaded automatically to provide it; see APPTAINER_BUILD_NO_HTTPPROXY)
 #   - $SCRATCH environment variable set (the SIF file is output to ${SCRATCH}/sif/)
 #
 # =================================================================================================
@@ -589,18 +600,25 @@ mkdir -p "${SIF_DIR}"
 echo "[info] Image reference: ${IMAGE_REF}" 1>&2
 echo "[info] SIF output:      ${SIF_FILE}" 1>&2
 
-# ====Login-node memory-cap mitigation + fast local-disk staging (re-exec into allocation)========
-# Building a SIF is memory- and I/O-heavy. On Alliance/Compute Canada login nodes, per-user memory
-# is capped and heavy processes are SIGKILLed ("Killed"), so the build must run inside a compute
-# allocation. We RE-EXEC this whole script inside the allocation so the inner run sees
-# ${SLURM_TMPDIR} (the compute node's fast local disk) for APPTAINER_TMPDIR/CACHEDIR. Override
-# resources with APPTAINER_BUILD_MEM/CPUS/TIME/ACCOUNT, or disable with APPTAINER_BUILD_NO_SALLOC=1.
+# ====Optional compute-allocation re-exec (opt-in)================================================
+# Building a SIF is memory- and I/O-heavy, so on memory-capped login nodes one may want to run it
+# inside a compute allocation. When APPTAINER_BUILD_USE_SALLOC=1 we RE-EXEC this whole script inside
+# a salloc allocation so the inner run sees ${SLURM_TMPDIR} (fast local disk) for
+# APPTAINER_TMPDIR/CACHEDIR. Override resources with APPTAINER_BUILD_MEM/CPUS/TIME/ACCOUNT.
 # Ref: https://docs.alliancecan.ca/wiki/Apptainer
-if [[ -z "${SLURM_JOB_ID:-}" && "${APPTAINER_BUILD_NO_SALLOC:-0}" != "1" ]] && command -v salloc &>/dev/null; then
+# IMPORTANT: pulling from a Docker registry (docker://) requires outbound internet, which the login
+# node HAS but compute nodes obtained via salloc typically DO NOT (e.g. Alliance Canada /
+# compute_canada). Because `apptainer build docker://` fuses the network fetch and the SIF
+# conversion into a single step, the registry pull MUST run where there is internet — i.e. on the
+# login node. Therefore, unlike the local tar->sif converter, this registry converter does NOT
+# re-exec into a compute allocation by default; it runs the fetch+build in place on the login node.
+# Set APPTAINER_BUILD_USE_SALLOC=1 to opt into a salloc allocation instead (only on clusters whose
+# compute nodes have outbound internet, or together with the httpproxy module).
+if [[ "${APPTAINER_BUILD_USE_SALLOC:-0}" == "1" && -z "${SLURM_JOB_ID:-}" ]] && command -v salloc &>/dev/null; then
   if [[ "${USE_DOCKER_LOGIN}" == true ]]; then
     echo "[warn] --docker-login prompts interactively, which does not work inside a SLURM allocation." 1>&2
     echo "[warn]   Authenticate first with 'apptainer registry login docker://docker.io' (done by" 1>&2
-    echo "[warn]   dna_hpc_server_config.bash), or re-run with APPTAINER_BUILD_NO_SALLOC=1." 1>&2
+    echo "[warn]   dna_hpc_server_config.bash), or unset APPTAINER_BUILD_USE_SALLOC." 1>&2
   fi
   _SALLOC_ARGS=(
     --time="${APPTAINER_BUILD_TIME:-6:00:00}"
@@ -624,17 +642,19 @@ if [[ -z "${SLURM_JOB_ID:-}" && "${APPTAINER_BUILD_NO_SALLOC:-0}" != "1" ]] && c
     echo "[warn]   the following accounts', set APPTAINER_BUILD_ACCOUNT=<account> and re-run." 1>&2
   fi
   _SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-  echo "[info] Not inside a SLURM job — re-running this script inside a compute allocation so the" 1>&2
-  echo "[info]   heavy build gets enough RAM and stages on the node's fast local disk (\$SLURM_TMPDIR)." 1>&2
+  echo "[info] APPTAINER_BUILD_USE_SALLOC=1 — re-running this script inside a compute allocation." 1>&2
+  echo "[warn]   Note: the registry pull needs outbound internet; ensure the compute nodes have it" 1>&2
+  echo "[warn]   (or the httpproxy module is available), otherwise the docker:// pull will time out." 1>&2
   echo "[info]   salloc ${_SALLOC_ARGS[*]} srun bash ${_SELF} $*" 1>&2
   # Guard against an infinite re-exec loop if SLURM_JOB_ID is somehow unset inside the job.
-  export APPTAINER_BUILD_NO_SALLOC=1
+  export APPTAINER_BUILD_USE_SALLOC=0
   exec salloc "${_SALLOC_ARGS[@]}" srun bash "${_SELF}" "$@"
 fi
-echo "[info] Running the Apptainer build in-place (inside a SLURM job, salloc unavailable, or APPTAINER_BUILD_NO_SALLOC=1)." 1>&2
+echo "[info] Running the Apptainer registry pull+build on the login node (default; the registry fetch" 1>&2
+echo "[info]   needs internet, which the login node has). Set APPTAINER_BUILD_USE_SALLOC=1 to use salloc." 1>&2
 
 # ====Apptainer cache configuration================================================================
-# Prefer SLURM_TMPDIR (fast local disk, available thanks to the re-exec above) when inside a job,
+# Prefer SLURM_TMPDIR (fast local disk) when running inside a job (APPTAINER_BUILD_USE_SALLOC=1),
 # otherwise fall back to ${SCRATCH}/tmp (a large disk-backed filesystem, NOT the small RAM-backed
 # /tmp which would OOM-Kill the build). Ref: https://docs.alliancecan.ca/wiki/Apptainer
 _APPTAINER_SCRATCH_TMP_ROOT="${SLURM_TMPDIR:-${SCRATCH}/tmp}"
@@ -651,6 +671,20 @@ if command -v module &>/dev/null; then
   else
     echo "[info] Loading default Apptainer module" 1>&2
     module load apptainer
+  fi
+  # Compute nodes on some HPC clusters (e.g. Alliance Canada / compute_canada) have no direct
+  # outbound internet access; pulling from a Docker registry (docker://index.docker.io) from a
+  # compute node then fails with a connection/i-o timeout. The `httpproxy` module exports the proxy
+  # env vars that give the compute node outbound HTTP(S) access.
+  # IMPORTANT: this proxy MUST NOT be loaded on the login node. The login node already has direct
+  # outbound internet, and routing docker.io through the compute-node proxy makes the registry pull
+  # fail with 'Get "https://index.docker.io/v2/": Forbidden'. Since this registry converter builds
+  # on the login node by default (see the salloc block above), only load httpproxy when we are
+  # actually running inside a SLURM job (i.e. APPTAINER_BUILD_USE_SALLOC=1 re-exec on a compute node).
+  # Load it best-effort (absent on clusters that do not need it). Disable with APPTAINER_BUILD_NO_HTTPPROXY=1.
+  if [[ -n "${SLURM_JOB_ID:-}" ]] && [[ "${APPTAINER_BUILD_NO_HTTPPROXY:-0}" != "1" ]] && module spider httpproxy &>/dev/null; then
+    echo "[info] Inside a SLURM job — loading httpproxy module (outbound internet for the registry pull)." 1>&2
+    module load httpproxy || echo "[warn] Failed to load httpproxy module; registry pull may time out on isolated compute nodes." 1>&2
   fi
 fi
 
@@ -715,6 +749,12 @@ if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
   echo "[error] Apptainer build failed for image: ${IMAGE_REF}" 1>&2
   echo "[hint]  Check that the image is accessible from the HPC server." 1>&2
   echo "[hint]  If the registry requires authentication, re-run with: --docker-login" 1>&2
+  echo "[hint]  A 'Forbidden' from index.docker.io usually means the httpproxy module is loaded on" 1>&2
+  echo "[hint]    the login node (it routes docker.io through a proxy meant for compute nodes). This" 1>&2
+  echo "[hint]    script builds on the login node by default and does NOT load httpproxy there; if you" 1>&2
+  echo "[hint]    loaded it manually, run 'module unload httpproxy' and retry." 1>&2
+  echo "[hint]  A 'dial tcp ... i/o timeout' to index.docker.io means the node has no outbound" 1>&2
+  echo "[hint]    internet. Run this converter on the login node (the default), not inside salloc." 1>&2
   exit 1
 fi
 
