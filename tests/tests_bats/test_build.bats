@@ -1200,6 +1200,8 @@ teardown_file() {
   "
   assert_success
   assert_output --partial "Generating Apptainer artifacts for profile: valeria (pipeline: push)"
+  # The built plain slurm image must be re-tagged with the target-aware tag before push
+  assert_output --partial "Mock docker command called with: tag norlabulaval/test-image-slurm:l4t-r36.4.0 norlabulaval/test-image-slurm:l4t-r36.4.0-valeria"
   assert_output --partial "Pushing slurm image to Docker registry"
   assert_output --partial "Mock docker command called with: push norlabulaval/test-image-slurm:l4t-r36.4.0"
   assert_output --partial "Mock dna::generate_registry_to_apptainer_sif_script"

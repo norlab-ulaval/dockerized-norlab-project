@@ -533,6 +533,17 @@ ${MSG_END_FORMAT}
         local sif_name="${DN_PROJECT_IMAGE_NAME:?err}-slurm-${PROJECT_TAG:?err}-${target_suffix}.sif"
         local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}-${target_suffix}"
 
+        # The docker compose build produces the slurm image with the plain, non-target-aware tag
+        # (${...}-slurm:${PROJECT_TAG}). Re-tag it with the target-aware tag so the downstream
+        # squash/push/save steps (which reference ${image_name}) can find it and different targets
+        # (mamba/valeria/compute_canada) never collide.
+        local built_slurm_image="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}"
+        n2st::print_msg "Tagging slurm image for target '${apptainer_profile}': ${built_slurm_image} -> ${image_name}"
+        docker tag "${built_slurm_image}" "${image_name}" || {
+            n2st::print_msg_error "Failed to tag slurm image ${built_slurm_image} as ${image_name}"
+            return 1
+        }
+
         # Squash image if requested (reduces size before save/push)
         if [[ "${squash_image}" == true ]]; then
             dna::squash_docker_image "${image_name}" || {
