@@ -531,7 +531,11 @@ _dna_validate_sif_baked_git() {
   # The check runs INSIDE the container, so 'apptainer exec' itself can fail for reasons that have
   # nothing to do with the image content (nested exec under srun, no loop device, an unreadable or
   # truncated SIF). Capture everything and tell those cases apart instead of blaming the '.git'.
-  _out="$( apptainer exec "${_sif}" /bin/sh -c '
+  # IMPORTANT: '--no-mount cwd'. Apptainer auto-binds the current working directory into the container.
+  # This converter is typically run from the host super-project root, which on an HPC server does NOT
+  # carry '.git' ('.git' is baked into the image). Without this flag, that host dir is mounted over
+  # /ros2_ws/src/<project>, MASKING the baked-in '.git' and making a perfectly good SIF fail the guard.
+  _out="$( apptainer exec --no-mount cwd "${_sif}" /bin/sh -c '
     expected="'"${SUPER_PROJECT_GIT_DIRNAME}"'"
     rc=0
     echo "DNA_GUARD_RAN"
@@ -1183,7 +1187,11 @@ _dna_validate_sif_baked_git() {
   # The check runs INSIDE the container, so 'apptainer exec' itself can fail for reasons that have
   # nothing to do with the image content (nested exec under srun, no loop device, an unreadable or
   # truncated SIF). Capture everything and tell those cases apart instead of blaming the '.git'.
-  _out="$( apptainer exec "${_sif}" /bin/sh -c '
+  # IMPORTANT: '--no-mount cwd'. Apptainer auto-binds the current working directory into the container.
+  # This converter is typically run from the host super-project root, which on an HPC server does NOT
+  # carry '.git' ('.git' is baked into the image). Without this flag, that host dir is mounted over
+  # /ros2_ws/src/<project>, MASKING the baked-in '.git' and making a perfectly good SIF fail the guard.
+  _out="$( apptainer exec --no-mount cwd "${_sif}" /bin/sh -c '
     expected="'"${SUPER_PROJECT_GIT_DIRNAME}"'"
     rc=0
     echo "DNA_GUARD_RAN"
@@ -1549,6 +1557,12 @@ function dna::get_apptainer_slurm_exec_flags() {
   flags+=("    --cleanenv \\")
   # Prevent $HOME auto-mount (avoids pip --user package conflicts from host)
   flags+=("    --no-home \\")
+  # Prevent the current-working-directory auto-mount. Apptainer auto-binds $PWD into the container;
+  # when the job is launched from the host super-project root, that host dir (which does NOT carry
+  # '.git' on the HPC server — '.git' is baked into the image) is mounted over ${DN_PROJECT_PATH},
+  # MASKING the baked-in '.git' and breaking the DN/N2ST bootstrap. Explicit --bind of src/,
+  # utilities/, artifact/, data/ below still overlays the live host code as intended.
+  flags+=("    --no-mount cwd \\")
 
   # GPU support — enables NVIDIA GPU access inside the container
   # Equivalent to runtime: nvidia in docker-compose (Docker path)

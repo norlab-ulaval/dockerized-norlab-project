@@ -863,6 +863,22 @@ teardown_file() {
   assert_output --partial "dn_entrypoint.init.bash"
 }
 
+@test "dna::print_apptainer_exec_command › includes --no-mount cwd (prevents host CWD masking baked-in .git)" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::print_apptainer_exec_command \
+      'compute_canada' \
+      'artifact/apptainer/test-project-slurm.sif' \
+      'test-sjob' \
+      'launcher/train.py'
+  "
+  assert_success
+  # Apptainer auto-binds the current working directory; without --no-mount cwd the host super-project
+  # root (which has no baked-in .git on the HPC server) masks the image's .git and breaks DN/N2ST.
+  assert_output --partial "--no-mount cwd"
+}
+
 @test "dna::print_apptainer_exec_command › output contains python args" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash

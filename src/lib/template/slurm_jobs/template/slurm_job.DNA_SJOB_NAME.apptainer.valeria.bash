@@ -146,7 +146,12 @@ fi
 # /ros2_ws/src/ survive, so a mere '.git/HEAD' existence check is NOT enough (it can false-pass).
 # Validate that ${DN_PROJECT_PATH}/.git is a COMPLETE repository (HEAD + objects + refs resolvable by
 # git) and fail fast with an actionable message.
-if ! apptainer exec "${SIF_PATH}" /bin/sh -c '[ -d "'"${DN_PROJECT_PATH}"'/.git/objects" ] && [ -d "'"${DN_PROJECT_PATH}"'/.git/refs" ] && git -c safe.directory="*" --git-dir="'"${DN_PROJECT_PATH}"'/.git" rev-parse --verify HEAD >/dev/null 2>&1'; then
+# IMPORTANT: '--no-mount cwd'. Apptainer auto-binds the current working directory into the
+# container. When this job is launched from the host super-project root, that host directory
+# (which does NOT carry '.git' on the HPC server — '.git' is baked into the image) gets mounted
+# over ${DN_PROJECT_PATH}, MASKING the image's baked-in '.git' and breaking the DN/N2ST bootstrap.
+# Disabling the cwd auto-mount keeps the baked-in '.git' visible.
+if ! apptainer exec --no-mount cwd "${SIF_PATH}" /bin/sh -c '[ -d "'"${DN_PROJECT_PATH}"'/.git/objects" ] && [ -d "'"${DN_PROJECT_PATH}"'/.git/refs" ] && git -c safe.directory="*" --git-dir="'"${DN_PROJECT_PATH}"'/.git" rev-parse --verify HEAD >/dev/null 2>&1'; then
   echo "[error] The SIF has a missing/incomplete baked-in super-project '.git': ${SIF_PATH}" 1>&2
   echo "[error]   (expected a valid ${DN_PROJECT_PATH}/.git inside the container). The SIF was likely" 1>&2
   echo "[error]   produced by a truncated/OOM-killed SIF conversion. Rebuild it with the tar pipeline" 1>&2
@@ -174,6 +179,7 @@ apptainer exec \
     --no-eval \
     --cleanenv \
     --no-home \
+    --no-mount cwd \
     --nv \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
