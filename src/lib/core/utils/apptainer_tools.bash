@@ -256,9 +256,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_EOF
 
   # Inject the tar_filename and sif_name variables (expand at generation time)
+  # SUPER_PROJECT_GIT_DIRNAME is the super-project repository directory baked under /ros2_ws/src/
+  # in the image; the content guard validates THAT specific '.git' (see _dna_validate_sif_baked_git).
+  # Fail loudly at generation time if it is unknown: without it the guard can only check sibling
+  # repos and would silently weaken to a non-specific check.
+  if [[ -z "${SUPER_PROJECT_REPO_NAME:-}" ]]; then
+    echo "[warn] SUPER_PROJECT_REPO_NAME is empty while generating $(basename "${script_path}"); the" 1>&2
+    echo "[warn]   baked-in '.git' content guard cannot target the specific super-project repo and" 1>&2
+    echo "[warn]   will only validate sibling repos. Run 'dna' from the super-project so it is set." 1>&2
+  fi
   cat >> "${script_path}" << EOF
 TAR_FILENAME="${tar_filename}"
 SIF_FILENAME="${sif_name}"
+SUPER_PROJECT_GIT_DIRNAME="${SUPER_PROJECT_REPO_NAME:-}"
 EOF
 
   cat >> "${script_path}" << 'SCRIPT_EOF'
@@ -367,12 +377,28 @@ if [[ -z "${SLURM_JOB_ID:-}" && "${APPTAINER_BUILD_NO_SALLOC:-0}" != "1" ]] && c
   export APPTAINER_BUILD_NO_SALLOC=1
   exec salloc "${_SALLOC_ARGS[@]}" srun bash "${_SELF}" "${_ORIG_ARGS[@]}"
 fi
-echo "[info] Running the Apptainer build in-place (inside a SLURM job, salloc unavailable, or APPTAINER_BUILD_NO_SALLOC=1)." 1>&2
+if [[ -n "${SLURM_JOB_ID:-}" ]]; then
+  echo "[info] Running the Apptainer build on compute node ${SLURMD_NODENAME:-$(hostname -s)} (SLURM job ${SLURM_JOB_ID}) — this is the expected path." 1>&2
+elif ! command -v salloc &>/dev/null; then
+  echo "[warn] Running the Apptainer build in-place: 'salloc' is unavailable, so the build runs HERE (likely the login node). On Alliance/Compute Canada this risks an OOM SIGKILL — prefer running inside a compute allocation." 1>&2
+else
+  echo "[warn] Running the Apptainer build in-place because APPTAINER_BUILD_NO_SALLOC=1: the build runs HERE (likely the login node). On Alliance/Compute Canada this risks an OOM SIGKILL — unset APPTAINER_BUILD_NO_SALLOC to build inside a compute allocation." 1>&2
+fi
 
 # ====Apptainer cache configuration================================================================
 # Prefer SLURM_TMPDIR (fast local disk, available thanks to the re-exec above) when inside a job,
 # otherwise fall back to ${SCRATCH}/tmp (a large disk-backed filesystem, NOT the small RAM-backed
 # /tmp which would OOM-Kill the build). Ref: https://docs.alliancecan.ca/wiki/Apptainer
+# NOTE: Alliance Canada recommends APPTAINER_TMPDIR/CACHEDIR be on a NON-Lustre/GPFS filesystem
+#   (${SLURM_TMPDIR}/local disk). ${SCRATCH} is Lustre on Alliance clusters, so the fallback below is
+#   only a best-effort last resort; warn loudly so the user knows to build inside a compute allocation.
+if [[ -z "${SLURM_TMPDIR:-}" ]]; then
+  echo "[warn] SLURM_TMPDIR is not set: falling back to APPTAINER_TMPDIR/CACHEDIR under ${SCRATCH}/tmp," 1>&2
+  echo "[warn]   which is a Lustre filesystem on Alliance Canada. Building Apptainer images on Lustre is" 1>&2
+  echo "[warn]   discouraged (missing features for --fakeroot/overlay) and slow. Prefer running this" 1>&2
+  echo "[warn]   converter inside a compute allocation (the default salloc re-exec) so ${SLURM_TMPDIR}" 1>&2
+  echo "[warn]   (fast, node-local, non-Lustre disk) is used instead. Ref: https://docs.alliancecan.ca/wiki/Apptainer" 1>&2
+fi
 _APPTAINER_SCRATCH_TMP_ROOT="${SLURM_TMPDIR:-${SCRATCH}/tmp}"
 mkdir -p "${_APPTAINER_SCRATCH_TMP_ROOT}"
 export APPTAINER_CACHEDIR="$( mktemp -d -p "${_APPTAINER_SCRATCH_TMP_ROOT}" )"
@@ -397,19 +423,24 @@ SIF_TMP="${SIF_STAGING_DIR}/${SIF_FILENAME}"
 echo "[info]   Staging: ${SIF_TMP}" 1>&2
 
 # ====Squashfs compression tuning=================================================================
-# apptainer >= 1.4.0 accepts --mksquashfs-args. Tune via APPTAINER_BUILD_COMPRESS="<comp>[:<level>]"
-# (default none — fastest, largest SIF). Faster-compressed alternatives: zstd:3, lz4.
+# apptainer >= 1.4.0 accepts --mksquashfs-args. Tune via APPTAINER_BUILD_COMPRESS="<comp>[:<level>]".
+# Default is 'default': let Apptainer/mksquashfs pick its own compressor. Measured on a real DNA
+# slurm image, the uncompressed variant ('none' -> -noD -noF -noI -noX) produced a 21.7 GB SIF vs
+# 13.2 GB with the default compressor for byte-identical content — a much heavier read from the
+# shared filesystem at every job start, for no benefit. Other values: none, zstd:3, lz4, gzip:6.
 _APPTAINER_VERSION="$( apptainer --version 2>/dev/null | grep -oP '[0-9]+\.[0-9]+\.[0-9]+' | head -1 )"
 _APPTAINER_MAJOR="$( echo "${_APPTAINER_VERSION}" | cut -d. -f1 )"
 _APPTAINER_MINOR="$( echo "${_APPTAINER_VERSION}" | cut -d. -f2 )"
 _APPTAINER_BUILD_ARGS=()
 if [[ "${_APPTAINER_MAJOR}" -gt 1 ]] || { [[ "${_APPTAINER_MAJOR}" -eq 1 ]] && [[ "${_APPTAINER_MINOR}" -ge 4 ]]; }; then
-  _COMPRESS_SPEC="${APPTAINER_BUILD_COMPRESS:-none}"
+  _COMPRESS_SPEC="${APPTAINER_BUILD_COMPRESS:-default}"
   _COMP_NAME="${_COMPRESS_SPEC%%:*}"
   _COMP_LEVEL="${_COMPRESS_SPEC#*:}"
   [[ "${_COMP_LEVEL}" == "${_COMPRESS_SPEC}" ]] && _COMP_LEVEL=""
   _MKSQUASHFS_ARGS=()
-  if [[ "${_COMP_NAME}" == "none" ]]; then
+  if [[ "${_COMP_NAME}" == "default" ]]; then
+    : # Let Apptainer/mksquashfs pick the compressor (smallest robust SIF, no tuning).
+  elif [[ "${_COMP_NAME}" == "none" ]]; then
     _MKSQUASHFS_ARGS=(-noD -noF -noI -noX)
   else
     _MKSQUASHFS_ARGS=(-comp "${_COMP_NAME}")
@@ -424,49 +455,184 @@ if [[ "${_APPTAINER_MAJOR}" -gt 1 ]] || { [[ "${_APPTAINER_MAJOR}" -eq 1 ]] && [
   if [[ -n "${_MKSQUASHFS_PROCS}" ]]; then
     _MKSQUASHFS_ARGS+=(-processors "${_MKSQUASHFS_PROCS}")
   fi
-  echo "[info] Apptainer ${_APPTAINER_VERSION}: squashfs args: ${_MKSQUASHFS_ARGS[*]}" 1>&2
-  _APPTAINER_BUILD_ARGS+=(--mksquashfs-args="${_MKSQUASHFS_ARGS[*]}")
+  if [[ ${#_MKSQUASHFS_ARGS[@]} -gt 0 ]]; then
+    echo "[info] Apptainer ${_APPTAINER_VERSION}: squashfs args: ${_MKSQUASHFS_ARGS[*]}" 1>&2
+    _APPTAINER_BUILD_ARGS+=(--mksquashfs-args="${_MKSQUASHFS_ARGS[*]}")
+  else
+    echo "[info] Apptainer ${_APPTAINER_VERSION}: using default squashfs settings (APPTAINER_BUILD_COMPRESS=${_COMPRESS_SPEC})." 1>&2
+  fi
 else
   echo "[info] Apptainer ${_APPTAINER_VERSION}: --mksquashfs-args unsupported (requires >= 1.4.0); using defaults (APPTAINER_BUILD_COMPRESS ignored)." 1>&2
 fi
 
-if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
-    "${SIF_TMP}" \
-    "docker-archive:${TAR_FILE}"; then
-  echo "[error] Apptainer build failed. The tar archive has been preserved: ${TAR_FILE}" 1>&2
+# ====Two-phase conversion: docker-archive -> sandbox -> SIF======================================
+# DO NOT collapse this into a single 'apptainer build <sif> docker-archive:<tar>' call.
+# Root cause (reproduced on Alliance Canada/Narval with apptainer 1.4.5, mksquashfs 4.6.1):
+#   the FUSED docker-archive -> SIF build silently DROPS content — the baked-in super-project
+#   '.git' (~11k files) was missing from the SIF while 'apptainer build' still exited 0. The very
+#   same tar, converted in two phases on the very same node, is complete:
+#     - 'apptainer build --sandbox' extracted all 11168 '.git' entries;
+#     - packing that sandbox into a SIF (with default AND with '-noD -noF -noI -noX' args) kept
+#       all 11168 entries and 'git rev-parse HEAD' resolved inside the SIF.
+#   Disk (749 GB free) and memory were never a factor. So: extraction is fine, packing is fine,
+#   only the fused path loses data => build the sandbox first, validate it, then pack it.
+# Bonus: the sandbox lets us validate the '.git' WHERE THE DATA STILL IS, before packing, which
+# makes a failure actionable instead of mysterious.
+_SANDBOX_DIR="${SIF_STAGING_DIR}/${SIF_FILENAME%.sif}.sandbox"
+rm -rf "${_SANDBOX_DIR}"
+
+echo "[info] Phase 1/2: extracting the docker archive into a sandbox: ${_SANDBOX_DIR}" 1>&2
+if ! apptainer build --sandbox "${_SANDBOX_DIR}" "docker-archive:${TAR_FILE}"; then
+  echo "[error] Apptainer sandbox extraction failed. The tar archive has been preserved: ${TAR_FILE}" 1>&2
+  rm -rf "${_SANDBOX_DIR}"
   exit 1
 fi
+
+# Validate the baked-in super-project '.git' in the SANDBOX (plain filesystem checks, no container
+# runtime needed). Catching a bad extraction here is far cheaper than packing a 13+ GB SIF first.
+if [[ -n "${SUPER_PROJECT_GIT_DIRNAME}" ]]; then
+  _SBX_GIT="${_SANDBOX_DIR}/ros2_ws/src/${SUPER_PROJECT_GIT_DIRNAME}/.git"
+  if [[ ! -d "${_SBX_GIT}/objects" ]] || [[ ! -d "${_SBX_GIT}/refs" ]] \
+      || ! GIT_DIR="${_SBX_GIT}" git rev-parse --verify HEAD &>/dev/null; then
+    echo "[error] Sandbox validation FAILED: the super-project '.git' is missing or incomplete at" 1>&2
+    echo "[error]   ${_SBX_GIT}" 1>&2
+    echo "[error]   The extraction of '${TAR_FILE}' did not produce a usable rootfs; no SIF was built." 1>&2
+    echo "[hint]  Check free space on \${APPTAINER_TMPDIR} (${APPTAINER_TMPDIR}) and verify the tar" 1>&2
+    echo "[hint]   integrity (compare its sha256 with the machine that produced it)." 1>&2
+    rm -rf "${_SANDBOX_DIR}"
+    exit 1
+  fi
+  echo "[done] Sandbox validation passed: super-project '.git' extracted completely." 1>&2
+fi
+
+echo "[info] Phase 2/2: packing the sandbox into a SIF: ${SIF_TMP}" 1>&2
+if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
+    "${SIF_TMP}" \
+    "${_SANDBOX_DIR}"; then
+  echo "[error] Apptainer build failed. The tar archive has been preserved: ${TAR_FILE}" 1>&2
+  rm -rf "${_SANDBOX_DIR}"
+  exit 1
+fi
+# NOTE: the sandbox is deliberately KEPT until the guards below pass, so a failure can be
+# investigated (and the SIF repacked) without re-extracting the whole tar.
 
 # ====Content guard: verify the baked-in super-project '.git' survived the conversion=============
 # DNA bakes the super-project '.git' into the image so the container stays portable and the DN/N2ST
-# bootstrap can resolve PROJECT_PATH/N2ST_PATH via 'git rev-parse'. If the SIF conversion silently
-# dropped '.git' (e.g. an OOM-killed/truncated extraction on a resource-capped login node), the
-# slurm job would later fail deep inside the entrypoint with 'N2ST_PATH: [ERROR] env var not set!'.
-# Detect it here and fail loudly instead of installing an invalid SIF.
-if ! apptainer exec "${SIF_TMP}" sh -c 'ls -d /ros2_ws/src/*/.git/HEAD >/dev/null 2>&1'; then
-  echo "[error] Content guard FAILED: the built SIF is missing the baked-in super-project '.git' directory." 1>&2
-  echo "[error]   This usually means the OCI extraction was truncated (often an OOM 'Killed' on a" 1>&2
-  echo "[error]   resource-capped login node). The SIF is INVALID and was NOT installed." 1>&2
-  echo "[hint]  Re-run this converter inside a compute allocation (it does so automatically unless" 1>&2
-  echo "[hint]   APPTAINER_BUILD_NO_SALLOC=1) and keep APPTAINER_TMPDIR on fast local disk (\$SLURM_TMPDIR)." 1>&2
+# bootstrap can resolve PROJECT_PATH/N2ST_PATH via 'git rev-parse'. A partial/truncated conversion
+# (e.g. the compute node ran out of space on ${APPTAINER_TMPDIR}/$SLURM_TMPDIR while unpacking a
+# large image, or an OOM/SIGKILL on a capped login node) can drop the big super-project '.git' while
+# smaller sibling repos under /ros2_ws/src/ survive. Checking "any .git/HEAD exists" is therefore
+# NOT enough (it matches a sibling repo and false-passes). We validate the SPECIFIC super-project
+# repo as a COMPLETE git repository (HEAD + objects + refs resolvable) and treat it as the hard
+# requirement; incomplete sibling repos are only WARNED about (they may be legitimately shallow).
+_dna_validate_sif_baked_git() {
+  local _sif="$1"
+  local _out _rc
+  # The check runs INSIDE the container, so 'apptainer exec' itself can fail for reasons that have
+  # nothing to do with the image content (nested exec under srun, no loop device, an unreadable or
+  # truncated SIF). Capture everything and tell those cases apart instead of blaming the '.git'.
+  _out="$( apptainer exec "${_sif}" /bin/sh -c '
+    expected="'"${SUPER_PROJECT_GIT_DIRNAME}"'"
+    rc=0
+    echo "DNA_GUARD_RAN"
+    if command -v git >/dev/null 2>&1; then has_git=1; else has_git=0; fi
+    check_repo() {
+      gd="$1"; label="$2"
+      if [ ! -d "${gd}" ]; then
+        echo "MISSING ${label} repo in SIF: ${gd} (directory absent)"; return 1
+      fi
+      if [ ! -d "${gd}/objects" ] || [ ! -d "${gd}/refs" ] || [ ! -e "${gd}/HEAD" ]; then
+        echo "INCOMPLETE ${label} repo in SIF: ${gd} (objects/refs/HEAD missing)"; return 1
+      fi
+      if [ "${has_git}" = "1" ]; then
+        # safe.directory: inside a SIF the files are owned by root while the runtime uid is the
+        # user, so git can refuse a perfectly complete repo with "dubious ownership".
+        if ! git -c safe.directory="*" --git-dir="${gd}" rev-parse --verify HEAD >/dev/null 2>&1; then
+          echo "UNRESOLVED ${label} repo in SIF: ${gd} (git rev-parse HEAD failed)"; return 1
+        fi
+      else
+        echo "NOGIT no git binary in the image; ${label} repo ${gd} checked structurally only"
+      fi
+      return 0
+    }
+    # 1. The super-project repo MUST be present and valid.
+    if [ -n "${expected}" ]; then
+      check_repo "/ros2_ws/src/${expected}/.git" "super-project" || rc=1
+    fi
+    # 2. Sibling repos are checked too (partial-drop signal) but only WARNED about, not fatal:
+    #    they can legitimately be shallow, a gitdir-file, or have an unborn HEAD.
+    for gd in /ros2_ws/src/*/.git; do
+      [ -e "${gd}" ] || continue
+      case "${gd}" in "/ros2_ws/src/${expected}/.git") continue ;; esac
+      check_repo "${gd}" "sibling" >/dev/null 2>&1 || echo "SIBLING_WARN incomplete baked repo (non-fatal): ${gd}"
+    done
+    exit ${rc}
+  ' 2>&1 )"
+  _rc=$?
+  if ! printf '%s' "${_out}" | grep -q 'DNA_GUARD_RAN'; then
+    echo "[error]   Could NOT run the content guard inside the SIF (apptainer exec rc=${_rc})." 1>&2
+    echo "[error]   This is a container RUNTIME failure, NOT proof that the '.git' is missing." 1>&2
+    printf '%s\n' "${_out}" | sed 's/^/[error]     /' 1>&2
+    return 1
+  fi
+  printf '%s\n' "${_out}" | while IFS= read -r _line; do
+    case "${_line}" in
+      DNA_GUARD_RAN|'') ;;
+      SIBLING_WARN*|NOGIT*)              echo "[warn]    ${_line}" 1>&2 ;;
+      MISSING*|INCOMPLETE*|UNRESOLVED*)  echo "[error]   ${_line}" 1>&2 ;;
+      *)                                 echo "[info]    ${_line}" 1>&2 ;;
+    esac
+  done
+  return ${_rc}
+}
+
+if ! _dna_validate_sif_baked_git "${SIF_TMP}"; then
+  echo "[error] Content guard FAILED: the built SIF has a missing/incomplete baked-in '.git'." 1>&2
+  echo "[error]   The super-project '.git' (used by the DN/N2ST bootstrap) did not survive conversion." 1>&2
+  echo "[error]   This is typically a TRUNCATED extraction: the node ran out of space on" 1>&2
+  echo "[error]   \${APPTAINER_TMPDIR} (\$SLURM_TMPDIR/localscratch) while unpacking a large image, or an" 1>&2
+  echo "[error]   OOM/SIGKILL on a resource-capped login node. The SIF is INVALID and was NOT installed." 1>&2
+  echo "[hint]  Retry inside a compute allocation (default) with more local disk, and/or shrink the SIF" 1>&2
+  echo "[hint]   footprint with APPTAINER_BUILD_COMPRESS=zstd:3. As a fallback, build the SIF on a host" 1>&2
+  echo "[hint]   with ample disk (e.g. another HPC login node) and copy the .sif to \${SCRATCH}/sif/." 1>&2
+  echo "[hint]  The extracted sandbox is KEPT at ${_SANDBOX_DIR} (it validated OK): inspect it, or" 1>&2
+  echo "[hint]   repack it manually with: apptainer build <out.sif> ${_SANDBOX_DIR}" 1>&2
   rm -f "${SIF_TMP}"
   exit 1
 fi
-echo "[done] Content guard passed: baked-in super-project '.git' is present in the SIF." 1>&2
+echo "[done] Content guard passed: super-project '.git' is present and valid in the SIF." 1>&2
 
 echo "[info] Moving SIF from staging to final destination..." 1>&2
 mv "${SIF_TMP}" "${SIF_FILE}"
-echo "[done] SIF file created: ${SIF_FILE}" 1>&2
 
-# ====Cleanup: delete the tar archive after successful SIF conversion==============================
-echo "[info] Deleting tar archive to free disk space: ${TAR_FILE}" 1>&2
-rm -f "${TAR_FILE}"
-echo "[done] Tar archive deleted: ${TAR_FILE}" 1>&2
+# Re-validate AFTER the move: a cross-filesystem mv (localscratch -> scratch) can itself truncate on
+# a full/over-quota destination, and the staging guard above only checked the pre-move copy.
+if ! _dna_validate_sif_baked_git "${SIF_FILE}"; then
+  echo "[error] Post-move validation FAILED: the installed SIF has a missing/incomplete baked-in '.git'." 1>&2
+  echo "[error]   The move to ${SIF_FILE} likely truncated the file (destination full/over-quota)." 1>&2
+  echo "[hint]  The extracted sandbox is KEPT at ${_SANDBOX_DIR}: repack it once space is freed." 1>&2
+  rm -f "${SIF_FILE}"
+  exit 1
+fi
+
+# Only now is the sandbox expendable: every failure path above keeps it so a retry never re-extracts.
+rm -rf "${_SANDBOX_DIR}"
+echo "[done] SIF file created and validated: ${SIF_FILE}" 1>&2
+
+# ====Source tar archive is intentionally KEPT========================================================
+# The source Docker tar archive is NOT deleted automatically: it is a costly artifact to rebuild and
+# transfer, and keeping it lets you re-run this conversion (e.g. after tuning APPTAINER_BUILD_COMPRESS
+# or on a node with more disk) without re-doing 'dna build --save' + rsync. Remove it manually when
+# you no longer need it:  rm -f "${TAR_FILE}"
+echo "[info] Source tar archive kept (not deleted): ${TAR_FILE}" 1>&2
+echo "[info]   Delete it manually to reclaim space once you no longer need it." 1>&2
 SCRIPT_EOF
 
-  # Make the generated script read-only so users don't mistakenly edit a file that 'dna' silently
-  # regenerates/overwrites on the next build. Regeneration handles this via the leading 'rm -f'.
-  chmod 0555 "${script_path}"
+  # Note: the generated script is kept readable/writable/executable by everyone on purpose. It is
+  # regenerated/overwritten by 'dna' on the next build (handled via the leading 'rm -f'), and a
+  # restrictive mode was a frequent source of rsync/scp failures when copying the artifact to an
+  # HPC server where the user name/uid differs from the one on the development machine.
+  chmod 0777 "${script_path}"
   return 0
 }
 
@@ -495,9 +661,11 @@ SCRIPT_EOF
 #   profile     - Optional HPC server profile/target name (reserved; the SIF is output to
 #                 ${SCRATCH}/sif/ on the HPC server regardless of the profile).
 #
-# The generated script builds the SIF into ${SCRATCH}/sif/ on the HPC server. The registry pull
-# runs on the login node by default (that is where outbound internet is available); it does NOT
-# re-exec into a salloc compute allocation unless APPTAINER_BUILD_USE_SALLOC=1 is set.
+# The generated script builds the SIF into ${SCRATCH}/sif/ on the HPC server and is turn-key: it
+# runs STAGE 1 (registry fetch -> sandbox) where it is started — the login node, the only place
+# with outbound internet — then re-execs STAGE 2 (the network-free, memory-heavy SIF packing)
+# inside a salloc compute allocation. Use --login-node-only (or APPTAINER_BUILD_NO_SALLOC=1) to
+# keep both stages in place.
 #
 # Outputs:
 #   Writes dna_registry_to_apptainer_sif_converter.sh to output_dir
@@ -528,10 +696,22 @@ DOCUMENTATION_BUFFER=$( cat <<'EOF'
 # Auto-generated by DNA: dna build slurm --apptainer <profile> --push
 # Run this script on the HPC server to build an Apptainer SIF from a Docker registry image.
 #
-# This script:
-#   1. Optionally authenticates to the Docker registry interactively via --docker-login.
-#   2. Builds the Apptainer SIF to APPTAINER_TMPDIR (SLURM_TMPDIR-aware mktemp scratch)
-#      then moves it to ${SCRATCH}/sif/ to avoid Lustre quota.
+# This is the SINGLE SOURCE OF TRUTH for registry -> SIF conversion on HPC servers: it handles the
+# login-node vs compute-node split by itself and runs end-to-end.
+#
+# STAGE 1 (login node): fetch + extract the registry image into a SANDBOX directory. The registry
+#   fetch needs outbound internet, which login nodes have and compute nodes usually do NOT
+#   (e.g. Alliance Canada). The OCI blob cache is PERSISTENT so a --force rebuild does not
+#   re-download the multi-GB layers.
+# STAGE 2 (compute node via salloc, when available): pack the sandbox into a SIF, validate the
+#   baked-in super-project '.git', then move it to ${SCRATCH}/sif/. Packing is memory/IO heavy and
+#   needs NO network, so it belongs on a compute node with real RAM and fast local disk.
+#
+# Both stages fall back gracefully: without salloc, stage 2 runs in place (with a warning).
+#
+# The conversion is deliberately TWO-PHASE (sandbox then pack), never fused: a fused
+# `apptainer build <sif> docker://...` was observed to silently DROP content (the baked-in
+# super-project '.git') while still exiting 0.
 #
 # Prerequisite: run dna_hpc_server_config.bash once to set up the directory structure
 # and authenticate with the Docker registry.
@@ -540,33 +720,42 @@ DOCUMENTATION_BUFFER=$( cat <<'EOF'
 #   $ bash artifact/apptainer/<target>/dna_registry_to_apptainer_sif_converter.sh [OPTIONS]
 #
 # Options:
+#   --force
+#       Rebuild even when the destination SIF already exists (default: skip and exit 0 when a
+#       VALID SIF is already in place). Layers are re-used from the persistent blob cache.
+#   --image <REPO>
+#       Override the Docker repository (without tag) baked in by 'dna'.
+#   --tag <TAG>
+#       Override the Docker image tag baked in by 'dna'.
 #   --docker-login
-#       Optional. Pass this flag to authenticate interactively with the Docker registry
-#       (docker.io) before building the SIF. Apptainer will prompt for credentials.
-#       Note: the interactive prompt does not work when the build is re-run inside a SLURM
-#       allocation (see below); prefer `apptainer registry login` beforehand (run by
-#       dna_hpc_server_config.bash). Note: by default this script builds on the login node (no
-#       salloc), so the interactive prompt works unless you set APPTAINER_BUILD_USE_SALLOC=1.
+#       Optional. Authenticate interactively with the Docker registry (docker.io) before
+#       fetching. The prompt happens during STAGE 1 on the login node, so it always works.
+#       For a non-interactive run, export APPTAINER_DOCKER_USERNAME / APPTAINER_DOCKER_PASSWORD
+#       instead (the password should be a Docker Hub *access token*).
+#   --login-node-only
+#       Run BOTH stages in place on the current node (no salloc). Use it on clusters without a
+#       job scheduler, or when the login node is unconstrained (e.g. Valeria).
 #   -h | --help
 #       Print this help message and exit.
 #
 # Environment variables (build tuning, all optional):
-#   APPTAINER_BUILD_USE_SALLOC=1  Opt in to running the fetch+build inside a compute allocation
-#       (salloc). OFF by default: `apptainer build docker://` fuses the network fetch and the SIF
-#       conversion into a single step, and the fetch needs outbound internet — which the login node
-#       has but compute nodes usually do NOT (e.g. Alliance Canada / compute_canada). So by default
-#       the pull+build runs in place on the internet-connected login node. Only enable this on
-#       clusters whose compute nodes have outbound internet (or with the httpproxy module).
-#   APPTAINER_BUILD_NO_HTTPPROXY=1  Do NOT load the `httpproxy` module. When APPTAINER_BUILD_USE_SALLOC=1
-#       the script loads it (when available) so isolated compute nodes get outbound internet for the
-#       registry pull. Set this to skip it (ignored for the default login-node build).
+#   APPTAINER_DOCKER_USERNAME / APPTAINER_DOCKER_PASSWORD
+#       Non-interactive registry credentials (token recommended) used by the STAGE 1 fetch.
+#   APPTAINER_PRESTAGE_CACHEDIR=<dir>
+#       Persistent OCI blob cache (default ${SCRATCH}/.apptainer_cache) so a --force rebuild does
+#       not re-download the layers. Set APPTAINER_BUILD_NO_PERSISTENT_CACHE=1 for a throw-away cache.
+#   APPTAINER_BUILD_NO_SALLOC=1   Never re-exec into a compute allocation (same as --login-node-only).
+#   APPTAINER_BUILD_NO_HTTPPROXY=1  Do NOT load the `httpproxy` module on compute nodes.
 #   APPTAINER_BUILD_ACCOUNT=<acct>  SLURM account for the allocation (auto-detected otherwise).
 #   APPTAINER_BUILD_MEM=<mem>       salloc --mem     (default 64G).
 #   APPTAINER_BUILD_CPUS=<n>        salloc --cpus-per-task and mksquashfs -processors (default 10).
 #   APPTAINER_BUILD_TIME=<hh:mm:ss> salloc --time    (default 6:00:00).
+#   APPTAINER_BUILD_HEARTBEAT_SEC=<n>  Progress heartbeat period in seconds (default 60, 0 disables).
+#   APPTAINER_BUILD_STALL_SEC=<n>   Warn when the staging area stops growing for that long
+#       (default 900). Purely informational; it never kills the build.
 #   APPTAINER_BUILD_COMPRESS=<comp[:level]>
-#       squashfs compressor for apptainer >= 1.4.0 (default none — smallest but slowest).
-#       Faster alternatives: zstd:3, lz4, or none (near-uncompressed, fastest). Ignored on < 1.4.0.
+#       squashfs compressor for apptainer >= 1.4.0 (default 'default' = apptainer's own choice).
+#       Alternatives: zstd:3, lz4, gzip:6, or none (uncompressed, largest). Ignored on < 1.4.0.
 #
 # Requires:
 #   - apptainer installed on the HPC server
@@ -580,6 +769,10 @@ EOF
 
 # ====Argument parsing=============================================================================
 USE_DOCKER_LOGIN=false
+FORCE_REBUILD=false
+LOGIN_NODE_ONLY=false
+OVERRIDE_IMAGE=""
+OVERRIDE_TAG=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --help|-h)
@@ -590,9 +783,25 @@ while [[ $# -gt 0 ]]; do
       USE_DOCKER_LOGIN=true
       shift
       ;;
+    --force)
+      FORCE_REBUILD=true
+      shift
+      ;;
+    --login-node-only)
+      LOGIN_NODE_ONLY=true
+      shift
+      ;;
+    --image)
+      OVERRIDE_IMAGE="${2:?[error] --image requires a value}"
+      shift 2
+      ;;
+    --tag)
+      OVERRIDE_TAG="${2:?[error] --tag requires a value}"
+      shift 2
+      ;;
     *)
       echo "[error] Unknown argument: $1" 1>&2
-      echo "Usage: $0 [--docker-login] [--help]" 1>&2
+      echo "Usage: $0 [--force] [--image <REPO>] [--tag <TAG>] [--docker-login] [--login-node-only] [--help]" 1>&2
       exit 1
       ;;
   esac
@@ -609,12 +818,32 @@ fi
 SCRIPT_EOF
 
   # Inject the image_ref and sif_name variables (expand at generation time)
+  # SUPER_PROJECT_GIT_DIRNAME is the super-project repository directory baked under /ros2_ws/src/
+  # in the image; the content guard validates THAT specific '.git' (see _dna_validate_sif_baked_git).
+  # Fail loudly at generation time if it is unknown: without it the guard can only check sibling
+  # repos and would silently weaken to a non-specific check.
+  if [[ -z "${SUPER_PROJECT_REPO_NAME:-}" ]]; then
+    echo "[warn] SUPER_PROJECT_REPO_NAME is empty while generating $(basename "${script_path}"); the" 1>&2
+    echo "[warn]   baked-in '.git' content guard cannot target the specific super-project repo and" 1>&2
+    echo "[warn]   will only validate sibling repos. Run 'dna' from the super-project so it is set." 1>&2
+  fi
   cat >> "${script_path}" << EOF
 IMAGE_REF="${image_ref}"
 SIF_FILENAME="${sif_name}"
+SUPER_PROJECT_GIT_DIRNAME="${SUPER_PROJECT_REPO_NAME:-}"
 EOF
 
   cat >> "${script_path}" << 'SCRIPT_EOF'
+
+# ====Image reference resolution (--image / --tag overrides)======================================
+# IMAGE_REF is baked in by 'dna' as '<repo>:<tag>'. --image replaces the repo part, --tag the tag.
+_BAKED_REPO="${IMAGE_REF%:*}"
+_BAKED_TAG="${IMAGE_REF##*:}"
+if [[ "${IMAGE_REF}" != *:* ]]; then
+  _BAKED_REPO="${IMAGE_REF}"
+  _BAKED_TAG="latest"
+fi
+IMAGE_REF="${OVERRIDE_IMAGE:-${_BAKED_REPO}}:${OVERRIDE_TAG:-${_BAKED_TAG}}"
 
 # Output the SIF to the scratch SIF cache (${SCRATCH}/sif/), matching the SIF path lookup in the
 # generated SLURM job scripts.
@@ -625,88 +854,108 @@ mkdir -p "${SIF_DIR}"
 echo "[info] Image reference: ${IMAGE_REF}" 1>&2
 echo "[info] SIF output:      ${SIF_FILE}" 1>&2
 
-# ====Login-node resource-limit detection=========================================================
-# Alliance Canada / Compute Canada clusters cap per-user RAM (~4 GB) and CPU-time on login nodes and
-# SIGKILL heavy processes ("Killed"). 'apptainer build docker://' fuses a memory-heavy extraction
-# with the registry fetch and is frequently killed here, silently producing an INVALID SIF (missing
-# the baked-in super-project '.git', which later crashes the slurm job with 'N2ST_PATH: [ERROR] ...').
-# The CC_CLUSTER env var is exported on all Alliance clusters, so use it to detect a capped login node.
-if [[ -z "${SLURM_JOB_ID:-}" && -n "${CC_CLUSTER:-}" && "${APPTAINER_BUILD_USE_SALLOC:-0}" != "1" ]]; then
-  echo "[warn] =================================================================================" 1>&2
-  echo "[warn] Detected an Alliance Canada login node (CC_CLUSTER=${CC_CLUSTER}) with strict RAM/CPU" 1>&2
-  echo "[warn]   limits. The registry (--push) conversion is UNRELIABLE here: the build is often" 1>&2
-  echo "[warn]   SIGKILLed mid-extraction, and compute nodes cannot reach Docker Hub's blob CDN, so" 1>&2
-  echo "[warn]   neither node type can complete a docker:// pull+build." 1>&2
-  echo "[warn]   Recommended on Alliance clusters instead of the --push pipeline:" 1>&2
-  echo "[warn]     1. Use the tar pipeline: 'dna build slurm --apptainer <target> --save', transfer" 1>&2
-  echo "[warn]        the tar, then run dna_tar_to_apptainer_sif_converter.sh (it builds inside salloc)." 1>&2
-  echo "[warn]     2. Or copy a working SIF built elsewhere (same linux/amd64 arch) into \${SCRATCH}/sif/." 1>&2
-  echo "[warn]   Proceeding with a best-effort login-node build; the post-build content guard below" 1>&2
-  echo "[warn]   will FAIL LOUDLY if the resulting SIF is truncated (never a silent bad SIF)." 1>&2
-  echo "[warn] =================================================================================" 1>&2
+# The sandbox produced by STAGE 1 lives on the SHARED filesystem (${SCRATCH}) so that the STAGE 2
+# compute node — a different machine — can read it. Node-local disk is used for the SIF staging.
+_SANDBOX_ROOT="${APPTAINER_BUILD_SANDBOX_ROOT:-${SCRATCH}/tmp}"
+_SANDBOX_DIR="${_SANDBOX_ROOT}/${SIF_FILENAME%.sif}.sandbox"
+
+# ====Progress heartbeat / stall detection========================================================
+# A multi-GB fetch/extract/pack prints nothing for long stretches; without feedback it is impossible
+# to tell "slow" from "hung". The heartbeat reports elapsed time and the growing size of the
+# watched path, and WARNS (never kills) when it stops growing.
+_HEARTBEAT_PID=""
+_dna_heartbeat_start() {
+  local _label="$1" _watch="$2"
+  local _period="${APPTAINER_BUILD_HEARTBEAT_SEC:-60}"
+  [[ "${_period}" -gt 0 ]] 2>/dev/null || return 0
+  local _stall="${APPTAINER_BUILD_STALL_SEC:-900}"
+  (
+    _t0=${SECONDS} _last_size=-1 _last_change=${SECONDS}
+    while true; do
+      sleep "${_period}"
+      _size="$( du -sk "${_watch}" 2>/dev/null | cut -f1 )"
+      _size="${_size:-0}"
+      echo "[info] ${_label}: elapsed $(( SECONDS - _t0 ))s, staged $(( _size / 1024 )) MiB" 1>&2
+      if [[ "${_size}" != "${_last_size}" ]]; then
+        _last_size="${_size}"
+        _last_change=${SECONDS}
+      elif [[ $(( SECONDS - _last_change )) -ge ${_stall} ]]; then
+        echo "[warn] ${_label}: no progress for $(( SECONDS - _last_change ))s — the build may be stalled" 1>&2
+        echo "[warn]   (slow registry, throttled shared filesystem, or a hung proxy). Not killing it." 1>&2
+        _last_change=${SECONDS}
+      fi
+    done
+  ) &
+  _HEARTBEAT_PID=$!
+}
+_dna_heartbeat_stop() {
+  if [[ -n "${_HEARTBEAT_PID}" ]]; then
+    kill "${_HEARTBEAT_PID}" 2>/dev/null || true
+    wait "${_HEARTBEAT_PID}" 2>/dev/null || true
+    _HEARTBEAT_PID=""
+  fi
+}
+trap '_dna_heartbeat_stop' EXIT
+
+# ====Watchdog based on the remaining SLURM time==================================================
+# Inside an allocation, a build that outlives the allocation is killed mid-write, leaving a
+# truncated SIF. Cap it slightly BELOW the remaining wall time so we exit cleanly and can say why.
+_dna_timeout_args() {
+  command -v timeout &>/dev/null || return 0
+  [[ -n "${SLURM_JOB_ID:-}" ]] || return 0
+  command -v squeue &>/dev/null || return 0
+  local _left
+  _left="$( squeue -h -j "${SLURM_JOB_ID}" -o %L 2>/dev/null | tr -d ' ' )"
+  [[ -n "${_left}" ]] || return 0
+  local _sec=0 _d=0 _hms="${_left}"
+  if [[ "${_hms}" == *-* ]]; then _d="${_hms%%-*}"; _hms="${_hms#*-}"; fi
+  local IFS=':' _parts
+  read -r -a _parts <<< "${_hms}"
+  case "${#_parts[@]}" in
+    3) _sec=$(( 10#${_parts[0]} * 3600 + 10#${_parts[1]} * 60 + 10#${_parts[2]} )) ;;
+    2) _sec=$(( 10#${_parts[0]} * 60 + 10#${_parts[1]} )) ;;
+    1) _sec=$(( 10#${_parts[0]} * 60 )) ;;
+  esac
+  _sec=$(( _sec + 10#${_d} * 86400 - 120 ))
+  [[ "${_sec}" -gt 60 ]] || return 0
+  echo "timeout --signal=TERM ${_sec}"
+}
+
+# ====Stage selection==============================================================================
+# STAGE 1 'fetch' needs the internet (login node); STAGE 2 'pack' needs RAM + fast local disk
+# (compute node) and NO network. The inner salloc run is identified by DNA_SIF_STAGE2_SANDBOX.
+if [[ -n "${DNA_SIF_STAGE2_SANDBOX:-}" ]]; then
+  _DNA_STAGE="pack"
+  _SANDBOX_DIR="${DNA_SIF_STAGE2_SANDBOX}"
+else
+  _DNA_STAGE="fetch+pack"
 fi
 
-# ====Optional compute-allocation re-exec (opt-in)================================================
-# Building a SIF is memory- and I/O-heavy, so on memory-capped login nodes one may want to run it
-# inside a compute allocation. When APPTAINER_BUILD_USE_SALLOC=1 we RE-EXEC this whole script inside
-# a salloc allocation so the inner run sees ${SLURM_TMPDIR} (fast local disk) for
-# APPTAINER_TMPDIR/CACHEDIR. Override resources with APPTAINER_BUILD_MEM/CPUS/TIME/ACCOUNT.
-# Ref: https://docs.alliancecan.ca/wiki/Apptainer
-# IMPORTANT: pulling from a Docker registry (docker://) requires outbound internet, which the login
-# node HAS but compute nodes obtained via salloc typically DO NOT (e.g. Alliance Canada /
-# compute_canada). Because `apptainer build docker://` fuses the network fetch and the SIF
-# conversion into a single step, the registry pull MUST run where there is internet — i.e. on the
-# login node. Therefore, unlike the local tar->sif converter, this registry converter does NOT
-# re-exec into a compute allocation by default; it runs the fetch+build in place on the login node.
-# Set APPTAINER_BUILD_USE_SALLOC=1 to opt into a salloc allocation instead (only on clusters whose
-# compute nodes have outbound internet, or together with the httpproxy module).
-if [[ "${APPTAINER_BUILD_USE_SALLOC:-0}" == "1" && -z "${SLURM_JOB_ID:-}" ]] && command -v salloc &>/dev/null; then
-  if [[ "${USE_DOCKER_LOGIN}" == true ]]; then
-    echo "[warn] --docker-login prompts interactively, which does not work inside a SLURM allocation." 1>&2
-    echo "[warn]   Authenticate first with 'apptainer registry login docker://docker.io' (done by" 1>&2
-    echo "[warn]   dna_hpc_server_config.bash), or unset APPTAINER_BUILD_USE_SALLOC." 1>&2
-  fi
-  _SALLOC_ARGS=(
-    --time="${APPTAINER_BUILD_TIME:-6:00:00}"
-    --mem="${APPTAINER_BUILD_MEM:-64G}"
-    --cpus-per-task="${APPTAINER_BUILD_CPUS:-10}"
-  )
-  _SALLOC_ACCOUNT="${APPTAINER_BUILD_ACCOUNT:-${SLURM_ACCOUNT:-}}"
-  if [[ -z "${_SALLOC_ACCOUNT}" ]] && command -v sacctmgr &>/dev/null; then
-    _SALLOC_ACCOUNT="$( sacctmgr -nP show user "${USER}" format=defaultaccount 2>/dev/null | head -1 )"
-    if [[ -z "${_SALLOC_ACCOUNT}" ]]; then
-      _SALLOC_ACCOUNT="$( sacctmgr -nP show associations user="${USER}" format=account 2>/dev/null | grep -v '^$' | head -1 )"
-    fi
-    if [[ -n "${_SALLOC_ACCOUNT}" ]]; then
-      echo "[info] Auto-detected SLURM account: ${_SALLOC_ACCOUNT} (override with APPTAINER_BUILD_ACCOUNT)." 1>&2
-    fi
-  fi
-  if [[ -n "${_SALLOC_ACCOUNT}" ]]; then
-    _SALLOC_ARGS+=( --account="${_SALLOC_ACCOUNT}" )
-  else
-    echo "[warn] No SLURM account could be determined. If salloc fails with 'Please specify one of" 1>&2
-    echo "[warn]   the following accounts', set APPTAINER_BUILD_ACCOUNT=<account> and re-run." 1>&2
-  fi
-  _SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-  echo "[info] APPTAINER_BUILD_USE_SALLOC=1 — re-running this script inside a compute allocation." 1>&2
-  echo "[warn]   Note: the registry pull needs outbound internet; ensure the compute nodes have it" 1>&2
-  echo "[warn]   (or the httpproxy module is available), otherwise the docker:// pull will time out." 1>&2
-  echo "[info]   salloc ${_SALLOC_ARGS[*]} srun bash ${_SELF} $*" 1>&2
-  # Guard against an infinite re-exec loop if SLURM_JOB_ID is somehow unset inside the job.
-  export APPTAINER_BUILD_USE_SALLOC=0
-  exec salloc "${_SALLOC_ARGS[@]}" srun bash "${_SELF}" "$@"
+# ====Skip when a valid SIF is already in place (unless --force)==================================
+if [[ "${_DNA_STAGE}" != "pack" && -f "${SIF_FILE}" && "${FORCE_REBUILD}" != true ]]; then
+  echo "[info] SIF already present: ${SIF_FILE}" 1>&2
+  echo "[info]   Nothing to do. Re-run with --force to rebuild it (cached layers are re-used)." 1>&2
+  exit 0
 fi
-echo "[info] Running the Apptainer registry pull+build on the login node (default; the registry fetch" 1>&2
-echo "[info]   needs internet, which the login node has). Set APPTAINER_BUILD_USE_SALLOC=1 to use salloc." 1>&2
 
 # ====Apptainer cache configuration================================================================
-# Prefer SLURM_TMPDIR (fast local disk) when running inside a job (APPTAINER_BUILD_USE_SALLOC=1),
-# otherwise fall back to ${SCRATCH}/tmp (a large disk-backed filesystem, NOT the small RAM-backed
-# /tmp which would OOM-Kill the build). Ref: https://docs.alliancecan.ca/wiki/Apptainer
+# Prefer SLURM_TMPDIR (fast node-local disk) when inside a job, otherwise fall back to
+# ${SCRATCH}/tmp (a large disk-backed filesystem, NOT the small RAM-backed /tmp which would
+# OOM-Kill the build). Ref: https://docs.alliancecan.ca/wiki/Apptainer
 _APPTAINER_SCRATCH_TMP_ROOT="${SLURM_TMPDIR:-${SCRATCH}/tmp}"
 mkdir -p "${_APPTAINER_SCRATCH_TMP_ROOT}"
-export APPTAINER_CACHEDIR="$( mktemp -d -p "${_APPTAINER_SCRATCH_TMP_ROOT}" )"
 export APPTAINER_TMPDIR="$( mktemp -d -p "${_APPTAINER_SCRATCH_TMP_ROOT}" )"
+
+# The OCI blob cache is PERSISTENT by default so a --force rebuild (or a STAGE 2 retry) does not
+# re-download the multi-GB layers. It must live on a large shared filesystem, never in $HOME.
+if [[ "${APPTAINER_BUILD_NO_PERSISTENT_CACHE:-0}" == "1" ]]; then
+  export APPTAINER_CACHEDIR="$( mktemp -d -p "${_APPTAINER_SCRATCH_TMP_ROOT}" )"
+  echo "[info] Using a throw-away OCI blob cache (APPTAINER_BUILD_NO_PERSISTENT_CACHE=1)." 1>&2
+else
+  export APPTAINER_CACHEDIR="${APPTAINER_PRESTAGE_CACHEDIR:-${SCRATCH}/.apptainer_cache}"
+  mkdir -p "${APPTAINER_CACHEDIR}"
+  echo "[info] Persistent OCI blob cache: ${APPTAINER_CACHEDIR}" 1>&2
+fi
 
 # ====Load Apptainer module (HPC module system)====================================================
 if command -v module &>/dev/null; then
@@ -719,55 +968,57 @@ if command -v module &>/dev/null; then
     module load apptainer
   fi
   # Compute nodes on some HPC clusters (e.g. Alliance Canada / compute_canada) have no direct
-  # outbound internet access; pulling from a Docker registry (docker://index.docker.io) from a
-  # compute node then fails with a connection/i-o timeout. The `httpproxy` module exports the proxy
-  # env vars that give the compute node outbound HTTP(S) access.
-  # IMPORTANT: this proxy MUST NOT be loaded on the login node. The login node already has direct
-  # outbound internet, and routing docker.io through the compute-node proxy makes the registry pull
-  # fail with 'Get "https://index.docker.io/v2/": Forbidden'. Since this registry converter builds
-  # on the login node by default (see the salloc block above), only load httpproxy when we are
-  # actually running inside a SLURM job (i.e. APPTAINER_BUILD_USE_SALLOC=1 re-exec on a compute node).
-  # Load it best-effort (absent on clusters that do not need it). Disable with APPTAINER_BUILD_NO_HTTPPROXY=1.
-  if [[ -n "${SLURM_JOB_ID:-}" ]] && [[ "${APPTAINER_BUILD_NO_HTTPPROXY:-0}" != "1" ]] && module spider httpproxy &>/dev/null; then
-    echo "[info] Inside a SLURM job — loading httpproxy module (outbound internet for the registry pull)." 1>&2
+  # outbound internet access. The `httpproxy` module exports proxy env vars that give them outbound
+  # HTTP(S). It MUST NOT be loaded on a login node (which has direct internet): routing docker.io
+  # through the compute-node proxy makes the pull fail with 'index.docker.io: Forbidden'.
+  # STAGE 2 (pack) needs NO network at all, so httpproxy is only relevant when the FETCH itself is
+  # running inside an allocation (i.e. the whole script was started from within a SLURM job).
+  # Load it best-effort. Disable with APPTAINER_BUILD_NO_HTTPPROXY=1.
+  if [[ "${_DNA_STAGE}" != "pack" ]] && [[ -n "${SLURM_JOB_ID:-}" ]] \
+      && [[ "${APPTAINER_BUILD_NO_HTTPPROXY:-0}" != "1" ]] && module spider httpproxy &>/dev/null; then
+    echo "[info] Fetching from inside a SLURM job — loading httpproxy module (outbound internet)." 1>&2
     module load httpproxy || echo "[warn] Failed to load httpproxy module; registry pull may time out on isolated compute nodes." 1>&2
   fi
 fi
 
-# ====Build SIF from registry image===============================================================
+# ====Registry credentials=========================================================================
 # Note: --disable-cache is NOT used here because APPTAINER_CACHEDIR is already redirected to
 # scratch space above, so the cache never lands in the home directory.
-if [[ "${USE_DOCKER_LOGIN}" == true ]]; then
+_APPTAINER_EXTRA_FLAGS=()
+if [[ -n "${APPTAINER_DOCKER_USERNAME:-}" && -n "${APPTAINER_DOCKER_PASSWORD:-}" ]]; then
+  # Consumed directly by apptainer — nothing to do beyond reporting it (never echo the secret).
+  echo "[info] Using non-interactive registry credentials for user '${APPTAINER_DOCKER_USERNAME}'." 1>&2
+elif [[ "${USE_DOCKER_LOGIN}" == true ]]; then
   echo "[info] Authenticating with docker.io interactively (--docker-login)..." 1>&2
   _APPTAINER_EXTRA_FLAGS=(--docker-login)
 else
-  echo "[info] No --docker-login flag provided — assuming public registry access." 1>&2
-  _APPTAINER_EXTRA_FLAGS=()
+  echo "[info] No credentials provided — assuming public registry access (or a prior 'apptainer registry login')." 1>&2
 fi
 
-# Build the SIF to APPTAINER_TMPDIR (scratch space, set above), then move it to the final destination.
+# Stage the SIF on APPTAINER_TMPDIR (node-local when inside an allocation), then move it to the
+# final destination on the shared filesystem.
 SIF_STAGING_DIR="${APPTAINER_TMPDIR:-/tmp}"
 SIF_TMP="${SIF_STAGING_DIR}/${SIF_FILENAME}"
 
-echo "[info] Building Apptainer SIF from Docker registry..." 1>&2
-echo "[info]   Source: docker://${IMAGE_REF}" 1>&2
-echo "[info]   Staging: ${SIF_TMP}" 1>&2
-echo "[info]   Output:  ${SIF_FILE}" 1>&2
-
 # ====Squashfs compression tuning=================================================================
-# apptainer >= 1.4.0 accepts --mksquashfs-args. Tune via APPTAINER_BUILD_COMPRESS="<comp>[:<level>]"
-# (default none — fastest, largest SIF). Faster-compressed alternatives: zstd:3, lz4.
+# apptainer >= 1.4.0 accepts --mksquashfs-args. Tune via APPTAINER_BUILD_COMPRESS="<comp>[:<level>]".
+# Default is 'default': let Apptainer/mksquashfs pick its own compressor. Measured on a real DNA
+# slurm image, the uncompressed variant ('none' -> -noD -noF -noI -noX) produced a 21.7 GB SIF vs
+# 13.2 GB with the default compressor for byte-identical content — a much heavier read from the
+# shared filesystem at every job start, for no benefit. Other values: none, zstd:3, lz4, gzip:6.
 _APPTAINER_VERSION="$( apptainer --version 2>/dev/null | grep -oP '[0-9]+\.[0-9]+\.[0-9]+' | head -1 )"
 _APPTAINER_MAJOR="$( echo "${_APPTAINER_VERSION}" | cut -d. -f1 )"
 _APPTAINER_MINOR="$( echo "${_APPTAINER_VERSION}" | cut -d. -f2 )"
 _APPTAINER_BUILD_ARGS=()
 if [[ "${_APPTAINER_MAJOR}" -gt 1 ]] || { [[ "${_APPTAINER_MAJOR}" -eq 1 ]] && [[ "${_APPTAINER_MINOR}" -ge 4 ]]; }; then
-  _COMPRESS_SPEC="${APPTAINER_BUILD_COMPRESS:-none}"
+  _COMPRESS_SPEC="${APPTAINER_BUILD_COMPRESS:-default}"
   _COMP_NAME="${_COMPRESS_SPEC%%:*}"
   _COMP_LEVEL="${_COMPRESS_SPEC#*:}"
   [[ "${_COMP_LEVEL}" == "${_COMPRESS_SPEC}" ]] && _COMP_LEVEL=""
   _MKSQUASHFS_ARGS=()
-  if [[ "${_COMP_NAME}" == "none" ]]; then
+  if [[ "${_COMP_NAME}" == "default" ]]; then
+    : # Let Apptainer/mksquashfs pick the compressor (smallest robust SIF, no tuning).
+  elif [[ "${_COMP_NAME}" == "none" ]]; then
     _MKSQUASHFS_ARGS=(-noD -noF -noI -noX)
   else
     _MKSQUASHFS_ARGS=(-comp "${_COMP_NAME}")
@@ -782,56 +1033,242 @@ if [[ "${_APPTAINER_MAJOR}" -gt 1 ]] || { [[ "${_APPTAINER_MAJOR}" -eq 1 ]] && [
   if [[ -n "${_MKSQUASHFS_PROCS}" ]]; then
     _MKSQUASHFS_ARGS+=(-processors "${_MKSQUASHFS_PROCS}")
   fi
-  echo "[info] Apptainer ${_APPTAINER_VERSION}: squashfs args: ${_MKSQUASHFS_ARGS[*]}" 1>&2
-  _APPTAINER_BUILD_ARGS+=(--mksquashfs-args="${_MKSQUASHFS_ARGS[*]}")
+  if [[ ${#_MKSQUASHFS_ARGS[@]} -gt 0 ]]; then
+    echo "[info] Apptainer ${_APPTAINER_VERSION}: squashfs args: ${_MKSQUASHFS_ARGS[*]}" 1>&2
+    _APPTAINER_BUILD_ARGS+=(--mksquashfs-args="${_MKSQUASHFS_ARGS[*]}")
+  else
+    echo "[info] Apptainer ${_APPTAINER_VERSION}: using default squashfs settings (APPTAINER_BUILD_COMPRESS=${_COMPRESS_SPEC})." 1>&2
+  fi
 else
   echo "[info] Apptainer ${_APPTAINER_VERSION}: --mksquashfs-args unsupported (requires >= 1.4.0); using defaults (APPTAINER_BUILD_COMPRESS ignored)." 1>&2
 fi
 
-if ! apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
-    "${_APPTAINER_EXTRA_FLAGS[@]}" \
-    "${SIF_TMP}" \
-    "docker://${IMAGE_REF}"; then
-  echo "[error] Apptainer build failed for image: ${IMAGE_REF}" 1>&2
-  echo "[hint]  Check that the image is accessible from the HPC server." 1>&2
-  echo "[hint]  If the registry requires authentication, re-run with: --docker-login" 1>&2
-  echo "[hint]  A 'Killed' during 'Extracting'/'Fetching' means the process was SIGKILLed by the" 1>&2
-  echo "[hint]    login-node resource limits (Alliance Canada). Use the '--save' tar pipeline or copy" 1>&2
-  echo "[hint]    a prebuilt SIF into \${SCRATCH}/sif/ instead (see the warning printed above)." 1>&2
-  echo "[hint]  A 'Forbidden' from index.docker.io usually means the httpproxy module is loaded on" 1>&2
-  echo "[hint]    the login node (it routes docker.io through a proxy meant for compute nodes). This" 1>&2
-  echo "[hint]    script builds on the login node by default and does NOT load httpproxy there; if you" 1>&2
-  echo "[hint]    loaded it manually, run 'module unload httpproxy' and retry." 1>&2
-  echo "[hint]  A 'dial tcp ... i/o timeout' to index.docker.io means the node has no outbound" 1>&2
-  echo "[hint]    internet. Run this converter on the login node (the default), not inside salloc." 1>&2
-  exit 1
+# ====Two-phase conversion: docker:// -> sandbox -> SIF===========================================
+# DO NOT collapse this into a single 'apptainer build <sif> docker://...' call: the FUSED build was
+# observed on Alliance Canada/Narval (apptainer 1.4.5) to silently DROP the baked-in super-project
+# '.git' while exiting 0, whereas '--sandbox' extraction + a separate pack kept every file.
+# The two phases also map exactly onto the node capabilities: extraction needs the NETWORK (login
+# node), packing needs RAM and fast local disk (compute node).
+
+# ----STAGE 1: fetch + extract into a sandbox (needs the internet)--------------------------------
+if [[ "${_DNA_STAGE}" != "pack" ]]; then
+  # Alliance Canada / Compute Canada cap per-user RAM (~4 GB) and CPU-time on login nodes and
+  # SIGKILL heavy processes ("Killed"). Stage 1 must run there anyway (compute nodes cannot reach
+  # Docker Hub's blob CDN), so warn up-front: for very large images the '--save' tar pipeline is
+  # the reliable alternative. CC_CLUSTER is exported on all Alliance clusters.
+  if [[ -z "${SLURM_JOB_ID:-}" && -n "${CC_CLUSTER:-}" ]]; then
+    echo "[warn] Alliance Canada login node detected (CC_CLUSTER=${CC_CLUSTER}): RAM and CPU-time are" 1>&2
+    echo "[warn]   capped here, so a large registry fetch can be SIGKILLed ('Killed'). Only the" 1>&2
+    echo "[warn]   network-bound stage 1 runs here; if it gets killed, use the '--save' tar pipeline" 1>&2
+    echo "[warn]   (dna_tar_to_apptainer_sif_converter.sh) or copy a prebuilt amd64 SIF instead." 1>&2
+  fi
+  mkdir -p "${_SANDBOX_ROOT}"
+  rm -rf "${_SANDBOX_DIR}"
+
+  echo "[info] Stage 1/2: fetching and extracting the registry image into a sandbox." 1>&2
+  echo "[info]   Source:  docker://${IMAGE_REF}" 1>&2
+  echo "[info]   Sandbox: ${_SANDBOX_DIR}" 1>&2
+  _dna_heartbeat_start "Stage 1/2 (fetch+extract)" "${_SANDBOX_DIR}"
+  # shellcheck disable=SC2046
+  if ! $( _dna_timeout_args ) apptainer build --sandbox \
+      "${_APPTAINER_EXTRA_FLAGS[@]}" \
+      "${_SANDBOX_DIR}" \
+      "docker://${IMAGE_REF}"; then
+    _dna_heartbeat_stop
+    rm -rf "${_SANDBOX_DIR}"
+    echo "[error] Stage 1/2 FAILED: could not fetch/extract image: ${IMAGE_REF}" 1>&2
+    echo "[hint]  Check that the image is accessible from this node." 1>&2
+    echo "[hint]  If the registry requires authentication, re-run with --docker-login or export" 1>&2
+    echo "[hint]    APPTAINER_DOCKER_USERNAME / APPTAINER_DOCKER_PASSWORD (access token)." 1>&2
+    echo "[hint]  A 'Killed' means the process was SIGKILLed by the login-node resource limits" 1>&2
+    echo "[hint]    (Alliance Canada caps RAM/CPU-time). Use the '--save' tar pipeline instead." 1>&2
+    echo "[hint]  A 'Forbidden' from index.docker.io usually means the httpproxy module is loaded on" 1>&2
+    echo "[hint]    a login node; run 'module unload httpproxy' and retry." 1>&2
+    echo "[hint]  A 'dial tcp ... i/o timeout' means this node has no outbound internet: run stage 1" 1>&2
+    echo "[hint]    on the LOGIN node (the default)." 1>&2
+    exit 1
+  fi
+  _dna_heartbeat_stop
+
+  # Validate the baked-in super-project '.git' in the SANDBOX (plain filesystem checks, no container
+  # runtime needed) so a bad extraction is caught before packing a multi-GB SIF.
+  if [[ -n "${SUPER_PROJECT_GIT_DIRNAME}" ]]; then
+    _SBX_GIT="${_SANDBOX_DIR}/ros2_ws/src/${SUPER_PROJECT_GIT_DIRNAME}/.git"
+    if [[ ! -d "${_SBX_GIT}/objects" ]] || [[ ! -d "${_SBX_GIT}/refs" ]] \
+        || ! GIT_DIR="${_SBX_GIT}" git rev-parse --verify HEAD &>/dev/null; then
+      echo "[error] Sandbox validation FAILED: the super-project '.git' is missing or incomplete at" 1>&2
+      echo "[error]   ${_SBX_GIT}" 1>&2
+      echo "[error]   The extraction of '${IMAGE_REF}' did not produce a usable rootfs; no SIF was built." 1>&2
+      rm -rf "${_SANDBOX_DIR}"
+      exit 1
+    fi
+    echo "[done] Sandbox validation passed: super-project '.git' extracted completely." 1>&2
+  fi
+
+  # ----Hand STAGE 2 over to a compute node------------------------------------------------------
+  # Packing is memory/IO heavy and needs NO network, so it belongs in an allocation. The sandbox
+  # lives on the shared filesystem, so the compute node reads exactly what we just extracted.
+  if [[ -z "${SLURM_JOB_ID:-}" && "${LOGIN_NODE_ONLY}" != true \
+        && "${APPTAINER_BUILD_NO_SALLOC:-0}" != "1" ]] && command -v salloc &>/dev/null; then
+    _SALLOC_ARGS=(
+      --time="${APPTAINER_BUILD_TIME:-6:00:00}"
+      --mem="${APPTAINER_BUILD_MEM:-64G}"
+      --cpus-per-task="${APPTAINER_BUILD_CPUS:-10}"
+    )
+    _SALLOC_ACCOUNT="${APPTAINER_BUILD_ACCOUNT:-${SLURM_ACCOUNT:-}}"
+    if [[ -z "${_SALLOC_ACCOUNT}" ]] && command -v sacctmgr &>/dev/null; then
+      _SALLOC_ACCOUNT="$( sacctmgr -nP show user "${USER}" format=defaultaccount 2>/dev/null | head -1 )"
+      if [[ -z "${_SALLOC_ACCOUNT}" ]]; then
+        _SALLOC_ACCOUNT="$( sacctmgr -nP show associations user="${USER}" format=account 2>/dev/null | grep -v '^$' | head -1 )"
+      fi
+      if [[ -n "${_SALLOC_ACCOUNT}" ]]; then
+        echo "[info] Auto-detected SLURM account: ${_SALLOC_ACCOUNT} (override with APPTAINER_BUILD_ACCOUNT)." 1>&2
+      fi
+    fi
+    if [[ -n "${_SALLOC_ACCOUNT}" ]]; then
+      _SALLOC_ARGS+=( --account="${_SALLOC_ACCOUNT}" )
+    else
+      echo "[warn] No SLURM account could be determined. If salloc fails with 'Please specify one of" 1>&2
+      echo "[warn]   the following accounts', set APPTAINER_BUILD_ACCOUNT=<account> and re-run." 1>&2
+    fi
+    _SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+    echo "[info] Stage 2/2 runs inside a compute allocation (RAM + node-local disk, no network needed)." 1>&2
+    echo "[info]   salloc ${_SALLOC_ARGS[*]} srun bash ${_SELF}" 1>&2
+    export DNA_SIF_STAGE2_SANDBOX="${_SANDBOX_DIR}"
+    exec salloc "${_SALLOC_ARGS[@]}" srun bash "${_SELF}" "$@"
+  fi
+  if [[ -n "${SLURM_JOB_ID:-}" ]]; then
+    echo "[info] Already inside SLURM job ${SLURM_JOB_ID} — running stage 2 here." 1>&2
+  elif [[ "${LOGIN_NODE_ONLY}" == true || "${APPTAINER_BUILD_NO_SALLOC:-0}" == "1" ]]; then
+    echo "[info] Running stage 2 in place (--login-node-only / APPTAINER_BUILD_NO_SALLOC=1)." 1>&2
+  else
+    echo "[warn] 'salloc' is unavailable — running the memory-heavy packing in place. On a" 1>&2
+    echo "[warn]   resource-capped login node this can be SIGKILLed; the guards below will catch it." 1>&2
+  fi
 fi
 
-# ====Content guard: verify the baked-in super-project '.git' survived the conversion=============
-# DNA bakes the super-project '.git' into the image so the container stays portable and the DN/N2ST
-# bootstrap can resolve PROJECT_PATH/N2ST_PATH via 'git rev-parse'. If the SIF conversion silently
-# dropped '.git' (e.g. an OOM-killed/truncated extraction on a resource-capped login node), the
-# slurm job would later fail deep inside the entrypoint with 'N2ST_PATH: [ERROR] env var not set!'.
-# Detect it here and fail loudly instead of installing an invalid SIF.
-if ! apptainer exec "${SIF_TMP}" sh -c 'ls -d /ros2_ws/src/*/.git/HEAD >/dev/null 2>&1'; then
-  echo "[error] Content guard FAILED: the built SIF is missing the baked-in super-project '.git' directory." 1>&2
-  echo "[error]   This usually means the OCI extraction was truncated (often an OOM 'Killed' on a" 1>&2
-  echo "[error]   resource-capped login node). The SIF is INVALID and was NOT installed." 1>&2
-  echo "[hint]  On Alliance Canada clusters, use the '--save' tar pipeline or copy a prebuilt SIF" 1>&2
-  echo "[hint]   (same linux/amd64 arch) into \${SCRATCH}/sif/ instead of the registry (--push) pipeline." 1>&2
+# ----STAGE 2: pack the sandbox into a SIF (no network needed)------------------------------------
+if [[ ! -d "${_SANDBOX_DIR}" ]]; then
+  echo "[error] Stage 2/2 cannot start: the sandbox is missing: ${_SANDBOX_DIR}" 1>&2
+  echo "[hint]  Re-run the script (stage 1 re-uses the persistent blob cache, so no re-download)." 1>&2
+  exit 1
+fi
+echo "[info] Stage 2/2: packing the sandbox into a SIF." 1>&2
+echo "[info]   Sandbox: ${_SANDBOX_DIR}" 1>&2
+echo "[info]   Staging: ${SIF_TMP}" 1>&2
+echo "[info]   Output:  ${SIF_FILE}" 1>&2
+_dna_heartbeat_start "Stage 2/2 (pack)" "${SIF_TMP}"
+# shellcheck disable=SC2046
+if ! $( _dna_timeout_args ) apptainer build "${_APPTAINER_BUILD_ARGS[@]}" \
+    "${SIF_TMP}" \
+    "${_SANDBOX_DIR}"; then
+  _dna_heartbeat_stop
+  echo "[error] Stage 2/2 FAILED: could not pack the sandbox into a SIF (image: ${IMAGE_REF})." 1>&2
+  echo "[hint]  The sandbox is KEPT at ${_SANDBOX_DIR} so a retry skips the download entirely." 1>&2
   rm -f "${SIF_TMP}"
   exit 1
 fi
-echo "[done] Content guard passed: baked-in super-project '.git' is present in the SIF." 1>&2
+_dna_heartbeat_stop
+
+# ====Content guard: verify the baked-in super-project '.git' survived the conversion=============
+# DNA bakes the super-project '.git' into the image so the container stays portable and the DN/N2ST
+# bootstrap can resolve PROJECT_PATH/N2ST_PATH via 'git rev-parse'. A partial/truncated conversion
+# can drop the big super-project '.git' while smaller sibling repos under /ros2_ws/src/ survive, so
+# checking "any .git/HEAD exists" is NOT enough (it matches a sibling repo and false-passes). We
+# validate the SPECIFIC super-project repo as a COMPLETE git repository (HEAD + objects + refs
+# resolvable) as the hard requirement; incomplete sibling repos are only WARNED about.
+_dna_validate_sif_baked_git() {
+  local _sif="$1"
+  local _out _rc
+  # The check runs INSIDE the container, so 'apptainer exec' itself can fail for reasons that have
+  # nothing to do with the image content (nested exec under srun, no loop device, an unreadable or
+  # truncated SIF). Capture everything and tell those cases apart instead of blaming the '.git'.
+  _out="$( apptainer exec "${_sif}" /bin/sh -c '
+    expected="'"${SUPER_PROJECT_GIT_DIRNAME}"'"
+    rc=0
+    echo "DNA_GUARD_RAN"
+    if command -v git >/dev/null 2>&1; then has_git=1; else has_git=0; fi
+    check_repo() {
+      gd="$1"; label="$2"
+      if [ ! -d "${gd}" ]; then
+        echo "MISSING ${label} repo in SIF: ${gd} (directory absent)"; return 1
+      fi
+      if [ ! -d "${gd}/objects" ] || [ ! -d "${gd}/refs" ] || [ ! -e "${gd}/HEAD" ]; then
+        echo "INCOMPLETE ${label} repo in SIF: ${gd} (objects/refs/HEAD missing)"; return 1
+      fi
+      if [ "${has_git}" = "1" ]; then
+        # safe.directory: inside a SIF the files are owned by root while the runtime uid is the
+        # user, so git can refuse a perfectly complete repo with "dubious ownership".
+        if ! git -c safe.directory="*" --git-dir="${gd}" rev-parse --verify HEAD >/dev/null 2>&1; then
+          echo "UNRESOLVED ${label} repo in SIF: ${gd} (git rev-parse HEAD failed)"; return 1
+        fi
+      else
+        echo "NOGIT no git binary in the image; ${label} repo ${gd} checked structurally only"
+      fi
+      return 0
+    }
+    # 1. The super-project repo MUST be present and valid.
+    if [ -n "${expected}" ]; then
+      check_repo "/ros2_ws/src/${expected}/.git" "super-project" || rc=1
+    fi
+    # 2. Sibling repos are checked too (partial-drop signal) but only WARNED about, not fatal:
+    #    they can legitimately be shallow, a gitdir-file, or have an unborn HEAD.
+    for gd in /ros2_ws/src/*/.git; do
+      [ -e "${gd}" ] || continue
+      case "${gd}" in "/ros2_ws/src/${expected}/.git") continue ;; esac
+      check_repo "${gd}" "sibling" >/dev/null 2>&1 || echo "SIBLING_WARN incomplete baked repo (non-fatal): ${gd}"
+    done
+    exit ${rc}
+  ' 2>&1 )"
+  _rc=$?
+  if ! printf '%s' "${_out}" | grep -q 'DNA_GUARD_RAN'; then
+    echo "[error]   Could NOT run the content guard inside the SIF (apptainer exec rc=${_rc})." 1>&2
+    echo "[error]   This is a container RUNTIME failure, NOT proof that the '.git' is missing." 1>&2
+    printf '%s\n' "${_out}" | sed 's/^/[error]     /' 1>&2
+    return 1
+  fi
+  printf '%s\n' "${_out}" | while IFS= read -r _line; do
+    case "${_line}" in
+      DNA_GUARD_RAN|'') ;;
+      SIBLING_WARN*|NOGIT*)              echo "[warn]    ${_line}" 1>&2 ;;
+      MISSING*|INCOMPLETE*|UNRESOLVED*)  echo "[error]   ${_line}" 1>&2 ;;
+      *)                                 echo "[info]    ${_line}" 1>&2 ;;
+    esac
+  done
+  return ${_rc}
+}
+
+if ! _dna_validate_sif_baked_git "${SIF_TMP}"; then
+  echo "[error] Content guard FAILED: the built SIF has a missing/incomplete baked-in '.git'." 1>&2
+  echo "[error]   The super-project '.git' (used by the DN/N2ST bootstrap) did not survive conversion." 1>&2
+  echo "[hint]  The sandbox is KEPT at ${_SANDBOX_DIR}: inspect it, then re-run to repack." 1>&2
+  rm -f "${SIF_TMP}"
+  exit 1
+fi
+echo "[done] Content guard passed: super-project '.git' is present and valid in the SIF." 1>&2
 
 echo "[info] Moving SIF from staging to final destination..." 1>&2
 mv "${SIF_TMP}" "${SIF_FILE}"
-echo "[done] SIF file created: ${SIF_FILE}" 1>&2
+
+# Re-validate AFTER the move: a cross-filesystem mv can itself truncate on a full/over-quota
+# destination, and the staging guard above only checked the pre-move copy.
+if ! _dna_validate_sif_baked_git "${SIF_FILE}"; then
+  echo "[error] Post-move validation FAILED: the installed SIF has a missing/incomplete baked-in '.git'." 1>&2
+  echo "[error]   The move to ${SIF_FILE} likely truncated the file (destination full/over-quota)." 1>&2
+  rm -f "${SIF_FILE}"
+  exit 1
+fi
+
+# Only now is the sandbox expendable: every failure path above keeps it so a retry never re-downloads.
+rm -rf "${_SANDBOX_DIR}"
+echo "[done] SIF file created and validated: ${SIF_FILE}" 1>&2
 SCRIPT_EOF
 
-  # Make the generated script read-only so users don't mistakenly edit a file that 'dna' silently
-  # regenerates/overwrites on the next build. Regeneration handles this via the leading 'rm -f'.
-  chmod 0555 "${script_path}"
+  # Note: the generated script is kept readable/writable/executable by everyone on purpose. It is
+  # regenerated/overwritten by 'dna' on the next build (handled via the leading 'rm -f'), and a
+  # restrictive mode was a frequent source of rsync/scp failures when copying the artifact to an
+  # HPC server where the user name/uid differs from the one on the development machine.
+  chmod 0777 "${script_path}"
   return 0
 }
 
@@ -992,7 +1429,7 @@ fi
 
 # ====Generate artifact/apptainer/README.md=======================================================
 # Document the auto-generated apptainer artifact directory so users don't mistakenly edit the
-# generated (read-only) converter/config scripts, and have a quick usage guide at hand.
+# generated converter/config scripts, and have a quick usage guide at hand.
 _APPTAINER_ARTIFACT_DIR="${SUPER_PROJECT_ROOT}/artifact/apptainer"
 mkdir -p "${_APPTAINER_ARTIFACT_DIR}"
 echo "[info] Writing ${_APPTAINER_ARTIFACT_DIR}/README.md" 1>&2
@@ -1001,7 +1438,7 @@ cat > "${_APPTAINER_ARTIFACT_DIR}/README.md" <<'README_EOF'
 
 > ⚠️ **AUTO-GENERATED DIRECTORY** — the scripts under `artifact/apptainer/<target>/` are generated
 > by `dna` commands (`dna build slurm --apptainer <target> --save|--push`). **Do not edit them by
-> hand**: they are marked read-only and are silently overwritten on the next `dna` build. Put any
+> hand**: they are silently overwritten on the next `dna` build. Put any
 > custom logic elsewhere.
 
 ## Contents
@@ -1065,9 +1502,11 @@ apptainer registry login --username "${_DNA_DOCKER_HUB_USERNAME}" docker://docke
 echo "[done] Docker registry authentication complete." 1>&2
 SCRIPT_EOF
 
-  # Make the generated script read-only so users don't mistakenly edit a file that 'dna' silently
-  # regenerates/overwrites on the next build. Regeneration handles this via the leading 'rm -f'.
-  chmod 0555 "${script_path}"
+  # Note: the generated script is kept readable/writable/executable by everyone on purpose. It is
+  # regenerated/overwritten by 'dna' on the next build (handled via the leading 'rm -f'), and a
+  # restrictive mode was a frequent source of rsync/scp failures when copying the artifact to an
+  # HPC server where the user name/uid differs from the one on the development machine.
+  chmod 0777 "${script_path}"
   return 0
 }
 

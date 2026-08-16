@@ -144,15 +144,16 @@ if [[ -z "${DN_PROJECT_PATH}" ]]; then
   exit 1
 fi
 
-# ====Content guard: verify the SIF carries the baked-in super-project '.git'=====================
-# The DN/N2ST entrypoint bootstrap resolves PROJECT_PATH/N2ST_PATH via 'git rev-parse'. If the SIF
-# lost its baked-in '.git' during conversion (e.g. a truncated/OOM-killed build on a resource-capped
-# login node), the job would crash deep in the entrypoint with 'N2ST_PATH: [ERROR] env var not set!'.
-# Detect it up-front and fail fast with an actionable message.
-if ! apptainer exec "${SIF_PATH}" test -f "${DN_PROJECT_PATH}/.git/HEAD"; then
-  echo "[error] The SIF is missing the baked-in super-project '.git' directory: ${SIF_PATH}" 1>&2
-  echo "[error]   (expected ${DN_PROJECT_PATH}/.git inside the container). The SIF was likely produced" 1>&2
-  echo "[error]   by a truncated/OOM-killed SIF conversion. Rebuild it with the tar pipeline" 1>&2
+# ====Content guard: verify the SIF carries a COMPLETE baked-in super-project '.git'==============
+# The DN/N2ST entrypoint bootstrap resolves PROJECT_PATH/N2ST_PATH via 'git rev-parse'. A truncated
+# SIF conversion can drop the (large) super-project '.git' while smaller sibling repos under
+# /ros2_ws/src/ survive, so a mere '.git/HEAD' existence check is NOT enough (it can false-pass).
+# Validate that ${DN_PROJECT_PATH}/.git is a COMPLETE repository (HEAD + objects + refs resolvable by
+# git) and fail fast with an actionable message.
+if ! apptainer exec "${SIF_PATH}" /bin/sh -c '[ -d "'"${DN_PROJECT_PATH}"'/.git/objects" ] && [ -d "'"${DN_PROJECT_PATH}"'/.git/refs" ] && git -c safe.directory="*" --git-dir="'"${DN_PROJECT_PATH}"'/.git" rev-parse --verify HEAD >/dev/null 2>&1'; then
+  echo "[error] The SIF has a missing/incomplete baked-in super-project '.git': ${SIF_PATH}" 1>&2
+  echo "[error]   (expected a valid ${DN_PROJECT_PATH}/.git inside the container). The SIF was likely" 1>&2
+  echo "[error]   produced by a truncated/OOM-killed SIF conversion. Rebuild it with the tar pipeline" 1>&2
   echo "[error]   (dna build slurm --apptainer <target> --save) or copy a known-good SIF, then re-submit." 1>&2
   exit 1
 fi
@@ -195,6 +196,7 @@ apptainer exec \
     --env SLURM_NODELIST="${SLURM_NODELIST}" \
     --env DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${DNA_SJOB_NAME}" \
     --pwd "${DN_PROJECT_PATH}/src" \
+    --workdir "${SLURM_TMPDIR:-/tmp}" \
     --writable-tmpfs \
     "${SIF_PATH}" \
     "/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash" \

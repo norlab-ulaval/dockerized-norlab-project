@@ -500,12 +500,23 @@ bash artifact/apptainer/<profile>/dna_registry_to_apptainer_sif_converter.sh [OP
 
 | Option | Description |
 |--------|-------------|
-| `--docker-login` | Optional. Authenticate interactively with docker.io before building. Apptainer prompts for credentials once. Use this for private registry images. (Prefer `apptainer registry login` beforehand when the build re-execs inside a SLURM allocation.) |
+| `--force` | Rebuild even when the destination SIF already exists. Without it, an existing SIF is left in place and the script exits 0. Cached layers are re-used, so a forced rebuild does not re-download. |
+| `--image <REPO>` | Override the Docker repository (without tag) baked in by `dna`. |
+| `--tag <TAG>` | Override the Docker image tag baked in by `dna`. |
+| `--docker-login` | Optional. Authenticate interactively with docker.io before fetching. The prompt happens in STAGE 1 on the login node, so it always works. For unattended runs export `APPTAINER_DOCKER_USERNAME`/`APPTAINER_DOCKER_PASSWORD` (access token) instead. |
+| `--login-node-only` | Run both stages in place, without requesting a compute allocation (clusters with no scheduler, or an unconstrained login node). Equivalent to `APPTAINER_BUILD_NO_SALLOC=1`. |
 | `--help` | Print usage and exit. |
 
 **Requires `$SCRATCH`** — the SIF is built into `${SCRATCH}/sif/<project>-slurm-<version>-<suffix>.sif`.
 
-This script: requires `$SCRATCH`; **runs the registry pull+build on the login node by default** — `apptainer build docker://` fuses the network fetch and the SIF conversion into one step, and the fetch needs outbound internet, which the login node has but compute nodes obtained via `salloc` typically do not (e.g. Alliance Canada / `compute_canada`); opt into a compute allocation with `APPTAINER_BUILD_USE_SALLOC=1` (auto-detects the SLURM account; tune with `APPTAINER_BUILD_MEM`/`CPUS`/`TIME`/`ACCOUNT`), in which case it best-effort loads the `httpproxy` module to give isolated compute nodes outbound internet (disable with `APPTAINER_BUILD_NO_HTTPPROXY=1`); conditionally runs `module load apptainer/<latest>`; sets `APPTAINER_CACHEDIR`/`APPTAINER_TMPDIR` on node-local scratch (`SLURM_TMPDIR`, falling back to `${SCRATCH}/tmp`); optionally authenticates via `--docker-login`; applies tunable squashfs compression when apptainer ≥ 1.4.0 (`APPTAINER_BUILD_COMPRESS`, default `none`); and builds the SIF to a staging area first, then moves it to `${SCRATCH}/sif/`.
+This script is the **single source of truth for registry → SIF conversion**: it is turn-key and handles the login-node/compute-node split by itself, so it works the same on every HPC server.
+
+- **STAGE 1 — fetch + extract (login node).** `apptainer build --sandbox docker://<image>` runs where the script is started, because the registry fetch needs outbound internet: login nodes have it, compute nodes obtained via `salloc` typically do not (e.g. Alliance Canada / `compute_canada`). The OCI blob cache is **persistent** (`APPTAINER_PRESTAGE_CACHEDIR`, default `${SCRATCH}/.apptainer_cache`), so a `--force` rebuild or a retry never re-downloads the multi-GB layers (`APPTAINER_BUILD_NO_PERSISTENT_CACHE=1` opts out). The extracted sandbox is written to a **shared** filesystem so the next stage — running on a different machine — can read it, and the baked-in super-project `.git` is validated right there, on the plain filesystem.
+- **STAGE 2 — pack (compute node).** The script re-execs itself inside `salloc` (SLURM account auto-detected; tune with `APPTAINER_BUILD_MEM`/`CPUS`/`TIME`/`ACCOUNT`) to pack the sandbox into a SIF. Packing is memory- and I/O-heavy but needs **no network**, which is exactly what a compute node offers. Without `salloc` — or with `--login-node-only` / `APPTAINER_BUILD_NO_SALLOC=1` — it runs in place with a warning.
+
+The conversion is deliberately **two-phase, never fused**: a single `apptainer build <sif> docker://…` was observed (Apptainer 1.4.5) to silently drop the baked-in super-project `.git` while exiting 0. Content guards run after packing and again after the move, and a failure keeps the sandbox so a retry skips the download.
+
+It also: requires `$SCRATCH`; conditionally runs `module load apptainer/<latest>` (plus `httpproxy` only when the fetch itself runs inside a job — disable with `APPTAINER_BUILD_NO_HTTPPROXY=1`); stages on node-local scratch (`SLURM_TMPDIR`, falling back to `${SCRATCH}/tmp`, never RAM-backed `/tmp`); prints a **progress heartbeat with stall detection** (`APPTAINER_BUILD_HEARTBEAT_SEC`, `APPTAINER_BUILD_STALL_SEC`) and caps each phase with a **watchdog based on the remaining SLURM wall time**; applies tunable squashfs compression when apptainer ≥ 1.4.0 (`APPTAINER_BUILD_COMPRESS`, default `default`); and moves the validated SIF into `${SCRATCH}/sif/`.
 
 ### `dna save --apptainer <profile> DIRPATH slurm`
 
