@@ -22,9 +22,9 @@ DOCUMENTATION_RUN_SLURM_APPTAINER=$( cat <<'EOF'
 # Optional flags:
 #   --apptainer <profile>                             HPC server profile (e.g., valeria, compute_canada, mamba)
 #   --sif-path <path>                                 Path to the SIF file on the HPC server
-#                                                     (default: artifact/apptainer/<image>-slurm.sif)
+#                                                     (default: ${SCRATCH}/sif/<image>-slurm-<target>.sif)
 #   --output-dir <path>                               Directory for generated scripts
-#                                                     (default: artifact/apptainer/)
+#                                                     (default: artifact/apptainer/<profile>/)
 #   --print-only                                      Print apptainer exec command to stdout only
 #                                                     (do not write script file)
 #   --log-name <name>                                 Log file name (for script header comment)
@@ -147,8 +147,12 @@ function dna::run_slurm_apptainer() {
   dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
 
   # ....Set env variables (post cli)...............................................................
-  local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer"
-  local default_sif_path="artifact/apptainer/${DN_PROJECT_IMAGE_NAME:?err}-slurm.sif"
+  local target_suffix
+  target_suffix="$(dna::apptainer_target_suffix "${apptainer_profile}")" || return 1
+  local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer/${apptainer_profile}"
+  # The SIF is built into ${SCRATCH}/sif/ on the HPC server by the converter scripts; keep
+  # ${SCRATCH} literal so it resolves on the HPC server at runtime.
+  local default_sif_path="\${SCRATCH}/sif/${DN_PROJECT_IMAGE_NAME:?err}-slurm-${PROJECT_TAG:?err}-${target_suffix}.sif"
 
   if [[ -z "${sif_path}" ]]; then
     sif_path="${default_sif_path}"
@@ -194,7 +198,7 @@ function dna::run_slurm_apptainer() {
     n2st::print_msg_done "Apptainer run script generated: ${generated_script}"
     echo ""
     n2st::print_msg "Next steps:
-  1. Ensure SIF exists on HPC (build with bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh if needed)
+  1. Ensure SIF exists on HPC (build with bash artifact/apptainer/${apptainer_profile}/dna_tar_to_apptainer_sif_converter.sh if needed)
   2. Transfer script to HPC: scp ${generated_script} user@hpc:/path/to/project/
   3. Submit job on HPC: sbatch slurm_job.apptainer.${apptainer_profile}.template.bash
      Or run directly: bash $(basename "${generated_script}")"

@@ -24,12 +24,12 @@
 #                    → builds Docker image, saves tar archive, generates dna_tar_to_apptainer_sif_converter.sh
 #       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
 #       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
+#                    artifact/apptainer/valeria/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
 #                    .dockerized_norlab/,
 #                    data/external_data/, data/repository_data/
 #                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
 #     On Valeria:
-#       4. Build SIF: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+#       4. Build SIF: bash artifact/apptainer/valeria/dna_tar_to_apptainer_sif_converter.sh
 #       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
 #
 #   Pipeline B — registry push (--push): build and push image to a Docker registry, pull on HPC via Apptainer.
@@ -38,12 +38,12 @@
 #                    → builds Docker image, pushes to registry, generates dna_registry_to_apptainer_sif_converter.sh
 #       2. Edit:     Set DNA_SJOB_NAME and python_arguments in this script
 #       3. Transfer (use your preferred method, e.g., rsync, scp, sftp):
-#                    artifact/apptainer/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
+#                    artifact/apptainer/valeria/, slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash,
 #                    .dockerized_norlab/,
 #                    data/external_data/, data/repository_data/
 #                    (data/shared_data/ is optional — replaced by a local data volume on the HPC server)
 #     On Valeria:
-#       4. Build SIF: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+#       4. Build SIF: bash artifact/apptainer/valeria/dna_registry_to_apptainer_sif_converter.sh
 #                    (optionally add --docker-login to authenticate to a private registry)
 #       5. Submit:    from super-project root dir execute $ sbatch slurm_jobs/slurm_job.<DNA_SJOB_NAME>.apptainer.valeria.bash
 #
@@ -94,7 +94,10 @@ export DNA_SJOB_NAME
 
 # ....HPC server configuration.....................................................................
 SUPER_PROJECT_ROOT="${SUPER_PROJECT_ROOT:-$(pwd)}"
-SIF_PATH="${SIF_PATH:-${SUPER_PROJECT_ROOT}/artifact/apptainer/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm.sif}"
+# DNA names each SIF with the full version: <image>-slurm-<PROJECT_TAG>-<target>.sif (e.g.
+# ...-slurm-l4t-r36.4.0-valeria.sif). The exact version is only known at build time, so resolve the
+# newest matching versioned SIF at runtime. Export SIF_PATH to pin a specific version instead.
+SIF_PATH="${SIF_PATH:-$(ls -t ${SCRATCH}/sif/PLACEHOLDER_DN_PROJECT_IMAGE_NAME-slurm-*-valeria.sif 2>/dev/null | head -n1)}"
 PROFILE_ENV_FILE="${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/hpc_server_profile/.env.valeria"
 
 # Source HPC-specific env (sets DN_PROJECT_PATH, DN_PROJECT_USER, etc.)
@@ -128,12 +131,31 @@ export APPTAINER_TMPDIR="$( mktemp -d -p "${SLURM_TMPDIR}" 2>/dev/null || mktemp
 # Sanity checks
 if [[ ! -f "${SIF_PATH}" ]]; then
   echo "[error] SIF file not found: ${SIF_PATH}" 1>&2
-  echo "[hint] Build it with: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh" 1>&2
+  echo "[hint] Build it with: bash artifact/apptainer/valeria/dna_tar_to_apptainer_sif_converter.sh" 1>&2
   exit 1
 fi
 
 if [[ -z "${DN_PROJECT_PATH}" ]]; then
   echo "[error] DN_PROJECT_PATH is not set. Check ${PROFILE_ENV_FILE}" 1>&2
+  exit 1
+fi
+
+# ====Content guard: verify the SIF carries a COMPLETE baked-in super-project '.git'==============
+# The DN/N2ST entrypoint bootstrap resolves PROJECT_PATH/N2ST_PATH via 'git rev-parse'. A truncated
+# SIF conversion can drop the (large) super-project '.git' while smaller sibling repos under
+# /ros2_ws/src/ survive, so a mere '.git/HEAD' existence check is NOT enough (it can false-pass).
+# Validate that ${DN_PROJECT_PATH}/.git is a COMPLETE repository (HEAD + objects + refs resolvable by
+# git) and fail fast with an actionable message.
+# IMPORTANT: '--no-mount cwd'. Apptainer auto-binds the current working directory into the
+# container. When this job is launched from the host super-project root, that host directory
+# (which does NOT carry '.git' on the HPC server — '.git' is baked into the image) gets mounted
+# over ${DN_PROJECT_PATH}, MASKING the image's baked-in '.git' and breaking the DN/N2ST bootstrap.
+# Disabling the cwd auto-mount keeps the baked-in '.git' visible.
+if ! apptainer exec --no-mount cwd "${SIF_PATH}" /bin/sh -c '[ -d "'"${DN_PROJECT_PATH}"'/.git/objects" ] && [ -d "'"${DN_PROJECT_PATH}"'/.git/refs" ] && git -c safe.directory="*" --git-dir="'"${DN_PROJECT_PATH}"'/.git" rev-parse --verify HEAD >/dev/null 2>&1'; then
+  echo "[error] The SIF has a missing/incomplete baked-in super-project '.git': ${SIF_PATH}" 1>&2
+  echo "[error]   (expected a valid ${DN_PROJECT_PATH}/.git inside the container). The SIF was likely" 1>&2
+  echo "[error]   produced by a truncated/OOM-killed SIF conversion. Rebuild it with the tar pipeline" 1>&2
+  echo "[error]   (dna build slurm --apptainer <target> --save) or copy a known-good SIF, then re-submit." 1>&2
   exit 1
 fi
 
@@ -157,6 +179,7 @@ apptainer exec \
     --no-eval \
     --cleanenv \
     --no-home \
+    --no-mount cwd \
     --nv \
     --bind /etc/localtime:/etc/localtime:ro \
     --bind "${SUPER_PROJECT_ROOT}/.dockerized_norlab/configuration/entrypoints/:/entrypoints/:ro" \
@@ -175,6 +198,7 @@ apptainer exec \
     --env SLURM_NODELIST="${SLURM_NODELIST}" \
     --env DN_CONTAINER_NAME="${DN_CONTAINER_NAME:?err}-${DNA_SJOB_NAME}" \
     --pwd "${DN_PROJECT_PATH}/src" \
+    --workdir "${SLURM_TMPDIR:-/tmp}" \
     --writable-tmpfs \
     "${SIF_PATH}" \
     "/dockerized-norlab/project/project-slurm/dn_entrypoint.init.bash" \

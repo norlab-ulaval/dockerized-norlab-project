@@ -56,6 +56,41 @@ function dna::setup_mock() {
     find "${mock_root}/slurm_jobs" -name "*.bash" -type f -exec sed -i "s/PLACEHOLDER_DN_PROJECT_IMAGE_NAME/${mock_repo_name}/g" {} +
   fi
 
+  # ....Disable incompatible ROS2 pytest plugins in mock ci-tests config..........................
+  # The DN base image ships the ROS2 `launch_testing` pytest plugin, which declares the removed
+  # `path` argument in its `pytest_pycollect_makemodule` hookimpl. On pytest >= 8 this fails
+  # hookspec validation and aborts test collection with a PluginValidationError. Its companion
+  # `launch_ros` depends on `launch_testing`'s hookspec, so both must be disabled together.
+  # The DNA template `tests/pytest*.ini` already carry this fix; inject it into the freshly cloned
+  # mock (which is a pre-initialized super project fetched from GitHub) so the ci-tests run is green.
+  local mock_pytest_ini
+  for mock_pytest_ini in \
+      "${mock_root}/tests/pytest.ini" \
+      "${mock_root}/tests/pytest.no_xdist.ini"; do
+    if [[ -f "${mock_pytest_ini}" ]] && ! grep -q "no:launch_testing" "${mock_pytest_ini}"; then
+      awk '{print} /-p no:randomly/{print "    -p no:launch_testing"; print "    -p no:launch_ros"}' \
+        "${mock_pytest_ini}" > "${mock_pytest_ini}.tmp" \
+        && mv "${mock_pytest_ini}.tmp" "${mock_pytest_ini}"
+    fi
+  done
+
+  # ....Point the Slurm dryrun job at the non-sweeper example.....................................
+  # The mock's `slurm_job.dryrun.bash` historically targets `example_app_hparm_optim.py`, a hydra
+  # MULTIRUN that instantiates the optuna TPE sampler. The DN base image ships incompatible
+  # hydra-optuna-sweeper/optuna versions, so the sampler instantiation crashes
+  # (`Cannot instantiate config of type TPESampler`), failing the slurm dryrun/validate tests.
+  # The dryrun only needs to validate the slurm/container pipeline, so retarget it to the
+  # non-sweeper single-run `example_app.py`. The DNA template already carries this fix; inject it
+  # into the freshly cloned mock (fetched from GitHub) so the tests are self-contained.
+  local mock_dryrun_job="${mock_root}/slurm_jobs/slurm_job.dryrun.bash"
+  if [[ -f "${mock_dryrun_job}" ]] && grep -q "example_app_hparm_optim.py" "${mock_dryrun_job}"; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i "" "s|launcher/example_app_hparm_optim.py|launcher/example_app.py|g" "${mock_dryrun_job}"
+    else
+      sed -i "s|launcher/example_app_hparm_optim.py|launcher/example_app.py|g" "${mock_dryrun_job}"
+    fi
+  fi
+
   if [[ ${DNA_DEBUG} == true ]]; then
     cd "${DNA_ROOT}/utilities/tmp/dockerized-norlab-project-mock" || exit 1
     #git status

@@ -370,10 +370,14 @@ ${MSG_END_FORMAT}
     # When --gs-only is set, skip all docker build/push/save steps and jump directly to script generation
     if [[ "${gs_only}" == true ]]; then
       n2st::print_msg "--gs-only flag set: skipping docker build/push/save, regenerating HPC converter script only"
-      local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer"
+      local target_suffix
+      target_suffix="$(dna::apptainer_target_suffix "${apptainer_profile}")" || return 1
+      local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer/${apptainer_profile}"
       mkdir -p "${apptainer_save_dir}" || return 1
-      local sif_name_gs="${DN_PROJECT_IMAGE_NAME:?err}-slurm.sif"
-      local image_name_gs="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}"
+      # SIF filename is fully versioned (image name + PROJECT_TAG + target suffix) so builds for
+      # different versions/targets never overwrite each other in the shared ${SCRATCH}/sif/ dir.
+      local sif_name_gs="${DN_PROJECT_IMAGE_NAME:?err}-slurm-${PROJECT_TAG:?err}-${target_suffix}.sif"
+      local image_name_gs="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}-${target_suffix}"
 
       dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
 
@@ -516,14 +520,29 @@ ${MSG_END_FORMAT}
         n2st::print_msg "Generating Apptainer artifacts for profile: ${apptainer_profile} (pipeline: ${apptainer_pipeline})"
         dna::check_apptainer_profile_env_file "${apptainer_profile}" || return 1
 
-        local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer"
+        local target_suffix
+        target_suffix="$(dna::apptainer_target_suffix "${apptainer_profile}")" || return 1
+        local apptainer_save_dir="${SUPER_PROJECT_ROOT:?err}/artifact/apptainer/${apptainer_profile}"
         mkdir -p "${apptainer_save_dir}" || {
             n2st::print_msg_error "Failed to create apptainer artifact directory: ${apptainer_save_dir}"
             return 1
         }
 
-        local sif_name="${DN_PROJECT_IMAGE_NAME:?err}-slurm.sif"
-        local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}"
+        # SIF filename is fully versioned (image name + PROJECT_TAG + target suffix) so builds for
+        # different versions/targets never overwrite each other in the shared ${SCRATCH}/sif/ dir.
+        local sif_name="${DN_PROJECT_IMAGE_NAME:?err}-slurm-${PROJECT_TAG:?err}-${target_suffix}.sif"
+        local image_name="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}-${target_suffix}"
+
+        # The docker compose build produces the slurm image with the plain, non-target-aware tag
+        # (${...}-slurm:${PROJECT_TAG}). Re-tag it with the target-aware tag so the downstream
+        # squash/push/save steps (which reference ${image_name}) can find it and different targets
+        # (mamba/valeria/compute_canada) never collide.
+        local built_slurm_image="${DN_PROJECT_HUB:?err}/${DN_PROJECT_IMAGE_NAME}-slurm:${PROJECT_TAG:?err}"
+        n2st::print_msg "Tagging slurm image for target '${apptainer_profile}': ${built_slurm_image} -> ${image_name}"
+        docker tag "${built_slurm_image}" "${image_name}" || {
+            n2st::print_msg_error "Failed to tag slurm image ${built_slurm_image} as ${image_name}"
+            return 1
+        }
 
         # Squash image if requested (reduces size before save/push)
         if [[ "${squash_image}" == true ]]; then
@@ -564,9 +583,9 @@ ${MSG_END_FORMAT}
             n2st::print_msg_done "Apptainer artifacts saved to: ${apptainer_save_dir}"
 
             n2st::print_msg "Next steps:
-  1. Transfer to HPC: artifact/apptainer/ (use your preferred method, e.g., rsync, scp, sftp)
-  2. Configure HPC (first time only): bash artifact/apptainer/dna_hpc_server_config.bash
-  3. Build SIF on HPC: bash artifact/apptainer/dna_tar_to_apptainer_sif_converter.sh
+  1. Transfer to HPC: artifact/apptainer/${apptainer_profile}/ (use your preferred method, e.g., rsync, scp, sftp)
+  2. Configure HPC (first time only): bash artifact/apptainer/${apptainer_profile}/dna_hpc_server_config.bash
+  3. Build SIF on HPC: bash artifact/apptainer/${apptainer_profile}/dna_tar_to_apptainer_sif_converter.sh
   4. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
 
         elif [[ "${apptainer_pipeline}" == "push" ]]; then
@@ -599,9 +618,9 @@ ${MSG_END_FORMAT}
             n2st::print_msg_done "Apptainer registry converter script saved to: ${apptainer_save_dir}"
 
             n2st::print_msg "Next steps:
-  1. Transfer scripts to HPC: artifact/apptainer/
-  2. Configure HPC (first time only): bash artifact/apptainer/dna_hpc_server_config.bash
-  3. Build SIF on HPC: bash artifact/apptainer/dna_registry_to_apptainer_sif_converter.sh
+  1. Transfer scripts to HPC: artifact/apptainer/${apptainer_profile}/
+  2. Configure HPC (first time only): bash artifact/apptainer/${apptainer_profile}/dna_hpc_server_config.bash
+  3. Build SIF on HPC: bash artifact/apptainer/${apptainer_profile}/dna_registry_to_apptainer_sif_converter.sh
   4. Generate run script: dna run slurm <sjob-id> --generate-apptainer ${apptainer_profile} <python-args>"
         fi
     fi

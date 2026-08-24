@@ -182,8 +182,10 @@ EOF
     assert_file_exist "${target_file}"
     run grep "PLACEHOLDER_DN_PROJECT_IMAGE_NAME" "${target_file}"
     assert_failure  # placeholder should NOT be present
-    run grep "test-project-slurm.sif" "${target_file}"
-    assert_success  # lowercase image name with -slurm.sif should be present
+    # Note: SIF filenames are now fully versioned/target-aware (<image>-slurm-<version>-<target>.sif),
+    # so assert the lowercased image name followed by the -slurm- prefix rather than the old -slurm.sif.
+    run grep "test-project-slurm-" "${target_file}"
+    assert_success  # lowercase image name with -slurm- prefix should be present
     run grep "Test-Project" "${target_file}"
     assert_failure  # mixed-case original should NOT be present
   done

@@ -40,12 +40,12 @@ jobs:
       id-token: write # to enable use of OIDC for npm provenance
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "latest"
       - name: Install semantic-release
@@ -57,7 +57,7 @@ jobs:
       - name: Install semantic-release additional plugins (semantic-release-replace-plugin)
         run: npm install semantic-release-replace-plugin -D
       - name: Install semantic-release additional plugins (conventional-changelog-conventionalcommits for commit-analyzer preset)
-        run: npm install conventional-changelog-conventionalcommits -D
+        run: npm install conventional-changelog-conventionalcommits@7 -D
       - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
         run: npm audit signatures
       - name: Release

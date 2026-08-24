@@ -42,6 +42,17 @@ export -f n2st::print_msg n2st::print_msg_error n2st::print_msg_done n2st::print
 
 export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 
+# The generated converter now builds the SIF into ${SCRATCH}/sif/ and requires $SCRATCH.
+# In this container there is no SLURM allocation and the mock tar architecture may not match the
+# host, so disable the salloc re-exec and the architecture guard.
+export SCRATCH="${MOCK_PROJECT_ROOT}/scratch"
+mkdir -p "${SCRATCH}"
+export APPTAINER_BUILD_NO_SALLOC=1
+export APPTAINER_ALLOW_ARCH_MISMATCH=1
+
+# The converter outputs the SIF to ${SCRATCH}/sif/<sif-name> regardless of the script location.
+ACTUAL_SIF_PATH="${SCRATCH}/sif/${SIF_NAME}"
+
 # Source apptainer_tools
 source "${DNA_SRC_LIB}/core/utils/apptainer_tools.bash"
 
@@ -49,7 +60,8 @@ source "${DNA_SRC_LIB}/core/utils/apptainer_tools.bash"
 dna::generate_apptainer_build_sif_script \
   "${MOCK_SLURM_TAR}" \
   "${SIF_NAME}" \
-  "${SIF_DIR}"
+  "${SIF_DIR}" \
+  "valeria"
 
 if [[ ! -f "${SIF_DIR}/dna_tar_to_apptainer_sif_converter.sh" ]]; then
   echo "[FAIL] dna_tar_to_apptainer_sif_converter.sh was not created" >&2
@@ -77,22 +89,27 @@ echo ""
 echo ">>> Test B: Execute dna_tar_to_apptainer_sif_converter.sh (tar → SIF conversion)"
 
 # Remove any existing SIF from previous runs
-rm -f "${SIF_PATH}"
+rm -f "${SIF_PATH}" "${ACTUAL_SIF_PATH}"
 
 cd "${SIF_DIR}"
 bash dna_tar_to_apptainer_sif_converter.sh
 
-if [[ ! -f "${SIF_PATH}" ]]; then
-  echo "[FAIL] SIF file not created: ${SIF_PATH}" >&2
+if [[ ! -f "${ACTUAL_SIF_PATH}" ]]; then
+  echo "[FAIL] SIF file not created: ${ACTUAL_SIF_PATH}" >&2
   exit 1
 fi
-echo "    PASS: SIF file created: ${SIF_PATH} ($(du -h "${SIF_PATH}" | cut -f1))"
+echo "    PASS: SIF file created: ${ACTUAL_SIF_PATH} ($(du -h "${ACTUAL_SIF_PATH}" | cut -f1))"
+
+# Copy the built SIF to the shared SIF_PATH expected by the subsequent container tests
+# (run_all_container_tests.bash uses SIF_PATH as shared state across tests).
+mkdir -p "$(dirname "${SIF_PATH}")"
+cp "${ACTUAL_SIF_PATH}" "${SIF_PATH}"
 
 # ====Test C: Verify SIF is valid via apptainer inspect==========================================
 echo ""
 echo ">>> Test C: Validate SIF via 'apptainer inspect'"
 
-INSPECT_OUTPUT=$(apptainer inspect "${SIF_PATH}" 2>&1)
+INSPECT_OUTPUT=$(apptainer inspect "${ACTUAL_SIF_PATH}" 2>&1)
 echo "${INSPECT_OUTPUT}"
 
 if ! echo "${INSPECT_OUTPUT}" | grep -qi "dna.apptainer.compatible: true"; then
@@ -105,7 +122,7 @@ echo "    PASS: SIF labels verified"
 echo ""
 echo ">>> Test D: Basic apptainer exec smoke test"
 
-EXEC_OUTPUT=$(apptainer exec "${SIF_PATH}" /bin/bash -c 'echo "SIF_EXEC_OK"' 2>&1)
+EXEC_OUTPUT=$(apptainer exec "${ACTUAL_SIF_PATH}" /bin/bash -c 'echo "SIF_EXEC_OK"' 2>&1)
 if ! echo "${EXEC_OUTPUT}" | grep -q "SIF_EXEC_OK"; then
   echo "[FAIL] Basic apptainer exec failed" >&2
   echo "Output: ${EXEC_OUTPUT}" >&2

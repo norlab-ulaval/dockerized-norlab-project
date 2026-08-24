@@ -82,8 +82,9 @@ echo ""
 echo ">>> Test 4: dna::generate_apptainer_build_sif_script"
 dna::generate_apptainer_build_sif_script \
   "my-project-slurm.l4t-r36.4.0.tar" \
-  "my-project-slurm.sif" \
-  "${TEMP_DIR}"
+  "my-project-slurm-l4t-r36.4.0-valeria.sif" \
+  "${TEMP_DIR}" \
+  "valeria"
 
 if [[ ! -f "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh" ]]; then
   echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh not created" >&2
@@ -97,7 +98,16 @@ if ! grep -q "docker-archive:" "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.s
   echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh missing 'docker-archive:'" >&2
   exit 1
 fi
-echo "    PASS: dna_tar_to_apptainer_sif_converter.sh created with correct content"
+# Target-aware SIF output to the shared scratch SIF cache
+if ! grep -q 'SIF_DIR="${SCRATCH}/sif"' "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh missing '\${SCRATCH}/sif' output dir" >&2
+  exit 1
+fi
+if ! grep -q 'SIF_FILENAME="my-project-slurm-l4t-r36.4.0-valeria.sif"' "${TEMP_DIR}/dna_tar_to_apptainer_sif_converter.sh"; then
+  echo "    FAIL: dna_tar_to_apptainer_sif_converter.sh missing versioned target-suffixed SIF filename" >&2
+  exit 1
+fi
+echo "    PASS: dna_tar_to_apptainer_sif_converter.sh created with target-aware content"
 
 # ....Test 3: get_apptainer_slurm_exec_flags..............................................
 echo ""

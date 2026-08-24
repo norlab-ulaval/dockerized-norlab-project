@@ -113,6 +113,32 @@ teardown_file() {
   assert_output --partial "not found"
 }
 
+# ====Tests: dna::apptainer_target_suffix========================================================
+
+@test "dna::apptainer_target_suffix › replaces underscores with hyphens" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::apptainer_target_suffix 'compute_canada'
+  "
+  assert_success
+  # Note: sourcing the mock import_dna_lib.bash emits a banner line on stdout, so assert the
+  # specific normalized suffix line rather than the whole output.
+  assert_line "compute-canada"
+}
+
+@test "dna::apptainer_target_suffix › leaves single-word profile unchanged" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::apptainer_target_suffix 'valeria'
+  "
+  assert_success
+  # Note: sourcing the mock import_dna_lib.bash emits a banner line on stdout, so assert the
+  # specific normalized suffix line rather than the whole output.
+  assert_line "valeria"
+}
+
 # ====Tests: dna::generate_apptainer_build_sif_script=============================================
 
 @test "dna::generate_apptainer_build_sif_script › creates dna_tar_to_apptainer_sif_converter.sh" {
@@ -152,7 +178,8 @@ teardown_file() {
   assert_output --partial "docker-archive:"
   # Conditional compression: --mksquashfs-args is applied only when apptainer >= 1.4.0
   assert_output --partial "--mksquashfs-args"
-  assert_output --partial "-comp zstd"
+  # Compression is tunable via APPTAINER_BUILD_COMPRESS (default 'default' = apptainer's own)
+  assert_output --partial "APPTAINER_BUILD_COMPRESS:-default"
   # Version check logic must be present
   assert_output --partial "_APPTAINER_VERSION"
   assert_output --partial "_APPTAINER_MAJOR"
@@ -175,6 +202,155 @@ teardown_file() {
   "
 
   assert_file_executable "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › contains the baked-in '.git' content guard" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial "Content guard"
+  assert_output --partial "_dna_validate_sif_baked_git"
+  assert_output --partial 'git rev-parse --verify HEAD'
+  assert_output --partial '/ros2_ws/src/*/.git'
+  assert_output --partial "missing/incomplete baked-in '.git'"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › injects SUPER_PROJECT_GIT_DIRNAME and re-validates after move" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  # The specific super-project repo dir name is embedded so the guard checks THAT '.git'
+  assert_output --partial 'SUPER_PROJECT_GIT_DIRNAME="my-super-project"'
+  # The guard runs on the staging SIF AND is re-run on the final SIF after the mv
+  assert_output --partial '_dna_validate_sif_baked_git "${SIF_TMP}"'
+  assert_output --partial '_dna_validate_sif_baked_git "${SIF_FILE}"'
+  assert_output --partial "Post-move validation FAILED"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › sibling-repo guard is non-fatal (warn only), super-project repo is the hard requirement" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  # Sibling repos are warned about, not treated as fatal.
+  assert_output --partial "SIBLING_WARN incomplete baked repo (non-fatal)"
+  # 'rc=1' (the hard failure) is set exactly once — only for the specific super-project repo.
+  run bash -c "grep -c 'rc=1' '${output_dir}/dna_tar_to_apptainer_sif_converter.sh'"
+  assert_output "1"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › guard neutralizes git safe.directory and reports exec failures" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  # A SIF is owned by root while the runtime uid is the user: without safe.directory git refuses a
+  # perfectly complete repo ("dubious ownership") and the guard false-fails on a VALID SIF.
+  assert_output --partial 'safe.directory="*"'
+  # An 'apptainer exec' failure must NOT be reported as a missing '.git'.
+  assert_output --partial "DNA_GUARD_RAN"
+  assert_output --partial "container RUNTIME failure, NOT proof that the '.git' is missing"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › warns at generation time when SUPER_PROJECT_REPO_NAME is empty" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    unset SUPER_PROJECT_REPO_NAME
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+  assert_success
+  assert_output --partial "SUPER_PROJECT_REPO_NAME is empty"
+  # The guard still degrades to an empty dirname (not the specific repo).
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_output --partial 'SUPER_PROJECT_GIT_DIRNAME=""'
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › generated script is executable and writable by all (mode 777)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  # Use stat (mode bits) rather than 'test -w': bats runs as root, which bypasses permission bits.
+  # Keep it writable by all: a restrictive mode breaks rsync/scp of the artifact to an HPC server
+  # where the user name/uid differs.
+  run stat -c '%a' "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output "777"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › regeneration overwrites an existing script" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script 'a.tar' 'a.sif' '${output_dir}'
+    dna::generate_apptainer_build_sif_script 'a.tar' 'a.sif' '${output_dir}'
+  "
+  assert_success
 
   rm -rf "${output_dir}"
 }
@@ -470,7 +646,7 @@ teardown_file() {
   rm -rf "${output_dir}"
 }
 
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh deletes tar archive after SIF conversion" {
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh keeps (does NOT delete) tar archive after SIF conversion" {
   local output_dir
   output_dir=$(mktemp -d)
 
@@ -483,69 +659,72 @@ teardown_file() {
       '${output_dir}'
   "
 
-  run grep "rm -f" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_success
-  assert_output --partial "TAR_FILE"
-
-  rm -rf "${output_dir}"
-}
-
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains --target-dir argument parsing" {
-  local output_dir
-  output_dir=$(mktemp -d)
-
-  bash -c "
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
-      'test-project-slurm.sif' \
-      '${output_dir}'
-  "
-
-  run grep "\-\-target-dir" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
-  assert_success
-
-  rm -rf "${output_dir}"
-}
-
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh uses TARGET_DIR as SIF output directory when --target-dir is provided" {
-  local output_dir
-  output_dir=$(mktemp -d)
-
-  bash -c "
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
-      'test-project-slurm.sif' \
-      '${output_dir}'
-  "
-
-  # The generated script sets SIF_FILE to <target-dir>/artifact/apptainer/<sif> when --target-dir is used
-  run grep "SUPER_PROJECT_ROOT}/artifact/apptainer" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
-  assert_success
-  assert_output --partial "SIF_FILE"
-
-  rm -rf "${output_dir}"
-}
-
-@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh fails when --target-dir is provided without argument" {
-  local output_dir
-  output_dir=$(mktemp -d)
-
-  bash -c "
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
-    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
-    dna::generate_apptainer_build_sif_script \
-      'test-project-slurm.l4t-r36.4.0.tar' \
-      'test-project-slurm.sif' \
-      '${output_dir}'
-  "
-
-  run bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh" --target-dir
+  # The source tar must be KEPT (not auto-deleted) after a successful conversion.
+  assert_output --partial "Source tar archive kept (not deleted)"
+  # There must be NO active (non-comment) 'rm -f "${TAR_FILE}"' cleanup line.
+  run grep -E '^[[:space:]]*rm -f "\$\{TAR_FILE\}"' "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
   assert_failure
-  assert_output --partial "--target-dir requires a path argument"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh contains --source-tar argument parsing" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm-valeria.sif' \
+      '${output_dir}'
+  "
+
+  run grep "\-\-source-tar" "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh outputs SIF to \${SCRATCH}/sif" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm-valeria.sif' \
+      '${output_dir}'
+  "
+
+  # The generated script builds the SIF into the shared scratch SIF cache (${SCRATCH}/sif/)
+  run grep 'SIF_DIR="${SCRATCH}/sif"' "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_apptainer_build_sif_script › dna_tar_to_apptainer_sif_converter.sh fails when \$SCRATCH is not set" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' \
+      'test-project-slurm-valeria.sif' \
+      '${output_dir}'
+  "
+
+  run env -u SCRATCH bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_failure
+  assert_output --partial "\$SCRATCH is not set"
 
   rm -rf "${output_dir}"
 }
@@ -662,7 +841,7 @@ teardown_file() {
   run bash "${output_dir}/dna_tar_to_apptainer_sif_converter.sh" --help
   assert_success
   assert_output --partial "Usage"
-  assert_output --partial "--target-dir"
+  assert_output --partial "--source-tar"
 
   rm -rf "${output_dir}"
 }
@@ -682,6 +861,22 @@ teardown_file() {
   assert_success
   assert_output --partial "apptainer exec"
   assert_output --partial "dn_entrypoint.init.bash"
+}
+
+@test "dna::print_apptainer_exec_command › includes --no-mount cwd (prevents host CWD masking baked-in .git)" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::print_apptainer_exec_command \
+      'compute_canada' \
+      'artifact/apptainer/test-project-slurm.sif' \
+      'test-sjob' \
+      'launcher/train.py'
+  "
+  assert_success
+  # Apptainer auto-binds the current working directory; without --no-mount cwd the host super-project
+  # root (which has no baked-in .git on the HPC server) masks the image's .git and breaks DN/N2ST.
+  assert_output --partial "--no-mount cwd"
 }
 
 @test "dna::print_apptainer_exec_command › output contains python args" {
@@ -1107,6 +1302,55 @@ export -f docker
   assert_success
 }
 
+@test "dna::generate_registry_to_apptainer_sif_script › contains the baked-in '.git' content guard" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' 'test-project-slurm.sif' \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  assert_output --partial "Content guard"
+  assert_output --partial "_dna_validate_sif_baked_git"
+  assert_output --partial 'git rev-parse --verify HEAD'
+  assert_output --partial "missing/incomplete baked-in '.git'"
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › detects Alliance/Compute Canada login node via CC_CLUSTER" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' 'test-project-slurm.sif' \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  assert_output --partial 'CC_CLUSTER'
+  assert_output --partial 'Alliance Canada login node'
+  assert_output --partial '--save'
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › generated script is executable and writable by all (mode 777)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' 'test-project-slurm.sif' '${output_dir}'
+  "
+  run stat -c '%a' "${output_dir}/dna_registry_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output "777"
+  rm -rf "${output_dir}"
+}
+
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains IMAGE_REF" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
@@ -1142,11 +1386,116 @@ export -f docker
   assert_output --partial 'docker://${IMAGE_REF}'
   # Conditional compression: --mksquashfs-args is applied only when apptainer >= 1.4.0
   assert_output --partial '--mksquashfs-args'
-  assert_output --partial '-comp zstd'
+  # Compression is tunable via APPTAINER_BUILD_COMPRESS (default 'default' = apptainer's own)
+  assert_output --partial 'APPTAINER_BUILD_COMPRESS:-default'
   # Version check logic must be present
   assert_output --partial '_APPTAINER_VERSION'
   assert_output --partial '_APPTAINER_MAJOR'
   assert_output --partial '_APPTAINER_MINOR'
+}
+
+@test "dna::generate_apptainer_build_sif_script › converts in two phases (sandbox then pack), never fused" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_apptainer_build_sif_script \
+      'test-project-slurm.l4t-r36.4.0.tar' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  assert_success
+  # Phase 1: extract to a sandbox. Phase 2: pack the sandbox into the SIF.
+  assert_output --partial 'apptainer build --sandbox "${_SANDBOX_DIR}" "docker-archive:${TAR_FILE}"'
+  assert_output --partial '"${SIF_TMP}" \'
+  assert_output --partial '"${_SANDBOX_DIR}"'
+  # The sandbox rootfs is validated BEFORE packing (cheap plain-filesystem check).
+  assert_output --partial 'Sandbox validation passed'
+  # The FUSED conversion (the one that silently drops the baked-in '.git') must NOT be generated.
+  run grep -E 'apptainer build .*"\$\{SIF_TMP\}" *\\?$' -A1 "${output_dir}/dna_tar_to_apptainer_sif_converter.sh"
+  refute_output --partial 'docker-archive:${TAR_FILE}'
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › converts in two phases (sandbox then pack)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_registry_to_apptainer_sif_script \
+      'my-hub/test-project-slurm:tag' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_registry_to_apptainer_sif_converter.sh"
+  assert_success
+  assert_output --partial 'apptainer build --sandbox'
+  assert_output --partial 'Stage 1/2'
+  assert_output --partial 'Stage 2/2'
+  assert_output --partial 'Sandbox validation passed'
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › is turn-key: --force/--image/--tag, persistent cache, heartbeat, watchdog" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_registry_to_apptainer_sif_script \
+      'my-hub/test-project-slurm:tag' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_registry_to_apptainer_sif_converter.sh"
+  assert_success
+  # Options absorbed from the (now retired) super-project prestage helper.
+  assert_output --partial 'FORCE_REBUILD'
+  assert_output --partial 'OVERRIDE_IMAGE'
+  assert_output --partial 'OVERRIDE_TAG'
+  assert_output --partial '--login-node-only'
+  # Persistent OCI blob cache so a --force rebuild does not re-download the layers.
+  assert_output --partial 'APPTAINER_PRESTAGE_CACHEDIR'
+  # Non-interactive registry credentials.
+  assert_output --partial 'APPTAINER_DOCKER_USERNAME'
+  assert_output --partial 'APPTAINER_DOCKER_PASSWORD'
+  # Progress heartbeat + stall detection and the SLURM-time-aware watchdog.
+  assert_output --partial '_dna_heartbeat_start'
+  assert_output --partial 'APPTAINER_BUILD_STALL_SEC'
+  assert_output --partial '_dna_timeout_args'
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_registry_to_apptainer_sif_script › fetches on the login node then packs inside salloc" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_REPO_NAME='my-super-project'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_registry_to_apptainer_sif_script \
+      'my-hub/test-project-slurm:tag' 'test-project-slurm.sif' '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_registry_to_apptainer_sif_converter.sh"
+  assert_success
+  # STAGE 2 is handed to a compute node via a self re-exec marked by DNA_SIF_STAGE2_SANDBOX.
+  assert_output --partial 'DNA_SIF_STAGE2_SANDBOX'
+  assert_output --partial 'exec salloc'
+  # The sandbox lives on the SHARED filesystem so the compute node can read it.
+  assert_output --partial '_SANDBOX_ROOT'
+
+  rm -rf "${output_dir}"
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains --docker-login flag support" {
@@ -1166,36 +1515,42 @@ export -f docker
   assert_output --partial 'USE_DOCKER_LOGIN'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script contains --target-dir argument parsing" {
+@test "dna::generate_registry_to_apptainer_sif_script › generated script outputs SIF to \${SCRATCH}/sif" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     output_dir=\$(mktemp -d)
     dna::generate_registry_to_apptainer_sif_script \
-      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
-      'test-project-slurm.sif' \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0-valeria' \
+      'test-project-slurm-valeria.sif' \
       \"\${output_dir}\"
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial '--target-dir'
+  assert_output --partial 'SIF_DIR="${SCRATCH}/sif"'
 }
 
-@test "dna::generate_registry_to_apptainer_sif_script › generated script uses TARGET_DIR as SIF output directory when --target-dir is provided" {
+@test "dna::generate_registry_to_apptainer_sif_script › registry fetch stays on the login node, packing goes to salloc" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
     export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
     source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
     output_dir=\$(mktemp -d)
     dna::generate_registry_to_apptainer_sif_script \
-      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
-      'test-project-slurm.sif' \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0-valeria' \
+      'test-project-slurm-valeria.sif' \
       \"\${output_dir}\"
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial 'artifact/apptainer'
+  # The docker:// registry FETCH needs internet, so stage 1 always runs where the script is
+  # started (the login node); only the network-free PACK stage is re-exec'd into salloc.
+  assert_output --partial 'Stage 1/2: fetching and extracting'
+  assert_output --partial 'exec salloc'
+  # Opting out of the allocation must be possible (unscheduled clusters, permissive login nodes).
+  assert_output --partial 'APPTAINER_BUILD_NO_SALLOC'
+  assert_output --partial 'LOGIN_NODE_ONLY'
 }
 
 @test "dna::generate_registry_to_apptainer_sif_script › generated script uses SLURM_TMPDIR-aware mktemp for cache config" {
@@ -1256,7 +1611,6 @@ export -f docker
   "
   assert_success
   assert_output --partial 'Usage'
-  assert_output --partial '--target-dir'
   assert_output --partial '--docker-login'
 }
 
@@ -1279,6 +1633,30 @@ export -f docker
   assert_output --partial '_APPTAINER_LATEST_VERSION'
 }
 
+@test "dna::generate_registry_to_apptainer_sif_script › httpproxy only loads inside a SLURM job (never on the login node)" {
+  run bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    export SUPER_PROJECT_ROOT='${MOCK_PROJECT_ROOT}'
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    output_dir=\$(mktemp -d)
+    dna::generate_registry_to_apptainer_sif_script \
+      'norlabulaval/test-project-slurm:l4t-r36.4.0' \
+      'test-project-slurm.sif' \
+      \"\${output_dir}\"
+    cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
+  "
+  assert_success
+  # Isolated compute nodes (e.g. Alliance Canada / compute_canada) need the httpproxy module for
+  # outbound internet, but loading it on the login node routes docker.io through the proxy and
+  # returns 'Forbidden'. The fetch normally runs on the login node, and the packing stage needs no
+  # network at all, so the httpproxy load MUST be gated behind an in-SLURM-job guard.
+  assert_output --partial 'module spider httpproxy'
+  assert_output --partial 'module load httpproxy'
+  assert_output --partial 'APPTAINER_BUILD_NO_HTTPPROXY'
+  # Guarded by both the stage (never for the network-free pack) and the SLURM_JOB_ID check.
+  assert_output --partial 'if [[ "${_DNA_STAGE}" != "pack" ]] && [[ -n "${SLURM_JOB_ID:-}" ]] \'
+}
+
 @test "dna::generate_registry_to_apptainer_sif_script › generated script contains error message on build failure" {
   run bash -c "
     source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
@@ -1292,7 +1670,8 @@ export -f docker
     cat \"\${output_dir}/dna_registry_to_apptainer_sif_converter.sh\"
   "
   assert_success
-  assert_output --partial 'Apptainer build failed'
+  assert_output --partial 'Stage 1/2 FAILED: could not fetch/extract image'
+  assert_output --partial 'Stage 2/2 FAILED: could not pack the sandbox'
   assert_output --partial '--docker-login'
 }
 
@@ -1358,6 +1737,42 @@ export -f docker
   "
   assert_success
   assert_file_exists "${output_dir}/dna_hpc_server_config.bash"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › embeds artifact/apptainer/README.md generation" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run cat "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output --partial "artifact/apptainer/README.md"
+  assert_output --partial "AUTO-GENERATED DIRECTORY"
+  assert_output --partial "README_EOF"
+
+  rm -rf "${output_dir}"
+}
+
+@test "dna::generate_hpc_server_config_script › generated script is executable and writable by all (mode 777)" {
+  local output_dir
+  output_dir=$(mktemp -d)
+
+  bash -c "
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/import_dna_lib.bash
+    source ${MOCK_DNA_DIR}/src/lib/core/utils/apptainer_tools.bash
+    dna::generate_hpc_server_config_script '${output_dir}'
+  "
+
+  run stat -c '%a' "${output_dir}/dna_hpc_server_config.bash"
+  assert_success
+  assert_output "777"
 
   rm -rf "${output_dir}"
 }
