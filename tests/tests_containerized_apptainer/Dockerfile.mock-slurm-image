@@ -63,13 +63,36 @@ COPY test_apptainer_env.py "${DN_PROJECT_PATH}/src/test_apptainer_env.py"
 
 # ====Bake in a COMPLETE super-project '.git'======================================================
 # The real DNA slurm image carries the super-project's '.git' baked in. The slurm job template's
-# content guard validates it inside the container with:
+# content guard (and the DN/N2ST entrypoint bootstrap) validate it inside the container with:
 #   [ -d .git/objects ] && [ -d .git/refs ] && git --git-dir=.git rev-parse --verify HEAD
 # Initialize a minimal but COMPLETE git repository (HEAD + objects + refs) so the guard passes,
 # mirroring a known-good SIF conversion.
-RUN git -C "${DN_PROJECT_PATH}" init -q && \
+#
+# Robustness notes:
+#   - Commit a REAL tracked file (not just --allow-empty) so the repo carries a blob + tree +
+#     commit, i.e. a genuine object graph.
+#   - 'git repack -adq' + 'git gc' consolidate the loose objects into a single packfile. A packed
+#     repo is a handful of files instead of many tiny loose objects, which is markedly more robust
+#     across the Docker -> Apptainer SIF (squashfs) conversion.
+#   - 'safe.directory=*' is baked system-wide so both the template content guard AND the real
+#     entrypoint's 'git rev-parse' succeed regardless of the (host) uid Apptainer runs the container
+#     as (Apptainer runs as the invoking user, not the image USER, so '.git' is often not owned by
+#     the caller).
+#   - The final chained check is a build-time self-test: it runs the EXACT content guard used by the
+#     slurm job template, so a broken bake fails the image build immediately instead of silently
+#     producing a SIF that later fails test_slurm_job_template.
+RUN git config --system --add safe.directory '*' && \
+    git -C "${DN_PROJECT_PATH}" init -q && \
+    echo "Mock super-project baked-in .git for Apptainer content guard." \
+        > "${DN_PROJECT_PATH}/.dna_mock_super_project" && \
+    git -C "${DN_PROJECT_PATH}" -c user.email="test@dna.mock" -c user.name="DNA Mock" add -A && \
     git -C "${DN_PROJECT_PATH}" -c user.email="test@dna.mock" -c user.name="DNA Mock" \
-        commit -q --allow-empty -m "Mock super-project baked-in .git for Apptainer content guard"
+        commit -q -m "Mock super-project baked-in .git for Apptainer content guard" && \
+    git -C "${DN_PROJECT_PATH}" repack -adq && \
+    git -C "${DN_PROJECT_PATH}" gc -q --prune=now && \
+    [ -d "${DN_PROJECT_PATH}/.git/objects" ] && \
+    [ -d "${DN_PROJECT_PATH}/.git/refs" ] && \
+    git --git-dir="${DN_PROJECT_PATH}/.git" rev-parse --verify HEAD >/dev/null
 
 # ====Set ownership================================================================================
 RUN chown -R testuser:testuser "${DN_PROJECT_PATH}" "${DN_PROJECT_SERVICE_DIR}" /entrypoints /dn_container_env_variable

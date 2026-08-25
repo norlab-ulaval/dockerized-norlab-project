@@ -21,7 +21,7 @@ services:
       PYTHONUNBUFFERED: 0 # Slightly faster
       DISPLAY: "" # Keep unset
       # -----------
-      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime if its relevant (ref task NMO-669)
+      # (NICE TO HAVE) ToDo: add logic to auto set DN_HOST at runtime. Relevant for multiarch tests (ref task NMO-669)
       DN_HOST: 'linux/x86'
       # DN_HOST: ${IMAGE_ARCH_AND_OS:?err}
       DN_CONTAINER_NAME: ${DN_CONTAINER_NAME:?err}
