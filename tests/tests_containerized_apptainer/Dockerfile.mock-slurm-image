@@ -22,8 +22,11 @@ FROM --platform=linux/amd64 ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install minimal dependencies
+# Note: 'git' is required inside the container by the slurm job template's content guard,
+# which validates the baked-in super-project '.git' via 'git rev-parse --verify HEAD'.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         bash \
+        git \
         python3 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -57,6 +60,16 @@ RUN chmod +x "${DN_PROJECT_SERVICE_DIR}/dn_entrypoint.init.bash"
 
 # ====Create a test python script==================================================================
 COPY test_apptainer_env.py "${DN_PROJECT_PATH}/src/test_apptainer_env.py"
+
+# ====Bake in a COMPLETE super-project '.git'======================================================
+# The real DNA slurm image carries the super-project's '.git' baked in. The slurm job template's
+# content guard validates it inside the container with:
+#   [ -d .git/objects ] && [ -d .git/refs ] && git --git-dir=.git rev-parse --verify HEAD
+# Initialize a minimal but COMPLETE git repository (HEAD + objects + refs) so the guard passes,
+# mirroring a known-good SIF conversion.
+RUN git -C "${DN_PROJECT_PATH}" init -q && \
+    git -C "${DN_PROJECT_PATH}" -c user.email="test@dna.mock" -c user.name="DNA Mock" \
+        commit -q --allow-empty -m "Mock super-project baked-in .git for Apptainer content guard"
 
 # ====Set ownership================================================================================
 RUN chown -R testuser:testuser "${DN_PROJECT_PATH}" "${DN_PROJECT_SERVICE_DIR}" /entrypoints /dn_container_env_variable
