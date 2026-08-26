@@ -63,6 +63,33 @@ done
 # ====Cleanup======================================================================================
 ARTIFACTS_DIR="${SCRIPT_DIR}/.test_artifacts"
 
+# Robustly remove the test artifacts directory.
+# The suite runs the container --privileged (needed for Apptainer), so files it creates under the
+# bind-mounted mock project (e.g. scratch/sif/mock-slurm.sif and scratch/tmp/*) are owned by root
+# on the host. A plain host-side 'rm -rf' then fails with "Permission denied" — and because this
+# script runs under 'set -e', that failure would abort cleanup() before it resets the exit code,
+# turning an otherwise-green run into a spurious non-zero exit ([NBS error]). Remove any root-owned
+# leftovers from inside a throwaway root container, and never let cleanup fail the suite over them.
+function remove_artifacts_dir() {
+  [[ -d "${ARTIFACTS_DIR}" ]] || return 0
+  # Fast path: plain host removal (works when nothing is root-owned).
+  if rm -rf "${ARTIFACTS_DIR}" 2>/dev/null; then
+    return 0
+  fi
+  echo "[info] Some test artifacts are root-owned (created inside the privileged test container);" >&2
+  echo "[info]   removing them via a throwaway root container." >&2
+  local parent base
+  parent="$(dirname "${ARTIFACTS_DIR}")"
+  base="$(basename "${ARTIFACTS_DIR}")"
+  docker run --rm --platform linux/amd64 \
+    -v "${parent}:/host_parent:rw" \
+    "${APPTAINER_TEST_ENV_IMAGE}" \
+    /bin/sh -c "rm -rf '/host_parent/${base}'" 2>/dev/null || true
+  # Best-effort final host cleanup; never fail the suite over leftover temp files.
+  rm -rf "${ARTIFACTS_DIR}" 2>/dev/null || true
+  return 0
+}
+
 function cleanup() {
   local exit_code=$?
 
@@ -76,7 +103,7 @@ function cleanup() {
 
   if [[ "${KEEP_ARTIFACTS}" == "false" ]]; then
     # Remove test artifacts
-    rm -rf "${ARTIFACTS_DIR}"
+    remove_artifacts_dir
     # Remove Docker images
     docker rmi -f "${MOCK_SLURM_IMAGE}" 2>/dev/null || true
     echo "[info] Test artifacts cleaned up (use --keep to preserve)"
@@ -136,7 +163,7 @@ if [[ "${HOST_IS_AMD64}" == "false" && "${DNA_APPTAINER_TEST_FORCE:-false}" != "
   # Best-effort cleanup of any leftover artifacts/container.
   docker rm -f "${TEST_CONTAINER_NAME}" 2>/dev/null || true
   if [[ "${KEEP_ARTIFACTS}" == "false" ]]; then
-    rm -rf "${ARTIFACTS_DIR}"
+    remove_artifacts_dir
   fi
   exit 0
 fi

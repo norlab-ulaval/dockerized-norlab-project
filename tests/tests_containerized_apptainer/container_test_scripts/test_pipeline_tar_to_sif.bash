@@ -42,6 +42,15 @@ export -f n2st::print_msg n2st::print_msg_error n2st::print_msg_done n2st::print
 
 export SUPER_PROJECT_ROOT="${MOCK_PROJECT_ROOT}"
 
+# Tell the generator which super-project repo directory carries the baked-in '.git' (baked under
+# /ros2_ws/src/<name> in Dockerfile.mock-slurm-image). Without this, the generated converter's
+# SUPER_PROJECT_GIT_DIRNAME is empty and it SKIPS both its sandbox '.git' validation and the SIF
+# '.git' content guard — so a conversion that drops the baked-in '.git' would go unnoticed here and
+# only surface later as a cryptic failure in test_slurm_job_template (the template's content guard).
+# Setting it makes the converter validate + guarantee the '.git' survives into the SIF (matching a
+# real DNA build) and fail fast with an actionable message right here if it does not.
+export SUPER_PROJECT_REPO_NAME="mock-project"
+
 # The generated converter now builds the SIF into ${SCRATCH}/sif/ and requires $SCRATCH.
 # In this container there is no SLURM allocation and the mock tar architecture may not match the
 # host, so disable the salloc re-exec and the architecture guard.
