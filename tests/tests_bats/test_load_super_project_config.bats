@@ -100,6 +100,8 @@ teardown() {
   assert_not_exist "${DN_PROJECT_USER}"
   assert_not_exist "${HYDRA_FULL_ERROR}"
   assert_not_exist "${MOCK_TEST_WAS_LOADED}"
+  assert_not_exist "${COMPOSE_BAKE}"
+  assert_not_exist "${BUILDX_BAKE_ENTITLEMENTS_FS}"
 
   assert_equal "$(pwd)" "${MOCK_PROJECT_PATH}"
 
@@ -122,6 +124,11 @@ teardown() {
   assert_equal "${DN_PROJECT_HUB}" "norlabulaval"
 
   assert_equal "${DN_PROJECT_USER}" 'root'
+
+  # Docker compose build is delegated to buildx bake. Bake fs entitlements check must be disabled
+  # since DNA Dockerfiles are located outside the super project root (see .env.dna-internal)
+  assert_equal "${COMPOSE_BAKE}" "true"
+  assert_equal "${BUILDX_BAKE_ENTITLEMENTS_FS}" "0"
 
   # Retrieve current DNA_RELEASE_CONFIG_SCHEME_VERSION
   source "${BATS_DOCKER_WORKDIR}/load_repo_main_dotenv.bash"

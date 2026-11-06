@@ -62,8 +62,18 @@ Trouble shooting procedure:
   fi
 
   # ....Remove byte-compiled files that could mess with tools on context/environment change........
-  pyclean "${DN_PROJECT_PATH}"
-  # Remember the non-interactive-ros2 user path nightmare
+  # Motivation: Remember the non-interactive-ros2 user path nightmare.
+  # (Priority) ToDo: add an option to disable pyclean step
+  # (Priority) ToDo: skip the 'artifact/' directory from the clean path as it is slowing down dna up considerably on RLRP
+  if [[ -d "${DN_PROJECT_PATH}/src" ]]; then
+    pyclean "${DN_PROJECT_PATH}/src"
+  fi
+  if [[ -d "${DN_PROJECT_PATH}/tests" ]]; then
+    pyclean "${DN_PROJECT_PATH}/tests"
+  fi
+  #if [[ -d "${DN_PROJECT_PATH}/utilities" ]]; then
+  #  pyclean "${DN_PROJECT_PATH}/utilities"
+  #fi
 
   # ....Teardown...................................................................................
   cd "${tmp_cwd}" || { echo "Return to original dir error" 1>&2 && return 1; }
